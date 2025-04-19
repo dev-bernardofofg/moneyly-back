@@ -2,13 +2,14 @@ import type { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/user';
+import { AuthenticatedRequest } from '../middlewares/auth';
 
 
 const JWT_SECRET = process.env.JWT_SECRET || 'segredo_super_secreto';
 
 // Função para gerar JWT
 const generateToken = (userId: string) => {
-  return jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' });
 };
 
 export const CreateUser = async (req: Request, res: Response) => {
@@ -88,3 +89,16 @@ export const CreateSession = async (req: Request, res: Response) => {
   }
 };
 
+export const GetMe = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const user = await User.findById(req.userId).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    return res.json(user);
+  } catch (error) {
+    return res.status(500).json({ error: 'Erro interno ao buscar usuário' });
+  }
+};
