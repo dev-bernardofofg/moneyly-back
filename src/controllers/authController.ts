@@ -12,7 +12,7 @@ const generateToken = (userId: string) => {
   return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' });
 };
 
-export const CreateUser = async (req: Request, res: Response) => {
+export const createUser = async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
 
@@ -51,7 +51,7 @@ export const CreateUser = async (req: Request, res: Response) => {
   }
 };
 
-export const CreateSession = async (req: Request, res: Response) => {
+export const createSession = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
@@ -89,7 +89,7 @@ export const CreateSession = async (req: Request, res: Response) => {
   }
 };
 
-export const GetMe = async (req: AuthenticatedRequest, res: Response) => {
+export const getMe = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const user = await User.findById(req.userId).select('-password');
 
