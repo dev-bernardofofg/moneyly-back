@@ -27,8 +27,11 @@ export const CreateUser = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Email já cadastrado.' });
     }
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+
     // Criar o novo usuário
-    const newUser = await User.create({ name, email, password });
+    const newUser = await User.create({ name, email, password: hashedPassword });
 
     // Retornar o token JWT
     const token = generateToken(String(newUser._id));
