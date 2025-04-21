@@ -1,24 +1,12 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from "../middlewares/auth";
 import Transaction from "../models/transaction";
+import { format } from 'date-fns';
+import { transactionSchema, transactionUpdateSchema } from '../schemas/transactionSchema';
 
 export const createTransaction = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { type, amount, category, description, date } = req.body;
-
-    if (!type || !amount || !category) {
-      return res.status(400).json({
-        error: 'Campos obrigatórios: type, amount e category.',
-      });
-    }
-
-    if (!['income', 'expense'].includes(type)) {
-      return res.status(400).json({ error: 'Tipo inválido. Use "income" ou "expense".' });
-    }
-
-    if (isNaN(Number(amount)) || Number(amount) <= 0) {
-      return res.status(400).json({ error: 'O campo amount deve ser um número positivo.' });
-    }
 
     const newTransaction = await Transaction.create({
       userId: req.userId,
@@ -26,21 +14,35 @@ export const createTransaction = async (req: AuthenticatedRequest, res: Response
       amount,
       category,
       description,
-      date: date || new Date(),
+      date: date ? new Date(date) : new Date(),
     });
 
     return res.status(201).json(newTransaction);
   } catch (error) {
-    console.error(error);
     return res.status(500).json({ error: 'Erro ao criar transação' });
   }
 };
-
 export const getTransactions = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const transactions = await Transaction.find({ userId: req.userId }).sort({ date: -1 });
+    const { category, startDate, endDate } = req.query;
+
+    const filter: any = { userId: req.userId };
+
+    if (category) {
+      filter.category = category;
+    }
+
+    if (startDate || endDate) {
+      filter.date = {};
+      if (startDate) filter.date.$gte = new Date(startDate as string);
+      if (endDate) filter.date.$lte = new Date(endDate as string);
+    }
+
+    const transactions = await Transaction.find(filter).sort({ date: -1 });
+
     return res.json(transactions);
   } catch (error) {
+    console.error(error);
     return res.status(500).json({ error: 'Erro ao buscar transações' });
   }
 };
@@ -56,11 +58,11 @@ export const updateTransaction = async (req: AuthenticatedRequest, res: Response
       return res.status(404).json({ error: 'Transação não encontrada' });
     }
 
-    transaction.type = type ?? transaction.type;
-    transaction.amount = amount ?? transaction.amount;
-    transaction.category = category ?? transaction.category;
-    transaction.description = description ?? transaction.description;
-    transaction.date = date ?? transaction.date;
+    if (date) transaction.date = new Date(date);
+    if (type) transaction.type = type;
+    if (amount) transaction.amount = amount;
+    if (category) transaction.category = category;
+    if (description) transaction.description = description;
 
     await transaction.save();
 
@@ -70,7 +72,6 @@ export const updateTransaction = async (req: AuthenticatedRequest, res: Response
     return res.status(500).json({ error: 'Erro ao atualizar transação' });
   }
 };
-
 export const deleteTransaction = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
@@ -88,5 +89,69 @@ export const deleteTransaction = async (req: AuthenticatedRequest, res: Response
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Erro ao deletar transação' });
+  }
+};
+
+export const getTransactionSummary = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const transactions = await Transaction.find({ userId: req.userId });
+
+    let totalIncome = 0;
+    let totalExpense = 0;
+    const byCategory: Record<string, number> = {};
+
+    transactions.forEach((tx) => {
+      if (tx.type === 'income') totalIncome += tx.amount;
+      if (tx.type === 'expense') totalExpense += tx.amount;
+
+      if (!byCategory[tx.category]) {
+        byCategory[tx.category] = 0;
+      }
+      byCategory[tx.category] += tx.amount;
+    });
+
+    return res.json({
+      totalIncome,
+      totalExpense,
+      balance: totalIncome - totalExpense,
+      byCategory,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Erro ao gerar resumo' });
+  }
+};
+
+export const getMonthlySummary = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    const filter: any = { userId: req.userId };
+
+    if (startDate || endDate) {
+      filter.date = {};
+      if (startDate) filter.date.$gte = new Date(startDate as string);
+      if (endDate) filter.date.$lte = new Date(endDate as string);
+    }
+
+    const transactions = await Transaction.find(filter);
+
+    const summary: Record<string, { income: number; expense: number }> = {};
+
+    transactions.forEach((tx) => {
+      const monthKey = format(new Date(tx.date), 'yyyy-MM');
+
+      if (!summary[monthKey]) {
+        summary[monthKey] = { income: 0, expense: 0 };
+      }
+
+      if (tx.type === 'income') summary[monthKey].income += tx.amount;
+      else summary[monthKey].expense += tx.amount;
+    });
+
+    return res.json(summary);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Erro ao gerar resumo mensal' });
   }
 };
