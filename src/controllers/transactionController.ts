@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from "../middlewares/auth";
 import Transaction from "../models/transaction";
 import { format } from 'date-fns';
-import { transactionSchema, transactionUpdateSchema } from '../schemas/transactionSchema';
+import User from '../models/user';
 
 export const createTransaction = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -22,6 +22,7 @@ export const createTransaction = async (req: AuthenticatedRequest, res: Response
     return res.status(500).json({ error: 'Erro ao criar transação' });
   }
 };
+
 export const getTransactions = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { category, startDate, endDate } = req.query;
@@ -40,7 +41,34 @@ export const getTransactions = async (req: AuthenticatedRequest, res: Response) 
 
     const transactions = await Transaction.find(filter).sort({ date: -1 });
 
-    return res.json(transactions);
+    const totalExpense = transactions
+      .filter((tx) => tx.type === 'expense')
+      .reduce((sum, tx) => sum + tx.amount, 0);
+
+    const totalIncome = transactions.filter((tx) => tx.type === 'income')
+      .reduce((sum, tx) => sum + tx.amount, 0);
+
+    const user = await User.findById(req.userId);
+    const monthlyIncome = user?.monthlyIncome ?? 0;
+
+    const percentUsed =
+      monthlyIncome > 0
+        ? Number(((totalExpense / monthlyIncome) * 100).toFixed(2))
+        : null;
+
+    const alert =
+      percentUsed !== null && percentUsed >= 80
+        ? 'Você já usou mais de 80% do seu rendimento mensal neste filtro!'
+        : null;
+
+    return res.json({
+      transactions,
+      totalExpense,
+      totalIncome,
+      monthlyIncome,
+      percentUsed,
+      alert,
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Erro ao buscar transações' });
@@ -72,6 +100,7 @@ export const updateTransaction = async (req: AuthenticatedRequest, res: Response
     return res.status(500).json({ error: 'Erro ao atualizar transação' });
   }
 };
+
 export const deleteTransaction = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
@@ -96,25 +125,44 @@ export const getTransactionSummary = async (req: AuthenticatedRequest, res: Resp
   try {
     const transactions = await Transaction.find({ userId: req.userId });
 
-    let totalIncome = 0;
+    let realIncome = 0;
     let totalExpense = 0;
     const byCategory: Record<string, number> = {};
 
     transactions.forEach((tx) => {
-      if (tx.type === 'income') totalIncome += tx.amount;
+      if (tx.type === 'income') realIncome += tx.amount;
       if (tx.type === 'expense') totalExpense += tx.amount;
 
       if (!byCategory[tx.category]) {
         byCategory[tx.category] = 0;
       }
+
       byCategory[tx.category] += tx.amount;
     });
 
+    const user = await User.findById(req.userId);
+    const monthlyIncome = user?.monthlyIncome ?? 0;
+
+    const balance = monthlyIncome - totalExpense;
+
+    const percentUsed =
+      monthlyIncome > 0
+        ? Number(((totalExpense / monthlyIncome) * 100).toFixed(2))
+        : null;
+
+    const alert =
+      percentUsed !== null && percentUsed >= 80
+        ? 'Você já usou mais de 80% do seu rendimento mensal!'
+        : null;
+
     return res.json({
-      totalIncome,
-      totalExpense,
-      balance: totalIncome - totalExpense,
+      realIncome,     // 💰 soma das transações tipo income
+      monthlyIncome,  // 💼 salário fixo do usuário
+      totalExpense,   // 💸 soma das expenses
+      balance,        // 💼 - 💸
+      percentUsed,
       byCategory,
+      alert,
     });
   } catch (error) {
     console.error(error);

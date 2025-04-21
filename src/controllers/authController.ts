@@ -97,8 +97,49 @@ export const getMe = async (req: AuthenticatedRequest, res: Response) => {
       return res.status(404).json({ error: 'Usuário não encontrado' });
     }
 
-    return res.json(user);
+    let updatedToken: string | undefined;
+
+    if (user.firstAccess) {
+      user.firstAccess = false;
+      await user.save();
+
+      updatedToken = generateToken(String(user._id))
+    }
+
+    return res.json({
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        monthlyIncome: user.monthlyIncome ?? 0,
+        createdAt: user.createdAt,
+      },
+      ...(updatedToken && { token: updatedToken }),
+    });
   } catch (error) {
     return res.status(500).json({ error: 'Erro interno ao buscar usuário' });
+  }
+};
+
+export const updateMonthlyIncome = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { monthlyIncome } = req.body;
+
+    if (!monthlyIncome || isNaN(monthlyIncome) || monthlyIncome < 0) {
+      return res.status(400).json({ error: 'Informe um rendimento válido.' });
+    }
+
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+
+    user.monthlyIncome = monthlyIncome;
+    await user.save();
+
+    return res.json({ message: 'Rendimento atualizado com sucesso.', monthlyIncome });
+  } catch (error) {
+    return res.status(500).json({ error: 'Erro ao atualizar rendimento.' });
   }
 };

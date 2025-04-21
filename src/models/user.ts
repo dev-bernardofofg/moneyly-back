@@ -4,6 +4,8 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
+  monthlyIncome?: number;
+  firstAccess?: boolean;
   createdAt: Date;
 }
 
@@ -25,6 +27,11 @@ const UserSchema: Schema = new Schema<IUser>(
       required: [true, 'A senha é obrigatória'],
       minlength: 6,
     },
+    firstAccess: { type: Boolean, default: true },
+    monthlyIncome: {
+      type: Number,
+      default: 0,
+    }
   },
   { timestamps: true }
 );
