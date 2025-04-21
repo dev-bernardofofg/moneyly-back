@@ -183,18 +183,46 @@ export const getMonthlySummary = async (req: AuthenticatedRequest, res: Response
     }
 
     const transactions = await Transaction.find(filter);
+    const user = await User.findById(req.userId);
+    const monthlyIncome = user?.monthlyIncome ?? 0;
 
-    const summary: Record<string, { income: number; expense: number }> = {};
+    const summary: Record<string, {
+      income: number;
+      expense: number;
+      percentUsed: number | null;
+      alert: string | null;
+    }> = {};
 
     transactions.forEach((tx) => {
       const monthKey = format(new Date(tx.date), 'yyyy-MM');
 
       if (!summary[monthKey]) {
-        summary[monthKey] = { income: 0, expense: 0 };
+        summary[monthKey] = {
+          income: 0,
+          expense: 0,
+          percentUsed: null,
+          alert: null,
+        };
       }
 
       if (tx.type === 'income') summary[monthKey].income += tx.amount;
-      else summary[monthKey].expense += tx.amount;
+      if (tx.type === 'expense') summary[monthKey].expense += tx.amount;
+    });
+
+    // Gerar os percentuais e alertas com base no rendimento
+    Object.keys(summary).forEach((monthKey) => {
+      const { expense } = summary[monthKey];
+
+      if (monthlyIncome > 0) {
+        const percent = Number(((expense / monthlyIncome) * 100).toFixed(2));
+        summary[monthKey].percentUsed = percent;
+
+        if (percent >= 80) {
+          const [year, month] = monthKey.split('-');
+          const alertMonth = format(new Date(Number(year), Number(month) - 1), 'MMMM', { locale: undefined });
+          summary[monthKey].alert = `Você gastou mais de 80% do seu rendimento em ${alertMonth}!`;
+        }
+      }
     });
 
     return res.json(summary);
