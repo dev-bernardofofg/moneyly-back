@@ -1,8 +1,9 @@
-import type { Application } from 'express';
-import { connectDB } from './config/db';
-import express from 'express';
-import cors from 'cors';
-import router from './routes';
+import cors from "cors";
+import type { Application } from "express";
+import express from "express";
+import { connectDB } from "./db";
+import { env } from "./env";
+import router from "./routes";
 
 const app: Application = express();
 app.use(express.json());
@@ -12,6 +13,6 @@ connectDB();
 
 app.use(router);
 
-app.listen(process.env.PORT, () => {
-  console.log(`Servidor rodando na porta ${process.env.PORT}`);
+app.listen(env.PORT, () => {
+  console.log(`Servidor rodando na porta ${env.PORT}`);
 });
