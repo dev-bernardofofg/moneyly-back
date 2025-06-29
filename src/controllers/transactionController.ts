@@ -19,7 +19,7 @@ export const createTransaction = async (
       userId: req.userId,
       type,
       amount,
-      category,
+      categoryId: category,
       description,
       date: date ? new Date(date) : new Date(),
     });
@@ -180,11 +180,11 @@ export const getTransactionSummary = async (
       if (tx.type === "income") realIncome += tx.amount;
       if (tx.type === "expense") totalExpense += tx.amount;
 
-      if (!byCategory[tx.category]) {
-        byCategory[tx.category] = 0;
+      if (!byCategory[tx.categoryId]) {
+        byCategory[tx.categoryId] = 0;
       }
 
-      byCategory[tx.category] += tx.amount;
+      byCategory[tx.categoryId] += tx.amount;
     });
 
     const user = await UserRepository.findById(req.userId);

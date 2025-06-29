@@ -30,7 +30,7 @@ export class TransactionRepository {
     let conditions = [eq(transactions.userId, userId)];
 
     if (filters?.category) {
-      conditions.push(eq(transactions.category, filters.category));
+      conditions.push(eq(transactions.categoryId, filters.category));
     }
 
     if (filters?.startDate) {
