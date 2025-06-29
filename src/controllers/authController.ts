@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import type { Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import { createDefaultCategoriesForUser } from "../db/seed";
 import { AuthenticatedRequest } from "../middlewares/auth";
 import { UserRepository } from "../repositories/userRepository";
 
@@ -37,6 +38,14 @@ export const createUser = async (req: Request, res: Response) => {
       email,
       password: hashedPassword,
     });
+
+    // Criar categorias padrão para o novo usuário
+    try {
+      await createDefaultCategoriesForUser(newUser.id);
+    } catch (categoryError) {
+      console.error("Erro ao criar categorias padrão:", categoryError);
+      // Não falhar o registro se as categorias não puderem ser criadas
+    }
 
     // Retornar o token JWT
     const token = generateToken(newUser.id);

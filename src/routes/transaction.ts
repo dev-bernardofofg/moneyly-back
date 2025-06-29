@@ -1,18 +1,41 @@
-import express from 'express';
-import { authenticateUser } from '../middlewares/auth';
-import { createTransaction, deleteTransaction, getMonthlySummary, getTransactions, getTransactionSummary, updateTransaction } from '../controllers/transactionController';
-import { validateBody } from '../middlewares/validateBody';
-import { transactionSchema, transactionUpdateSchema } from '../schemas/transactionSchema';
+import { Router } from "express";
+import {
+  createTransaction,
+  deleteTransaction,
+  getMonthlySummary,
+  getTransactions,
+  getTransactionSummary,
+  updateTransaction,
+} from "../controllers/transactionController";
+import { authenticateUser } from "../middlewares/auth";
+import { validateBody } from "../middlewares/validateBody";
+import {
+  transactionSchema,
+  transactionUpdateSchema,
+} from "../schemas/transactionSchema";
 
+const TransactionsRouter: Router = Router();
 
-const TransactionsRouters = express();
+TransactionsRouter.post(
+  "/create",
+  authenticateUser,
+  validateBody(transactionSchema),
+  createTransaction
+);
+TransactionsRouter.get("/", authenticateUser, getTransactions);
+TransactionsRouter.put(
+  "/:id",
+  authenticateUser,
+  validateBody(transactionUpdateSchema),
+  updateTransaction
+);
+TransactionsRouter.delete("/:id", authenticateUser, deleteTransaction);
 
-TransactionsRouters.post('/create', authenticateUser, validateBody(transactionSchema), createTransaction)
-TransactionsRouters.get('/', authenticateUser, getTransactions)
-TransactionsRouters.put('/:id', authenticateUser, validateBody(transactionUpdateSchema), updateTransaction)
-TransactionsRouters.delete('/:id', authenticateUser, deleteTransaction)
+TransactionsRouter.get("/summary", authenticateUser, getTransactionSummary);
+TransactionsRouter.get(
+  "/summary-by-month",
+  authenticateUser,
+  getMonthlySummary
+);
 
-TransactionsRouters.get('/summary', authenticateUser, getTransactionSummary)
-TransactionsRouters.get('/summary-by-month', authenticateUser, getMonthlySummary)
-
-export default TransactionsRouters
+export default TransactionsRouter;
