@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { Response } from "express";
+import { PaginationHelper } from "../lib/pagination";
 import { AuthenticatedRequest } from "../middlewares/auth";
 import { TransactionRepository } from "../repositories/transactionRepository";
 import { UserRepository } from "../repositories/userRepository";
@@ -39,7 +40,7 @@ export const getTransactions = async (
       return res.status(401).json({ error: "Usuário não autenticado" });
     }
 
-    const { category, startDate, endDate } = req.query;
+    const { category, startDate, endDate, page, limit } = req.query;
 
     const filters: {
       category?: string;
@@ -59,40 +60,92 @@ export const getTransactions = async (
       filters.endDate = new Date(endDate as string);
     }
 
-    const transactions = await TransactionRepository.findByUserId(
-      req.userId,
-      filters
-    );
+    // Verificar se há parâmetros de paginação
+    const hasPagination = page || limit;
 
-    const totalExpense = transactions
-      .filter((tx) => tx.type === "expense")
-      .reduce((sum, tx) => sum + tx.amount, 0);
+    if (hasPagination) {
+      // Usar versão paginada
+      const paginationParams = {
+        page: page ? Number(page) : undefined,
+        limit: limit ? Number(limit) : undefined,
+      };
 
-    const totalIncome = transactions
-      .filter((tx) => tx.type === "income")
-      .reduce((sum, tx) => sum + tx.amount, 0);
+      const pagination = PaginationHelper.validateAndParse(paginationParams);
+      const result = await TransactionRepository.findByUserIdPaginated(
+        req.userId,
+        pagination,
+        filters
+      );
 
-    const user = await UserRepository.findById(req.userId);
-    const monthlyIncome = user?.monthlyIncome ?? 0;
+      // Calcular totais para as transações da página atual
+      const totalExpense = result.data
+        .filter((tx) => tx.type === "expense")
+        .reduce((sum, tx) => sum + tx.amount, 0);
 
-    const percentUsed =
-      monthlyIncome > 0
-        ? Number(((totalExpense / monthlyIncome) * 100).toFixed(2))
-        : null;
+      const totalIncome = result.data
+        .filter((tx) => tx.type === "income")
+        .reduce((sum, tx) => sum + tx.amount, 0);
 
-    const alert =
-      percentUsed !== null && percentUsed >= 80
-        ? "Você já usou mais de 80% do seu rendimento mensal neste filtro!"
-        : null;
+      const user = await UserRepository.findById(req.userId);
+      const monthlyIncome = user?.monthlyIncome ?? 0;
 
-    return res.json({
-      transactions,
-      totalExpense,
-      totalIncome,
-      monthlyIncome,
-      percentUsed,
-      alert,
-    });
+      const percentUsed =
+        monthlyIncome > 0
+          ? Number(((totalExpense / monthlyIncome) * 100).toFixed(2))
+          : null;
+
+      const alert =
+        percentUsed !== null && percentUsed >= 80
+          ? "Você já usou mais de 80% do seu rendimento mensal nesta página!"
+          : null;
+
+      return res.json({
+        ...result,
+        summary: {
+          totalExpense,
+          totalIncome,
+          monthlyIncome,
+          percentUsed,
+          alert,
+        },
+      });
+    } else {
+      // Usar versão original (sem paginação)
+      const transactions = await TransactionRepository.findByUserId(
+        req.userId,
+        filters
+      );
+
+      const totalExpense = transactions
+        .filter((tx) => tx.type === "expense")
+        .reduce((sum, tx) => sum + tx.amount, 0);
+
+      const totalIncome = transactions
+        .filter((tx) => tx.type === "income")
+        .reduce((sum, tx) => sum + tx.amount, 0);
+
+      const user = await UserRepository.findById(req.userId);
+      const monthlyIncome = user?.monthlyIncome ?? 0;
+
+      const percentUsed =
+        monthlyIncome > 0
+          ? Number(((totalExpense / monthlyIncome) * 100).toFixed(2))
+          : null;
+
+      const alert =
+        percentUsed !== null && percentUsed >= 80
+          ? "Você já usou mais de 80% do seu rendimento mensal neste filtro!"
+          : null;
+
+      return res.json({
+        transactions,
+        totalExpense,
+        totalIncome,
+        monthlyIncome,
+        percentUsed,
+        alert,
+      });
+    }
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Erro ao buscar transações" });

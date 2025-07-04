@@ -1,10 +1,15 @@
-import { and, desc, eq, gte, lte } from "drizzle-orm";
+import { and, count, desc, eq, gte, lte } from "drizzle-orm";
 import { db } from "../db";
 import {
   transactions,
   type NewTransaction,
   type Transaction,
 } from "../db/schema";
+import {
+  PaginationHelper,
+  PaginationQuery,
+  PaginationResult,
+} from "../lib/pagination";
 
 export class TransactionRepository {
   // Criar transação
@@ -16,6 +21,55 @@ export class TransactionRepository {
       .values(transactionData)
       .returning();
     return transaction;
+  }
+
+  // Buscar transações do usuário com filtros e paginação
+  static async findByUserIdPaginated(
+    userId: string,
+    pagination: PaginationQuery,
+    filters?: {
+      category?: string;
+      startDate?: Date;
+      endDate?: Date;
+    }
+  ): Promise<PaginationResult<Transaction>> {
+    let conditions = [eq(transactions.userId, userId)];
+
+    if (filters?.category) {
+      conditions.push(eq(transactions.categoryId, filters.category));
+    }
+
+    if (filters?.startDate) {
+      conditions.push(gte(transactions.date, filters.startDate));
+    }
+
+    if (filters?.endDate) {
+      conditions.push(lte(transactions.date, filters.endDate));
+    }
+
+    // Buscar total de registros
+    const [{ value: total }] = await db
+      .select({ value: count() })
+      .from(transactions)
+      .where(and(...conditions));
+
+    // Buscar dados paginados
+    const data = await db
+      .select()
+      .from(transactions)
+      .where(and(...conditions))
+      .orderBy(desc(transactions.date))
+      .limit(pagination.limit)
+      .offset(pagination.offset);
+
+    const page = Math.floor(pagination.offset / pagination.limit) + 1;
+
+    return PaginationHelper.createPaginationResult(
+      data,
+      total,
+      page,
+      pagination.limit
+    );
   }
 
   // Buscar transações do usuário com filtros

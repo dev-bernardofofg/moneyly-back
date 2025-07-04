@@ -22,7 +22,9 @@ TransactionsRouter.post(
   validateBody(transactionSchema),
   createTransaction
 );
+
 TransactionsRouter.get("/", authenticateUser, getTransactions);
+
 TransactionsRouter.put(
   "/:id",
   authenticateUser,
@@ -32,6 +34,7 @@ TransactionsRouter.put(
 TransactionsRouter.delete("/:id", authenticateUser, deleteTransaction);
 
 TransactionsRouter.get("/summary", authenticateUser, getTransactionSummary);
+
 TransactionsRouter.get(
   "/summary-by-month",
   authenticateUser,
