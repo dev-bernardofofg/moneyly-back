@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { Response } from "express";
 import { PaginationHelper } from "../lib/pagination";
+import { ResponseHandler } from "../lib/ResponseHandler";
 import { AuthenticatedRequest } from "../middlewares/auth";
 import { TransactionRepository } from "../repositories/transactionRepository";
 import { UserRepository } from "../repositories/userRepository";
@@ -11,7 +12,7 @@ export const createTransaction = async (
 ) => {
   try {
     if (!req.userId) {
-      return res.status(401).json({ error: "Usuário não autenticado" });
+      return ResponseHandler.unauthorized(res, "Usuário não autenticado");
     }
 
     const { type, amount, category, description, date } = req.body;
@@ -25,9 +26,14 @@ export const createTransaction = async (
       date: date ? new Date(date) : new Date(),
     });
 
-    return res.status(201).json(newTransaction);
+    return ResponseHandler.created(
+      res,
+      newTransaction,
+      "Transação criada com sucesso"
+    );
   } catch (error) {
-    return res.status(500).json({ error: "Erro ao criar transação" });
+    console.error("Erro ao criar transação:", error);
+    return ResponseHandler.serverError(res);
   }
 };
 
@@ -37,7 +43,7 @@ export const getTransactions = async (
 ) => {
   try {
     if (!req.userId) {
-      return res.status(401).json({ error: "Usuário não autenticado" });
+      return ResponseHandler.unauthorized(res, "Usuário não autenticado");
     }
 
     const { category, startDate, endDate, page, limit } = req.query;
@@ -99,16 +105,12 @@ export const getTransactions = async (
           ? "Você já usou mais de 80% do seu rendimento mensal nesta página!"
           : null;
 
-      return res.json({
-        ...result,
-        summary: {
-          totalExpense,
-          totalIncome,
-          monthlyIncome,
-          percentUsed,
-          alert,
-        },
-      });
+      return ResponseHandler.paginated(
+        res,
+        result.data,
+        result.pagination,
+        "Transações recuperadas com sucesso"
+      );
     } else {
       // Usar versão original (sem paginação)
       const transactions = await TransactionRepository.findByUserId(
@@ -137,18 +139,22 @@ export const getTransactions = async (
           ? "Você já usou mais de 80% do seu rendimento mensal neste filtro!"
           : null;
 
-      return res.json({
-        transactions,
-        totalExpense,
-        totalIncome,
-        monthlyIncome,
-        percentUsed,
-        alert,
-      });
+      return ResponseHandler.success(
+        res,
+        {
+          transactions,
+          totalExpense,
+          totalIncome,
+          monthlyIncome,
+          percentUsed,
+          alert,
+        },
+        "Transações recuperadas com sucesso"
+      );
     }
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Erro ao buscar transações" });
+    console.error("Erro ao buscar transações:", error);
+    return ResponseHandler.serverError(res);
   }
 };
 
@@ -158,7 +164,7 @@ export const updateTransaction = async (
 ) => {
   try {
     if (!req.userId) {
-      return res.status(401).json({ error: "Usuário não autenticado" });
+      return ResponseHandler.unauthorized(res, "Usuário não autenticado");
     }
 
     const { id } = req.params;
@@ -178,13 +184,17 @@ export const updateTransaction = async (
     );
 
     if (!transaction) {
-      return res.status(404).json({ error: "Transação não encontrada" });
+      return ResponseHandler.notFound(res, "Transação não encontrada");
     }
 
-    return res.json(transaction);
+    return ResponseHandler.success(
+      res,
+      transaction,
+      "Transação atualizada com sucesso"
+    );
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Erro ao atualizar transação" });
+    console.error("Erro ao atualizar transação:", error);
+    return ResponseHandler.serverError(res);
   }
 };
 
@@ -194,21 +204,21 @@ export const deleteTransaction = async (
 ) => {
   try {
     if (!req.userId) {
-      return res.status(401).json({ error: "Usuário não autenticado" });
+      return ResponseHandler.unauthorized(res, "Usuário não autenticado");
     }
 
     const { id } = req.params;
 
-    const transaction = await TransactionRepository.delete(id, req.userId);
+    const deleted = await TransactionRepository.delete(id, req.userId);
 
-    if (!transaction) {
-      return res.status(404).json({ error: "Transação não encontrada" });
+    if (!deleted) {
+      return ResponseHandler.notFound(res, "Transação não encontrada");
     }
 
-    return res.json({ message: "Transação deletada com sucesso" });
+    return ResponseHandler.success(res, null, "Transação deletada com sucesso");
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Erro ao deletar transação" });
+    console.error("Erro ao deletar transação:", error);
+    return ResponseHandler.serverError(res);
   }
 };
 
@@ -218,7 +228,7 @@ export const getTransactionSummary = async (
 ) => {
   try {
     if (!req.userId) {
-      return res.status(401).json({ error: "Usuário não autenticado" });
+      return ResponseHandler.unauthorized(res, "Usuário não autenticado");
     }
 
     const transactions = await TransactionRepository.findAllByUserId(
@@ -255,18 +265,22 @@ export const getTransactionSummary = async (
         ? "Você já usou mais de 80% do seu rendimento mensal!"
         : null;
 
-    return res.json({
-      realIncome, // 💰 soma das transações tipo income
-      monthlyIncome, // 💼 salário fixo do usuário
-      totalExpense, // 💸 soma das expenses
-      balance, // 💼 - 💸
-      percentUsed,
-      byCategory,
-      alert,
-    });
+    return ResponseHandler.success(
+      res,
+      {
+        realIncome, // 💰 soma das transações tipo income
+        monthlyIncome, // 💼 salário fixo do usuário
+        totalExpense, // 💸 soma das expenses
+        balance, // 💼 - 💸
+        percentUsed,
+        byCategory,
+        alert,
+      },
+      "Resumo das transações gerado com sucesso"
+    );
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Erro ao gerar resumo" });
+    console.error("Erro ao gerar resumo:", error);
+    return ResponseHandler.serverError(res);
   }
 };
 
@@ -276,7 +290,7 @@ export const getMonthlySummary = async (
 ) => {
   try {
     if (!req.userId) {
-      return res.status(401).json({ error: "Usuário não autenticado" });
+      return ResponseHandler.unauthorized(res, "Usuário não autenticado");
     }
 
     const { startDate, endDate } = req.query;
@@ -346,12 +360,16 @@ export const getMonthlySummary = async (
           : null;
     });
 
-    return res.json({
-      summary,
-      monthlyIncome,
-    });
+    return ResponseHandler.success(
+      res,
+      {
+        summary,
+        monthlyIncome,
+      },
+      "Resumo mensal gerado com sucesso"
+    );
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Erro ao gerar resumo mensal" });
+    console.error("Erro ao gerar resumo mensal:", error);
+    return ResponseHandler.serverError(res);
   }
 };

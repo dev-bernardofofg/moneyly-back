@@ -8,7 +8,8 @@ import {
   updateTransaction,
 } from "../controllers/transactionController";
 import { authenticateUser } from "../middlewares/auth";
-import { validateBody } from "../middlewares/validateBody";
+import { validate } from "../middlewares/validate";
+import { idParamSchema, transactionQuerySchema } from "../schemas/authSchema";
 import {
   transactionSchema,
   transactionUpdateSchema,
@@ -19,19 +20,30 @@ const TransactionsRouter: Router = Router();
 TransactionsRouter.post(
   "/create",
   authenticateUser,
-  validateBody(transactionSchema),
+  validate({ body: transactionSchema }),
   createTransaction
 );
 
-TransactionsRouter.get("/", authenticateUser, getTransactions);
+TransactionsRouter.get(
+  "/",
+  authenticateUser,
+  validate({ query: transactionQuerySchema }),
+  getTransactions
+);
 
 TransactionsRouter.put(
   "/:id",
   authenticateUser,
-  validateBody(transactionUpdateSchema),
+  validate({ body: transactionUpdateSchema, params: idParamSchema }),
   updateTransaction
 );
-TransactionsRouter.delete("/:id", authenticateUser, deleteTransaction);
+
+TransactionsRouter.delete(
+  "/:id",
+  authenticateUser,
+  validate({ params: idParamSchema }),
+  deleteTransaction
+);
 
 TransactionsRouter.get("/summary", authenticateUser, getTransactionSummary);
 
