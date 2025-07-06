@@ -1,0 +1,44 @@
+---
+description: "Regra PERN-backend: aplicar SOLID, padronizar respostas e validações"
+globs:
+  - "src/controllers/**/*.ts"
+  - "src/routes/**/*.ts"
+alwaysApply: true
+---
+
+# 💡 Backend PERN — SOLID & Padronização
+
+Sempre que você criar ou editar um **Controller** ou uma **Route**:
+
+1. **Single Responsibility**
+
+   - Controllers devem delegar toda lógica de negócio a classes em `src/services`.
+
+2. **Open/Closed**
+
+   - Para adicionar nova feature, crie um novo Service sem modificar o existente.
+
+3. **Liskov Substitution**
+
+   - Implemente interfaces em `src/repositories` para seus Services, garantindo substituibilidade.
+
+4. **Interface Segregation**
+
+   - Separe interfaces granulares (ex: `IUserRepository`, `ITransactionRepository`).
+
+5. **Dependency Inversion**
+
+   - Controllers e Services dependem de **interfaces**, não de implementações concretas.
+
+6. **ResponseHandler**
+
+   - Use o utilitário `src/lib/ResponseHandler` em vez de chamar `res.status(...).json(...)` diretamente.
+
+7. **Validações com Zod**
+
+   - Coloque todos os schemas em `src/schemas` e valide via middleware genérico em `src/middlewares/validate.ts`.
+
+8. **Error Handler global**
+   - Garanta um middleware `src/middlewares/errorHandler.ts` que capture exceções e retorne via `ResponseHandler.error()`.
+
+---
