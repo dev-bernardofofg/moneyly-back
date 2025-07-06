@@ -1,0 +1,97 @@
+@baseUrl = http://localhost:5000
+@contentType = application/json
+
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJmYjkxMjUxYy1kMDI3LTQ2OWUtYTE5My00ZDJjNDNhMjBlODMiLCJpYXQiOjE3NTE3Njg1NTIsImV4cCI6MTc1MjM3MzM1Mn0._-ciLB5Uc2Z7Jfny585S2-QEXKs4m7SO-jcxyTbtAuE
+
+
+### ========================================
+### 📂 CATEGORIAS - GERENCIAMENTO
+### ========================================
+
+### 1. Listar categorias do usuário
+GET {{baseUrl}}/categories
+Authorization: Bearer {{authToken}}
+
+### 2. Criar nova categoria
+POST {{baseUrl}}/categories/create
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "Lazer",
+  "color": "#FF6B6B",
+  "icon": "🎮"
+}
+
+### 3. Atualizar categoria
+PUT {{baseUrl}}/categories/update/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "Entretenimento",
+  "color": "#4ECDC4",
+  "icon": "🎬"
+}
+
+### 4. Deletar categoria
+DELETE {{baseUrl}}/categories/delete/1
+Authorization: Bearer {{authToken}}
+
+### 5. Buscar categoria por ID (se disponível)
+GET {{baseUrl}}/categories/1
+Authorization: Bearer {{authToken}}
+
+### ========================================
+### 🧪 TESTES DE VALIDAÇÃO
+### ========================================
+
+### 6. Teste - Nome vazio
+POST {{baseUrl}}/categories/create
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "",
+  "color": "#FF6B6B"
+}
+
+### 7. Teste - Cor inválida
+POST {{baseUrl}}/categories/create
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "Teste",
+  "color": "cor-invalida"
+}
+
+### 8. Teste - ID inválido
+GET {{baseUrl}}/categories/id-invalido
+Authorization: Bearer {{authToken}}
+
+### ========================================
+### 🔒 TESTES DE AUTORIZAÇÃO
+### ========================================
+
+### 9. Teste - Listar categorias sem token
+GET {{baseUrl}}/categories
+
+### 10. Teste - Criar categoria sem token
+POST {{baseUrl}}/categories/create
+Content-Type: {{contentType}}
+
+{
+  "name": "Teste",
+  "color": "#FF6B6B"
+}
+
+### ========================================
+### 📝 VARIÁVEIS PARA REST CLIENT
+### ========================================
+
+# Após criar uma categoria, copie o ID da resposta:
+# @categoryId = id-da-categoria-aqui
+
+# Token de autenticação (copie após fazer login):
+# @authToken = seu_token_jwt_aqui 

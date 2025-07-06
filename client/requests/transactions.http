@@ -1,0 +1,139 @@
+@baseUrl = http://localhost:5000
+@contentType = application/json
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJmYjkxMjUxYy1kMDI3LTQ2OWUtYTE5My00ZDJjNDNhMjBlODMiLCJpYXQiOjE3NTE3Njg1NTIsImV4cCI6MTc1MjM3MzM1Mn0._-ciLB5Uc2Z7Jfny585S2-QEXKs4m7SO-jcxyTbtAuE
+
+### ========================================
+### 💰 TRANSAÇÕES - CRUD COMPLETO
+### ========================================
+
+### 1. Criar transação de receita
+POST {{baseUrl}}/transactions/create
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "type": "income",
+  "amount": 5000,
+  "category": "f7590298-c78f-4e89-8f88-3546d2b2eaaf",
+  "description": "Salário do mês",
+  "date": "2024-01-15"
+}
+
+### 2. Criar transação de despesa
+POST {{baseUrl}}/transactions/create
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "type": "expense",
+  "amount": 150.50,
+  "category": "f7590298-c78f-4e89-8f88-3546d2b2eaaf",
+  "description": "Compras no supermercado",
+  "date": "2024-01-16"
+}
+
+### 3. Listar transações (sem paginação)
+GET {{baseUrl}}/transactions
+Authorization: Bearer {{authToken}}
+
+### 4. Listar transações com paginação
+GET {{baseUrl}}/transactions?page=1&limit=10
+Authorization: Bearer {{authToken}}
+
+### 5. Filtrar transações por categoria
+GET {{baseUrl}}/transactions?category=f7590298-c78f-4e89-8f88-3546d2b2eaaf
+Authorization: Bearer {{authToken}}
+
+### 6. Filtrar transações por período
+GET {{baseUrl}}/transactions?startDate=2024-01-01&endDate=2024-01-31
+Authorization: Bearer {{authToken}}
+
+### 7. Atualizar transação
+PUT {{baseUrl}}/transactions/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "amount": 200.00,
+  "description": "Compras atualizadas"
+}
+
+### 8. Deletar transação
+DELETE {{baseUrl}}/transactions/1
+Authorization: Bearer {{authToken}}
+
+### 9. Buscar resumo das transações
+GET {{baseUrl}}/transactions/summary
+Authorization: Bearer {{authToken}}
+
+### 10. Buscar resumo mensal
+GET {{baseUrl}}/transactions/summary-by-month
+Authorization: Bearer {{authToken}}
+
+### ========================================
+### 🧪 TESTES DE VALIDAÇÃO
+### ========================================
+
+### 11. Teste - Tipo inválido
+POST {{baseUrl}}/transactions/create
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "type": "invalid",
+  "amount": 100,
+  "category": "f7590298-c78f-4e89-8f88-3546d2b2eaaf"
+}
+
+### 12. Teste - Valor negativo
+POST {{baseUrl}}/transactions/create
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "type": "expense",
+  "amount": -100,
+  "category": "f7590298-c78f-4e89-8f88-3546d2b2eaaf"
+}
+
+### 13. Teste - Data futura
+POST {{baseUrl}}/transactions/create
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "type": "expense",
+  "amount": 100,
+  "category": "f7590298-c78f-4e89-8f88-3546d2b2eaaf",
+  "date": "2025-12-31"
+}
+
+### 14. Teste - ID inválido na atualização
+PUT {{baseUrl}}/transactions/id-invalido
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "amount": 100
+}
+
+### 15. Teste - Paginação inválida
+GET {{baseUrl}}/transactions?page=-1&limit=1000
+Authorization: Bearer {{authToken}}
+
+### ========================================
+### 🔒 TESTES DE AUTORIZAÇÃO
+### ========================================
+
+### 16. Teste - Criar transação sem token
+POST {{baseUrl}}/transactions/create
+Content-Type: {{contentType}}
+
+{
+  "type": "expense",
+  "amount": 100,  
+  "category": "f7590298-c78f-4e89-8f88-3546d2b2eaaf"
+}
+
+### 17. Teste - Listar transações sem token
+GET {{baseUrl}}/transactions

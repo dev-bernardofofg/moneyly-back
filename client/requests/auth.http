@@ -1,0 +1,93 @@
+@baseUrl = http://localhost:5000
+@contentType = application/json
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJmYjkxMjUxYy1kMDI3LTQ2OWUtYTE5My00ZDJjNDNhMjBlODMiLCJpYXQiOjE3NTE3Njg1NTIsImV4cCI6MTc1MjM3MzM1Mn0._-ciLB5Uc2Z7Jfny585S2-QEXKs4m7SO-jcxyTbtAuE
+
+### ========================================
+### 🔐 AUTENTICAÇÃO - REGISTRO E LOGIN
+### ========================================
+
+### 1. Registrar novo usuário
+POST {{baseUrl}}/users/sign-up
+Content-Type: {{contentType}}
+
+{
+  "name": "João Silva",
+  "email": "joao@example.com",
+  "password": "123456"
+}
+
+### 2. Fazer login
+POST {{baseUrl}}/users/sign-in
+Content-Type: {{contentType}}
+
+{
+  "email": "joao@example.com",
+  "password": "123456"
+}
+
+### 3. Buscar dados do usuário logado
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{authToken}}
+
+### 4. Atualizar rendimento mensal
+PUT {{baseUrl}}/users/income
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "monthlyIncome": 5000
+}
+
+### ========================================
+### 🧪 TESTES DE VALIDAÇÃO
+### ========================================
+
+### 5. Teste - Email inválido
+POST {{baseUrl}}/users/sign-up
+Content-Type: {{contentType}}
+
+{
+  "name": "Teste",
+  "email": "email-invalido",
+  "password": "123456"
+}
+
+### 6. Teste - Senha muito curta
+POST {{baseUrl}}/users/sign-up
+Content-Type: {{contentType}}
+
+{
+  "name": "Teste",
+  "email": "teste@example.com",
+  "password": "123"
+}
+
+### 7. Teste - Nome muito curto
+POST {{baseUrl}}/users/sign-up
+Content-Type: {{contentType}}
+
+{
+  "name": "A",
+  "email": "teste@example.com",
+  "password": "123456"
+}
+
+### 8. Teste - Rendimento negativo
+PUT {{baseUrl}}/users/income
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "monthlyIncome": -1000
+}
+
+### ========================================
+### 🔒 TESTES DE AUTORIZAÇÃO
+### ========================================
+
+### 9. Teste - Acesso sem token
+GET {{baseUrl}}/users/me
+
+### 10. Teste - Token inválido
+GET {{baseUrl}}/users/me
+Authorization: Bearer token_invalido
