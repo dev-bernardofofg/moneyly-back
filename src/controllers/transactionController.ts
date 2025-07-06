@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { Response } from "express";
+import { getCurrentFinancialPeriod } from "../lib/financialPeriod";
 import { PaginationHelper } from "../lib/pagination";
 import { ResponseHandler } from "../lib/ResponseHandler";
 import { AuthenticatedRequest } from "../middlewares/auth";
@@ -370,6 +371,91 @@ export const getMonthlySummary = async (
     );
   } catch (error) {
     console.error("Erro ao gerar resumo mensal:", error);
+    return ResponseHandler.serverError(res);
+  }
+};
+
+export const getCurrentFinancialPeriodSummary = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    if (!req.userId) {
+      return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+    }
+
+    const user = await UserRepository.findById(req.userId);
+    if (!user) {
+      return ResponseHandler.notFound(res, "Usuário não encontrado");
+    }
+
+    const financialMonthStart = user.financialMonthStart ?? 1;
+    const financialMonthEnd = user.financialMonthEnd ?? 31;
+    const monthlyIncome = user.monthlyIncome ?? 0;
+
+    // Calcular o período financeiro atual
+    const currentPeriod = getCurrentFinancialPeriod(
+      financialMonthStart,
+      financialMonthEnd
+    );
+
+    // Buscar transações do período financeiro atual
+    const transactions = await TransactionRepository.findByUserId(req.userId, {
+      startDate: currentPeriod.startDate,
+      endDate: currentPeriod.endDate,
+    });
+
+    let realIncome = 0;
+    let totalExpense = 0;
+    const byCategory: Record<string, number> = {};
+
+    transactions.forEach((tx) => {
+      if (tx.type === "income") realIncome += tx.amount;
+      if (tx.type === "expense") totalExpense += tx.amount;
+
+      if (!byCategory[tx.categoryId]) {
+        byCategory[tx.categoryId] = 0;
+      }
+
+      byCategory[tx.categoryId] += tx.amount;
+    });
+
+    const balance = monthlyIncome - totalExpense;
+
+    const percentUsed =
+      monthlyIncome > 0
+        ? Number(((totalExpense / monthlyIncome) * 100).toFixed(2))
+        : null;
+
+    const alert =
+      percentUsed !== null && percentUsed >= 80
+        ? "Você já usou mais de 80% do seu rendimento mensal no período atual!"
+        : null;
+
+    return ResponseHandler.success(
+      res,
+      {
+        currentPeriod: {
+          startDate: currentPeriod.startDate,
+          endDate: currentPeriod.endDate,
+          description: `Período financeiro: ${format(
+            currentPeriod.startDate,
+            "dd/MM/yyyy"
+          )} a ${format(currentPeriod.endDate, "dd/MM/yyyy")}`,
+        },
+        realIncome, // 💰 soma das transações tipo income no período
+        monthlyIncome, // 💼 salário fixo do usuário
+        totalExpense, // 💸 soma das expenses no período
+        balance, // 💼 - 💸
+        percentUsed,
+        byCategory,
+        alert,
+        transactionsCount: transactions.length,
+      },
+      "Resumo do período financeiro atual gerado com sucesso"
+    );
+  } catch (error) {
+    console.error("Erro ao gerar resumo do período financeiro:", error);
     return ResponseHandler.serverError(res);
   }
 };

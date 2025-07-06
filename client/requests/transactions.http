@@ -70,6 +70,10 @@ Authorization: Bearer {{authToken}}
 GET {{baseUrl}}/transactions/summary-by-month
 Authorization: Bearer {{authToken}}
 
+### 10.1. Buscar resumo do período financeiro atual
+GET {{baseUrl}}/transactions/summary-current-period
+Authorization: Bearer {{authToken}}
+
 ### ========================================
 ### 🧪 TESTES DE VALIDAÇÃO
 ### ========================================

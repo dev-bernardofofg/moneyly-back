@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   createTransaction,
   deleteTransaction,
+  getCurrentFinancialPeriodSummary,
   getMonthlySummary,
   getTransactions,
   getTransactionSummary,
@@ -9,7 +10,8 @@ import {
 } from "../controllers/transactionController";
 import { authenticateUser } from "../middlewares/auth";
 import { validate } from "../middlewares/validate";
-import { idParamSchema, transactionQuerySchema } from "../schemas/authSchema";
+import { idParamSchema } from "../schemas/authSchema";
+import { transactionQuerySchema } from "../schemas/paginationSchema";
 import {
   transactionSchema,
   transactionUpdateSchema,
@@ -51,6 +53,12 @@ TransactionsRouter.get(
   "/summary-by-month",
   authenticateUser,
   getMonthlySummary
+);
+
+TransactionsRouter.get(
+  "/summary-current-period",
+  authenticateUser,
+  getCurrentFinancialPeriodSummary
 );
 
 export default TransactionsRouter;

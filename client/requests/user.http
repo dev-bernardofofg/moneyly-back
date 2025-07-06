@@ -1,0 +1,123 @@
+@baseUrl = http://localhost:5000
+@contentType = application/json
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJmYjkxMjUxYy1kMDI3LTQ2OWUtYTE5My00ZDJjNDNhMjBlODMiLCJpYXQiOjE3NTE3Njg1NTIsImV4cCI6MTc1MjM3MzM1Mn0._-ciLB5Uc2Z7Jfny585S2-QEXKs4m7SO-jcxyTbtAuE
+
+### ========================================
+### 👤 USUÁRIO - MANIPULAÇÃO DE DADOS
+### ========================================
+
+### 1. Buscar dados do usuário logado
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{authToken}}
+
+### 2. Atualizar rendimento mensal
+PUT {{baseUrl}}/users/income
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "monthlyIncome": 5000
+}
+
+### 3. Atualizar período financeiro
+PUT {{baseUrl}}/users/financial-period
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "financialMonthStart": 5,
+  "financialMonthEnd": 5
+}
+
+### 4. Atualizar rendimento e período financeiro juntos
+PUT {{baseUrl}}/users/income-and-period
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "monthlyIncome": 5000,
+  "financialMonthStart": 5,
+  "financialMonthEnd": 5
+}
+
+### ========================================
+### 🧪 TESTES DE VALIDAÇÃO
+### ========================================
+
+### 5. Teste - Rendimento negativo
+PUT {{baseUrl}}/users/income
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "monthlyIncome": -1000
+}
+
+### 6. Teste - Período financeiro inválido (dia 0)
+PUT {{baseUrl}}/users/financial-period
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "financialMonthStart": 0,
+  "financialMonthEnd": 5
+}
+
+### 7. Teste - Período financeiro inválido (dia 32)
+PUT {{baseUrl}}/users/financial-period
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "financialMonthStart": 5,
+  "financialMonthEnd": 32
+}
+
+### 8. Teste - Período financeiro inválido (lógica incorreta)
+PUT {{baseUrl}}/users/financial-period
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "financialMonthStart": 10,
+  "financialMonthEnd": 5
+}
+
+### 9. Teste - Período financeiro válido (5 a 5)
+PUT {{baseUrl}}/users/financial-period
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "financialMonthStart": 5,
+  "financialMonthEnd": 5
+}
+
+### 10. Teste - Período financeiro válido (15 a 14)
+PUT {{baseUrl}}/users/financial-period
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "financialMonthStart": 15,
+  "financialMonthEnd": 14
+}
+
+### ========================================
+### 🔒 TESTES DE AUTORIZAÇÃO
+### ========================================
+
+### 11. Teste - Acesso sem token
+GET {{baseUrl}}/users/me
+
+### 12. Teste - Token inválido
+GET {{baseUrl}}/users/me
+Authorization: Bearer token_invalido
+
+### 13. Teste - Atualizar rendimento sem token
+PUT {{baseUrl}}/users/income
+Content-Type: {{contentType}}
+
+{
+  "monthlyIncome": 5000
+} 

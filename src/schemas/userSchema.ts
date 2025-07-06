@@ -1,27 +1,6 @@
 import { z } from "zod";
 
-// Schema para criação de usuário (registro)
-export const createUserSchema = z.object({
-  name: z
-    .string()
-    .min(2, "Nome deve ter pelo menos 2 caracteres")
-    .max(100, "Nome muito longo"),
-  email: z.string().email("Email inválido").max(100, "Email muito longo"),
-  password: z
-    .string()
-    .min(6, "Senha deve ter pelo menos 6 caracteres")
-    .max(100, "Senha muito longa"),
-});
-
-// Schema para login
-export const loginSchema = z.object({
-  email: z.string().email("Email inválido").max(100, "Email muito longo"),
-  password: z
-    .string()
-    .min(6, "Senha deve ter pelo menos 6 caracteres")
-    .max(100, "Senha muito longa"),
-});
-
+// Schema para atualizar rendimento mensal
 export const updateMonthlyIncomeSchema = z.object({
   monthlyIncome: z
     .number()
@@ -29,6 +8,7 @@ export const updateMonthlyIncomeSchema = z.object({
     .max(999999999, "Rendimento muito alto"),
 });
 
+// Schema para atualizar período financeiro
 export const updateFinancialPeriodSchema = z
   .object({
     financialMonthStart: z
@@ -62,6 +42,7 @@ export const updateFinancialPeriodSchema = z
     }
   );
 
+// Schema para atualizar rendimento e período financeiro juntos
 export const updateIncomeAndPeriodSchema = z
   .object({
     monthlyIncome: z
@@ -96,42 +77,32 @@ export const updateIncomeAndPeriodSchema = z
     }
   );
 
-// Schema para parâmetros de ID (usado em várias rotas)
-export const idParamSchema = z.object({
-  id: z.string().uuid("ID inválido"),
+// Schema para atualizar perfil do usuário
+export const updateUserProfileSchema = z.object({
+  name: z
+    .string()
+    .min(2, "Nome deve ter pelo menos 2 caracteres")
+    .max(100, "Nome muito longo"),
+  email: z.string().email("Email inválido").max(100, "Email muito longo"),
 });
 
-export const paginationQuerySchema = z.object({
-  page: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val, 10) : 1))
-    .refine((val) => val > 0, "Página deve ser maior que 0"),
-  limit: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val, 10) : 10))
-    .refine((val) => val > 0 && val <= 100, "Limite deve estar entre 1 e 100"),
-});
-
-export const transactionQuerySchema = z
+// Schema para atualizar senha
+export const updatePasswordSchema = z
   .object({
-    category: z.string().optional(),
-    startDate: z
+    currentPassword: z
       .string()
-      .optional()
-      .refine((val) => {
-        if (!val) return true;
-        const date = new Date(val);
-        return !isNaN(date.getTime());
-      }, "Data de início inválida"),
-    endDate: z
+      .min(6, "Senha atual deve ter pelo menos 6 caracteres"),
+    newPassword: z
       .string()
-      .optional()
-      .refine((val) => {
-        if (!val) return true;
-        const date = new Date(val);
-        return !isNaN(date.getTime());
-      }, "Data de fim inválida"),
+      .min(6, "Nova senha deve ter pelo menos 6 caracteres")
+      .max(100, "Nova senha muito longa"),
   })
-  .merge(paginationQuerySchema);
+  .refine(
+    (data) => {
+      return data.currentPassword !== data.newPassword;
+    },
+    {
+      message: "Nova senha deve ser diferente da senha atual",
+      path: ["newPassword"],
+    }
+  );

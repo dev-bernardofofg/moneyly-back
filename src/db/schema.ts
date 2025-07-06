@@ -15,6 +15,8 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   monthlyIncome: integer("monthly_income").default(0),
+  financialMonthStart: integer("financial_month_start").default(1), // Dia do mês que inicia o período financeiro
+  financialMonthEnd: integer("financial_month_end").default(31), // Dia do mês que termina o período financeiro
   firstAccess: boolean("first_access").default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

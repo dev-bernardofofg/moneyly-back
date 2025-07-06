@@ -7,7 +7,7 @@
 ### ========================================
 
 ### 1. Registrar novo usuário
-POST {{baseUrl}}/users/sign-up
+POST {{baseUrl}}/auth/sign-up
 Content-Type: {{contentType}}
 
 {
@@ -17,7 +17,7 @@ Content-Type: {{contentType}}
 }
 
 ### 2. Fazer login
-POST {{baseUrl}}/users/sign-in
+POST {{baseUrl}}/auth/sign-in
 Content-Type: {{contentType}}
 
 {
@@ -38,12 +38,33 @@ Authorization: Bearer {{authToken}}
   "monthlyIncome": 5000
 }
 
+### 4.1. Atualizar período financeiro
+PUT {{baseUrl}}/users/financial-period
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "financialMonthStart": 5,
+  "financialMonthEnd": 5
+}
+
+### 4.2. Atualizar rendimento e período financeiro juntos
+PUT {{baseUrl}}/users/income-and-period
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "monthlyIncome": 5000,
+  "financialMonthStart": 5,
+  "financialMonthEnd": 5
+}
+
 ### ========================================
 ### 🧪 TESTES DE VALIDAÇÃO
 ### ========================================
 
-### 5. Teste - Email inválido
-POST {{baseUrl}}/users/sign-up
+### 3. Teste - Email inválido
+POST {{baseUrl}}/auth/sign-up
 Content-Type: {{contentType}}
 
 {
@@ -52,8 +73,8 @@ Content-Type: {{contentType}}
   "password": "123456"
 }
 
-### 6. Teste - Senha muito curta
-POST {{baseUrl}}/users/sign-up
+### 4. Teste - Senha muito curta
+POST {{baseUrl}}/auth/sign-up
 Content-Type: {{contentType}}
 
 {
@@ -62,8 +83,8 @@ Content-Type: {{contentType}}
   "password": "123"
 }
 
-### 7. Teste - Nome muito curto
-POST {{baseUrl}}/users/sign-up
+### 5. Teste - Nome muito curto
+POST {{baseUrl}}/auth/sign-up
 Content-Type: {{contentType}}
 
 {
@@ -72,22 +93,26 @@ Content-Type: {{contentType}}
   "password": "123456"
 }
 
-### 8. Teste - Rendimento negativo
-PUT {{baseUrl}}/users/income
-Content-Type: {{contentType}}
-Authorization: Bearer {{authToken}}
 
-{
-  "monthlyIncome": -1000
-}
 
 ### ========================================
 ### 🔒 TESTES DE AUTORIZAÇÃO
 ### ========================================
 
-### 9. Teste - Acesso sem token
-GET {{baseUrl}}/users/me
+### 6. Teste - Login com usuário inexistente
+POST {{baseUrl}}/auth/sign-in
+Content-Type: {{contentType}}
 
-### 10. Teste - Token inválido
-GET {{baseUrl}}/users/me
-Authorization: Bearer token_invalido
+{
+  "email": "inexistente@example.com",
+  "password": "123456"
+}
+
+### 7. Teste - Login com senha incorreta
+POST {{baseUrl}}/auth/sign-in
+Content-Type: {{contentType}}
+
+{
+  "email": "joao@example.com",
+  "password": "senha_incorreta"
+}

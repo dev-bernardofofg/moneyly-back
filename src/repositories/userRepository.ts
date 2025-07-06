@@ -33,6 +33,8 @@ export class UserRepository {
         name: users.name,
         email: users.email,
         monthlyIncome: users.monthlyIncome,
+        financialMonthStart: users.financialMonthStart,
+        financialMonthEnd: users.financialMonthEnd,
         firstAccess: users.firstAccess,
         createdAt: users.createdAt,
         updatedAt: users.updatedAt,
@@ -52,6 +54,46 @@ export class UserRepository {
       .update(users)
       .set({
         monthlyIncome,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id))
+      .returning();
+
+    return user || null;
+  }
+
+  // Atualizar período financeiro
+  static async updateFinancialPeriod(
+    id: string,
+    financialMonthStart: number,
+    financialMonthEnd: number
+  ): Promise<User | null> {
+    const [user] = await db
+      .update(users)
+      .set({
+        financialMonthStart,
+        financialMonthEnd,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id))
+      .returning();
+
+    return user || null;
+  }
+
+  // Atualizar rendimento e período financeiro
+  static async updateIncomeAndPeriod(
+    id: string,
+    monthlyIncome: number,
+    financialMonthStart: number,
+    financialMonthEnd: number
+  ): Promise<User | null> {
+    const [user] = await db
+      .update(users)
+      .set({
+        monthlyIncome,
+        financialMonthStart,
+        financialMonthEnd,
         updatedAt: new Date(),
       })
       .where(eq(users.id, id))

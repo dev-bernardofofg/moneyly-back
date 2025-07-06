@@ -3,7 +3,6 @@ import type { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { createDefaultCategoriesForUser } from "../db/seed";
 import { ResponseHandler } from "../lib/ResponseHandler";
-import { AuthenticatedRequest } from "../middlewares/auth";
 import { UserRepository } from "../repositories/userRepository";
 
 const JWT_SECRET = process.env.JWT_SECRET || "segredo_super_secreto";
@@ -100,74 +99,6 @@ export const createSession = async (req: Request, res: Response) => {
     );
   } catch (error) {
     console.error("Erro no login:", error);
-    return ResponseHandler.serverError(res);
-  }
-};
-
-export const getMe = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    if (!req.userId) {
-      return ResponseHandler.unauthorized(res, "Usuário não autenticado");
-    }
-
-    const user = await UserRepository.findByIdWithoutPassword(req.userId);
-
-    if (!user) {
-      return ResponseHandler.notFound(res, "Usuário não encontrado");
-    }
-
-    let updatedToken: string | undefined;
-
-    if (user.firstAccess) {
-      await UserRepository.updateFirstAccess(user.id, false);
-      updatedToken = generateToken(user.id);
-    }
-
-    return ResponseHandler.success(
-      res,
-      {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          monthlyIncome: user.monthlyIncome ?? 0,
-          createdAt: user.createdAt,
-        },
-        ...(updatedToken && { token: updatedToken }),
-      },
-      "Dados do usuário recuperados com sucesso"
-    );
-  } catch (error) {
-    return ResponseHandler.serverError(res);
-  }
-};
-
-export const updateMonthlyIncome = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
-  try {
-    if (!req.userId) {
-      return ResponseHandler.unauthorized(res, "Usuário não autenticado");
-    }
-
-    const { monthlyIncome } = req.body;
-
-    const user = await UserRepository.updateMonthlyIncome(
-      req.userId,
-      monthlyIncome
-    );
-
-    if (!user) {
-      return ResponseHandler.notFound(res, "Usuário não encontrado");
-    }
-
-    return ResponseHandler.success(
-      res,
-      { monthlyIncome },
-      "Rendimento atualizado com sucesso"
-    );
-  } catch (error) {
     return ResponseHandler.serverError(res);
   }
 };
