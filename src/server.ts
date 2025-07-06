@@ -1,14 +1,22 @@
-import cors from "cors";
 import type { Application } from "express";
 import express from "express";
 import { connectDB } from "./db";
 import { env } from "./env";
 import { errorHandler } from "./middlewares/errorHandler";
+import { sanitizeData } from "./middlewares/sanitize";
+import { securityMiddleware } from "./middlewares/security";
 import router from "./routes";
 
 const app: Application = express();
-app.use(express.json());
-app.use(cors());
+
+// Aplicar middlewares de segurança
+securityMiddleware(app);
+
+// Parser de JSON
+app.use(express.json({ limit: "10mb" })); // Limitar tamanho do payload
+
+// Sanitização de dados
+app.use(sanitizeData);
 
 connectDB();
 

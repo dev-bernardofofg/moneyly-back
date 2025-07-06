@@ -18,9 +18,7 @@ export const errorHandler = (
     stack: error.stack,
     url: req.url,
     method: req.method,
-    body: req.body,
-    params: req.params,
-    query: req.query,
+    timestamp: new Date().toISOString(),
   });
 
   // Zod validation errors

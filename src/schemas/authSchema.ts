@@ -1,16 +1,31 @@
 import { z } from "zod";
 
+// Função para validar força da senha
+const validatePasswordStrength = (password: string) => {
+  const hasUpperCase = /[A-Z]/.test(password);
+  const hasLowerCase = /[a-z]/.test(password);
+  const hasNumbers = /\d/.test(password);
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+  return hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar;
+};
+
 // Schema para criação de usuário (registro)
 export const createUserSchema = z.object({
   name: z
     .string()
     .min(2, "Nome deve ter pelo menos 2 caracteres")
-    .max(100, "Nome muito longo"),
+    .max(100, "Nome muito longo")
+    .regex(/^[a-zA-ZÀ-ÿ\s]+$/, "Nome deve conter apenas letras e espaços"),
   email: z.string().email("Email inválido").max(100, "Email muito longo"),
   password: z
     .string()
-    .min(6, "Senha deve ter pelo menos 6 caracteres")
-    .max(100, "Senha muito longa"),
+    .min(8, "Senha deve ter pelo menos 8 caracteres")
+    .max(128, "Senha muito longa")
+    .refine(validatePasswordStrength, {
+      message:
+        "Senha deve conter pelo menos uma letra maiúscula, uma minúscula, um número e um caractere especial",
+    }),
 });
 
 // Schema para login
@@ -18,8 +33,8 @@ export const loginSchema = z.object({
   email: z.string().email("Email inválido").max(100, "Email muito longo"),
   password: z
     .string()
-    .min(6, "Senha deve ter pelo menos 6 caracteres")
-    .max(100, "Senha muito longa"),
+    .min(1, "Senha é obrigatória")
+    .max(128, "Senha muito longa"),
 });
 
 export const updateMonthlyIncomeSchema = z.object({

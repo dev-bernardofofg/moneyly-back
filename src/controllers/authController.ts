@@ -2,14 +2,13 @@ import bcrypt from "bcryptjs";
 import type { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { createDefaultCategoriesForUser } from "../db/seed";
+import { env } from "../env";
 import { ResponseHandler } from "../lib/ResponseHandler";
 import { UserRepository } from "../repositories/userRepository";
 
-const JWT_SECRET = process.env.JWT_SECRET || "segredo_super_secreto";
-
 // Função para gerar JWT
 const generateToken = (userId: string) => {
-  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: "7d" });
+  return jwt.sign({ userId }, env.JWT_SECRET, { expiresIn: "7d" });
 };
 
 export const createUser = async (req: Request, res: Response) => {
