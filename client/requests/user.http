@@ -25,8 +25,8 @@ Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
 
 {
-  "financialMonthStart": 5,
-  "financialMonthEnd": 5
+  "financialDayStart": 5,
+  "financialDayEnd": 5
 }
 
 ### 4. Atualizar rendimento e período financeiro juntos
@@ -36,8 +36,8 @@ Authorization: Bearer {{authToken}}
 
 {
   "monthlyIncome": 5000,
-  "financialMonthStart": 5,
-  "financialMonthEnd": 5
+  "financialDayStart": 5,
+  "financialDayEnd": 5
 }
 
 ### ========================================
@@ -59,8 +59,8 @@ Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
 
 {
-  "financialMonthStart": 0,
-  "financialMonthEnd": 5
+  "financialDayStart": 0,
+  "financialDayEnd": 5
 }
 
 ### 7. Teste - Período financeiro inválido (dia 32)
@@ -69,8 +69,8 @@ Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
 
 {
-  "financialMonthStart": 5,
-  "financialMonthEnd": 32
+  "financialDayStart": 5,
+  "financialDayEnd": 32
 }
 
 ### 8. Teste - Período financeiro inválido (lógica incorreta)
@@ -79,8 +79,8 @@ Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
 
 {
-  "financialMonthStart": 10,
-  "financialMonthEnd": 5
+  "financialDayStart": 10,
+  "financialDayEnd": 5
 }
 
 ### 9. Teste - Período financeiro válido (5 a 5)
@@ -89,8 +89,8 @@ Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
 
 {
-  "financialMonthStart": 5,
-  "financialMonthEnd": 5
+  "financialDayStart": 5,
+  "financialDayEnd": 5
 }
 
 ### 10. Teste - Período financeiro válido (15 a 14)
@@ -99,8 +99,8 @@ Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
 
 {
-  "financialMonthStart": 15,
-  "financialMonthEnd": 14
+  "financialDayStart": 15,
+  "financialDayEnd": 14
 }
 
 ### ========================================

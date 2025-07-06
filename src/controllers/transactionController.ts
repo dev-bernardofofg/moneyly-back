@@ -389,14 +389,14 @@ export const getCurrentFinancialPeriodSummary = async (
       return ResponseHandler.notFound(res, "Usuário não encontrado");
     }
 
-    const financialMonthStart = user.financialMonthStart ?? 1;
-    const financialMonthEnd = user.financialMonthEnd ?? 31;
+    const financialDayStart = user.financialDayStart ?? 1;
+    const financialDayEnd = user.financialDayEnd ?? 31;
     const monthlyIncome = user.monthlyIncome ?? 0;
 
     // Calcular o período financeiro atual
     const currentPeriod = getCurrentFinancialPeriod(
-      financialMonthStart,
-      financialMonthEnd
+      financialDayStart,
+      financialDayEnd
     );
 
     // Buscar transações do período financeiro atual

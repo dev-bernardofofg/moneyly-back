@@ -23,8 +23,8 @@ export const getMe = async (req: AuthenticatedRequest, res: Response) => {
           name: user.name,
           email: user.email,
           monthlyIncome: user.monthlyIncome ?? 0,
-          financialMonthStart: user.financialMonthStart ?? 1,
-          financialMonthEnd: user.financialMonthEnd ?? 31,
+          financialDayStart: user.financialDayStart ?? 1,
+          financialDayEnd: user.financialDayEnd ?? 31,
           createdAt: user.createdAt,
         },
       },
@@ -74,12 +74,12 @@ export const updateFinancialPeriod = async (
       return ResponseHandler.unauthorized(res, "Usuário não autenticado");
     }
 
-    const { financialMonthStart, financialMonthEnd } = req.body;
+    const { financialDayStart, financialDayEnd } = req.body;
 
     const user = await UserRepository.updateFinancialPeriod(
       req.userId,
-      financialMonthStart,
-      financialMonthEnd
+      financialDayStart,
+      financialDayEnd
     );
 
     if (!user) {
@@ -88,7 +88,7 @@ export const updateFinancialPeriod = async (
 
     return ResponseHandler.success(
       res,
-      { financialMonthStart, financialMonthEnd },
+      { financialDayStart, financialDayEnd },
       "Período financeiro atualizado com sucesso"
     );
   } catch (error) {
@@ -105,13 +105,13 @@ export const updateIncomeAndPeriod = async (
       return ResponseHandler.unauthorized(res, "Usuário não autenticado");
     }
 
-    const { monthlyIncome, financialMonthStart, financialMonthEnd } = req.body;
+    const { monthlyIncome, financialDayStart, financialDayEnd } = req.body;
 
     const user = await UserRepository.updateIncomeAndPeriod(
       req.userId,
       monthlyIncome,
-      financialMonthStart,
-      financialMonthEnd
+      financialDayStart,
+      financialDayEnd
     );
 
     if (!user) {
@@ -120,7 +120,7 @@ export const updateIncomeAndPeriod = async (
 
     return ResponseHandler.success(
       res,
-      { monthlyIncome, financialMonthStart, financialMonthEnd },
+      { monthlyIncome, financialDayStart, financialDayEnd },
       "Rendimento e período financeiro atualizados com sucesso"
     );
   } catch (error) {

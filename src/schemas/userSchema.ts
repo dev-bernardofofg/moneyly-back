@@ -11,11 +11,11 @@ export const updateMonthlyIncomeSchema = z.object({
 // Schema para atualizar período financeiro
 export const updateFinancialPeriodSchema = z
   .object({
-    financialMonthStart: z
+    financialDayStart: z
       .number()
       .min(1, "Dia de início deve ser entre 1 e 31")
       .max(31, "Dia de início deve ser entre 1 e 31"),
-    financialMonthEnd: z
+    financialDayEnd: z
       .number()
       .min(1, "Dia de fim deve ser entre 1 e 31")
       .max(31, "Dia de fim deve ser entre 1 e 31"),
@@ -23,22 +23,22 @@ export const updateFinancialPeriodSchema = z
   .refine(
     (data) => {
       // Validar que o período faz sentido (ex: 5 a 5, 1 a 31, etc.)
-      if (data.financialMonthStart === data.financialMonthEnd) {
+      if (data.financialDayStart === data.financialDayEnd) {
         return true; // Período de um dia (ex: 5 a 5)
       }
 
       // Para períodos que cruzam meses (ex: 5 a 4 do próximo mês)
-      if (data.financialMonthStart > data.financialMonthEnd) {
+      if (data.financialDayStart > data.financialDayEnd) {
         return true; // Válido (ex: 5 a 4)
       }
 
       // Para períodos dentro do mesmo mês (ex: 1 a 31)
-      return data.financialMonthStart < data.financialMonthEnd;
+      return data.financialDayStart < data.financialDayEnd;
     },
     {
       message:
-        "Período financeiro inválido. Exemplos válidos: 5 a 5, 1 a 31, 15 a 14",
-      path: ["financialMonthEnd"],
+        "Período financeiro inválido. Exemplos válidos: dia 5 a dia 5, dia 1 a dia 31, dia 15 a dia 14",
+      path: ["financialDayEnd"],
     }
   );
 
@@ -49,31 +49,31 @@ export const updateIncomeAndPeriodSchema = z
       .number()
       .positive("Rendimento deve ser positivo")
       .max(999999999, "Rendimento muito alto"),
-    financialMonthStart: z
+    financialDayStart: z
       .number()
       .min(1, "Dia de início deve ser entre 1 e 31")
       .max(31, "Dia de início deve ser entre 1 e 31"),
-    financialMonthEnd: z
+    financialDayEnd: z
       .number()
       .min(1, "Dia de fim deve ser entre 1 e 31")
       .max(31, "Dia de fim deve ser entre 1 e 31"),
   })
   .refine(
     (data) => {
-      if (data.financialMonthStart === data.financialMonthEnd) {
+      if (data.financialDayStart === data.financialDayEnd) {
         return true;
       }
 
-      if (data.financialMonthStart > data.financialMonthEnd) {
+      if (data.financialDayStart > data.financialDayEnd) {
         return true;
       }
 
-      return data.financialMonthStart < data.financialMonthEnd;
+      return data.financialDayStart < data.financialDayEnd;
     },
     {
       message:
-        "Período financeiro inválido. Exemplos válidos: 5 a 5, 1 a 31, 15 a 14",
-      path: ["financialMonthEnd"],
+        "Período financeiro inválido. Exemplos válidos: dia 5 a dia 5, dia 1 a dia 31, dia 15 a dia 14",
+      path: ["financialDayEnd"],
     }
   );
 

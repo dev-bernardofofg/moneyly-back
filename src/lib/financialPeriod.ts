@@ -9,14 +9,14 @@ export interface FinancialPeriod {
 
 /**
  * Calcula o período financeiro atual baseado na configuração do usuário
- * @param financialMonthStart Dia do mês que inicia o período (1-31)
- * @param financialMonthEnd Dia do mês que termina o período (1-31)
+ * @param financialDayStart Dia do mês que inicia o período (1-31)
+ * @param financialDayEnd Dia do mês que termina o período (1-31)
  * @param referenceDate Data de referência (padrão: hoje)
  * @returns Objeto com data de início e fim do período financeiro
  */
 export function getCurrentFinancialPeriod(
-  financialMonthStart: number,
-  financialMonthEnd: number,
+  financialDayStart: number,
+  financialDayEnd: number,
   referenceDate: Date = new Date()
 ): FinancialPeriod {
   const currentYear = referenceDate.getFullYear();
@@ -27,24 +27,24 @@ export function getCurrentFinancialPeriod(
   let endDate: Date;
 
   // Se o dia atual é maior ou igual ao dia de início, o período começou neste mês
-  if (currentDay >= financialMonthStart) {
-    startDate = new Date(currentYear, currentMonth, financialMonthStart);
+  if (currentDay >= financialDayStart) {
+    startDate = new Date(currentYear, currentMonth, financialDayStart);
 
     // Se o dia de fim é menor que o dia de início, vai para o próximo mês
-    if (financialMonthEnd < financialMonthStart) {
-      endDate = new Date(currentYear, currentMonth + 1, financialMonthEnd);
+    if (financialDayEnd < financialDayStart) {
+      endDate = new Date(currentYear, currentMonth + 1, financialDayEnd);
     } else {
-      endDate = new Date(currentYear, currentMonth, financialMonthEnd);
+      endDate = new Date(currentYear, currentMonth, financialDayEnd);
     }
   } else {
     // Se o dia atual é menor que o dia de início, o período começou no mês anterior
-    startDate = new Date(currentYear, currentMonth - 1, financialMonthStart);
+    startDate = new Date(currentYear, currentMonth - 1, financialDayStart);
 
     // Se o dia de fim é menor que o dia de início, vai para este mês
-    if (financialMonthEnd < financialMonthStart) {
-      endDate = new Date(currentYear, currentMonth, financialMonthEnd);
+    if (financialDayEnd < financialDayStart) {
+      endDate = new Date(currentYear, currentMonth, financialDayEnd);
     } else {
-      endDate = new Date(currentYear, currentMonth - 1, financialMonthEnd);
+      endDate = new Date(currentYear, currentMonth - 1, financialDayEnd);
     }
   }
 
@@ -53,15 +53,15 @@ export function getCurrentFinancialPeriod(
 
 /**
  * Calcula o período financeiro para um mês específico
- * @param financialMonthStart Dia do mês que inicia o período (1-31)
- * @param financialMonthEnd Dia do mês que termina o período (1-31)
+ * @param financialDayStart Dia do mês que inicia o período (1-31)
+ * @param financialDayEnd Dia do mês que termina o período (1-31)
  * @param year Ano desejado
  * @param month Mês desejado (1-12)
  * @returns Objeto com data de início e fim do período financeiro
  */
 export function getFinancialPeriodForMonth(
-  financialMonthStart: number,
-  financialMonthEnd: number,
+  financialDayStart: number,
+  financialDayEnd: number,
   year: number,
   month: number // 1-12
 ): FinancialPeriod {
@@ -71,12 +71,12 @@ export function getFinancialPeriodForMonth(
   let endDate: Date;
 
   // Se o dia de fim é menor que o dia de início, o período cruza meses
-  if (financialMonthEnd < financialMonthStart) {
-    startDate = new Date(year, monthIndex, financialMonthStart);
-    endDate = new Date(year, monthIndex + 1, financialMonthEnd);
+  if (financialDayEnd < financialDayStart) {
+    startDate = new Date(year, monthIndex, financialDayStart);
+    endDate = new Date(year, monthIndex + 1, financialDayEnd);
   } else {
-    startDate = new Date(year, monthIndex, financialMonthStart);
-    endDate = new Date(year, monthIndex, financialMonthEnd);
+    startDate = new Date(year, monthIndex, financialDayStart);
+    endDate = new Date(year, monthIndex, financialDayEnd);
   }
 
   return { startDate, endDate };
@@ -85,20 +85,20 @@ export function getFinancialPeriodForMonth(
 /**
  * Verifica se uma data está dentro do período financeiro atual
  * @param date Data a ser verificada
- * @param financialMonthStart Dia do mês que inicia o período (1-31)
- * @param financialMonthEnd Dia do mês que termina o período (1-31)
+ * @param financialDayStart Dia do mês que inicia o período (1-31)
+ * @param financialDayEnd Dia do mês que termina o período (1-31)
  * @param referenceDate Data de referência (padrão: hoje)
  * @returns true se a data está no período financeiro atual
  */
 export function isDateInCurrentFinancialPeriod(
   date: Date,
-  financialMonthStart: number,
-  financialMonthEnd: number,
+  financialDayStart: number,
+  financialDayEnd: number,
   referenceDate: Date = new Date()
 ): boolean {
   const period = getCurrentFinancialPeriod(
-    financialMonthStart,
-    financialMonthEnd,
+    financialDayStart,
+    financialDayEnd,
     referenceDate
   );
 
@@ -107,21 +107,21 @@ export function isDateInCurrentFinancialPeriod(
 
 /**
  * Gera uma descrição legível do período financeiro
- * @param financialMonthStart Dia do mês que inicia o período (1-31)
- * @param financialMonthEnd Dia do mês que termina o período (1-31)
+ * @param financialDayStart Dia do mês que inicia o período (1-31)
+ * @param financialDayEnd Dia do mês que termina o período (1-31)
  * @returns String descritiva do período
  */
 export function getFinancialPeriodDescription(
-  financialMonthStart: number,
-  financialMonthEnd: number
+  financialDayStart: number,
+  financialDayEnd: number
 ): string {
-  if (financialMonthStart === financialMonthEnd) {
-    return `Dia ${financialMonthStart} de cada mês`;
+  if (financialDayStart === financialDayEnd) {
+    return `Dia ${financialDayStart} de cada mês`;
   }
 
-  if (financialMonthEnd < financialMonthStart) {
-    return `Dia ${financialMonthStart} a ${financialMonthEnd} do próximo mês`;
+  if (financialDayEnd < financialDayStart) {
+    return `Dia ${financialDayStart} a ${financialDayEnd} do próximo mês`;
   }
 
-  return `Dia ${financialMonthStart} a ${financialMonthEnd} do mesmo mês`;
+  return `Dia ${financialDayStart} a ${financialDayEnd} do mesmo mês`;
 }
