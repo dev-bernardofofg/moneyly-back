@@ -1,0 +1,106 @@
+@baseUrl = http://localhost:5000
+@contentType = application/json
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwYjQxMDk5ZC1iODljLTQ5NzUtYWZiOC1mNmRlYjdmYWEzYjQiLCJpYXQiOjE3NTIyOTA5MDAsImV4cCI6MTc1Mjg5NTcwMH0.-_Kmdp7mCByYIjBJFpboE2QHYrfQ773HQqvclOGCO8Y
+
+### ========================================
+### 📊 OVERVIEW/DASHBOARD - DADOS CONSOLIDADOS
+### ========================================
+
+### 1. Buscar dados do dashboard
+# Retorna: stats, currentPeriod, monthlyHistory, expensesByCategory, alerts, transactionsCount
+GET {{baseUrl}}/overview/dashboard
+Authorization: Bearer {{authToken}}
+
+### ========================================
+### 🧪 TESTES DE VALIDAÇÃO
+### ========================================
+
+### 2. Teste - Sem token de autenticação
+GET {{baseUrl}}/overview/dashboard
+
+### 3. Teste - Token inválido
+GET {{baseUrl}}/overview/dashboard
+Authorization: Bearer token-invalido
+
+### ========================================
+### 📋 ESTRUTURA DE RESPOSTA ESPERADA
+### ========================================
+
+# GET /overview/dashboard retorna:
+# {
+#   "success": true,
+#   "message": "Dados do dashboard recuperados com sucesso",
+#   "data": {
+#     "stats": {
+#       "totalIncome": 5000,
+#       "totalExpense": 3000,
+#       "balance": 2000,
+#       "percentUsed": 60.0,
+#       "remainingBudget": 2000
+#     },
+#     "currentPeriod": {
+#       "startDate": "2024-01-05T00:00:00.000Z",
+#       "endDate": "2024-02-05T00:00:00.000Z",
+#       "description": "Período financeiro: 05/01/2024 a 05/02/2024"
+#     },
+#     "monthlyHistory": [
+#       {
+#         "id": "uuid-da-transacao",
+#         "type": "income",
+#         "amount": 5000,
+#         "date": "15/01/2024",
+#         "category": "Salário",
+#         "description": "Salário do mês"
+#       },
+#       {
+#         "id": "uuid-da-transacao",
+#         "type": "expense",
+#         "amount": 150,
+#         "date": "16/01/2024",
+#         "category": "Alimentação",
+#         "description": "Compras no supermercado"
+#       },
+#       {
+#         "id": "uuid-da-transacao",
+#         "type": "expense",
+#         "amount": 80,
+#         "date": "17/01/2024",
+#         "category": "Transporte",
+#         "description": "Combustível"
+#       }
+#     ],
+#     "expensesByCategory": [
+#       {
+#         "id": "uuid",
+#         "name": "Alimentação",
+#         "amount": 1500,
+#         "percentage": 50.0
+#       },
+#       {
+#         "id": "uuid",
+#         "name": "Transporte",
+#         "amount": 800,
+#         "percentage": 26.7
+#       }
+#     ],
+#     "alerts": [
+#       "⚠️ Você já usou mais de 70% do seu rendimento mensal!"
+#     ],
+#     "transactionsCount": 15
+#   }
+# }
+
+### ========================================
+### 📝 NOVA ESTRUTURA DO MONTHLY HISTORY
+### ========================================
+
+# O monthlyHistory agora retorna as últimas 5 transações com:
+# - id: ID único da transação
+# - type: "income" ou "expense"
+# - amount: Valor da operação
+# - date: Data no formato dd/MM/yyyy
+# - category: Nome da categoria
+# - description: Descrição da transação (opcional)
+
+# Ordenação: Mais recente primeiro
+# Limite: Últimas 5 transações 

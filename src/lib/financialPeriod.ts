@@ -30,8 +30,8 @@ export function getCurrentFinancialPeriod(
   if (currentDay >= financialDayStart) {
     startDate = new Date(currentYear, currentMonth, financialDayStart);
 
-    // Se o dia de fim é menor que o dia de início, vai para o próximo mês
-    if (financialDayEnd < financialDayStart) {
+    // Se o dia de fim é menor ou igual ao dia de início, vai para o próximo mês
+    if (financialDayEnd <= financialDayStart) {
       endDate = new Date(currentYear, currentMonth + 1, financialDayEnd);
     } else {
       endDate = new Date(currentYear, currentMonth, financialDayEnd);
@@ -40,8 +40,8 @@ export function getCurrentFinancialPeriod(
     // Se o dia atual é menor que o dia de início, o período começou no mês anterior
     startDate = new Date(currentYear, currentMonth - 1, financialDayStart);
 
-    // Se o dia de fim é menor que o dia de início, vai para este mês
-    if (financialDayEnd < financialDayStart) {
+    // Se o dia de fim é menor ou igual ao dia de início, vai para este mês
+    if (financialDayEnd <= financialDayStart) {
       endDate = new Date(currentYear, currentMonth, financialDayEnd);
     } else {
       endDate = new Date(currentYear, currentMonth - 1, financialDayEnd);
@@ -70,8 +70,8 @@ export function getFinancialPeriodForMonth(
   let startDate: Date;
   let endDate: Date;
 
-  // Se o dia de fim é menor que o dia de início, o período cruza meses
-  if (financialDayEnd < financialDayStart) {
+  // Se o dia de fim é menor ou igual ao dia de início, o período cruza meses
+  if (financialDayEnd <= financialDayStart) {
     startDate = new Date(year, monthIndex, financialDayStart);
     endDate = new Date(year, monthIndex + 1, financialDayEnd);
   } else {

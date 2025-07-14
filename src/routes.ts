@@ -1,6 +1,7 @@
 import { Router } from "express";
 import AuthRouters from "./routes/auth";
 import CategoryRouter from "./routes/category";
+import { OverviewRouter } from "./routes/overview";
 import TransactionsRouters from "./routes/transaction";
 import UserRouters from "./routes/user";
 
@@ -17,5 +18,8 @@ router.use("/transactions", TransactionsRouters);
 
 // Rotas de categorias
 router.use("/categories", CategoryRouter);
+
+// Rotas de overview/dashboard
+router.use("/overview", OverviewRouter);
 
 export default router;
