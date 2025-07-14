@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:5000
 @contentType = application/json
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwYjQxMDk5ZC1iODljLTQ5NzUtYWZiOC1mNmRlYjdmYWEzYjQiLCJpYXQiOjE3NTIyOTA5MDAsImV4cCI6MTc1Mjg5NTcwMH0.-_Kmdp7mCByYIjBJFpboE2QHYrfQ773HQqvclOGCO8Y
+@authToken = 
 
 ### ========================================
 ### 📊 OVERVIEW/DASHBOARD - DADOS CONSOLIDADOS
