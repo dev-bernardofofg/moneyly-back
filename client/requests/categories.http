@@ -1,16 +1,57 @@
 @baseUrl = http://localhost:5000
 @contentType = application/json
 
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJmYjkxMjUxYy1kMDI3LTQ2OWUtYTE5My00ZDJjNDNhMjBlODMiLCJpYXQiOjE3NTE3Njg1NTIsImV4cCI6MTc1MjM3MzM1Mn0._-ciLB5Uc2Z7Jfny585S2-QEXKs4m7SO-jcxyTbtAuE
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwYjQxMDk5ZC1iODljLTQ5NzUtYWZiOC1mNmRlYjdmYWEzYjQiLCJpYXQiOjE3NTI1NDk5NTAsImV4cCI6MTc1MzE1NDc1MH0.36w3ogBmbQG5Nit_rQ95rOQjt_EqZw5RMUUhrWJL7jg
 
 
 ### ========================================
 ### 📂 CATEGORIAS - GERENCIAMENTO
 ### ========================================
+### 
+### 📝 NOVO FORMATO DE RESPOSTA:
+### 
+### 🔹 SEM PAGINAÇÃO:
+### {
+###   "success": true,
+###   "data": {
+###     "categories": [
+###       {
+###         "id": "uuid",
+###         "name": "Alimentação",
+###         "createdAt": "2024-01-15T00:00:00.000Z",
+###         "updatedAt": "2024-01-15T00:00:00.000Z"
+###       }
+###     ]
+###   },
+###   "message": "Categorias recuperadas com sucesso"
+### }
+### 
+### 🔹 COM PAGINAÇÃO:
+### {
+###   "success": true,
+###   "data": {
+###     "categories": [...],
+###     "totalCount": 10
+###   },
+###   "message": "Categorias recuperadas com sucesso"
+### }
 
-### 1. Listar categorias do usuário
-GET {{baseUrl}}/categories
+### 1. Listar categorias do usuário (sem paginação)
+POST {{baseUrl}}/categories
+Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
+
+{}
+
+### 1.1. Listar categorias com paginação
+POST {{baseUrl}}/categories
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "page": 1,
+  "limit": 5
+}
 
 ### 2. Criar nova categoria
 POST {{baseUrl}}/categories/create
@@ -18,9 +59,7 @@ Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
 
 {
-  "name": "Lazer",
-  "color": "#FF6B6B",
-  "icon": "🎮"
+  "name": "Lazer"
 }
 
 ### 3. Atualizar categoria
@@ -29,9 +68,7 @@ Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
 
 {
-  "name": "Entretenimento",
-  "color": "#4ECDC4",
-  "icon": "🎬"
+  "name": "Entretenimento"
 }
 
 ### 4. Deletar categoria
@@ -52,21 +89,29 @@ Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
 
 {
-  "name": "",
-  "color": "#FF6B6B"
+  "name": ""
 }
 
-### 7. Teste - Cor inválida
+### 7. Teste - Nome muito longo
 POST {{baseUrl}}/categories/create
 Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
 
 {
-  "name": "Teste",
-  "color": "cor-invalida"
+  "name": "Este é um nome de categoria muito longo que deve exceder o limite de 50 caracteres permitidos"
 }
 
-### 8. Teste - ID inválido
+### 8. Teste - Paginação inválida
+POST {{baseUrl}}/categories
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "page": -1,
+  "limit": 1000
+}
+
+### 9. Teste - ID inválido
 GET {{baseUrl}}/categories/id-invalido
 Authorization: Bearer {{authToken}}
 
@@ -74,16 +119,18 @@ Authorization: Bearer {{authToken}}
 ### 🔒 TESTES DE AUTORIZAÇÃO
 ### ========================================
 
-### 9. Teste - Listar categorias sem token
-GET {{baseUrl}}/categories
+### 10. Teste - Listar categorias sem token
+POST {{baseUrl}}/categories
+Content-Type: {{contentType}}
 
-### 10. Teste - Criar categoria sem token
+{}
+
+### 11. Teste - Criar categoria sem token
 POST {{baseUrl}}/categories/create
 Content-Type: {{contentType}}
 
 {
-  "name": "Teste",
-  "color": "#FF6B6B"
+  "name": "Teste"
 }
 
 ### ========================================

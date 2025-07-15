@@ -1,6 +1,7 @@
 import { and, count, desc, eq, gte, lte } from "drizzle-orm";
 import { db } from "../db";
 import {
+  categories,
   transactions,
   type NewTransaction,
   type Transaction,
@@ -10,6 +11,17 @@ import {
   PaginationQuery,
   PaginationResult,
 } from "../lib/pagination";
+
+// Tipo para transação com nome da categoria
+export type TransactionWithCategory = Omit<
+  Transaction,
+  "categoryId" | "userId"
+> & {
+  category: {
+    id: string;
+    name: string;
+  };
+};
 
 export class TransactionRepository {
   // Criar transação
@@ -23,7 +35,7 @@ export class TransactionRepository {
     return transaction;
   }
 
-  // Buscar transações do usuário com filtros e paginação
+  // Buscar transações do usuário com filtros e paginação (com nome da categoria)
   static async findByUserIdPaginated(
     userId: string,
     pagination: PaginationQuery,
@@ -32,7 +44,7 @@ export class TransactionRepository {
       startDate?: Date;
       endDate?: Date;
     }
-  ): Promise<PaginationResult<Transaction>> {
+  ): Promise<PaginationResult<TransactionWithCategory>> {
     let conditions = [eq(transactions.userId, userId)];
 
     if (filters?.category) {
@@ -53,10 +65,24 @@ export class TransactionRepository {
       .from(transactions)
       .where(and(...conditions));
 
-    // Buscar dados paginados
+    // Buscar dados paginados com JOIN na categoria
     const data = await db
-      .select()
+      .select({
+        id: transactions.id,
+        type: transactions.type,
+        title: transactions.title,
+        amount: transactions.amount,
+        description: transactions.description,
+        date: transactions.date,
+        createdAt: transactions.createdAt,
+        updatedAt: transactions.updatedAt,
+        category: {
+          id: categories.id,
+          name: categories.name,
+        },
+      })
       .from(transactions)
+      .innerJoin(categories, eq(transactions.categoryId, categories.id))
       .where(and(...conditions))
       .orderBy(desc(transactions.date))
       .limit(pagination.limit)
@@ -72,7 +98,7 @@ export class TransactionRepository {
     );
   }
 
-  // Buscar transações do usuário com filtros
+  // Buscar transações do usuário com filtros (com nome da categoria)
   static async findByUserId(
     userId: string,
     filters?: {
@@ -80,7 +106,7 @@ export class TransactionRepository {
       startDate?: Date;
       endDate?: Date;
     }
-  ): Promise<Transaction[]> {
+  ): Promise<TransactionWithCategory[]> {
     let conditions = [eq(transactions.userId, userId)];
 
     if (filters?.category) {
@@ -96,8 +122,22 @@ export class TransactionRepository {
     }
 
     return await db
-      .select()
+      .select({
+        id: transactions.id,
+        type: transactions.type,
+        title: transactions.title,
+        amount: transactions.amount,
+        description: transactions.description,
+        date: transactions.date,
+        createdAt: transactions.createdAt,
+        updatedAt: transactions.updatedAt,
+        category: {
+          id: categories.id,
+          name: categories.name,
+        },
+      })
       .from(transactions)
+      .innerJoin(categories, eq(transactions.categoryId, categories.id))
       .where(and(...conditions))
       .orderBy(desc(transactions.date));
   }
@@ -145,11 +185,28 @@ export class TransactionRepository {
     return transaction || null;
   }
 
-  // Buscar todas as transações do usuário
-  static async findAllByUserId(userId: string): Promise<Transaction[]> {
+  // Buscar todas as transações do usuário (com nome da categoria)
+  static async findAllByUserId(
+    userId: string
+  ): Promise<TransactionWithCategory[]> {
     return await db
-      .select()
+      .select({
+        id: transactions.id,
+        userId: transactions.userId,
+        type: transactions.type,
+        title: transactions.title,
+        amount: transactions.amount,
+        description: transactions.description,
+        date: transactions.date,
+        createdAt: transactions.createdAt,
+        updatedAt: transactions.updatedAt,
+        category: {
+          id: categories.id,
+          name: categories.name,
+        },
+      })
       .from(transactions)
+      .innerJoin(categories, eq(transactions.categoryId, categories.id))
       .where(eq(transactions.userId, userId))
       .orderBy(desc(transactions.date));
   }

@@ -1,10 +1,58 @@
 @baseUrl = http://localhost:5000
 @contentType = application/json
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJmYjkxMjUxYy1kMDI3LTQ2OWUtYTE5My00ZDJjNDNhMjBlODMiLCJpYXQiOjE3NTE3Njg1NTIsImV4cCI6MTc1MjM3MzM1Mn0._-ciLB5Uc2Z7Jfny585S2-QEXKs4m7SO-jcxyTbtAuE
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwYjQxMDk5ZC1iODljLTQ5NzUtYWZiOC1mNmRlYjdmYWEzYjQiLCJpYXQiOjE3NTI1NDk5NTAsImV4cCI6MTc1MzE1NDc1MH0.36w3ogBmbQG5Nit_rQ95rOQjt_EqZw5RMUUhrWJL7jg
 
 ### ========================================
 ### 💰 TRANSAÇÕES - CRUD COMPLETO
 ### ========================================
+### 
+### 📝 NOVO FORMATO DE RESPOSTA:
+### 
+### 🔹 SEM PAGINAÇÃO:
+### {
+###   "success": true,
+###   "data": {
+###     "transactions": [
+###       {
+###         "id": "uuid",
+###         "type": "income|expense", 
+###         "title": "Título da Transação",
+###         "category": { 
+###           "id": "category-uuid",
+###           "name": "Nome da Categoria" 
+###         },
+###         "amount": 1000,
+###         "description": "Descrição",
+###         "date": "2024-01-15T00:00:00.000Z",
+###         "createdAt": "2024-01-15T00:00:00.000Z",
+###         "updatedAt": "2024-01-15T00:00:00.000Z"
+###       }
+###     ],
+###     "totalExpense": 500,
+###     "totalIncome": 1000,
+###     "monthlyIncome": 3000,
+###     "percentUsed": 16.67,
+###     "alert": null
+###   },
+###   "message": "Transações recuperadas com sucesso"
+### }
+### 
+### 🔹 COM PAGINAÇÃO:
+### {
+###   "success": true,
+###   "data": {
+###     "transactions": [...],
+###     "totalCount": 150,  // ← Total de registros para paginação
+###     "totalExpense": 500,
+###     "totalIncome": 1000,
+###     "monthlyIncome": 3000,
+###     "percentUsed": 16.67,
+###     "alert": null
+###   },
+###   "message": "Transações recuperadas com sucesso"
+### }
+### 
+### ✅ OBS: Não há mais objeto de paginação, apenas totalCount
 
 ### 1. Criar transação de receita
 POST {{baseUrl}}/transactions/create
@@ -13,9 +61,10 @@ Authorization: Bearer {{authToken}}
 
 {
   "type": "income",
+  "title": "Salário do mês",
   "amount": 5000,
   "category": "f7590298-c78f-4e89-8f88-3546d2b2eaaf",
-  "description": "Salário do mês",
+  "description": "Salário do mês de janeiro",
   "date": "2024-01-15"
 }
 
@@ -26,27 +75,50 @@ Authorization: Bearer {{authToken}}
 
 {
   "type": "expense",
+  "title": "Compras no supermercado",
   "amount": 150.50,
   "category": "f7590298-c78f-4e89-8f88-3546d2b2eaaf",
-  "description": "Compras no supermercado",
+  "description": "Compras semanais",
   "date": "2024-01-16"
 }
 
 ### 3. Listar transações (sem paginação)
-GET {{baseUrl}}/transactions
+POST {{baseUrl}}/transactions
+Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
+
+{}
 
 ### 4. Listar transações com paginação
-GET {{baseUrl}}/transactions?page=1&limit=10
+POST {{baseUrl}}/transactions
+Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
+
+{
+  "page": 1,
+  "limit": 10
+}
 
 ### 5. Filtrar transações por categoria
-GET {{baseUrl}}/transactions?category=f7590298-c78f-4e89-8f88-3546d2b2eaaf
+POST {{baseUrl}}/transactions
+Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
 
+{
+  "category": "666a6146-8937-4caa-87bf-c128d10ad344",
+  "page": 1,
+  "limit": 10
+}
+
 ### 6. Filtrar transações por período
-GET {{baseUrl}}/transactions?startDate=2024-01-01&endDate=2024-01-31
+POST {{baseUrl}}/transactions
+Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
+
+{
+  "startDate": "2024-01-01",
+  "endDate": "2024-01-31"
+}
 
 ### 7. Atualizar transação
 PUT {{baseUrl}}/transactions/1
@@ -54,6 +126,7 @@ Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
 
 {
+  "title": "Compras atualizadas",
   "amount": 200.00,
   "description": "Compras atualizadas"
 }
@@ -122,8 +195,14 @@ Authorization: Bearer {{authToken}}
 }
 
 ### 15. Teste - Paginação inválida
-GET {{baseUrl}}/transactions?page=-1&limit=1000
+POST {{baseUrl}}/transactions
+Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
+
+{
+  "page": -1,
+  "limit": 1000
+}
 
 ### ========================================
 ### 🔒 TESTES DE AUTORIZAÇÃO
@@ -140,4 +219,7 @@ Content-Type: {{contentType}}
 }
 
 ### 17. Teste - Listar transações sem token
-GET {{baseUrl}}/transactions
+POST {{baseUrl}}/transactions
+Content-Type: {{contentType}}
+
+{}

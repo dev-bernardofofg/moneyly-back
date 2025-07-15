@@ -29,6 +29,7 @@ export const transactions = pgTable("transactions", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   type: text("type", { enum: ["income", "expense"] }).notNull(),
+  title: text("title").notNull(),
   amount: integer("amount").notNull(),
   categoryId: uuid("category_id")
     .notNull()

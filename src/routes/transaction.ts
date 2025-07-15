@@ -11,7 +11,7 @@ import {
 import { authenticateUser } from "../middlewares/auth";
 import { validate } from "../middlewares/validate";
 import { idParamSchema } from "../schemas/authSchema";
-import { transactionQuerySchema } from "../schemas/paginationSchema";
+import { transactionBodySchema } from "../schemas/paginationSchema";
 import {
   transactionSchema,
   transactionUpdateSchema,
@@ -26,10 +26,10 @@ TransactionsRouter.post(
   createTransaction
 );
 
-TransactionsRouter.get(
+TransactionsRouter.post(
   "/",
   authenticateUser,
-  validate({ query: transactionQuerySchema }),
+  validate({ body: transactionBodySchema }),
   getTransactions
 );
 

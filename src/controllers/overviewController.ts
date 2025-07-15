@@ -129,7 +129,7 @@ function calculateMonthlyHistory(transactions: any[], categories: any[]) {
 
   // Transformar transações em formato desejado
   const monthlyHistory = transactions.map((tx) => {
-    const category = categoriesMap[tx.categoryId];
+    const category = categoriesMap[tx.category.id];
 
     return {
       id: tx.id,
@@ -174,8 +174,8 @@ function calculateExpensesByCategory(transactions: any[], categories: any[]) {
   );
 
   expenseTransactions.forEach((tx) => {
-    if (expensesByCategory[tx.categoryId]) {
-      expensesByCategory[tx.categoryId].amount += tx.amount;
+    if (expensesByCategory[tx.category.id]) {
+      expensesByCategory[tx.category.id].amount += tx.amount;
     }
   });
 

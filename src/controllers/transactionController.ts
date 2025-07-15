@@ -16,11 +16,12 @@ export const createTransaction = async (
       return ResponseHandler.unauthorized(res, "Usuário não autenticado");
     }
 
-    const { type, amount, category, description, date } = req.body;
+    const { type, title, amount, category, description, date } = req.body;
 
     const newTransaction = await TransactionRepository.create({
       userId: req.userId,
       type,
+      title,
       amount,
       categoryId: category,
       description,
@@ -47,7 +48,7 @@ export const getTransactions = async (
       return ResponseHandler.unauthorized(res, "Usuário não autenticado");
     }
 
-    const { category, startDate, endDate, page, limit } = req.query;
+    const { category, startDate, endDate, page, limit } = req.body;
 
     const filters: {
       category?: string;
@@ -106,10 +107,17 @@ export const getTransactions = async (
           ? "Você já usou mais de 80% do seu rendimento mensal nesta página!"
           : null;
 
-      return ResponseHandler.paginated(
+      return ResponseHandler.success(
         res,
-        result.data,
-        result.pagination,
+        {
+          transactions: result.data,
+          totalCount: result.pagination.total,
+          totalExpense,
+          totalIncome,
+          monthlyIncome,
+          percentUsed,
+          alert,
+        },
         "Transações recuperadas com sucesso"
       );
     } else {
@@ -169,11 +177,12 @@ export const updateTransaction = async (
     }
 
     const { id } = req.params;
-    const { type, amount, category, description, date } = req.body;
+    const { type, title, amount, category, description, date } = req.body;
 
     const updateData: any = {};
     if (date) updateData.date = new Date(date);
     if (type) updateData.type = type;
+    if (title) updateData.title = title;
     if (amount) updateData.amount = amount;
     if (category) updateData.category = category;
     if (description) updateData.description = description;
@@ -244,11 +253,11 @@ export const getTransactionSummary = async (
       if (tx.type === "income") realIncome += tx.amount;
       if (tx.type === "expense") totalExpense += tx.amount;
 
-      if (!byCategory[tx.categoryId]) {
-        byCategory[tx.categoryId] = 0;
+      if (!byCategory[tx.category.id]) {
+        byCategory[tx.category.id] = 0;
       }
 
-      byCategory[tx.categoryId] += tx.amount;
+      byCategory[tx.category.id] += tx.amount;
     });
 
     const user = await UserRepository.findById(req.userId);
@@ -413,11 +422,11 @@ export const getCurrentFinancialPeriodSummary = async (
       if (tx.type === "income") realIncome += tx.amount;
       if (tx.type === "expense") totalExpense += tx.amount;
 
-      if (!byCategory[tx.categoryId]) {
-        byCategory[tx.categoryId] = 0;
+      if (!byCategory[tx.category.id]) {
+        byCategory[tx.category.id] = 0;
       }
 
-      byCategory[tx.categoryId] += tx.amount;
+      byCategory[tx.category.id] += tx.amount;
     });
 
     const balance = monthlyIncome - totalExpense;

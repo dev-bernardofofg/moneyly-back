@@ -1,5 +1,6 @@
 import { Response } from "express";
 import { PaginationHelper } from "../lib/pagination";
+import { ResponseHandler } from "../lib/ResponseHandler";
 import { AuthenticatedRequest } from "../middlewares/auth";
 import { CategoryRepository } from "../repositories/categoriesRepository";
 
@@ -9,7 +10,7 @@ export const createCategory = async (
 ) => {
   try {
     if (!req.userId) {
-      return res.status(401).json({ error: "Usuário não autenticado" });
+      return ResponseHandler.unauthorized(res, "Usuário não autenticado");
     }
 
     const categoryExists = await CategoryRepository.findByNameAndUserId(
@@ -18,7 +19,7 @@ export const createCategory = async (
     );
 
     if (categoryExists) {
-      return res.status(400).json({ error: "Categoria já existe" });
+      return ResponseHandler.error(res, "Categoria já existe");
     }
 
     const { name } = req.body;
@@ -28,9 +29,14 @@ export const createCategory = async (
       userId: req.userId,
     });
 
-    return res.status(201).json(category);
+    return ResponseHandler.created(
+      res,
+      category,
+      "Categoria criada com sucesso"
+    );
   } catch (error) {
-    return res.status(500).json({ error: "Erro ao criar categoria" });
+    console.error("Erro ao criar categoria:", error);
+    return ResponseHandler.serverError(res);
   }
 };
 
@@ -40,10 +46,10 @@ export const getCategories = async (
 ) => {
   try {
     if (!req.userId) {
-      return res.status(401).json({ error: "Usuário não autenticado" });
+      return ResponseHandler.unauthorized(res, "Usuário não autenticado");
     }
 
-    const { page, limit } = req.query;
+    const { page, limit } = req.body;
 
     // Verificar se há parâmetros de paginação
     const hasPagination = page || limit;
@@ -61,14 +67,28 @@ export const getCategories = async (
         pagination
       );
 
-      return res.status(200).json(result);
+      return ResponseHandler.success(
+        res,
+        {
+          categories: result.data,
+          totalCount: result.pagination.total,
+        },
+        "Categorias recuperadas com sucesso"
+      );
     } else {
       // Usar versão original (sem paginação)
       const categories = await CategoryRepository.findByUserId(req.userId);
-      return res.status(200).json(categories);
+      return ResponseHandler.success(
+        res,
+        {
+          categories,
+        },
+        "Categorias recuperadas com sucesso"
+      );
     }
   } catch (error) {
-    return res.status(500).json({ error: "Erro ao buscar categorias" });
+    console.error("Erro ao buscar categorias:", error);
+    return ResponseHandler.serverError(res);
   }
 };
 
@@ -78,7 +98,7 @@ export const updateCategory = async (
 ) => {
   try {
     if (!req.userId) {
-      return res.status(401).json({ error: "Usuário não autenticado" });
+      return ResponseHandler.unauthorized(res, "Usuário não autenticado");
     }
 
     const { id } = req.params;
@@ -90,7 +110,7 @@ export const updateCategory = async (
       req.userId
     );
     if (!existingCategory) {
-      return res.status(404).json({ error: "Categoria não encontrada" });
+      return ResponseHandler.notFound(res, "Categoria não encontrada");
     }
 
     // Verificar se já existe outra categoria com o mesmo nome para este usuário
@@ -99,18 +119,24 @@ export const updateCategory = async (
       req.userId
     );
     if (categoryWithSameName && categoryWithSameName.id !== id) {
-      return res
-        .status(400)
-        .json({ error: "Já existe uma categoria com este nome" });
+      return ResponseHandler.error(
+        res,
+        "Já existe uma categoria com este nome"
+      );
     }
 
     const category = await CategoryRepository.update(id, {
       name,
       userId: req.userId,
     });
-    return res.status(200).json(category);
+    return ResponseHandler.success(
+      res,
+      category,
+      "Categoria atualizada com sucesso"
+    );
   } catch (error) {
-    return res.status(500).json({ error: "Erro ao atualizar categoria" });
+    console.error("Erro ao atualizar categoria:", error);
+    return ResponseHandler.serverError(res);
   }
 };
 
@@ -120,7 +146,7 @@ export const deleteCategory = async (
 ) => {
   try {
     if (!req.userId) {
-      return res.status(401).json({ error: "Usuário não autenticado" });
+      return ResponseHandler.unauthorized(res, "Usuário não autenticado");
     }
 
     const { id } = req.params;
@@ -131,12 +157,13 @@ export const deleteCategory = async (
       req.userId
     );
     if (!existingCategory) {
-      return res.status(404).json({ error: "Categoria não encontrada" });
+      return ResponseHandler.notFound(res, "Categoria não encontrada");
     }
 
     await CategoryRepository.delete(id);
-    return res.status(200).json({ message: "Categoria deletada com sucesso" });
+    return ResponseHandler.success(res, null, "Categoria deletada com sucesso");
   } catch (error) {
-    return res.status(500).json({ error: "Erro ao deletar categoria" });
+    console.error("Erro ao deletar categoria:", error);
+    return ResponseHandler.serverError(res);
   }
 };
