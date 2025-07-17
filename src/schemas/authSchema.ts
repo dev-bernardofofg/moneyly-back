@@ -12,21 +12,23 @@ const validatePasswordStrength = (password: string) => {
 
 // Schema para criação de usuário (registro)
 export const createUserSchema = z.object({
-  name: z
-    .string()
-    .min(2, "Nome deve ter pelo menos 2 caracteres")
-    .max(100, "Nome muito longo")
-    .regex(/^[a-zA-ZÀ-ÿ\s]+$/, "Nome deve conter apenas letras e espaços"),
-  email: z.string().email("Email inválido").max(100, "Email muito longo"),
-  password: z
-    .string()
-    .min(8, "Senha deve ter pelo menos 8 caracteres")
-    .max(128, "Senha muito longa")
-    .refine(validatePasswordStrength, {
-      message:
-        "Senha deve conter pelo menos uma letra maiúscula, uma minúscula, um número e um caractere especial",
-    }),
+  name: z.string().min(1, "Nome é obrigatório"),
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
 });
+
+export const createSessionSchema = z.object({
+  email: z.string().email("Email inválido"),
+  password: z.string().min(1, "Senha é obrigatória"),
+});
+
+export const googleAuthSchema = z.object({
+  idToken: z.string().min(1, "Token do Google é obrigatório"),
+});
+
+export type CreateUserInput = z.infer<typeof createUserSchema>;
+export type CreateSessionInput = z.infer<typeof createSessionSchema>;
+export type GoogleAuthInput = z.infer<typeof googleAuthSchema>;
 
 // Schema para login
 export const loginSchema = z.object({

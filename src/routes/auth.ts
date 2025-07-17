@@ -1,8 +1,16 @@
 import { Router } from "express";
-import { createSession, createUser } from "../controllers/authController";
+import {
+  createGoogleSession,
+  createSession,
+  createUser,
+} from "../controllers/authController";
 import { authRateLimit } from "../middlewares/security";
 import { validateBody } from "../middlewares/validate";
-import { createUserSchema, loginSchema } from "../schemas/authSchema";
+import {
+  createUserSchema,
+  googleAuthSchema,
+  loginSchema,
+} from "../schemas/authSchema";
 
 const AuthRouters: Router = Router();
 
@@ -18,6 +26,12 @@ AuthRouters.post(
   authRateLimit,
   validateBody(loginSchema),
   createSession
+);
+AuthRouters.post(
+  "/google",
+  authRateLimit,
+  validateBody(googleAuthSchema),
+  createGoogleSession
 );
 
 export default AuthRouters;

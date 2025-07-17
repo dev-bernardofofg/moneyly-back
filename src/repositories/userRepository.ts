@@ -17,6 +17,15 @@ export class UserRepository {
     return user || null;
   }
 
+  // Buscar usuário por Google ID
+  static async findByGoogleId(googleId: string): Promise<User | null> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.googleId, googleId));
+    return user || null;
+  }
+
   // Buscar usuário por ID
   static async findById(id: string): Promise<User | null> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -32,6 +41,8 @@ export class UserRepository {
         id: users.id,
         name: users.name,
         email: users.email,
+        googleId: users.googleId,
+        avatar: users.avatar,
         monthlyIncome: users.monthlyIncome,
         financialDayStart: users.financialDayStart,
         financialDayEnd: users.financialDayEnd,
@@ -45,6 +56,24 @@ export class UserRepository {
     return user || null;
   }
 
+  // Atualizar informações do Google
+  static async updateGoogleInfo(
+    id: string,
+    googleInfo: { googleId: string; avatar?: string }
+  ): Promise<User | null> {
+    const [user] = await db
+      .update(users)
+      .set({
+        googleId: googleInfo.googleId,
+        avatar: googleInfo.avatar,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id))
+      .returning();
+
+    return user || null;
+  }
+
   // Atualizar rendimento mensal
   static async updateMonthlyIncome(
     id: string,
@@ -54,6 +83,7 @@ export class UserRepository {
       .update(users)
       .set({
         monthlyIncome,
+        firstAccess: false, // Marca que não é mais o primeiro acesso
         updatedAt: new Date(),
       })
       .where(eq(users.id, id))
@@ -73,6 +103,7 @@ export class UserRepository {
       .set({
         financialDayStart,
         financialDayEnd,
+        firstAccess: false, // Marca que não é mais o primeiro acesso
         updatedAt: new Date(),
       })
       .where(eq(users.id, id))
@@ -94,6 +125,7 @@ export class UserRepository {
         monthlyIncome,
         financialDayStart,
         financialDayEnd,
+        firstAccess: false, // Marca que não é mais o primeiro acesso
         updatedAt: new Date(),
       })
       .where(eq(users.id, id))

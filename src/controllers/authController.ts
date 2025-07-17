@@ -5,6 +5,7 @@ import { createDefaultCategoriesForUser } from "../db/seed";
 import { env } from "../env";
 import { ResponseHandler } from "../lib/ResponseHandler";
 import { UserRepository } from "../repositories/userRepository";
+import { GoogleAuthService } from "../services/googleAuthService";
 
 // Função para gerar JWT
 const generateToken = (userId: string) => {
@@ -52,6 +53,7 @@ export const createUser = async (req: Request, res: Response) => {
           monthlyIncome: newUser.monthlyIncome ?? 0,
           financialDayStart: newUser.financialDayStart ?? 1,
           financialDayEnd: newUser.financialDayEnd ?? 31,
+          firstAccess: newUser.firstAccess,
           createdAt: newUser.createdAt,
         },
         token,
@@ -80,6 +82,13 @@ export const createSession = async (req: Request, res: Response) => {
     }
 
     // Verificar a senha
+    if (!user.password) {
+      return ResponseHandler.unauthorized(
+        res,
+        "Conta não possui senha cadastrada"
+      );
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return ResponseHandler.unauthorized(res, "Senha inválida");
@@ -98,6 +107,7 @@ export const createSession = async (req: Request, res: Response) => {
           monthlyIncome: user.monthlyIncome ?? 0,
           financialDayStart: user.financialDayStart ?? 1,
           financialDayEnd: user.financialDayEnd ?? 31,
+          firstAccess: user.firstAccess,
           createdAt: user.createdAt,
         },
         token,
@@ -107,5 +117,53 @@ export const createSession = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Erro no login:", error);
     return ResponseHandler.serverError(res);
+  }
+};
+
+export const createGoogleSession = async (req: Request, res: Response) => {
+  try {
+    const { idToken } = req.body;
+
+    // Autenticar com Google
+    const user = await GoogleAuthService.authenticateWithGoogle(idToken);
+
+    if (!user) {
+      return ResponseHandler.error(
+        res,
+        "Falha na autenticação com Google",
+        undefined,
+        401
+      );
+    }
+
+    // Gerar token JWT
+    const token = generateToken(user.id);
+
+    return ResponseHandler.success(
+      res,
+      {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          googleId: user.googleId,
+          avatar: user.avatar,
+          monthlyIncome: user.monthlyIncome ?? 0,
+          financialDayStart: user.financialDayStart ?? 1,
+          financialDayEnd: user.financialDayEnd ?? 31,
+          createdAt: user.createdAt,
+        },
+        token,
+      },
+      "Login com Google realizado com sucesso"
+    );
+  } catch (error) {
+    console.error("Erro no login com Google:", error);
+    return ResponseHandler.error(
+      res,
+      "Falha na autenticação com Google",
+      undefined,
+      401
+    );
   }
 };

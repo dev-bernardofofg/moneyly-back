@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:5000
 @contentType = application/json
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwMDg0MGI2NS1jZjAxLTRiZjUtOWM1ZS1iN2U1NjY1OWFlOGQiLCJpYXQiOjE3NTE3NzMzMzYsImV4cCI6MTc1MjM3ODEzNn0.j_PCqCIeJ1aUI9EzcnBHdf0KceWav50MApnMQnn8NkY
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzMzY0ZDA5Mi03ZWU1LTQ1MTAtYTk5Yy0yZGY2ZmI2NjRjMjAiLCJpYXQiOjE3NTI3NjY2MTUsImV4cCI6MTc1MzM3MTQxNX0.0tBYdUOonK_aOFcfhfRTBrXhhFfXFhhGgcSOrMihm58
 
 ### ========================================
 ### 👤 USUÁRIO - MANIPULAÇÃO DE DADOS

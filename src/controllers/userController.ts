@@ -25,6 +25,7 @@ export const getMe = async (req: AuthenticatedRequest, res: Response) => {
           monthlyIncome: user.monthlyIncome ?? 0,
           financialDayStart: user.financialDayStart ?? 1,
           financialDayEnd: user.financialDayEnd ?? 31,
+          firstAccess: user.firstAccess,
           createdAt: user.createdAt,
         },
       },
@@ -57,7 +58,10 @@ export const updateMonthlyIncome = async (
 
     return ResponseHandler.success(
       res,
-      { monthlyIncome },
+      {
+        monthlyIncome,
+        firstAccess: false,
+      },
       "Rendimento atualizado com sucesso"
     );
   } catch (error) {
@@ -88,7 +92,11 @@ export const updateFinancialPeriod = async (
 
     return ResponseHandler.success(
       res,
-      { financialDayStart, financialDayEnd },
+      {
+        financialDayStart,
+        financialDayEnd,
+        firstAccess: false,
+      },
       "Período financeiro atualizado com sucesso"
     );
   } catch (error) {
@@ -120,7 +128,12 @@ export const updateIncomeAndPeriod = async (
 
     return ResponseHandler.success(
       res,
-      { monthlyIncome, financialDayStart, financialDayEnd },
+      {
+        monthlyIncome,
+        financialDayStart,
+        financialDayEnd,
+        firstAccess: false,
+      },
       "Rendimento e período financeiro atualizados com sucesso"
     );
   } catch (error) {

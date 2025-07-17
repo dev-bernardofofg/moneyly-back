@@ -1,0 +1,32 @@
+### Autenticação com Google OAuth
+POST http://localhost:3333/auth/google
+Content-Type: application/json
+
+{
+  "idToken": "seu-google-id-token-aqui"
+}
+
+### Exemplo de resposta esperada:
+# {
+#   "success": true,
+#   "data": {
+#     "user": {
+#       "id": "uuid-do-usuario",
+#       "name": "Nome do Usuário",
+#       "email": "email@exemplo.com",
+#       "googleId": "google-id-unico",
+#       "avatar": "https://url-do-avatar.com",
+#       "monthlyIncome": 0,
+#       "financialDayStart": 1,
+#       "financialDayEnd": 31,
+#       "createdAt": "2024-01-01T00:00:00.000Z"
+#     },
+#     "token": "jwt-token-aqui"
+#   },
+#   "message": "Login com Google realizado com sucesso"
+# }
+
+### Para testar, você precisa:
+# 1. Configurar o Google OAuth no Google Cloud Console
+# 2. Obter um token ID válido do Google
+# 3. Substituir "seu-google-id-token-aqui" pelo token real 

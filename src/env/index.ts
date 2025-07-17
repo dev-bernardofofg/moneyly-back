@@ -12,6 +12,8 @@ const envSchema = z.object({
   DATABASE_URL: z.string().url().optional(),
   JWT_SECRET: z.string().min(1),
   PORT: z.coerce.number().default(3333), // coerce nessa linha para padronizar independente do formato que recebermos ser convertido aqui
+  GOOGLE_CLIENT_ID: z.string().min(1),
+  GOOGLE_CLIENT_SECRET: z.string().min(1),
 });
 
 export const _env = envSchema.safeParse(process.env); // passando a tipagem
