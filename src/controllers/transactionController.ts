@@ -184,7 +184,7 @@ export const updateTransaction = async (
     if (type) updateData.type = type;
     if (title) updateData.title = title;
     if (amount) updateData.amount = amount;
-    if (category) updateData.category = category;
+    if (category) updateData.categoryId = category;
     if (description) updateData.description = description;
 
     const transaction = await TransactionRepository.update(
