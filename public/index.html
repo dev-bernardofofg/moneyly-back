@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Moneyly API</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+      }
+      .endpoint {
+        background: #f8f9fa;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
+        border-left: 4px solid #007bff;
+      }
+      .method {
+        font-weight: bold;
+        color: #007bff;
+      }
+      .url {
+        font-family: monospace;
+        background: #e9ecef;
+        padding: 2px 6px;
+        border-radius: 3px;
+      }
+      .status {
+        text-align: center;
+        padding: 20px;
+        background: #d4edda;
+        color: #155724;
+        border-radius: 5px;
+        margin: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🚀 Moneyly API</h1>
+
+      <div class="status">
+        ✅ API está funcionando! Use os endpoints abaixo:
+      </div>
+
+      <h2>📋 Endpoints Disponíveis</h2>
+
+      <div class="endpoint">
+        <span class="method">GET</span> <span class="url">/api/health</span>
+        <br />Health check da API
+      </div>
+
+      <div class="endpoint">
+        <span class="method">GET</span>
+        <span class="url">/api/transactions</span> <br />Listar transações
+      </div>
+
+      <div class="endpoint">
+        <span class="method">POST</span>
+        <span class="url">/api/transactions</span> <br />Criar nova transação
+      </div>
+
+      <div class="endpoint">
+        <span class="method">GET</span>
+        <span class="url">/api/categories</span> <br />Listar categorias
+      </div>
+
+      <div class="endpoint">
+        <span class="method">GET</span> <span class="url">/api/overview</span>
+        <br />Resumo financeiro
+      </div>
+
+      <div class="endpoint">
+        <span class="method">POST</span>
+        <span class="url">/api/auth/login</span> <br />Login de usuário
+      </div>
+
+      <div class="endpoint">
+        <span class="method">POST</span>
+        <span class="url">/api/auth/register</span> <br />Registro de usuário
+      </div>
+
+      <div class="endpoint">
+        <span class="method">GET</span>
+        <span class="url">/api/user/profile</span> <br />Perfil do usuário
+      </div>
+
+      <div class="endpoint">
+        <span class="method">GET</span>
+        <span class="url">/api/savings-goals</span> <br />Metas de economia
+      </div>
+
+      <div class="endpoint">
+        <span class="method">GET</span>
+        <span class="url">/api/category-budgets</span> <br />Orçamentos por
+        categoria
+      </div>
+
+      <div style="margin-top: 30px; text-align: center; color: #666">
+        <p>🔧 Desenvolvido com Express, TypeScript e Drizzle ORM</p>
+        <p>🚀 Deploy na Vercel</p>
+      </div>
+    </div>
+  </body>
+</html>
