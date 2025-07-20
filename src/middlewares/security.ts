@@ -94,38 +94,3 @@ export const securityMiddleware = (app: express.Application) => {
     next();
   });
 };
-
-// Middleware de segurança para Netlify Functions (versão simplificada)
-export const netlifySecurityMiddleware = (app: express.Application) => {
-  // CORS configurado
-  app.use(cors(corsOptions));
-
-  // Rate limiting geral (desabilitado em ambiente serverless se necessário)
-  if (!env.NETLIFY_FUNCTION) {
-    app.use(apiRateLimit);
-    app.use(speedLimiter);
-  }
-
-  // Remover headers que podem expor informações
-  app.disable("x-powered-by");
-
-  // Headers de segurança básicos (sem Helmet para evitar problemas no Netlify)
-  app.use((req, res, next) => {
-    try {
-      // Headers de segurança básicos
-      res.setHeader("X-Content-Type-Options", "nosniff");
-      res.setHeader("X-Frame-Options", "DENY");
-      res.setHeader("X-XSS-Protection", "1; mode=block");
-      res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-
-      // Configurar timeout para requisições
-      req.setTimeout(env.REQUEST_TIMEOUT);
-      res.setTimeout(env.REQUEST_TIMEOUT);
-
-      next();
-    } catch (error) {
-      console.error("Security middleware error:", error);
-      next();
-    }
-  });
-};

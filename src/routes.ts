@@ -16,7 +16,6 @@ router.get("/health", (req, res) => {
     message: "API is running",
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || "development",
-    netlify: process.env.NETLIFY_FUNCTION === "true",
   });
 });
 

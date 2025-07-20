@@ -25,9 +25,6 @@ export const env = {
     ? process.env.ALLOWED_ORIGINS.split(",")
     : ["http://localhost:3000", "http://localhost:5173"],
 
-  // Configurações específicas do Netlify
-  NETLIFY_FUNCTION: process.env.NETLIFY_FUNCTION === "true",
-
   // Configurações de rate limiting
   RATE_LIMIT_WINDOW_MS: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000"), // 15 minutos
   RATE_LIMIT_MAX: parseInt(process.env.RATE_LIMIT_MAX || "100"),
@@ -53,7 +50,6 @@ if (missingEnvVars.length > 0 && env.NODE_ENV === "production") {
 console.log("🔧 Configurações carregadas:", {
   NODE_ENV: env.NODE_ENV,
   PORT: env.PORT,
-  NETLIFY_FUNCTION: env.NETLIFY_FUNCTION,
   ALLOWED_ORIGINS: env.ALLOWED_ORIGINS,
   DATABASE_URL: env.DATABASE_URL ? "✅ Configurado" : "❌ Não configurado",
   JWT_SECRET: env.JWT_SECRET ? "✅ Configurado" : "❌ Não configurado",
