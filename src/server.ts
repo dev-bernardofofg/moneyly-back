@@ -7,7 +7,7 @@ import { sanitizeData } from "./middlewares/sanitize";
 import { securityMiddleware } from "./middlewares/security";
 import router from "./routes";
 
-const app: Application = express();
+export const app: Application = express();
 
 // Aplicar middlewares de segurança
 securityMiddleware(app);
