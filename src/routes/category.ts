@@ -9,8 +9,8 @@ import { authenticateUser } from "../middlewares/auth";
 import { validate } from "../middlewares/validate";
 import { idParamSchema } from "../schemas/authSchema";
 import {
-  categorySchema,
-  categoryUpdateSchema,
+  createCategorySchema,
+  updateCategorySchema,
 } from "../schemas/categorySchema";
 import { paginationBodySchema } from "../schemas/paginationSchema";
 
@@ -19,7 +19,7 @@ const CategoryRouter: Router = Router();
 CategoryRouter.post(
   "/create",
   authenticateUser,
-  validate({ body: categorySchema }),
+  validate({ body: createCategorySchema }),
   createCategory
 );
 
@@ -33,7 +33,7 @@ CategoryRouter.post(
 CategoryRouter.put(
   "/update/:id",
   authenticateUser,
-  validate({ body: categoryUpdateSchema, params: idParamSchema }),
+  validate({ body: updateCategorySchema, params: idParamSchema }),
   updateCategory
 );
 

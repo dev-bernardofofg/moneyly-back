@@ -1,0 +1,112 @@
+### Orçamentos por Categoria
+
+# Configuração base
+@baseUrl = http://localhost:5000
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzMzY0ZDA5Mi03ZWU1LTQ1MTAtYTk5Yy0yZGY2ZmI2NjRjMjAiLCJpYXQiOjE3NTI4MjU4MTQsImV4cCI6MTc1MzQzMDYxNH0.G6NfEu1dPadVC8HcmUFG3r3LYvPMko6U4mVErgXG2hg
+
+### Login para obter token
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+
+### ========================================
+### CRUD Orçamentos por Categoria
+### ========================================
+
+### 1. Criar orçamento por categoria
+POST {{baseUrl}}/budgets
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "categoryId": "a72ff31e-70d7-4e5b-b20b-bd23ccffa49e",
+  "monthlyLimit": 800
+}
+
+### 2. Buscar orçamentos do usuário
+# Esta rota retorna os orçamentos com informações de progresso incluídas
+GET {{baseUrl}}/budgets
+Authorization: Bearer {{authToken}}
+
+### 3. Buscar progresso dos orçamentos
+# Esta rota é similar à anterior, mas mantida para compatibilidade
+# Ambas as rotas agora retornam as mesmas informações de progresso
+GET {{baseUrl}}/budgets/progress
+Authorization: Bearer {{authToken}}
+
+### 6. Atualizar orçamento
+PUT {{baseUrl}}/budgets/550e8400-e29b-41d4-a716-446655440001
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "monthlyLimit": 1000
+}
+
+### 7. Deletar orçamento
+DELETE {{baseUrl}}/budgets/550e8400-e29b-41d4-a716-446655440001
+Authorization: Bearer {{authToken}}
+
+### ========================================
+### Exemplos de Resposta
+### ========================================
+
+### Exemplo de resposta - Criar orçamento
+# {
+#   "success": true,
+#   "data": null,
+#   "message": "Orçamento por categoria criado com sucesso"
+# }
+
+### Exemplo de resposta - Listar orçamentos
+# {
+#   "success": true,
+#   "data": [
+#     {
+#       "id": "550e8400-e29b-41d4-a716-446655440001",
+#       "monthlyLimit": 800,
+#       "category": {
+#         "id": "550e8400-e29b-41d4-a716-446655440000",
+#         "name": "Alimentação"
+#       },
+#       "spent": 600,
+#       "remaining": 200,
+#       "percentage": 75.0,
+#       "status": "attention"
+#     }
+#   ],
+#   "message": "Orçamentos por categoria recuperados com sucesso"
+# }
+
+### Exemplo de resposta - Progresso dos orçamentos
+# {
+#   "success": true,
+#   "data": [
+#     {
+#       "id": "550e8400-e29b-41d4-a716-446655440001",
+#       "monthlyLimit": 800,
+#       "category": {
+#         "id": "550e8400-e29b-41d4-a716-446655440000",
+#         "name": "Alimentação"
+#       },
+#       "spent": 600,
+#       "remaining": 200,
+#       "percentage": 75.0,
+#       "status": "attention"
+#     }
+#   ],
+#   "message": "Progresso dos orçamentos recuperado com sucesso"
+# }
+
+### ========================================
+### Status dos Orçamentos
+### ========================================
+# status: "safe" (0-74%)
+# status: "attention" (75-89%)
+# status: "warning" (90-99%)
+# status: "exceeded" (100%+) 

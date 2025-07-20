@@ -1,10 +1,18 @@
 import { z } from "zod";
 
-export const categorySchema = z.object({
-  name: z
-    .string()
-    .min(1, "O nome da categoria é obrigatório")
-    .max(50, "O nome da categoria deve ter no máximo 50 caracteres"),
+export const createCategorySchema = z.object({
+  name: z.string().min(1, "Nome da categoria é obrigatório"),
 });
 
-export const categoryUpdateSchema = categorySchema.partial();
+export const updateCategorySchema = z.object({
+  name: z.string().min(1, "Nome da categoria é obrigatório"),
+});
+
+export const createCategoryBudgetSchema = z.object({
+  categoryId: z.string().uuid("ID da categoria inválido"),
+  monthlyLimit: z.number().positive("Limite mensal deve ser positivo"),
+});
+
+export const updateCategoryBudgetSchema = z.object({
+  monthlyLimit: z.number().positive("Limite mensal deve ser positivo"),
+});

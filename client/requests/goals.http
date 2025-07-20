@@ -1,0 +1,167 @@
+### Objetivos de Poupança
+
+# Configuração base
+@baseUrl = http://localhost:5000
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzMzY0ZDA5Mi03ZWU1LTQ1MTAtYTk5Yy0yZGY2ZmI2NjRjMjAiLCJpYXQiOjE3NTI4MjU4MTQsImV4cCI6MTc1MzQzMDYxNH0.G6NfEu1dPadVC8HcmUFG3r3LYvPMko6U4mVErgXG2hg
+
+### Login para obter token
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+
+### ========================================
+### CRUD Objetivos de Poupança
+### ========================================
+
+### 1. Criar objetivo de poupança
+POST {{baseUrl}}/goals
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "Viagem para Europa",
+  "description": "Economizar para uma viagem de 15 dias pela Europa",
+  "targetAmount": 15000,
+  "targetDate": "2025-12-31T23:59:59.000Z"
+}
+
+### 2. Buscar objetivos do usuário (apenas ativos)
+GET {{baseUrl}}/goals
+Authorization: Bearer {{authToken}}
+
+### 3. Buscar objetivos do usuário (incluindo inativos)
+GET {{baseUrl}}/goals?activeOnly=false
+Authorization: Bearer {{authToken}}
+
+### 4. Buscar objetivo específico
+GET {{baseUrl}}/goals/550e8400-e29b-41d4-a716-446655440002
+Authorization: Bearer {{authToken}}
+
+### 5. Buscar progresso dos objetivos
+GET {{baseUrl}}/goals/progress
+Authorization: Bearer {{authToken}}
+
+### 6. Atualizar objetivo
+PUT {{baseUrl}}/goals/4bb252ce-4337-4a92-9728-335887a2c305
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "Viagem para Europa - Atualizado",
+  "targetAmount": 18000,
+  "targetDate": "2025-06-30T23:59:59.000Z"
+}
+
+### 7. Adicionar valor ao objetivo
+POST {{baseUrl}}/goals/550e8400-e29b-41d4-a716-446655440002/add-amount
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "amount": 500
+}
+
+### 8. Deletar objetivo
+DELETE {{baseUrl}}/goals/4442bd4d-6904-4301-b20a-8312533161ee
+Authorization: Bearer {{authToken}}
+
+### ========================================
+### Exemplos de Resposta
+### ========================================
+
+### Exemplo de resposta - Criar objetivo
+# {
+#   "success": true,
+#   "data": null,
+#   "message": "Objetivo de poupança criado com sucesso"
+# }
+
+### Exemplo de resposta - Listar objetivos
+# {
+#   "success": true,
+#   "data": [
+#     {
+#       "id": "550e8400-e29b-41d4-a716-446655440002",
+#       "title": "Viagem para Europa",
+#       "description": "Economizar para uma viagem de 15 dias pela Europa",
+#       "targetAmount": 15000,
+#       "currentAmount": 5000,
+#       "targetDate": "2024-12-31T23:59:59.000Z",
+#       "startDate": "2024-01-01T00:00:00.000Z",
+#       "isActive": true,
+#       "milestones": [
+#         {
+#           "id": "550e8400-e29b-41d4-a716-446655440003",
+#           "percentage": 25,
+#           "amount": 3750,
+#           "isReached": true,
+#           "reachedAt": "2024-03-15T10:30:00.000Z"
+#         },
+#         {
+#           "id": "550e8400-e29b-41d4-a716-446655440004",
+#           "percentage": 50,
+#           "amount": 7500,
+#           "isReached": false,
+#           "reachedAt": null
+#         }
+#       ],
+#       "progress": {
+#         "percentage": 33,
+#         "remaining": 10000,
+#         "daysRemaining": 45
+#       }
+#     }
+#   ],
+#   "message": "Objetivos de poupança recuperados com sucesso"
+# }
+
+### Exemplo de resposta - Progresso dos objetivos
+# {
+#   "success": true,
+#   "data": [
+#     {
+#       "id": "550e8400-e29b-41d4-a716-446655440002",
+#       "title": "Viagem para Europa",
+#       "targetAmount": 15000,
+#       "currentAmount": 5000,
+#       "targetDate": "2024-12-31T23:59:59.000Z",
+#       "progress": {
+#         "percentage": 33,
+#         "remaining": 10000,
+#         "daysRemaining": 45
+#       },
+#       "status": "good-progress",
+#       "nextMilestone": {
+#         "id": "550e8400-e29b-41d4-a716-446655440004",
+#         "percentage": 50,
+#         "amount": 7500,
+#         "isReached": false
+#       }
+#     }
+#   ],
+#   "message": "Progresso dos objetivos recuperado com sucesso"
+# }
+
+### ========================================
+### Status dos Objetivos
+### ========================================
+# status: "just-started" (0-24%)
+# status: "early-stage" (25-49%)
+# status: "good-progress" (50-74%)
+# status: "on-track" (75-99%)
+# status: "completed" (100%)
+# status: "overdue" (prazo vencido)
+
+### ========================================
+### Marcos Automáticos
+### ========================================
+# Os marcos são criados automaticamente:
+# - 25% do valor alvo
+# - 50% do valor alvo
+# - 75% do valor alvo
+# - 100% do valor alvo 

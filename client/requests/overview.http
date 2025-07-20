@@ -1,106 +1,149 @@
-@baseUrl = http://localhost:5000
-@contentType = application/json
-@authToken = 
+### Overview/Dashboard (Atualizado com Orçamentos e Objetivos)
+
+# Configuração base
+@baseUrl = http://localhost:3000
+@authToken = {{login.response.body.data.token}}
+
+### Login para obter token
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
 
 ### ========================================
-### 📊 OVERVIEW/DASHBOARD - DADOS CONSOLIDADOS
+### Dashboard Overview Completo
 ### ========================================
 
-### 1. Buscar dados do dashboard
-# Retorna: stats, currentPeriod, monthlyHistory, expensesByCategory, alerts, transactionsCount
-GET {{baseUrl}}/overview/dashboard
+### Buscar dados completos do dashboard
+GET {{baseUrl}}/overview
 Authorization: Bearer {{authToken}}
 
 ### ========================================
-### 🧪 TESTES DE VALIDAÇÃO
+### Exemplo de Resposta Completa
 ### ========================================
 
-### 2. Teste - Sem token de autenticação
-GET {{baseUrl}}/overview/dashboard
-
-### 3. Teste - Token inválido
-GET {{baseUrl}}/overview/dashboard
-Authorization: Bearer token-invalido
-
-### ========================================
-### 📋 ESTRUTURA DE RESPOSTA ESPERADA
-### ========================================
-
-# GET /overview/dashboard retorna:
 # {
 #   "success": true,
-#   "message": "Dados do dashboard recuperados com sucesso",
 #   "data": {
 #     "stats": {
 #       "totalIncome": 5000,
-#       "totalExpense": 3000,
-#       "balance": 2000,
-#       "percentUsed": 60.0,
-#       "remainingBudget": 2000
+#       "totalExpense": 3200,
+#       "balance": 1800,
+#       "percentUsed": 64.0,
+#       "remainingBudget": 1800
 #     },
 #     "currentPeriod": {
-#       "startDate": "2024-01-05T00:00:00.000Z",
-#       "endDate": "2024-02-05T00:00:00.000Z",
-#       "description": "Período financeiro: 05/01/2024 a 05/02/2024"
+#       "startDate": "2024-12-01T00:00:00.000Z",
+#       "endDate": "2024-12-31T23:59:59.000Z",
+#       "description": "Período financeiro: 01/12/2024 a 31/12/2024"
 #     },
 #     "monthlyHistory": [
 #       {
-#         "id": "uuid-da-transacao",
-#         "type": "income",
-#         "amount": 5000,
-#         "date": "15/01/2024",
-#         "category": "Salário",
-#         "description": "Salário do mês"
-#       },
-#       {
-#         "id": "uuid-da-transacao",
+#         "id": "550e8400-e29b-41d4-a716-446655440005",
 #         "type": "expense",
 #         "amount": 150,
-#         "date": "16/01/2024",
+#         "date": "15/12/2024",
 #         "category": "Alimentação",
-#         "description": "Compras no supermercado"
-#       },
-#       {
-#         "id": "uuid-da-transacao",
-#         "type": "expense",
-#         "amount": 80,
-#         "date": "17/01/2024",
-#         "category": "Transporte",
-#         "description": "Combustível"
+#         "description": "Supermercado"
 #       }
 #     ],
 #     "expensesByCategory": [
 #       {
-#         "id": "uuid",
+#         "id": "550e8400-e29b-41d4-a716-446655440000",
 #         "name": "Alimentação",
-#         "amount": 1500,
-#         "percentage": 50.0
-#       },
+#         "amount": 1200,
+#         "percentage": 37.5
+#       }
+#     ],
+#     "budgetProgress": [
 #       {
-#         "id": "uuid",
-#         "name": "Transporte",
-#         "amount": 800,
-#         "percentage": 26.7
+#         "id": "550e8400-e29b-41d4-a716-446655440001",
+#         "monthlyLimit": 800,
+#         "category": {
+#           "id": "550e8400-e29b-41d4-a716-446655440000",
+#           "name": "Alimentação"
+#         },
+#         "spent": 600,
+#         "remaining": 200,
+#         "percentage": 75.0,
+#         "status": "attention"
+#       }
+#     ],
+#     "goalsProgress": [
+#       {
+#         "id": "550e8400-e29b-41d4-a716-446655440002",
+#         "title": "Viagem para Europa",
+#         "description": "Economizar para uma viagem de 15 dias pela Europa",
+#         "targetAmount": 15000,
+#         "currentAmount": 5000,
+#         "targetDate": "2024-12-31T23:59:59.000Z",
+#         "startDate": "2024-01-01T00:00:00.000Z",
+#         "isActive": true,
+#         "milestones": [
+#           {
+#             "id": "550e8400-e29b-41d4-a716-446655440003",
+#             "percentage": 25,
+#             "amount": 3750,
+#             "isReached": true,
+#             "reachedAt": "2024-03-15T10:30:00.000Z"
+#           }
+#         ],
+#         "progress": {
+#           "percentage": 33,
+#           "remaining": 10000,
+#           "daysRemaining": 45
+#         },
+#         "status": "good-progress",
+#         "nextMilestone": {
+#           "id": "550e8400-e29b-41d4-a716-446655440004",
+#           "percentage": 50,
+#           "amount": 7500,
+#           "isReached": false
+#         }
 #       }
 #     ],
 #     "alerts": [
-#       "⚠️ Você já usou mais de 70% do seu rendimento mensal!"
+#       "⚠️ Orçamento da categoria \"Alimentação\" está em 75%!",
+#       "🎯 Objetivo \"Viagem para Europa\" está em 33%!"
 #     ],
-#     "transactionsCount": 15
-#   }
+#     "transactionsCount": 25
+#   },
+#   "message": "Dados do dashboard recuperados com sucesso"
 # }
 
 ### ========================================
-### 📝 NOVA ESTRUTURA DO MONTHLY HISTORY
+### Estrutura dos Dados
 ### ========================================
 
-# O monthlyHistory agora retorna as últimas 5 transações com:
-# - id: ID único da transação
-# - type: "income" ou "expense"
-# - amount: Valor da operação
-# - date: Data no formato dd/MM/yyyy
-# - category: Nome da categoria
-# - description: Descrição da transação (opcional)
+### Stats (Estatísticas Gerais)
+# - totalIncome: Receita total do período
+# - totalExpense: Despesa total do período
+# - balance: Saldo (receita - despesa)
+# - percentUsed: Percentual da receita utilizada
+# - remainingBudget: Orçamento restante
 
-# Ordenação: Mais recente primeiro
-# Limite: Últimas 5 transações 
+### Budget Progress (Progresso dos Orçamentos)
+# - monthlyLimit: Limite mensal definido
+# - spent: Valor já gasto
+# - remaining: Valor restante
+# - percentage: Percentual utilizado
+# - status: "safe" | "attention" | "warning" | "exceeded"
+
+### Goals Progress (Progresso dos Objetivos)
+# - targetAmount: Valor alvo
+# - currentAmount: Valor atual
+# - progress.percentage: Percentual atingido
+# - progress.remaining: Valor restante
+# - progress.daysRemaining: Dias restantes
+# - status: "just-started" | "early-stage" | "good-progress" | "on-track" | "completed" | "overdue"
+# - nextMilestone: Próximo marco a ser atingido
+
+### Alerts (Alertas)
+# - Lista de alertas importantes baseados nos dados
+# - Orçamentos próximos do limite
+# - Objetivos próximos do prazo
+# - Marcos atingidos 

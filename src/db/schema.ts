@@ -52,10 +52,56 @@ export const categories = pgTable("categories", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Tabela de orçamentos por categoria
+export const categoryBudgets = pgTable("category_budgets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  categoryId: uuid("category_id")
+    .notNull()
+    .references(() => categories.id, { onDelete: "cascade" }),
+  monthlyLimit: integer("monthly_limit").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Tabela de objetivos de poupança
+export const savingsGoals = pgTable("savings_goals", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  targetAmount: integer("target_amount").notNull(),
+  currentAmount: integer("current_amount").default(0),
+  targetDate: timestamp("target_date").notNull(),
+  startDate: timestamp("start_date").defaultNow().notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Tabela de marcos de progresso dos objetivos
+export const goalMilestones = pgTable("goal_milestones", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  goalId: uuid("goal_id")
+    .notNull()
+    .references(() => savingsGoals.id, { onDelete: "cascade" }),
+  percentage: integer("percentage").notNull(), // 25, 50, 75, 100
+  amount: integer("amount").notNull(),
+  isReached: boolean("is_reached").default(false),
+  reachedAt: timestamp("reached_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Relacionamentos
 export const usersRelations = relations(users, ({ many }) => ({
   transactions: many(transactions),
   categories: many(categories),
+  categoryBudgets: many(categoryBudgets),
+  savingsGoals: many(savingsGoals),
 }));
 
 export const transactionsRelations = relations(transactions, ({ one }) => ({
@@ -75,6 +121,39 @@ export const categoriesRelations = relations(categories, ({ one, many }) => ({
     references: [users.id],
   }),
   transactions: many(transactions),
+  budgets: many(categoryBudgets),
+}));
+
+export const categoryBudgetsRelations = relations(
+  categoryBudgets,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [categoryBudgets.userId],
+      references: [users.id],
+    }),
+    category: one(categories, {
+      fields: [categoryBudgets.categoryId],
+      references: [categories.id],
+    }),
+  })
+);
+
+export const savingsGoalsRelations = relations(
+  savingsGoals,
+  ({ one, many }) => ({
+    user: one(users, {
+      fields: [savingsGoals.userId],
+      references: [users.id],
+    }),
+    milestones: many(goalMilestones),
+  })
+);
+
+export const goalMilestonesRelations = relations(goalMilestones, ({ one }) => ({
+  goal: one(savingsGoals, {
+    fields: [goalMilestones.goalId],
+    references: [savingsGoals.id],
+  }),
 }));
 
 // Tipos TypeScript
@@ -84,3 +163,9 @@ export type Transaction = typeof transactions.$inferSelect;
 export type NewTransaction = typeof transactions.$inferInsert;
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
+export type CategoryBudget = typeof categoryBudgets.$inferSelect;
+export type NewCategoryBudget = typeof categoryBudgets.$inferInsert;
+export type SavingsGoal = typeof savingsGoals.$inferSelect;
+export type NewSavingsGoal = typeof savingsGoals.$inferInsert;
+export type GoalMilestone = typeof goalMilestones.$inferSelect;
+export type NewGoalMilestone = typeof goalMilestones.$inferInsert;

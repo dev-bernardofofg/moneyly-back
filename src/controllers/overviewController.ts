@@ -6,6 +6,8 @@ import { AuthenticatedRequest } from "../middlewares/auth";
 import { CategoryRepository } from "../repositories/categoriesRepository";
 import { TransactionRepository } from "../repositories/transactionRepository";
 import { UserRepository } from "../repositories/userRepository";
+import { CategoryBudgetService } from "../services/categoryBudgetService";
+import { SavingsGoalService } from "../services/savingsGoalService";
 
 export const getDashboardOverview = async (
   req: AuthenticatedRequest,
@@ -49,6 +51,14 @@ export const getDashboardOverview = async (
     // Buscar categorias do usuário
     const categories = await CategoryRepository.findByUserId(req.userId);
 
+    // Buscar orçamentos por categoria
+    const budgetService = new CategoryBudgetService();
+    const budgetProgress = await budgetService.getBudgetProgress(req.userId);
+
+    // Buscar objetivos de poupança
+    const goalService = new SavingsGoalService();
+    const goalsProgress = await goalService.getGoalsProgress(req.userId);
+
     // Calcular stats do período atual
     const stats = calculateStats(
       currentPeriodTransactions,
@@ -68,7 +78,12 @@ export const getDashboardOverview = async (
     );
 
     // Calcular alertas
-    const alerts = calculateAlerts(stats, user.monthlyIncome ?? 0);
+    const alerts = calculateAlerts(
+      stats,
+      user.monthlyIncome ?? 0,
+      budgetProgress,
+      goalsProgress
+    );
 
     return ResponseHandler.success(
       res,
@@ -84,6 +99,8 @@ export const getDashboardOverview = async (
         },
         monthlyHistory,
         expensesByCategory,
+        budgetProgress,
+        goalsProgress,
         alerts,
         transactionsCount: currentPeriodTransactions.length,
       },
@@ -193,7 +210,12 @@ function calculateExpensesByCategory(transactions: any[], categories: any[]) {
     .sort((a, b) => b.amount - a.amount);
 }
 
-function calculateAlerts(stats: any, monthlyIncome: number) {
+function calculateAlerts(
+  stats: any,
+  monthlyIncome: number,
+  budgetProgress: any,
+  goalsProgress: any
+) {
   const alerts: string[] = [];
 
   if (stats.percentUsed !== null) {
@@ -212,6 +234,35 @@ function calculateAlerts(stats: any, monthlyIncome: number) {
 
   if (stats.remainingBudget < monthlyIncome * 0.1) {
     alerts.push("💰 Resta menos de 10% do seu orçamento mensal!");
+  }
+
+  // Adicionar alertas de orçamento e objetivos
+  if (budgetProgress.percentUsed !== null) {
+    if (budgetProgress.percentUsed >= 90) {
+      alerts.push("⚠️ Você já usou mais de 90% do seu orçamento!");
+    } else if (budgetProgress.percentUsed >= 80) {
+      alerts.push("⚠️ Você já usou mais de 80% do seu orçamento!");
+    } else if (budgetProgress.percentUsed >= 70) {
+      alerts.push("⚠️ Você já usou mais de 70% do seu orçamento!");
+    }
+  }
+
+  if (budgetProgress.remainingBudget < monthlyIncome * 0.1) {
+    alerts.push("💰 Resta menos de 10% do seu orçamento!");
+  }
+
+  if (goalsProgress.percentUsed !== null) {
+    if (goalsProgress.percentUsed >= 90) {
+      alerts.push("⚠️ Você já atingiu mais de 90% do seu objetivo!");
+    } else if (goalsProgress.percentUsed >= 80) {
+      alerts.push("⚠️ Você já atingiu mais de 80% do seu objetivo!");
+    } else if (goalsProgress.percentUsed >= 70) {
+      alerts.push("⚠️ Você já atingiu mais de 70% do seu objetivo!");
+    }
+  }
+
+  if (goalsProgress.remainingBudget < monthlyIncome * 0.1) {
+    alerts.push("💰 Resta menos de 10% do seu objetivo!");
   }
 
   return alerts;

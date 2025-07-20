@@ -1,7 +1,7 @@
 @baseUrl = http://localhost:5000
 @contentType = application/json
 
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwYjQxMDk5ZC1iODljLTQ5NzUtYWZiOC1mNmRlYjdmYWEzYjQiLCJpYXQiOjE3NTI1NDk5NTAsImV4cCI6MTc1MzE1NDc1MH0.36w3ogBmbQG5Nit_rQ95rOQjt_EqZw5RMUUhrWJL7jg
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzMzY0ZDA5Mi03ZWU1LTQ1MTAtYTk5Yy0yZGY2ZmI2NjRjMjAiLCJpYXQiOjE3NTI4MjU4MTQsImV4cCI6MTc1MzQzMDYxNH0.G6NfEu1dPadVC8HcmUFG3r3LYvPMko6U4mVErgXG2hg
 
 
 ### ========================================
