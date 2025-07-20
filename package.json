@@ -2,12 +2,12 @@
   "name": "back-end",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "api/index.ts",
   "scripts": {
     "dev": "ts-node-dev --respawn src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "vercel-build": "tsc",
+
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
