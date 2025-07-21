@@ -116,11 +116,11 @@ export const getDashboardOverview = async (
 function calculateStats(transactions: any[], monthlyIncome: number) {
   const totalIncome = transactions
     .filter((tx) => tx.type === "income")
-    .reduce((sum, tx) => sum + tx.amount, 0);
+    .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
   const totalExpense = transactions
     .filter((tx) => tx.type === "expense")
-    .reduce((sum, tx) => sum + tx.amount, 0);
+    .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
   const balance = monthlyIncome - totalExpense;
   const percentUsed =
@@ -151,7 +151,7 @@ function calculateMonthlyHistory(transactions: any[], categories: any[]) {
     return {
       id: tx.id,
       type: tx.type, // Mantém "income" ou "expense"
-      amount: tx.amount,
+      amount: Number(tx.amount),
       date: format(new Date(tx.date), "dd/MM/yyyy"),
       category: category ? category.name : "Categoria não encontrada",
       description: tx.description || "",
@@ -186,13 +186,13 @@ function calculateExpensesByCategory(transactions: any[], categories: any[]) {
     (tx) => tx.type === "expense"
   );
   const totalExpenses = expenseTransactions.reduce(
-    (sum, tx) => sum + tx.amount,
+    (sum, tx) => sum + Number(tx.amount),
     0
   );
 
   expenseTransactions.forEach((tx) => {
     if (expensesByCategory[tx.category.id]) {
-      expensesByCategory[tx.category.id].amount += tx.amount;
+      expensesByCategory[tx.category.id].amount += Number(tx.amount);
     }
   });
 

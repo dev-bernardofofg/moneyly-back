@@ -105,7 +105,7 @@ export class CategoryBudgetService implements ICategoryBudgetService {
           (tx: any) =>
             tx.type === "expense" && tx.category.id === budget.category.id
         )
-        .reduce((sum: number, tx: any) => sum + tx.amount, 0);
+        .reduce((sum: number, tx: any) => sum + Number(tx.amount), 0);
 
       const percentage = Math.min(
         (categoryExpenses / Number(budget.monthlyLimit)) * 100,
@@ -201,13 +201,16 @@ export class CategoryBudgetService implements ICategoryBudgetService {
           (tx: any) =>
             tx.type === "expense" && tx.category.id === budget.category.id
         )
-        .reduce((sum: number, tx: any) => sum + tx.amount, 0);
+        .reduce((sum: number, tx: any) => sum + Number(tx.amount), 0);
 
       const percentage = Math.min(
-        (categoryExpenses / budget.monthlyLimit) * 100,
+        (categoryExpenses / Number(budget.monthlyLimit)) * 100,
         100
       );
-      const remaining = Math.max(0, budget.monthlyLimit - categoryExpenses);
+      const remaining = Math.max(
+        0,
+        Number(budget.monthlyLimit) - categoryExpenses
+      );
 
       return {
         ...budget,
