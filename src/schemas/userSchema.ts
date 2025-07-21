@@ -3,9 +3,17 @@ import { z } from "zod";
 // Schema para atualizar rendimento mensal
 export const updateMonthlyIncomeSchema = z.object({
   monthlyIncome: z
-    .number()
-    .positive("Rendimento deve ser positivo")
-    .max(999999999, "Rendimento muito alto"),
+    .union([z.string(), z.number()])
+    .transform((val) => {
+      const num = typeof val === "string" ? parseFloat(val) : val;
+      return isNaN(num) ? 0 : num;
+    })
+    .pipe(
+      z
+        .number()
+        .positive("Rendimento deve ser positivo")
+        .max(999999999.99, "Rendimento muito alto")
+    ),
 });
 
 // Schema para atualizar período financeiro
@@ -46,9 +54,17 @@ export const updateFinancialPeriodSchema = z
 export const updateIncomeAndPeriodSchema = z
   .object({
     monthlyIncome: z
-      .number()
-      .positive("Rendimento deve ser positivo")
-      .max(999999999, "Rendimento muito alto"),
+      .union([z.string(), z.number()])
+      .transform((val) => {
+        const num = typeof val === "string" ? parseFloat(val) : val;
+        return isNaN(num) ? 0 : num;
+      })
+      .pipe(
+        z
+          .number()
+          .positive("Rendimento deve ser positivo")
+          .max(999999999.99, "Rendimento muito alto")
+      ),
     financialDayStart: z
       .number()
       .min(1, "Dia de início deve ser entre 1 e 31")

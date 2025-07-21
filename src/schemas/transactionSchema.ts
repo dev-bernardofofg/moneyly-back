@@ -7,8 +7,16 @@ export const transactionSchema = z.object({
   }),
   title: z.string().min(1, "O título é obrigatório"),
   amount: z
-    .number({ invalid_type_error: "O amount deve ser um número" })
-    .positive("O valor deve ser positivo"),
+    .union([z.string(), z.number()])
+    .transform((val) => {
+      const num = typeof val === "string" ? parseFloat(val) : val;
+      return isNaN(num) ? 0 : num;
+    })
+    .pipe(
+      z
+        .number({ invalid_type_error: "O amount deve ser um número" })
+        .positive("O valor deve ser positivo")
+    ),
   category: z.string().min(1, "A categoria é obrigatória"),
   description: z.string().optional(),
   date: z

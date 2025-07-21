@@ -10,9 +10,21 @@ export const updateCategorySchema = z.object({
 
 export const createCategoryBudgetSchema = z.object({
   categoryId: z.string().uuid("ID da categoria inválido"),
-  monthlyLimit: z.number().positive("Limite mensal deve ser positivo"),
+  monthlyLimit: z
+    .union([z.string(), z.number()])
+    .transform((val) => {
+      const num = typeof val === "string" ? parseFloat(val) : val;
+      return isNaN(num) ? 0 : num;
+    })
+    .pipe(z.number().positive("Limite mensal deve ser positivo")),
 });
 
 export const updateCategoryBudgetSchema = z.object({
-  monthlyLimit: z.number().positive("Limite mensal deve ser positivo"),
+  monthlyLimit: z
+    .union([z.string(), z.number()])
+    .transform((val) => {
+      const num = typeof val === "string" ? parseFloat(val) : val;
+      return isNaN(num) ? 0 : num;
+    })
+    .pipe(z.number().positive("Limite mensal deve ser positivo")),
 });

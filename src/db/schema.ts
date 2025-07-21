@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
   boolean,
+  decimal,
   integer,
   pgTable,
   text,
@@ -16,7 +17,9 @@ export const users = pgTable("users", {
   password: text("password"), // Tornando opcional para suportar OAuth
   googleId: text("google_id").unique(), // ID único do Google
   avatar: text("avatar"), // URL do avatar do Google
-  monthlyIncome: integer("monthly_income").default(0),
+  monthlyIncome: decimal("monthly_income", { precision: 10, scale: 2 }).default(
+    "0"
+  ),
   financialDayStart: integer("financial_day_start").default(1), // Dia do mês que inicia o período financeiro
   financialDayEnd: integer("financial_day_end").default(31), // Dia do mês que termina o período financeiro
   firstAccess: boolean("first_access").default(true),
@@ -32,7 +35,7 @@ export const transactions = pgTable("transactions", {
     .references(() => users.id, { onDelete: "cascade" }),
   type: text("type", { enum: ["income", "expense"] }).notNull(),
   title: text("title").notNull(),
-  amount: integer("amount").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   categoryId: uuid("category_id")
     .notNull()
     .references(() => categories.id, { onDelete: "cascade" }),
@@ -61,7 +64,7 @@ export const categoryBudgets = pgTable("category_budgets", {
   categoryId: uuid("category_id")
     .notNull()
     .references(() => categories.id, { onDelete: "cascade" }),
-  monthlyLimit: integer("monthly_limit").notNull(),
+  monthlyLimit: decimal("monthly_limit", { precision: 10, scale: 2 }).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -74,8 +77,10 @@ export const savingsGoals = pgTable("savings_goals", {
     .references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   description: text("description"),
-  targetAmount: integer("target_amount").notNull(),
-  currentAmount: integer("current_amount").default(0),
+  targetAmount: decimal("target_amount", { precision: 10, scale: 2 }).notNull(),
+  currentAmount: decimal("current_amount", { precision: 10, scale: 2 }).default(
+    "0"
+  ),
   targetDate: timestamp("target_date").notNull(),
   startDate: timestamp("start_date").defaultNow().notNull(),
   isActive: boolean("is_active").default(true),
@@ -90,7 +95,7 @@ export const goalMilestones = pgTable("goal_milestones", {
     .notNull()
     .references(() => savingsGoals.id, { onDelete: "cascade" }),
   percentage: integer("percentage").notNull(), // 25, 50, 75, 100
-  amount: integer("amount").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   isReached: boolean("is_reached").default(false),
   reachedAt: timestamp("reached_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -121,7 +126,7 @@ export const categoriesRelations = relations(categories, ({ one, many }) => ({
     references: [users.id],
   }),
   transactions: many(transactions),
-  budgets: many(categoryBudgets),
+  categoryBudgets: many(categoryBudgets),
 }));
 
 export const categoryBudgetsRelations = relations(
