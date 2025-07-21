@@ -2,7 +2,8 @@
 
 # Configuração base
 @baseUrl = http://localhost:3000
-@authToken = {{login.response.body.data.token}}
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1ODlhZWFkZC00YWExLTQ1NjAtYjI5Ny1lYmUxYTNkZjhjYTAiLCJpYXQiOjE3NTMwNzIwOTAsImV4cCI6MTc1MzY3Njg5MH0.GgkzlyjVshHHBxWZgZ_CB2q0zM5T6yK5rPyD5l-dRv8
+
 
 ### Login para obter token
 # @name login
@@ -147,3 +148,12 @@ Authorization: Bearer {{authToken}}
 # - Orçamentos próximos do limite
 # - Objetivos próximos do prazo
 # - Marcos atingidos 
+
+### Teste do Dashboard Overview (Dados Gerais)
+GET {{baseUrl}}/api/overview
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+### Teste do Dashboard Overview (sem token para verificar erro)
+GET {{baseUrl}}/api/overview
+Content-Type: application/json 
