@@ -37,11 +37,11 @@ export class SavingsGoalRepository implements ISavingsGoalRepository {
     // Criar marcos automaticamente (25%, 50%, 75%, 100%)
     const milestones = [25, 50, 75, 100];
     for (const percentage of milestones) {
-      const amount = Math.floor((data.targetAmount * percentage) / 100);
+      const amount = Math.floor((Number(data.targetAmount) * percentage) / 100);
       await this.createMilestone({
         goalId: goal.id,
         percentage,
-        amount,
+        amount: amount.toString(),
       });
     }
 
@@ -111,11 +111,11 @@ export class SavingsGoalRepository implements ISavingsGoalRepository {
     const goal = await this.findById(id);
     if (!goal) return null;
 
-    const newAmount = (goal.currentAmount ?? 0) + amount;
+    const newAmount = (Number(goal.currentAmount) ?? 0) + amount;
     const [updatedGoal] = await db
       .update(savingsGoals)
       .set({
-        currentAmount: newAmount,
+        currentAmount: newAmount.toString(),
         updatedAt: new Date(),
       })
       .where(eq(savingsGoals.id, id))
@@ -166,9 +166,10 @@ export class SavingsGoalRepository implements ISavingsGoalRepository {
       milestones,
       progress: {
         percentage: Math.floor(
-          ((goal.currentAmount ?? 0) / goal.targetAmount) * 100
+          ((Number(goal.currentAmount) ?? 0) / Number(goal.targetAmount)) * 100
         ),
-        remaining: goal.targetAmount - (goal.currentAmount ?? 0),
+        remaining:
+          Number(goal.targetAmount) - (Number(goal.currentAmount) ?? 0),
         daysRemaining: Math.ceil(
           (new Date(goal.targetDate).getTime() - new Date().getTime()) /
             (1000 * 60 * 60 * 24)
@@ -187,7 +188,7 @@ export class SavingsGoalRepository implements ISavingsGoalRepository {
     if (!goal) return;
 
     for (const milestone of milestones) {
-      if (!milestone.isReached && currentAmount >= milestone.amount) {
+      if (!milestone.isReached && currentAmount >= Number(milestone.amount)) {
         await this.updateMilestone(milestone.id, {
           isReached: true,
           reachedAt: new Date(),

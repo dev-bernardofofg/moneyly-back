@@ -62,7 +62,7 @@ export const getDashboardOverview = async (
     // Calcular stats do período atual
     const stats = calculateStats(
       currentPeriodTransactions,
-      user.monthlyIncome ?? 0
+      Number(user.monthlyIncome) ?? 0
     );
 
     // Calcular histórico mensal
@@ -80,7 +80,7 @@ export const getDashboardOverview = async (
     // Calcular alertas
     const alerts = calculateAlerts(
       stats,
-      user.monthlyIncome ?? 0,
+      Number(user.monthlyIncome) ?? 0,
       budgetProgress,
       goalsProgress
     );

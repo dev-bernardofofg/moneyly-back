@@ -82,7 +82,7 @@ export class UserRepository {
     const [user] = await db
       .update(users)
       .set({
-        monthlyIncome,
+        monthlyIncome: monthlyIncome.toString(),
         firstAccess: false, // Marca que não é mais o primeiro acesso
         updatedAt: new Date(),
       })
@@ -122,7 +122,7 @@ export class UserRepository {
     const [user] = await db
       .update(users)
       .set({
-        monthlyIncome,
+        monthlyIncome: monthlyIncome.toString(),
         financialDayStart,
         financialDayEnd,
         firstAccess: false, // Marca que não é mais o primeiro acesso

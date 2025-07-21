@@ -88,14 +88,14 @@ export const getTransactions = async (
       // Calcular totais para as transações da página atual
       const totalExpense = result.data
         .filter((tx) => tx.type === "expense")
-        .reduce((sum, tx) => sum + tx.amount, 0);
+        .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
       const totalIncome = result.data
         .filter((tx) => tx.type === "income")
-        .reduce((sum, tx) => sum + tx.amount, 0);
+        .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
       const user = await UserRepository.findById(req.userId);
-      const monthlyIncome = user?.monthlyIncome ?? 0;
+      const monthlyIncome = Number(user?.monthlyIncome) ?? 0;
 
       const percentUsed =
         monthlyIncome > 0
@@ -129,14 +129,14 @@ export const getTransactions = async (
 
       const totalExpense = transactions
         .filter((tx) => tx.type === "expense")
-        .reduce((sum, tx) => sum + tx.amount, 0);
+        .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
       const totalIncome = transactions
         .filter((tx) => tx.type === "income")
-        .reduce((sum, tx) => sum + tx.amount, 0);
+        .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
       const user = await UserRepository.findById(req.userId);
-      const monthlyIncome = user?.monthlyIncome ?? 0;
+      const monthlyIncome = Number(user?.monthlyIncome) ?? 0;
 
       const percentUsed =
         monthlyIncome > 0
@@ -250,18 +250,18 @@ export const getTransactionSummary = async (
     const byCategory: Record<string, number> = {};
 
     transactions.forEach((tx) => {
-      if (tx.type === "income") realIncome += tx.amount;
-      if (tx.type === "expense") totalExpense += tx.amount;
+      if (tx.type === "income") realIncome += Number(tx.amount);
+      if (tx.type === "expense") totalExpense += Number(tx.amount);
 
       if (!byCategory[tx.category.id]) {
         byCategory[tx.category.id] = 0;
       }
 
-      byCategory[tx.category.id] += tx.amount;
+      byCategory[tx.category.id] += Number(tx.amount);
     });
 
     const user = await UserRepository.findById(req.userId);
-    const monthlyIncome = user?.monthlyIncome ?? 0;
+    const monthlyIncome = Number(user?.monthlyIncome) ?? 0;
 
     const balance = monthlyIncome - totalExpense;
 
@@ -323,7 +323,7 @@ export const getMonthlySummary = async (
       filters
     );
     const user = await UserRepository.findById(req.userId);
-    const monthlyIncome = user?.monthlyIncome ?? 0;
+    const monthlyIncome = Number(user?.monthlyIncome) ?? 0;
 
     const summary: Record<
       string,
@@ -348,9 +348,9 @@ export const getMonthlySummary = async (
       }
 
       if (tx.type === "income") {
-        summary[monthKey].income += tx.amount;
+        summary[monthKey].income += Number(tx.amount);
       } else {
-        summary[monthKey].expense += tx.amount;
+        summary[monthKey].expense += Number(tx.amount);
       }
     });
 
@@ -400,7 +400,7 @@ export const getCurrentFinancialPeriodSummary = async (
 
     const financialDayStart = user.financialDayStart ?? 1;
     const financialDayEnd = user.financialDayEnd ?? 31;
-    const monthlyIncome = user.monthlyIncome ?? 0;
+    const monthlyIncome = Number(user.monthlyIncome) ?? 0;
 
     // Calcular o período financeiro atual
     const currentPeriod = getCurrentFinancialPeriod(
@@ -419,14 +419,14 @@ export const getCurrentFinancialPeriodSummary = async (
     const byCategory: Record<string, number> = {};
 
     transactions.forEach((tx) => {
-      if (tx.type === "income") realIncome += tx.amount;
-      if (tx.type === "expense") totalExpense += tx.amount;
+      if (tx.type === "income") realIncome += Number(tx.amount);
+      if (tx.type === "expense") totalExpense += Number(tx.amount);
 
       if (!byCategory[tx.category.id]) {
         byCategory[tx.category.id] = 0;
       }
 
-      byCategory[tx.category.id] += tx.amount;
+      byCategory[tx.category.id] += Number(tx.amount) ?? 0;
     });
 
     const balance = monthlyIncome - totalExpense;

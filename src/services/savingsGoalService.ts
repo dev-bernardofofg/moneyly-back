@@ -52,7 +52,7 @@ export class SavingsGoalService implements ISavingsGoalService {
       userId,
       title: data.title,
       description: data.description,
-      targetAmount: data.targetAmount,
+      targetAmount: data.targetAmount.toString(),
       targetDate: new Date(data.targetDate),
     });
 

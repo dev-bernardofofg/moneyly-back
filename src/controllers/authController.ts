@@ -151,6 +151,7 @@ export const createGoogleSession = async (req: Request, res: Response) => {
           monthlyIncome: user.monthlyIncome ?? 0,
           financialDayStart: user.financialDayStart ?? 1,
           financialDayEnd: user.financialDayEnd ?? 31,
+          firstAccess: user.firstAccess,
           createdAt: user.createdAt,
         },
         token,

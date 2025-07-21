@@ -64,7 +64,7 @@ export class CategoryBudgetService implements ICategoryBudgetService {
     const budget = await this.budgetRepository.create({
       userId,
       categoryId: data.categoryId,
-      monthlyLimit: data.monthlyLimit,
+      monthlyLimit: data.monthlyLimit.toString(),
     });
 
     return budget;
@@ -108,10 +108,13 @@ export class CategoryBudgetService implements ICategoryBudgetService {
         .reduce((sum: number, tx: any) => sum + tx.amount, 0);
 
       const percentage = Math.min(
-        (categoryExpenses / budget.monthlyLimit) * 100,
+        (categoryExpenses / Number(budget.monthlyLimit)) * 100,
         100
       );
-      const remaining = Math.max(0, budget.monthlyLimit - categoryExpenses);
+      const remaining = Math.max(
+        0,
+        Number(budget.monthlyLimit) - categoryExpenses
+      );
 
       return {
         ...budget,
@@ -131,7 +134,7 @@ export class CategoryBudgetService implements ICategoryBudgetService {
     data: { monthlyLimit: number }
   ): Promise<any> {
     const budget = await this.budgetRepository.update(budgetId, {
-      monthlyLimit: data.monthlyLimit,
+      monthlyLimit: data.monthlyLimit.toString(),
     });
 
     if (!budget) {
