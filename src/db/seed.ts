@@ -1,8 +1,10 @@
+import { eq } from "drizzle-orm";
+import { UserCategoryPreferencesRepository } from "../repositories/user-category-preferences.repository";
 import { db } from "./index";
 import { categories } from "./schema";
 
-// Categorias padrão para novos usuários
-export const defaultCategories = [
+// Categorias globais padrão
+export const globalCategories = [
   // Receitas
   { name: "Salário" },
   { name: "Freelance" },
@@ -23,12 +25,13 @@ export const defaultCategories = [
   { name: "Emergências" },
 ];
 
-// Função para criar categorias padrão para um usuário
-export async function createDefaultCategoriesForUser(userId: string) {
+// Função para criar categorias globais (executar apenas uma vez)
+export async function createGlobalCategories() {
   try {
-    const categoriesToInsert = defaultCategories.map((category) => ({
+    const categoriesToInsert = globalCategories.map((category) => ({
       ...category,
-      userId,
+      isGlobal: true,
+      userId: null, // Categorias globais não têm userId
     }));
 
     const insertedCategories = await db
@@ -36,17 +39,48 @@ export async function createDefaultCategoriesForUser(userId: string) {
       .values(categoriesToInsert)
       .returning();
 
-    console.log(
-      `✅ Criadas ${insertedCategories.length} categorias padrão para o usuário ${userId}`
-    );
+    console.log(`✅ Criadas ${insertedCategories.length} categorias globais`);
     return insertedCategories;
   } catch (error) {
-    console.error("❌ Erro ao criar categorias padrão:", error);
+    console.error("❌ Erro ao criar categorias globais:", error);
     throw error;
   }
 }
 
-// Função para obter categorias padrão (sem userId para referência)
-export function getDefaultCategories() {
-  return defaultCategories;
+// Função para criar preferências padrão para um usuário
+export async function createDefaultPreferencesForUser(userId: string) {
+  try {
+    // Buscar todas as categorias globais
+    const globalCategories = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.isGlobal, true));
+
+    if (globalCategories.length === 0) {
+      console.log(
+        "⚠️ Nenhuma categoria global encontrada. Execute createGlobalCategories primeiro."
+      );
+      return [];
+    }
+
+    const categoryIds = globalCategories.map((cat) => cat.id);
+    const preferences =
+      await UserCategoryPreferencesRepository.createDefaultPreferencesForUser(
+        userId,
+        categoryIds
+      );
+
+    console.log(
+      `✅ Criadas ${preferences.length} preferências padrão para o usuário ${userId}`
+    );
+    return preferences;
+  } catch (error) {
+    console.error("❌ Erro ao criar preferências padrão:", error);
+    throw error;
+  }
+}
+
+// Função para obter categorias globais (sem userId para referência)
+export function getGlobalCategories() {
+  return globalCategories;
 }

@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:5000
 @contentType = application/json
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwYjQxMDk5ZC1iODljLTQ5NzUtYWZiOC1mNmRlYjdmYWEzYjQiLCJpYXQiOjE3NTI1NDk5NTAsImV4cCI6MTc1MzE1NDc1MH0.36w3ogBmbQG5Nit_rQ95rOQjt_EqZw5RMUUhrWJL7jg
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NDRmZWM4MS01OWM5LTQyMTQtYmI4OC01ZGMyNWIxNjcxZGMiLCJpYXQiOjE3NTM1MDg3NzEsImV4cCI6MTc1NDExMzU3MX0.xTXDmzLHh43br-mRskM6MzFO9QkNVyfu_xsMla4IwkY
 
 ### ========================================
 ### 💰 TRANSAÇÕES - CRUD COMPLETO
@@ -63,7 +63,7 @@ Authorization: Bearer {{authToken}}
   "type": "income",
   "title": "Salário do mês",
   "amount": 5000,
-  "category": "f7590298-c78f-4e89-8f88-3546d2b2eaaf",
+  "category": "f1af41e4-0141-4e06-872a-d116849fdaa4",
   "description": "Salário do mês de janeiro",
   "date": "2024-01-15"
 }
@@ -77,7 +77,7 @@ Authorization: Bearer {{authToken}}
   "type": "expense",
   "title": "Compras no supermercado",
   "amount": 150.50,
-  "category": "f7590298-c78f-4e89-8f88-3546d2b2eaaf",
+  "category": "6ffe7601-a613-4697-8593-89e9e770a66e",
   "description": "Compras semanais",
   "date": "2024-01-16"
 }

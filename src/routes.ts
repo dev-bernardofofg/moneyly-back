@@ -1,11 +1,11 @@
 import { Router } from "express";
-import authRoutes from "./routes/auth";
-import categoryRoutes from "./routes/category";
-import categoryBudgetRoutes from "./routes/categoryBudget";
-import { OverviewRouter } from "./routes/overview";
-import savingsGoalRoutes from "./routes/savingsGoal";
-import transactionRoutes from "./routes/transaction";
-import userRoutes from "./routes/user";
+import { AuthRouters } from "./routes/auth.router";
+import { BudgetRouter } from "./routes/budget.router";
+import { CategoryRouter } from "./routes/category.router";
+import savingsGoalRoutes from "./routes/goal.router";
+import { OverviewRouter } from "./routes/overview.router";
+import transactionRoutes from "./routes/transaction.router";
+import { UserRouters } from "./routes/user.router";
 
 const router: Router = Router();
 
@@ -20,12 +20,12 @@ router.get("/health", (req, res) => {
 });
 
 // Rotas da aplicação
-router.use("/auth", authRoutes);
-router.use("/user", userRoutes);
+router.use("/auth", AuthRouters);
+router.use("/user", UserRouters);
 router.use("/transactions", transactionRoutes);
-router.use("/categories", categoryRoutes);
-router.use("/category-budgets", categoryBudgetRoutes);
-router.use("/savings-goals", savingsGoalRoutes);
+router.use("/categories", CategoryRouter);
+router.use("/budgets", BudgetRouter);
+router.use("/goals", savingsGoalRoutes);
 router.use("/overview", OverviewRouter);
 
 export default router;

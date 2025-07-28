@@ -1,159 +1,90 @@
 ### Overview/Dashboard (Atualizado com Orçamentos e Objetivos)
 
 # Configuração base
-@baseUrl = http://localhost:3000
+@baseUrl = http://localhost:5000
+@contentType = application/json
 @authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1ODlhZWFkZC00YWExLTQ1NjAtYjI5Ny1lYmUxYTNkZjhjYTAiLCJpYXQiOjE3NTMwNzIwOTAsImV4cCI6MTc1MzY3Njg5MH0.GgkzlyjVshHHBxWZgZ_CB2q0zM5T6yK5rPyD5l-dRv8
 
+### ========================================
+### 📊 OVERVIEW - PERÍODOS FINANCEIROS
+### ========================================
 
-### Login para obter token
-# @name login
-POST {{baseUrl}}/auth/login
-Content-Type: application/json
+### 1. Buscar períodos financeiros disponíveis
+POST {{baseUrl}}/overview/periods
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
 
 {
-  "email": "user@example.com",
-  "password": "password123"
+  "userId": "3364d092-7ee5-4510-a99c-2df6fb664c20"
+}
+
+### 2. Buscar dados do dashboard (período atual - padrão)
+POST {{baseUrl}}/overview/dashboard
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "userId": "3364d092-7ee5-4510-a99c-2df6fb664c20"
+}
+
+### 3. Buscar dados do dashboard (período específico)
+POST {{baseUrl}}/overview/dashboard
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "userId": "3364d092-7ee5-4510-a99c-2df6fb664c20",
+  "periodId": "2024-07-05T00:00:00.000Z_2024-08-05T00:00:00.000Z"
+}
+
+GET {{baseUrl}}/overview/planner
+Authorization: {{authToken}}
+Content-Type: application/json
+
+### Teste do Overview Planner (sem token para verificar erro)
+GET {{baseUrl}}/overview/planner
+Content-Type: application/json 
+
+### ========================================
+### 🧪 TESTES DE VALIDAÇÃO
+### ========================================
+
+### 4. Teste - Período não encontrado
+POST {{baseUrl}}/overview/dashboard
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "userId": "3364d092-7ee5-4510-a99c-2df6fb664c20",
+  "periodId": "periodo-inexistente"
+}
+
+### 5. Teste - UUID inválido
+POST {{baseUrl}}/overview/periods
+Content-Type: {{contentType}}
+Authorization: Bearer {{authToken}}
+
+{
+  "userId": "uuid-invalido"
 }
 
 ### ========================================
-### Dashboard Overview Completo
+### 🔒 TESTES DE AUTORIZAÇÃO
 ### ========================================
 
-### Buscar dados completos do dashboard
-GET {{baseUrl}}/overview
-Authorization: Bearer {{authToken}}
+### 6. Teste - Acesso sem token
+POST {{baseUrl}}/overview/periods
+Content-Type: {{contentType}}
 
-### ========================================
-### Exemplo de Resposta Completa
-### ========================================
+{
+  "userId": "3364d092-7ee5-4510-a99c-2df6fb664c20"
+}
 
-# {
-#   "success": true,
-#   "data": {
-#     "stats": {
-#       "totalIncome": 5000,
-#       "totalExpense": 3200,
-#       "balance": 1800,
-#       "percentUsed": 64.0,
-#       "remainingBudget": 1800
-#     },
-#     "currentPeriod": {
-#       "startDate": "2024-12-01T00:00:00.000Z",
-#       "endDate": "2024-12-31T23:59:59.000Z",
-#       "description": "Período financeiro: 01/12/2024 a 31/12/2024"
-#     },
-#     "monthlyHistory": [
-#       {
-#         "id": "550e8400-e29b-41d4-a716-446655440005",
-#         "type": "expense",
-#         "amount": 150,
-#         "date": "15/12/2024",
-#         "category": "Alimentação",
-#         "description": "Supermercado"
-#       }
-#     ],
-#     "expensesByCategory": [
-#       {
-#         "id": "550e8400-e29b-41d4-a716-446655440000",
-#         "name": "Alimentação",
-#         "amount": 1200,
-#         "percentage": 37.5
-#       }
-#     ],
-#     "budgetProgress": [
-#       {
-#         "id": "550e8400-e29b-41d4-a716-446655440001",
-#         "monthlyLimit": 800,
-#         "category": {
-#           "id": "550e8400-e29b-41d4-a716-446655440000",
-#           "name": "Alimentação"
-#         },
-#         "spent": 600,
-#         "remaining": 200,
-#         "percentage": 75.0,
-#         "status": "attention"
-#       }
-#     ],
-#     "goalsProgress": [
-#       {
-#         "id": "550e8400-e29b-41d4-a716-446655440002",
-#         "title": "Viagem para Europa",
-#         "description": "Economizar para uma viagem de 15 dias pela Europa",
-#         "targetAmount": 15000,
-#         "currentAmount": 5000,
-#         "targetDate": "2024-12-31T23:59:59.000Z",
-#         "startDate": "2024-01-01T00:00:00.000Z",
-#         "isActive": true,
-#         "milestones": [
-#           {
-#             "id": "550e8400-e29b-41d4-a716-446655440003",
-#             "percentage": 25,
-#             "amount": 3750,
-#             "isReached": true,
-#             "reachedAt": "2024-03-15T10:30:00.000Z"
-#           }
-#         ],
-#         "progress": {
-#           "percentage": 33,
-#           "remaining": 10000,
-#           "daysRemaining": 45
-#         },
-#         "status": "good-progress",
-#         "nextMilestone": {
-#           "id": "550e8400-e29b-41d4-a716-446655440004",
-#           "percentage": 50,
-#           "amount": 7500,
-#           "isReached": false
-#         }
-#       }
-#     ],
-#     "alerts": [
-#       "⚠️ Orçamento da categoria \"Alimentação\" está em 75%!",
-#       "🎯 Objetivo \"Viagem para Europa\" está em 33%!"
-#     ],
-#     "transactionsCount": 25
-#   },
-#   "message": "Dados do dashboard recuperados com sucesso"
-# }
+### 7. Teste - Token inválido
+POST {{baseUrl}}/overview/dashboard
+Content-Type: {{contentType}}
+Authorization: Bearer token_invalido
 
-### ========================================
-### Estrutura dos Dados
-### ========================================
-
-### Stats (Estatísticas Gerais)
-# - totalIncome: Receita total do período
-# - totalExpense: Despesa total do período
-# - balance: Saldo (receita - despesa)
-# - percentUsed: Percentual da receita utilizada
-# - remainingBudget: Orçamento restante
-
-### Budget Progress (Progresso dos Orçamentos)
-# - monthlyLimit: Limite mensal definido
-# - spent: Valor já gasto
-# - remaining: Valor restante
-# - percentage: Percentual utilizado
-# - status: "safe" | "attention" | "warning" | "exceeded"
-
-### Goals Progress (Progresso dos Objetivos)
-# - targetAmount: Valor alvo
-# - currentAmount: Valor atual
-# - progress.percentage: Percentual atingido
-# - progress.remaining: Valor restante
-# - progress.daysRemaining: Dias restantes
-# - status: "just-started" | "early-stage" | "good-progress" | "on-track" | "completed" | "overdue"
-# - nextMilestone: Próximo marco a ser atingido
-
-### Alerts (Alertas)
-# - Lista de alertas importantes baseados nos dados
-# - Orçamentos próximos do limite
-# - Objetivos próximos do prazo
-# - Marcos atingidos 
-
-### Teste do Dashboard Overview (Dados Gerais)
-GET {{baseUrl}}/api/overview
-Authorization: Bearer {{authToken}}
-Content-Type: application/json
-
-### Teste do Dashboard Overview (sem token para verificar erro)
-GET {{baseUrl}}/api/overview
-Content-Type: application/json 
+{
+  "userId": "3364d092-7ee5-4510-a99c-2df6fb664c20"
+} 

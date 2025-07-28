@@ -2,7 +2,7 @@ import type { Application } from "express";
 import express from "express";
 import { connectDB } from "./db";
 import { env } from "./env";
-import { errorHandler } from "./middlewares/errorHandler";
+import { errorHandler } from "./middlewares/error-handler";
 import { sanitizeData } from "./middlewares/sanitize";
 import { securityMiddleware } from "./middlewares/security";
 import router from "./routes";
@@ -25,6 +25,9 @@ app.use(router);
 // Global error handler - deve ser o último middleware
 app.use(errorHandler);
 
-app.listen(env.PORT, () => {
-  console.log(`Servidor rodando na porta ${env.PORT}`);
-});
+// Só inicia o servidor se não estiver em ambiente de teste
+if (process.env.NODE_ENV !== "test") {
+  app.listen(env.PORT, () => {
+    console.log(`Servidor rodando na porta ${env.PORT}`);
+  });
+}

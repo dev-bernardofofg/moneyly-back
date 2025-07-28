@@ -47,16 +47,29 @@ export const transactions = pgTable("transactions", {
 
 export const categories = pgTable("categories", {
   id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }), // Tornando opcional para categorias globais
+  name: text("name").notNull(),
+  isGlobal: boolean("is_global").default(false).notNull(), // Nova coluna para categorias globais
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Nova tabela para controlar preferências de categorias globais por usuário
+export const userCategoryPreferences = pgTable("user_category_preferences", {
+  id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
+  categoryId: uuid("category_id")
+    .notNull()
+    .references(() => categories.id, { onDelete: "cascade" }),
+  isVisible: boolean("is_visible").default(true).notNull(), // Se a categoria global deve ser visível para o usuário
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Tabela de orçamentos por categoria
-export const categoryBudgets = pgTable("category_budgets", {
+export const budgets = pgTable("budgets", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id")
     .notNull()
@@ -70,7 +83,7 @@ export const categoryBudgets = pgTable("category_budgets", {
 });
 
 // Tabela de objetivos de poupança
-export const savingsGoals = pgTable("savings_goals", {
+export const goals = pgTable("goals", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id")
     .notNull()
@@ -93,7 +106,7 @@ export const goalMilestones = pgTable("goal_milestones", {
   id: uuid("id").primaryKey().defaultRandom(),
   goalId: uuid("goal_id")
     .notNull()
-    .references(() => savingsGoals.id, { onDelete: "cascade" }),
+    .references(() => goals.id, { onDelete: "cascade" }),
   percentage: integer("percentage").notNull(), // 25, 50, 75, 100
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   isReached: boolean("is_reached").default(false),
@@ -105,8 +118,9 @@ export const goalMilestones = pgTable("goal_milestones", {
 export const usersRelations = relations(users, ({ many }) => ({
   transactions: many(transactions),
   categories: many(categories),
-  categoryBudgets: many(categoryBudgets),
-  savingsGoals: many(savingsGoals),
+  budgets: many(budgets),
+  goals: many(goals),
+  categoryPreferences: many(userCategoryPreferences),
 }));
 
 export const transactionsRelations = relations(transactions, ({ one }) => ({
@@ -126,40 +140,49 @@ export const categoriesRelations = relations(categories, ({ one, many }) => ({
     references: [users.id],
   }),
   transactions: many(transactions),
-  categoryBudgets: many(categoryBudgets),
+  budgets: many(budgets),
+  userPreferences: many(userCategoryPreferences),
 }));
 
-export const categoryBudgetsRelations = relations(
-  categoryBudgets,
+export const categoryBudgetsRelations = relations(budgets, ({ one }) => ({
+  user: one(users, {
+    fields: [budgets.userId],
+    references: [users.id],
+  }),
+  category: one(categories, {
+    fields: [budgets.categoryId],
+    references: [categories.id],
+  }),
+}));
+
+export const goalsRelations = relations(goals, ({ one, many }) => ({
+  user: one(users, {
+    fields: [goals.userId],
+    references: [users.id],
+  }),
+  milestones: many(goalMilestones),
+}));
+
+export const goalMilestonesRelations = relations(goalMilestones, ({ one }) => ({
+  goal: one(goals, {
+    fields: [goalMilestones.goalId],
+    references: [goals.id],
+  }),
+}));
+
+export const userCategoryPreferencesRelations = relations(
+  userCategoryPreferences,
   ({ one }) => ({
     user: one(users, {
-      fields: [categoryBudgets.userId],
+      fields: [userCategoryPreferences.userId],
       references: [users.id],
     }),
     category: one(categories, {
-      fields: [categoryBudgets.categoryId],
+      fields: [userCategoryPreferences.categoryId],
       references: [categories.id],
     }),
   })
 );
-
-export const savingsGoalsRelations = relations(
-  savingsGoals,
-  ({ one, many }) => ({
-    user: one(users, {
-      fields: [savingsGoals.userId],
-      references: [users.id],
-    }),
-    milestones: many(goalMilestones),
-  })
-);
-
-export const goalMilestonesRelations = relations(goalMilestones, ({ one }) => ({
-  goal: one(savingsGoals, {
-    fields: [goalMilestones.goalId],
-    references: [savingsGoals.id],
-  }),
-}));
 
 // Tipos TypeScript
 export type User = typeof users.$inferSelect;
@@ -168,9 +191,13 @@ export type Transaction = typeof transactions.$inferSelect;
 export type NewTransaction = typeof transactions.$inferInsert;
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
-export type CategoryBudget = typeof categoryBudgets.$inferSelect;
-export type NewCategoryBudget = typeof categoryBudgets.$inferInsert;
-export type SavingsGoal = typeof savingsGoals.$inferSelect;
-export type NewSavingsGoal = typeof savingsGoals.$inferInsert;
+export type CategoryBudget = typeof budgets.$inferSelect;
+export type NewCategoryBudget = typeof budgets.$inferInsert;
+export type Goal = typeof goals.$inferSelect;
+export type NewGoal = typeof goals.$inferInsert;
 export type GoalMilestone = typeof goalMilestones.$inferSelect;
 export type NewGoalMilestone = typeof goalMilestones.$inferInsert;
+export type UserCategoryPreference =
+  typeof userCategoryPreferences.$inferSelect;
+export type NewUserCategoryPreference =
+  typeof userCategoryPreferences.$inferInsert;

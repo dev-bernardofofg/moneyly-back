@@ -2,16 +2,15 @@
 
 # Configuração base
 @baseUrl = http://localhost:5000
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzMzY0ZDA5Mi03ZWU1LTQ1MTAtYTk5Yy0yZGY2ZmI2NjRjMjAiLCJpYXQiOjE3NTI4MjU4MTQsImV4cCI6MTc1MzQzMDYxNH0.G6NfEu1dPadVC8HcmUFG3r3LYvPMko6U4mVErgXG2hg
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJmZDcxMTAzNS0wM2VkLTRlOTEtODQ0Ny02ZjcwOTQ3ZjQ0NGEiLCJpYXQiOjE3NTM1MDA4MjgsImV4cCI6MTc1NDEwNTYyOH0.UnelYsWYKFsvtt3Pmr8Ynh_G-zExfismzojdxBT-jQc
 
 ### Login para obter token
-# @name login
-POST {{baseUrl}}/auth/login
+POST {{baseUrl}}/auth/sign-in
 Content-Type: application/json
 
 {
-  "email": "user@example.com",
-  "password": "password123"
+  "email": "joao@example.com",
+  "password": "123456"
 }
 
 ### ========================================
@@ -24,7 +23,7 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "categoryId": "a72ff31e-70d7-4e5b-b20b-bd23ccffa49e",
+  "categoryId": "d2769966-e1b0-4d54-95c2-22c5db380467",
   "monthlyLimit": 800
 }
 
