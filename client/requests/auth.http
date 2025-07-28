@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:5000
 @contentType = application/json
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwMDg0MGI2NS1jZjAxLTRiZjUtOWM1ZS1iN2U1NjY1OWFlOGQiLCJpYXQiOjE3NTE3NzMzMzYsImV4cCI6MTc1MjM3ODEzNn0.j_PCqCIeJ1aUI9EzcnBHdf0KceWav50MApnMQnn8NkY
+@authToken =  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJkNDFlMTAwYi04OGI1LTRiYzUtODNlMi0yYWY5NzhhOWVkYzUiLCJpYXQiOjE3NTM2NjY4MzQsImV4cCI6MTc1NDI3MTYzNH0.I5FlVCWQvbU5d79urCpfR0ozQmVNIr6suoZYMgrDuf4
 
 ### ========================================
 ### 🔐 AUTENTICAÇÃO - REGISTRO E LOGIN
@@ -28,11 +28,11 @@ Content-Type: {{contentType}}
 }
 
 ### 3. Buscar dados do usuário logado
-GET {{baseUrl}}/users/me
+GET {{baseUrl}}/user/me
 Authorization: Bearer {{authToken}}
 
 ### 4. Atualizar rendimento mensal
-PUT {{baseUrl}}/users/income
+PUT {{baseUrl}}/user/income
 Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
 
@@ -41,7 +41,7 @@ Authorization: Bearer {{authToken}}
 }
 
 ### 4.1. Atualizar período financeiro
-PUT {{baseUrl}}/users/financial-period
+PUT {{baseUrl}}/user/financial-period
 Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
 
@@ -51,7 +51,7 @@ Authorization: Bearer {{authToken}}
 }
 
 ### 4.2. Atualizar rendimento e período financeiro juntos
-PUT {{baseUrl}}/users/income-and-period
+PUT {{baseUrl}}/user/income-and-period
 Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
 

@@ -137,11 +137,11 @@ export class CategoryRepository {
         .offset(remainingOffset);
     }
 
-    const data = [...personalCategories, ...globalCategories];
+    const categories = [...personalCategories, ...globalCategories];
     const page = Math.floor(pagination.offset / pagination.limit) + 1;
 
     return PaginationHelper.createPaginationResult(
-      data,
+      categories,
       total,
       page,
       pagination.limit

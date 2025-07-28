@@ -35,19 +35,18 @@ export const getCategories = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const { userId } = req;
+  const { id } = req.user;
   const { page, limit } = req.body;
 
-  if (!userId) {
-    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
-  }
-
   try {
-    const categories = await getCategoriesService(userId, { page, limit });
+    const result = await getCategoriesService(id, { page, limit });
 
     return ResponseHandler.success(
       res,
-      { categories },
+      {
+        categories: result.data,
+        pagination: result.pagination,
+      },
       "Categorias recuperadas com sucesso"
     );
   } catch (error) {

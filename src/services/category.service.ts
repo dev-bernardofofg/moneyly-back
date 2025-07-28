@@ -24,14 +24,25 @@ export const getCategoriesService = async (
   );
 
   if (paginationExists) {
-    const categories = await CategoryRepository.findByUserIdPaginated(
+    const result = await CategoryRepository.findByUserIdPaginated(
       userId,
       paginationExists
     );
-    return categories;
+    return result;
   } else {
     const categories = await CategoryRepository.findByUserId(userId);
-    return categories;
+    // Retornar estrutura consistente mesmo sem paginação
+    return {
+      data: categories,
+      pagination: {
+        page: 1,
+        limit: categories.length,
+        total: categories.length,
+        totalPages: 1,
+        hasNext: false,
+        hasPrev: false,
+      },
+    };
   }
 };
 
@@ -50,7 +61,6 @@ export const updateCategoryService = async (
 
 export const deleteCategoryService = async (id: string, userId: string) => {
   await validateCategoryExistsByUserId(id, userId);
-  await validateCategoryIsNotGlobal(id, userId);
   await validateHideGlobalCategory(id, userId);
   const category = await CategoryRepository.delete(id, userId);
   return category;
