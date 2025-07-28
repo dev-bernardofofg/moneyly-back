@@ -14,18 +14,14 @@ POST {{baseUrl}}/overview/periods
 Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
 
-{
-  "userId": "3364d092-7ee5-4510-a99c-2df6fb664c20"
-}
+{}
 
 ### 2. Buscar dados do dashboard (período atual - padrão)
 POST {{baseUrl}}/overview/dashboard
 Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
 
-{
-  "userId": "3364d092-7ee5-4510-a99c-2df6fb664c20"
-}
+{}
 
 ### 3. Buscar dados do dashboard (período específico)
 POST {{baseUrl}}/overview/dashboard
@@ -33,7 +29,6 @@ Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
 
 {
-  "userId": "3364d092-7ee5-4510-a99c-2df6fb664c20",
   "periodId": "2024-07-05T00:00:00.000Z_2024-08-05T00:00:00.000Z"
 }
 
@@ -55,18 +50,15 @@ Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
 
 {
-  "userId": "3364d092-7ee5-4510-a99c-2df6fb664c20",
   "periodId": "periodo-inexistente"
 }
 
-### 5. Teste - UUID inválido
+### 5. Teste - UUID inválido (removido - userId agora vem do token)
 POST {{baseUrl}}/overview/periods
 Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
 
-{
-  "userId": "uuid-invalido"
-}
+{}
 
 ### ========================================
 ### 🔒 TESTES DE AUTORIZAÇÃO
@@ -76,15 +68,11 @@ Authorization: Bearer {{authToken}}
 POST {{baseUrl}}/overview/periods
 Content-Type: {{contentType}}
 
-{
-  "userId": "3364d092-7ee5-4510-a99c-2df6fb664c20"
-}
+{}
 
 ### 7. Teste - Token inválido
 POST {{baseUrl}}/overview/dashboard
 Content-Type: {{contentType}}
 Authorization: Bearer token_invalido
 
-{
-  "userId": "3364d092-7ee5-4510-a99c-2df6fb664c20"
-} 
+{} 
