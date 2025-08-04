@@ -1,7 +1,6 @@
 import { format } from "date-fns";
 import { Response } from "express";
 import { getCurrentFinancialPeriod } from "../helpers/financial-period";
-import { PaginationHelper } from "../helpers/pagination";
 import { ResponseHandler } from "../helpers/response-handler";
 import { AuthenticatedRequest } from "../middlewares/auth";
 import { TransactionRepository } from "../repositories/transaction.repository";
@@ -10,6 +9,7 @@ import {
   createTransactionService,
   updateTransactionService,
 } from "../services/transaction.service";
+import { validatePagination } from "../validations/pagination.validation";
 
 export const createTransaction = async (
   req: AuthenticatedRequest,
@@ -63,20 +63,13 @@ export const getTransactions = async (
       filters.endDate = new Date(endDate as string);
     }
 
-    // Verificar se há parâmetros de paginação
-    const hasPagination = page || limit;
+    const paginationExists = await validatePagination(page, limit);
 
-    if (hasPagination) {
+    if (paginationExists) {
       // Usar versão paginada
-      const paginationParams = {
-        page: page ? Number(page) : undefined,
-        limit: limit ? Number(limit) : undefined,
-      };
-
-      const pagination = PaginationHelper.validateAndParse(paginationParams);
       const result = await TransactionRepository.findByUserIdPaginated(
         userId,
-        pagination,
+        paginationExists,
         filters
       );
 
@@ -106,7 +99,7 @@ export const getTransactions = async (
         res,
         {
           transactions: result.data,
-          totalCount: result.pagination.total,
+          pagination: result.pagination,
           totalExpense,
           totalIncome,
           monthlyIncome,
@@ -147,6 +140,14 @@ export const getTransactions = async (
         res,
         {
           transactions,
+          pagination: {
+            page: 1,
+            limit: transactions.length,
+            total: transactions.length,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false,
+          },
           totalExpense,
           totalIncome,
           monthlyIncome,
