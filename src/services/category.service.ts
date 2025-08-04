@@ -19,8 +19,8 @@ export const getCategoriesService = async (
   pagination: { page?: number; limit?: number }
 ) => {
   const paginationExists = await validatePagination(
-    pagination.page || 0,
-    pagination.limit || 0
+    pagination.page,
+    pagination.limit
   );
 
   if (paginationExists) {

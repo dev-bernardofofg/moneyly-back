@@ -1,4 +1,5 @@
 import { formatInTimeZone } from "date-fns-tz";
+import { ptBR } from "date-fns/locale";
 import {
   createNormalizedSaoPauloDate,
   getCurrentSaoPauloDate,
@@ -324,16 +325,18 @@ export function getAvailableFinancialPeriods(
         return txDate >= period.startDate && txDate <= period.endDate;
       });
 
-      // Criar label formatado (ex: "Julho - Agosto")
+      // Criar label formatado em português (ex: "Julho - Agosto")
       const startMonth = formatInTimeZone(
         period.startDate,
         SAO_PAULO_TIMEZONE,
-        "MMMM"
+        "MMMM",
+        { locale: ptBR }
       );
       const endMonth = formatInTimeZone(
         period.endDate,
         SAO_PAULO_TIMEZONE,
-        "MMMM"
+        "MMMM",
+        { locale: ptBR }
       );
       const startYear = period.startDate.getFullYear();
       const endYear = period.endDate.getFullYear();
@@ -349,11 +352,16 @@ export function getAvailableFinancialPeriods(
         label = `${startMonth} ${startYear} - ${endMonth} ${endYear}`;
       }
 
+      // Capitalizar primeira letra de cada mês
+      const capitalizedLabel = label.replace(/\b\w/g, (char) =>
+        char.toUpperCase()
+      );
+
       periods.push({
         id: `${period.startDate.toISOString()}_${period.endDate.toISOString()}`,
         startDate: period.startDate,
         endDate: period.endDate,
-        label: label.charAt(0).toUpperCase() + label.slice(1), // Capitalizar primeira letra
+        label: capitalizedLabel,
         transactionCount: periodTransactions.length,
       });
     }
