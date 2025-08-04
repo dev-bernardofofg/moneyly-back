@@ -23,16 +23,27 @@ export const getDashboardOverview = async (
   } = req.user;
   const { periodId } = req.body;
   try {
+    // Se há periodId, buscar todas as transações para validar o período
+    // Se não há periodId, usar data atual para buscar transações do período atual
+    const dates = periodId
+      ? { startDate: new Date(0), endDate: new Date() } // Buscar todas as transações
+      : { startDate: new Date(), endDate: new Date() }; // Buscar apenas hoje
+
     const { transactions, availablePeriods, selectedPeriod } =
       await getTransactionsByUserId(
         userId,
-        { startDate: new Date(), endDate: new Date() },
+        dates,
         { startDay: financialDayStart ?? 1, endDay: financialDayEnd ?? 31 },
         periodId
       );
 
+    // Se há periodId, usar o período selecionado para buscar transações específicas
+    const periodDates = selectedPeriod
+      ? { startDate: selectedPeriod.startDate, endDate: selectedPeriod.endDate }
+      : { startDate: new Date(), endDate: new Date() };
+
     const { stats, monthlyHistory, expensesByCategory, periodTransactions } =
-      await getDashboardOverviewService(userId, monthlyIncome, selectedPeriod!);
+      await getDashboardOverviewService(userId, monthlyIncome, periodDates);
 
     return ResponseHandler.success(
       res,

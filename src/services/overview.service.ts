@@ -33,7 +33,8 @@ export const getTransactionsByUserId = async (
 
     if (periodId) {
       validatePeriodId(periodId, availablePeriods);
-      return { transactions, availablePeriods };
+      const selectedPeriod = availablePeriods.find((p) => p.id === periodId);
+      return { transactions, availablePeriods, selectedPeriod };
     } else {
       const currentPeriod = getCurrentFinancialPeriod(
         financial.startDay,
