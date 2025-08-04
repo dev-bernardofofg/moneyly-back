@@ -12,7 +12,9 @@ export const validate = (config: ValidationConfig) => {
     try {
       // Validate body
       if (config.body) {
+        console.log("🔍 Debug - validate middleware - body before:", req.body);
         req.body = config.body.parse(req.body);
+        console.log("🔍 Debug - validate middleware - body after:", req.body);
       }
 
       // Validate params
