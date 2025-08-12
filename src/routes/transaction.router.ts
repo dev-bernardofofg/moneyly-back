@@ -9,6 +9,7 @@ import {
   updateTransaction,
 } from "../controllers/transaction.controller";
 import { authenticateUser } from "../middlewares/auth";
+import { ensurePeriodExists } from "../middlewares/auto-period-creation";
 import { validate } from "../middlewares/validate";
 import { idParamSchema } from "../schemas/auth.schema";
 import { transactionBodySchema } from "../schemas/pagination.schema";
@@ -19,45 +20,39 @@ import {
 
 const TransactionsRouter: Router = Router();
 
+TransactionsRouter.use(authenticateUser);
+TransactionsRouter.use(ensurePeriodExists);
+
 TransactionsRouter.post(
   "/create",
-  authenticateUser,
   validate({ body: transactionSchema }),
   createTransaction
 );
 
 TransactionsRouter.post(
   "/",
-  authenticateUser,
   validate({ body: transactionBodySchema }),
   getTransactions
 );
 
 TransactionsRouter.put(
   "/:id",
-  authenticateUser,
   validate({ body: transactionUpdateSchema, params: idParamSchema }),
   updateTransaction
 );
 
 TransactionsRouter.delete(
   "/:id",
-  authenticateUser,
   validate({ params: idParamSchema }),
   deleteTransaction
 );
 
-TransactionsRouter.get("/summary", authenticateUser, getTransactionSummary);
+TransactionsRouter.get("/summary", getTransactionSummary);
 
-TransactionsRouter.get(
-  "/summary-by-month",
-  authenticateUser,
-  getMonthlySummary
-);
+TransactionsRouter.get("/summary-by-month", getMonthlySummary);
 
 TransactionsRouter.get(
   "/summary-current-period",
-  authenticateUser,
   getCurrentFinancialPeriodSummary
 );
 

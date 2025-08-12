@@ -5,6 +5,7 @@ import {
   getPlannerOverview,
 } from "../controllers/overview.controller";
 import { authenticateUser } from "../middlewares/auth";
+import { ensurePeriodExists } from "../middlewares/auto-period-creation";
 import { validateBody } from "../middlewares/validate";
 import {
   getAvailablePeriodsSchema,
@@ -13,10 +14,12 @@ import {
 
 const OverviewRouter: Router = Router();
 
+OverviewRouter.use(authenticateUser);
+OverviewRouter.use(ensurePeriodExists);
+
 // Buscar períodos financeiros disponíveis
 OverviewRouter.post(
   "/periods",
-  authenticateUser,
   validateBody(getAvailablePeriodsSchema),
   getAvailablePeriods
 );
@@ -24,11 +27,10 @@ OverviewRouter.post(
 // Rota principal do dashboard - retorna dados de um período específico
 OverviewRouter.post(
   "/dashboard",
-  authenticateUser,
   validateBody(getDashboardOverviewSchema),
   getDashboardOverview
 );
 
-OverviewRouter.get("/planner", authenticateUser, getPlannerOverview);
+OverviewRouter.get("/planner", getPlannerOverview);
 
 export { OverviewRouter };

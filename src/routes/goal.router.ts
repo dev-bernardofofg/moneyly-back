@@ -8,6 +8,7 @@ import {
   updateSavingsGoal,
 } from "../controllers/goal.controller";
 import { authenticateUser } from "../middlewares/auth";
+import { ensurePeriodExists } from "../middlewares/auto-period-creation";
 import { validateBody } from "../middlewares/validate";
 import {
   addAmountToGoalSchema,
@@ -19,6 +20,7 @@ const GoalRouter: Router = Router();
 
 // Todas as rotas requerem autenticação
 GoalRouter.use(authenticateUser);
+GoalRouter.use(ensurePeriodExists);
 
 // Criar objetivo de poupança
 GoalRouter.post("/", validateBody(createSavingsGoalSchema), createGoal);

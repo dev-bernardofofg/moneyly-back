@@ -11,6 +11,11 @@ export class UserRepository {
     return user;
   }
 
+  static async findAll(): Promise<User[]> {
+    const usersData = await db.select().from(users);
+    return usersData as User[];
+  }
+
   // Buscar usuário por email
   static async findByEmail(email: string): Promise<User | null> {
     const [user] = await db.select().from(users).where(eq(users.email, email));

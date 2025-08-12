@@ -114,6 +114,17 @@ export const goalMilestones = pgTable("goal_milestones", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Tabela de períodos financeiros
+export const financialPeriods = pgTable("financial_periods", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Relacionamentos
 export const usersRelations = relations(users, ({ many }) => ({
   transactions: many(transactions),
@@ -121,6 +132,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   budgets: many(budgets),
   goals: many(goals),
   categoryPreferences: many(userCategoryPreferences),
+  financialPeriods: many(financialPeriods),
 }));
 
 export const transactionsRelations = relations(transactions, ({ one }) => ({
@@ -183,6 +195,13 @@ export const userCategoryPreferencesRelations = relations(
     }),
   })
 );
+
+export const financialPeriodsRelations = relations(financialPeriods, ({ one }) => ({
+  user: one(users, {
+    fields: [financialPeriods.userId],
+    references: [users.id],
+  }),
+}));
 
 // Tipos TypeScript
 export type User = typeof users.$inferSelect;

@@ -6,6 +6,7 @@ import {
   updateCategoryBudget,
 } from "../controllers/budget.controller";
 import { authenticateUser } from "../middlewares/auth";
+import { ensurePeriodExists } from "../middlewares/auto-period-creation";
 import { validateBody } from "../middlewares/validate";
 import {
   createCategoryBudgetSchema,
@@ -14,26 +15,27 @@ import {
 
 const BudgetRouter: Router = Router();
 
+BudgetRouter.use(authenticateUser);
+BudgetRouter.use(ensurePeriodExists);
+
 // Criar orçamento por categoria
 BudgetRouter.post(
   "/",
-  authenticateUser,
   validateBody(createCategoryBudgetSchema),
   createCategoryBudget
 );
 
 // Buscar orçamentos do usuário
-BudgetRouter.get("/", authenticateUser, getUserBudgets);
+BudgetRouter.get("/", getUserBudgets);
 
 // Atualizar orçamento
 BudgetRouter.put(
   "/:id",
-  authenticateUser,
   validateBody(updateCategoryBudgetSchema),
   updateCategoryBudget
 );
 
 // Deletar orçamento
-BudgetRouter.delete("/:id", authenticateUser, deleteCategoryBudget);
+BudgetRouter.delete("/:id", deleteCategoryBudget);
 
 export { BudgetRouter };
