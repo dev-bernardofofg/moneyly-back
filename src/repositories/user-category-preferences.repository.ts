@@ -5,6 +5,7 @@ import {
   type NewUserCategoryPreference,
 } from "../db/schema";
 
+// Implementa IUserCategoryPreferencesRepository (métodos estáticos)
 export class UserCategoryPreferencesRepository {
   static async create(preferenceData: NewUserCategoryPreference) {
     const [preference] = await db

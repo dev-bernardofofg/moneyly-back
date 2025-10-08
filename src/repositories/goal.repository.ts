@@ -9,9 +9,11 @@ import {
   NewGoalMilestone,
 } from "../db/schema";
 
+// Implementa IGoalRepository (métodos estáticos)
 export class GoalRepository {
   static async create(data: NewGoal): Promise<Goal> {
     const [goal] = await db.insert(goals).values(data).returning();
+    if (!goal) throw new Error("Falha ao criar objetivo");
 
     // Criar marcos automaticamente (25%, 50%, 75%, 100%)
     const milestones = [25, 50, 75, 100];
@@ -103,6 +105,7 @@ export class GoalRepository {
       .insert(goalMilestones)
       .values(data)
       .returning();
+    if (!milestone) throw new Error("Falha ao criar marco");
     return milestone;
   }
 
@@ -167,10 +170,11 @@ export class GoalRepository {
           reachedAt: new Date(),
         });
 
-        // Aqui você pode adicionar lógica para notificações
-        console.log(
-          `🎉 Marco de ${milestone.percentage}% atingido para o objetivo: ${goal.title}`
-        );
+        // TODO: Adicionar lógica para notificações
+        // logger.info(`Marco de ${milestone.percentage}% atingido`, {
+        //   goalTitle: goal.title,
+        //   milestone: milestone.percentage,
+        // });
       }
     }
   }

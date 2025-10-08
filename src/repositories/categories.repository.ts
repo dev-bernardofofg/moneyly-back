@@ -12,6 +12,7 @@ import {
 } from "../helpers/pagination";
 import { UserCategoryPreferencesRepository } from "./user-category-preferences.repository";
 
+// Implementa ICategoryRepository (métodos estáticos)
 export class CategoryRepository {
   static async create(categoryData: NewCategory) {
     const [category] = await db
@@ -65,13 +66,14 @@ export class CategoryRepository {
     pagination: PaginationQuery
   ): Promise<PaginationResult<typeof categoriesTable.$inferSelect>> {
     // Contar categorias pessoais
-    const [{ value: personalCount }] = await db
+    const personalCountResult = await db
       .select({ value: count() })
       .from(categoriesTable)
       .where(eq(categoriesTable.userId, userId));
+    const personalCount = personalCountResult[0]?.value ?? 0;
 
     // Contar categorias globais visíveis (otimizado)
-    const [{ value: globalCount }] = await db
+    const globalCountResult = await db
       .select({ value: count() })
       .from(categoriesTable)
       .leftJoin(
@@ -90,6 +92,7 @@ export class CategoryRepository {
           )
         )
       );
+    const globalCount = globalCountResult[0]?.value ?? 0;
 
     const total = personalCount + globalCount;
 

@@ -2,12 +2,14 @@ import { eq } from "drizzle-orm";
 import { db } from "../db";
 import { users, type NewUser, type User } from "../db/schema";
 
+// Implementa IUserRepository (métodos estáticos)
 export class UserRepository {
   // Criar usuário
   static async create(
     userData: Omit<NewUser, "id" | "createdAt" | "updatedAt">
   ): Promise<User> {
     const [user] = await db.insert(users).values(userData).returning();
+    if (!user) throw new Error("Falha ao criar usuário");
     return user;
   }
 

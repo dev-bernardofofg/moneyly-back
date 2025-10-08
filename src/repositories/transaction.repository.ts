@@ -23,6 +23,7 @@ export type TransactionWithCategory = Omit<
   };
 };
 
+// Implementa ITransactionRepository (métodos estáticos)
 export class TransactionRepository {
   // Criar transação
   static async create(
@@ -32,6 +33,7 @@ export class TransactionRepository {
       .insert(transactions)
       .values(transactionData)
       .returning();
+    if (!transaction) throw new Error("Falha ao criar transação");
     return transaction;
   }
 
@@ -60,15 +62,17 @@ export class TransactionRepository {
     }
 
     // Buscar total de registros
-    const [{ value: total }] = await db
+    const totalResult = await db
       .select({ value: count() })
       .from(transactions)
       .where(and(...conditions));
+    const total = totalResult[0]?.value ?? 0;
 
     // Buscar dados paginados com JOIN na categoria
     const data = await db
       .select({
         id: transactions.id,
+        periodId: transactions.periodId,
         type: transactions.type,
         title: transactions.title,
         amount: transactions.amount,
@@ -124,6 +128,7 @@ export class TransactionRepository {
     return await db
       .select({
         id: transactions.id,
+        periodId: transactions.periodId,
         type: transactions.type,
         title: transactions.title,
         amount: transactions.amount,
@@ -193,6 +198,7 @@ export class TransactionRepository {
       .select({
         id: transactions.id,
         userId: transactions.userId,
+        periodId: transactions.periodId,
         type: transactions.type,
         title: transactions.title,
         amount: transactions.amount,
@@ -209,5 +215,55 @@ export class TransactionRepository {
       .innerJoin(categories, eq(transactions.categoryId, categories.id))
       .where(eq(transactions.userId, userId))
       .orderBy(desc(transactions.date));
+  }
+
+  // Buscar transações por periodId
+  static async findByPeriodId(
+    userId: string,
+    periodId: string
+  ): Promise<TransactionWithCategory[]> {
+    return await db
+      .select({
+        id: transactions.id,
+        periodId: transactions.periodId,
+        type: transactions.type,
+        title: transactions.title,
+        amount: transactions.amount,
+        description: transactions.description,
+        date: transactions.date,
+        createdAt: transactions.createdAt,
+        updatedAt: transactions.updatedAt,
+        category: {
+          id: categories.id,
+          name: categories.name,
+        },
+      })
+      .from(transactions)
+      .innerJoin(categories, eq(transactions.categoryId, categories.id))
+      .where(
+        and(
+          eq(transactions.userId, userId),
+          eq(transactions.periodId, periodId)
+        )
+      )
+      .orderBy(desc(transactions.date));
+  }
+
+  // Buscar transações por periodId OU por data (fallback)
+  static async findByPeriodIdOrDate(
+    userId: string,
+    periodId?: string,
+    dateRange?: { startDate: Date; endDate: Date }
+  ): Promise<TransactionWithCategory[]> {
+    if (periodId) {
+      // Buscar por periodId (mais preciso)
+      return await this.findByPeriodId(userId, periodId);
+    } else if (dateRange) {
+      // Fallback para busca por data
+      return await this.findByUserId(userId, dateRange);
+    } else {
+      // Buscar todas
+      return await this.findAllByUserId(userId);
+    }
   }
 }

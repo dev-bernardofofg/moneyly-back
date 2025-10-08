@@ -7,9 +7,11 @@ import {
   type CategoryBudget,
 } from "../db/schema";
 
+// Implementa IBudgetRepository (métodos estáticos)
 export class BudgetRepository {
   static async create(data: NewCategoryBudget): Promise<CategoryBudget> {
     const [budget] = await db.insert(budgets).values(data).returning();
+    if (!budget) throw new Error("Falha ao criar orçamento");
     return budget;
   }
 

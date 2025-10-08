@@ -2,9 +2,24 @@ import { and, eq, gte, lte } from "drizzle-orm";
 import { db } from "../db";
 import { financialPeriods } from "../db/schema";
 
+// Implementa IFinancialPeriodRepository (métodos estáticos)
 export class FinancialPeriodRepository {
-  static async create(data: any): Promise<any> {
+  static async create(data: {
+    userId: string;
+    startDate: Date;
+    endDate: Date;
+    isActive: boolean;
+  }): Promise<{
+    id: string;
+    userId: string;
+    startDate: Date;
+    endDate: Date;
+    isActive: boolean | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }> {
     const [period] = await db.insert(financialPeriods).values(data).returning();
+    if (!period) throw new Error("Falha ao criar período financeiro");
     return period;
   }
 
@@ -12,7 +27,17 @@ export class FinancialPeriodRepository {
     userId: string,
     startDate: Date,
     endDate: Date
-  ): Promise<any[]> {
+  ): Promise<
+    Array<{
+      id: string;
+      userId: string;
+      startDate: Date;
+      endDate: Date;
+      isActive: boolean | null;
+      createdAt: Date;
+      updatedAt: Date;
+    }>
+  > {
     return await db
       .select()
       .from(financialPeriods)
@@ -25,7 +50,17 @@ export class FinancialPeriodRepository {
       );
   }
 
-  static async findActiveByUser(userId: string): Promise<any[]> {
+  static async findActiveByUser(userId: string): Promise<
+    Array<{
+      id: string;
+      userId: string;
+      startDate: Date;
+      endDate: Date;
+      isActive: boolean | null;
+      createdAt: Date;
+      updatedAt: Date;
+    }>
+  > {
     return await db
       .select()
       .from(financialPeriods)
@@ -49,7 +84,15 @@ export class FinancialPeriodRepository {
     userId: string,
     startDate: Date,
     endDate: Date
-  ): Promise<any> {
+  ): Promise<{
+    id: string;
+    userId: string;
+    startDate: Date;
+    endDate: Date;
+    isActive: boolean | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }> {
     // Verificar se já existe
     const existing = await db
       .select()
@@ -63,16 +106,47 @@ export class FinancialPeriodRepository {
       )
       .limit(1);
 
-    if (existing.length > 0) {
-      return existing[0];
+    const existingPeriod = existing[0];
+    if (existingPeriod) {
+      return existingPeriod;
     }
 
     // Criar novo período
-    return await this.create({
+    const newPeriod = await this.create({
       userId,
       startDate,
       endDate,
       isActive: true,
     });
+    return newPeriod;
+  }
+
+  static async findById(
+    periodId: string,
+    userId: string
+  ): Promise<
+    | {
+        id: string;
+        userId: string;
+        startDate: Date;
+        endDate: Date;
+        isActive: boolean | null;
+        createdAt: Date;
+        updatedAt: Date;
+      }
+    | undefined
+  > {
+    const [period] = await db
+      .select()
+      .from(financialPeriods)
+      .where(
+        and(
+          eq(financialPeriods.id, periodId),
+          eq(financialPeriods.userId, userId)
+        )
+      )
+      .limit(1);
+
+    return period;
   }
 }
