@@ -1,167 +1,157 @@
-### Objetivos de Poupança
-
-# Configuração base
-@baseUrl = http://localhost:5000
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJmZDcxMTAzNS0wM2VkLTRlOTEtODQ0Ny02ZjcwOTQ3ZjQ0NGEiLCJpYXQiOjE3NTM1MDM3MjIsImV4cCI6MTc1NDEwODUyMn0.7gkexkpubXnMKYlySqRQ2RnWlKMj_WxRGot55wEVE_A
-
-### Login para obter token
-# @name login
-POST {{baseUrl}}/auth/login
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
+# Arquivo de requests para objetivos de poupança
+# 
+# Este arquivo contém todas as rotas de objetivos da API Moneyly
+# Inclui: CRUD de objetivos e adição de valores
 
 ### ========================================
-### CRUD Objetivos de Poupança
+### CRUD DE OBJETIVOS DE POUPANÇA
 ### ========================================
 
-### 1. Criar objetivo de poupança
+### Criar novo objetivo de poupança
+# @name createGoal
+@baseUrl = {{baseUrl}}
+@authToken = {{authToken}}
+@contentType = {{contentType}}
+@goalId = {{goalId}}
+
 POST {{baseUrl}}/goals
 Authorization: Bearer {{authToken}}
-Content-Type: application/json
+Content-Type: {{contentType}}
 
 {
   "title": "Viagem para Europa",
   "description": "Economizar para uma viagem de 15 dias pela Europa",
-  "targetAmount": 15000,
-  "targetDate": "2025-12-31T23:59:59.000Z"
+  "targetAmount": 15000.00,
+  "targetDate": "2025-06-01T00:00:00.000Z"
 }
 
-### 2. Buscar objetivos do usuário (apenas ativos)
+### Listar objetivos do usuário
+# @name getUserGoals
 GET {{baseUrl}}/goals
 Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
 
-### 3. Buscar objetivos do usuário (incluindo inativos)
-GET {{baseUrl}}/goals?activeOnly=false
+### Buscar objetivo específico por ID
+# @name getGoalById
+GET {{baseUrl}}/goals/{{goalId}}
 Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
 
-### 4. Buscar objetivo específico
-GET {{baseUrl}}/goals/550e8400-e29b-41d4-a716-446655440002
+### Atualizar objetivo de poupança
+# @name updateSavingsGoal
+PUT {{baseUrl}}/goals/{{goalId}}
 Authorization: Bearer {{authToken}}
-
-### 5. Buscar progresso dos objetivos
-GET {{baseUrl}}/goals/progress
-Authorization: Bearer {{authToken}}
-
-### 6. Atualizar objetivo
-PUT {{baseUrl}}/goals/4bb252ce-4337-4a92-9728-335887a2c305
-Authorization: Bearer {{authToken}}
-Content-Type: application/json
+Content-Type: {{contentType}}
 
 {
-  "title": "Viagem para Europa - Atualizado",
-  "targetAmount": 18000,
-  "targetDate": "2025-06-30T23:59:59.000Z"
+  "title": "Viagem para Europa Atualizada",
+  "description": "Economizar para uma viagem de 20 dias pela Europa",
+  "targetAmount": 18000.00,
+  "targetDate": "2025-08-01T00:00:00.000Z"
 }
 
-### 7. Adicionar valor ao objetivo
-POST {{baseUrl}}/goals/550e8400-e29b-41d4-a716-446655440002/add-amount
+### Adicionar valor ao objetivo
+# @name addAmountToGoal
+POST {{baseUrl}}/goals/{{goalId}}/add-amount
 Authorization: Bearer {{authToken}}
-Content-Type: application/json
+Content-Type: {{contentType}}
 
 {
-  "amount": 500
+  "amount": 500.00
 }
 
-### 8. Deletar objetivo
-DELETE {{baseUrl}}/goals/4442bd4d-6904-4301-b20a-8312533161ee
+### Deletar objetivo de poupança
+# @name deleteSavingsGoal
+DELETE {{baseUrl}}/goals/{{goalId}}
 Authorization: Bearer {{authToken}}
 
 ### ========================================
-### Exemplos de Resposta
+### EXEMPLOS DE USO
 ### ========================================
 
-### Exemplo de resposta - Criar objetivo
-# {
-#   "success": true,
-#   "data": null,
-#   "message": "Objetivo de poupança criado com sucesso"
-# }
+### Exemplo: Criar objetivo para compra de carro
+POST {{baseUrl}}/goals
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
 
-### Exemplo de resposta - Listar objetivos
-# {
-#   "success": true,
-#   "data": [
-#     {
-#       "id": "550e8400-e29b-41d4-a716-446655440002",
-#       "title": "Viagem para Europa",
-#       "description": "Economizar para uma viagem de 15 dias pela Europa",
-#       "targetAmount": 15000,
-#       "currentAmount": 5000,
-#       "targetDate": "2024-12-31T23:59:59.000Z",
-#       "startDate": "2024-01-01T00:00:00.000Z",
-#       "isActive": true,
-#       "milestones": [
-#         {
-#           "id": "550e8400-e29b-41d4-a716-446655440003",
-#           "percentage": 25,
-#           "amount": 3750,
-#           "isReached": true,
-#           "reachedAt": "2024-03-15T10:30:00.000Z"
-#         },
-#         {
-#           "id": "550e8400-e29b-41d4-a716-446655440004",
-#           "percentage": 50,
-#           "amount": 7500,
-#           "isReached": false,
-#           "reachedAt": null
-#         }
-#       ],
-#       "progress": {
-#         "percentage": 33,
-#         "remaining": 10000,
-#         "daysRemaining": 45
-#       }
-#     }
-#   ],
-#   "message": "Objetivos de poupança recuperados com sucesso"
-# }
+{
+  "title": "Compra de Carro",
+  "description": "Economizar para dar entrada em um carro",
+  "targetAmount": 25000.00,
+  "targetDate": "2026-01-01T00:00:00.000Z"
+}
 
-### Exemplo de resposta - Progresso dos objetivos
-# {
-#   "success": true,
-#   "data": [
-#     {
-#       "id": "550e8400-e29b-41d4-a716-446655440002",
-#       "title": "Viagem para Europa",
-#       "targetAmount": 15000,
-#       "currentAmount": 5000,
-#       "targetDate": "2024-12-31T23:59:59.000Z",
-#       "progress": {
-#         "percentage": 33,
-#         "remaining": 10000,
-#         "daysRemaining": 45
-#       },
-#       "status": "good-progress",
-#       "nextMilestone": {
-#         "id": "550e8400-e29b-41d4-a716-446655440004",
-#         "percentage": 50,
-#         "amount": 7500,
-#         "isReached": false
-#       }
-#     }
-#   ],
-#   "message": "Progresso dos objetivos recuperado com sucesso"
-# }
+### Exemplo: Criar objetivo para reserva de emergência
+POST {{baseUrl}}/goals
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
 
-### ========================================
-### Status dos Objetivos
-### ========================================
-# status: "just-started" (0-24%)
-# status: "early-stage" (25-49%)
-# status: "good-progress" (50-74%)
-# status: "on-track" (75-99%)
-# status: "completed" (100%)
-# status: "overdue" (prazo vencido)
+{
+  "title": "Reserva de Emergência",
+  "description": "Criar uma reserva de 6 meses de despesas",
+  "targetAmount": 18000.00,
+  "targetDate": "2024-12-01T00:00:00.000Z"
+}
+
+### Exemplo: Criar objetivo para faculdade
+POST {{baseUrl}}/goals
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+{
+  "title": "Faculdade",
+  "description": "Economizar para pagar a faculdade",
+  "targetAmount": 30000.00,
+  "targetDate": "2027-02-01T00:00:00.000Z"
+}
+
+### Exemplo: Atualizar apenas o valor alvo
+PUT {{baseUrl}}/goals/{{goalId}}
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+{
+  "targetAmount": 20000.00
+}
+
+### Exemplo: Atualizar apenas a data alvo
+PUT {{baseUrl}}/goals/{{goalId}}
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+{
+  "targetDate": "2025-12-01T00:00:00.000Z"
+}
+
+### Exemplo: Adicionar valor parcial ao objetivo
+POST {{baseUrl}}/goals/{{goalId}}/add-amount
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+{
+  "amount": 1000.00
+}
+
+### Exemplo: Adicionar valor pequeno ao objetivo
+POST {{baseUrl}}/goals/{{goalId}}/add-amount
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+{
+  "amount": 50.00
+}
 
 ### ========================================
-### Marcos Automáticos
+### NOTAS IMPORTANTES
 ### ========================================
-# Os marcos são criados automaticamente:
-# - 25% do valor alvo
-# - 50% do valor alvo
-# - 75% do valor alvo
-# - 100% do valor alvo 
+
+# 1. Todas as rotas requerem autenticação (token JWT)
+# 2. O sistema cria automaticamente períodos financeiros quando necessário
+# 3. Título do objetivo é obrigatório
+# 4. Valor alvo deve ser positivo
+# 5. Data alvo deve ser uma data válida (formato ISO)
+# 6. Valores adicionados devem ser positivos
+# 7. Sistema calcula automaticamente o progresso (currentAmount vs targetAmount)
+# 8. Objetivos podem ser marcados como ativos/inativos
+# 9. Use o token retornado pelo login em todas as requisições
+# 10. Objetivos são vinculados ao usuário logado 

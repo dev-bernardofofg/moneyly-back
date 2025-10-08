@@ -23,6 +23,11 @@ lib-cov
 coverage
 *.lcov
 
+# Playwright
+playwright-report/
+playwright/.cache/
+test-results/
+
 # nyc test coverage
 .nyc_output
 
@@ -74,6 +79,7 @@ web_modules/
 
 # dotenv environment variable files
 .env
+.env.test
 .env.development.local
 .env.test.local
 .env.production.local
@@ -135,3 +141,11 @@ dist
 .yarn/install-state.gz
 .pnp.*
 .vercel
+
+# Generated files
+src/generated/
+!src/generated/.gitkeep
+openapi.json
+
+# Public folder
+public/

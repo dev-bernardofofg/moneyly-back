@@ -1,38 +1,54 @@
+# Arquivo de requests para usuários
+# 
+# Este arquivo contém todas as rotas de usuário da API Moneyly
+# Inclui: perfil, configurações financeiras, períodos financeiros
+
+### ========================================
+### PERFIL DO USUÁRIO
+### ========================================
+
 @baseUrl = http://localhost:5000
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzMGE2YjIwYy1kYzcwLTRlMmMtOGZhOS1lZjRjMjZkYjBlYzQiLCJpYXQiOjE3NTUwOTI2MjcsImV4cCI6MTc1NTY5NzQyN30.WyH8Q8uA33zdtZ6N-RWaLubjkZtH_Gdtg4Xwyaey7RM
 @contentType = application/json
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzMzY0ZDA5Mi03ZWU1LTQ1MTAtYTk5Yy0yZGY2ZmI2NjRjMjAiLCJpYXQiOjE3NTI3NjY2MTUsImV4cCI6MTc1MzM3MTQxNX0.0tBYdUOonK_aOFcfhfRTBrXhhFfXFhhGgcSOrMihm58
+@periodId = 2024-07-05T00:00:00.000Z_2024-08-05T00:00:00.000Z
 
-### ========================================
-### 👤 USUÁRIO - MANIPULAÇÃO DE DADOS
-### ========================================
 
-### 1. Buscar dados do usuário logado
-GET {{baseUrl}}/users/me
+### Buscar dados do usuário logado
+# @name getMe
+GET {{baseUrl}}/user/me
 Authorization: Bearer {{authToken}}
-
-### 2. Atualizar rendimento mensal
-PUT {{baseUrl}}/users/income
 Content-Type: {{contentType}}
+
+### ========================================
+### CONFIGURAÇÕES FINANCEIRAS
+### ========================================
+
+### Atualizar rendimento mensal
+# @name updateIncome
+PUT {{baseUrl}}/user/income
 Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
 
 {
   "monthlyIncome": 5000
 }
 
-### 3. Atualizar período financeiro
-PUT {{baseUrl}}/users/financial-period
-Content-Type: {{contentType}}
+### Atualizar período financeiro
+# @name updateFinancialPeriod
+PUT {{baseUrl}}/user/financial-period
 Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
 
 {
   "financialDayStart": 5,
   "financialDayEnd": 5
 }
 
-### 4. Atualizar rendimento e período financeiro juntos
-PUT {{baseUrl}}/users/income-and-period
-Content-Type: {{contentType}}
+### Atualizar rendimento e período financeiro juntos
+# @name updateIncomeAndPeriod
+PUT {{baseUrl}}/user/income-and-period
 Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
 
 {
   "monthlyIncome": 5000,
@@ -41,62 +57,48 @@ Authorization: Bearer {{authToken}}
 }
 
 ### ========================================
-### 🧪 TESTES DE VALIDAÇÃO
+### PERÍODOS FINANCEIROS
 ### ========================================
 
-### 5. Teste - Rendimento negativo
-PUT {{baseUrl}}/users/income
-Content-Type: {{contentType}}
+### Listar períodos financeiros do usuário
+# @name getFinancialPeriods
+GET {{baseUrl}}/user/financial-periods
 Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+### Buscar período financeiro específico por ID
+# @name getFinancialPeriodById
+GET {{baseUrl}}/user/financial-periods/{{periodId}}
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+### ========================================
+### EXEMPLOS DE USO
+### ========================================
+
+### Exemplo: Atualizar apenas o rendimento
+PUT {{baseUrl}}/user/income
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
 
 {
-  "monthlyIncome": -1000
+  "monthlyIncome": 7500
 }
 
-### 6. Teste - Período financeiro inválido (dia 0)
-PUT {{baseUrl}}/users/financial-period
-Content-Type: {{contentType}}
+### Exemplo: Configurar período financeiro (5 a 5)
+PUT {{baseUrl}}/user/financial-period
 Authorization: Bearer {{authToken}}
-
-{
-  "financialDayStart": 0,
-  "financialDayEnd": 5
-}
-
-### 7. Teste - Período financeiro inválido (dia 32)
-PUT {{baseUrl}}/users/financial-period
 Content-Type: {{contentType}}
-Authorization: Bearer {{authToken}}
-
-{
-  "financialDayStart": 5,
-  "financialDayEnd": 32
-}
-
-### 8. Teste - Período financeiro inválido (lógica incorreta)
-PUT {{baseUrl}}/users/financial-period
-Content-Type: {{contentType}}
-Authorization: Bearer {{authToken}}
-
-{
-  "financialDayStart": 10,
-  "financialDayEnd": 5
-}
-
-### 9. Teste - Período financeiro válido (5 a 5)
-PUT {{baseUrl}}/users/financial-period
-Content-Type: {{contentType}}
-Authorization: Bearer {{authToken}}
 
 {
   "financialDayStart": 5,
   "financialDayEnd": 5
 }
 
-### 10. Teste - Período financeiro válido (15 a 14)
-PUT {{baseUrl}}/users/financial-period
-Content-Type: {{contentType}}
+### Exemplo: Configurar período que cruza meses (15 a 14)
+PUT {{baseUrl}}/user/financial-period
 Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
 
 {
   "financialDayStart": 15,
@@ -104,20 +106,15 @@ Authorization: Bearer {{authToken}}
 }
 
 ### ========================================
-### 🔒 TESTES DE AUTORIZAÇÃO
+### NOTAS IMPORTANTES
 ### ========================================
 
-### 11. Teste - Acesso sem token
-GET {{baseUrl}}/users/me
-
-### 12. Teste - Token inválido
-GET {{baseUrl}}/users/me
-Authorization: Bearer token_invalido
-
-### 13. Teste - Atualizar rendimento sem token
-PUT {{baseUrl}}/users/income
-Content-Type: {{contentType}}
-
-{
-  "monthlyIncome": 5000
-} 
+# 1. Todas as rotas requerem autenticação (token JWT)
+# 2. Rendimento mensal deve ser positivo e menor que 999.999.999
+# 3. Dias do período financeiro devem estar entre 1 e 31
+# 4. Períodos válidos incluem:
+#    - Um dia: 5 a 5
+#    - Dentro do mês: 1 a 31
+#    - Cruzando meses: 15 a 14 (15º dia a 14º do próximo mês)
+# 5. O sistema cria automaticamente períodos financeiros quando necessário
+# 6. Use o token retornado pelo login em todas as requisições 

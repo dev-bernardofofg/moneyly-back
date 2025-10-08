@@ -1,144 +1,156 @@
 @baseUrl = http://localhost:5000
 @contentType = application/json
-
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NDRmZWM4MS01OWM5LTQyMTQtYmI4OC01ZGMyNWIxNjcxZGMiLCJpYXQiOjE3NTM1MDg3NzEsImV4cCI6MTc1NDExMzU3MX0.xTXDmzLHh43br-mRskM6MzFO9QkNVyfu_xsMla4IwkY
-
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyZmVlNDIxYS1jNDc2LTQzMWMtOGZmMi01MGNiMzhjNWJmYmIiLCJpYXQiOjE3NTQ5NzMyNjIsImV4cCI6MTc1NTU3ODA2Mn0.91xAAJzoA49XnNg0KFGnvszE3Mlfy5JG1PcRqWayzJU
+@categoryId = 123e4567-e89b-12d3-a456-426614174001
+@budgetId = 123e4567-e89b-12d3-a456-426614174003
 
 ### ========================================
-### 📂 CATEGORIAS - GERENCIAMENTO
+### CRUD DE CATEGORIAS
 ### ========================================
-### 
-### 📝 NOVO FORMATO DE RESPOSTA:
-### 
-### 🔹 SEM PAGINAÇÃO:
-### {
-###   "success": true,
-###   "data": {
-###     "categories": [
-###       {
-###         "id": "uuid",
-###         "name": "Alimentação",
-###         "createdAt": "2024-01-15T00:00:00.000Z",
-###         "updatedAt": "2024-01-15T00:00:00.000Z"
-###       }
-###     ]
-###   },
-###   "message": "Categorias recuperadas com sucesso"
-### }
-### 
-### 🔹 COM PAGINAÇÃO:
-### {
-###   "success": true,
-###   "data": {
-###     "categories": [...],
-###     "totalCount": 10
-###   },
-###   "message": "Categorias recuperadas com sucesso"
-### }
 
-### 1. Listar categorias do usuário (sem paginação)
-POST {{baseUrl}}/categories
-Content-Type: {{contentType}}
+### Criar nova categoria
+# @name createCategory
+POST {{baseUrl}}/categories/create
 Authorization: Bearer {{authToken}}
-
-{}
-
-### 1.1. Listar categorias com paginação
-POST {{baseUrl}}/categories
 Content-Type: {{contentType}}
+
+{
+  "name": "Supermercado"
+}
+
+### Listar categorias do usuário
+# @name getCategories
+POST {{baseUrl}}/categories
 Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
 
 {
   "page": 1,
-  "limit": 5
+  "limit": 20
 }
 
-### 2. Criar nova categoria
-POST {{baseUrl}}/categories/create
-Content-Type: {{contentType}}
+### Atualizar categoria
+# @name updateCategory
+PUT {{baseUrl}}/categories/update/{{categoryId}}
 Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
 
 {
-  "name": "Lazer1"
+  "name": "Supermercado Atualizado"
 }
 
-### 3. Atualizar categoria
-PUT {{baseUrl}}/categories/update/1
-Content-Type: {{contentType}}
-Authorization: Bearer {{authToken}}
-
-{
-  "name": "Entretenimento"
-}
-
-### 4. Deletar categoria
-DELETE {{baseUrl}}/categories/delete/1
-Authorization: Bearer {{authToken}}
-
-### 5. Buscar categoria por ID (se disponível)
-GET {{baseUrl}}/categories/1
+### Deletar categoria
+# @name deleteCategory
+DELETE {{baseUrl}}/categories/delete/{{categoryId}}
 Authorization: Bearer {{authToken}}
 
 ### ========================================
-### 🧪 TESTES DE VALIDAÇÃO
+### ORÇAMENTOS POR CATEGORIA
 ### ========================================
 
-### 6. Teste - Nome vazio
-POST {{baseUrl}}/categories/create
-Content-Type: {{contentType}}
+### Criar orçamento para uma categoria
+# @name createCategoryBudget
+POST {{baseUrl}}/budgets
 Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
 
 {
-  "name": ""
+  "categoryId": "{{categoryId}}",
+  "monthlyLimit": 500.00
 }
 
-### 7. Teste - Nome muito longo
-POST {{baseUrl}}/categories/create
-Content-Type: {{contentType}}
+### Listar orçamentos do usuário
+# @name getUserBudgets
+GET {{baseUrl}}/budgets
 Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+### Atualizar orçamento de uma categoria
+# @name updateCategoryBudget
+PUT {{baseUrl}}/budgets/{{budgetId}}
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
 
 {
-  "name": "Este é um nome de categoria muito longo que deve exceder o limite de 50 caracteres permitidos"
+  "monthlyLimit": 600.00
 }
 
-### 8. Teste - Paginação inválida
+### Deletar orçamento de uma categoria
+# @name deleteCategoryBudget
+DELETE {{baseUrl}}/budgets/{{budgetId}}
+Authorization: Bearer {{authToken}}
+
+### ========================================
+### EXEMPLOS DE USO
+### ========================================
+
+### Exemplo: Criar categoria de transporte
+POST {{baseUrl}}/categories/create
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Transporte"
+}
+
+### Exemplo: Criar categoria de lazer
+POST {{baseUrl}}/categories/create
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Lazer"
+}
+
+### Exemplo: Criar categoria de saúde
+POST {{baseUrl}}/categories/create
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Saúde"
+}
+
+### Exemplo: Listar categorias com paginação
 POST {{baseUrl}}/categories
-Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
-
-{
-  "page": -1,
-  "limit": 1000
-}
-
-### 9. Teste - ID inválido
-GET {{baseUrl}}/categories/id-invalido
-Authorization: Bearer {{authToken}}
-
-### ========================================
-### 🔒 TESTES DE AUTORIZAÇÃO
-### ========================================
-
-### 10. Teste - Listar categorias sem token
-POST {{baseUrl}}/categories
-Content-Type: {{contentType}}
-
-{}
-
-### 11. Teste - Criar categoria sem token
-POST {{baseUrl}}/categories/create
 Content-Type: {{contentType}}
 
 {
-  "name": "Teste"
+  "page": 1,
+  "limit": 10
+}
+
+### Exemplo: Criar orçamento para transporte
+POST {{baseUrl}}/budgets
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+{
+  "categoryId": "{{categoryId}}",
+  "monthlyLimit": 300.00
+}
+
+### Exemplo: Atualizar limite do orçamento
+PUT {{baseUrl}}/budgets/{{budgetId}}
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+{
+  "monthlyLimit": 400.00
 }
 
 ### ========================================
-### 📝 VARIÁVEIS PARA REST CLIENT
+### NOTAS IMPORTANTES
 ### ========================================
 
-# Após criar uma categoria, copie o ID da resposta:
-# @categoryId = id-da-categoria-aqui
-
-# Token de autenticação (copie após fazer login):
-# @authToken = seu_token_jwt_aqui 
+# 1. Todas as rotas requerem autenticação (token JWT)
+# 2. Nome da categoria é obrigatório
+# 3. Categorias são criadas automaticamente para o usuário logado
+# 4. Orçamentos são vinculados a categorias específicas
+# 5. Limite mensal deve ser positivo
+# 6. Paginação: página (1+) e limite (1-100)
+# 7. Categorias não podem ser deletadas se tiverem transações
+# 8. Orçamentos são criados para o período financeiro atual
+# 9. Sistema cria automaticamente períodos financeiros quando necessário
+# 10. Use o token retornado pelo login em todas as requisições 

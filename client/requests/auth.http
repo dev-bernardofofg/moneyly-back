@@ -1,120 +1,76 @@
+# Arquivo de requests para autenticação
+# 
+# Este arquivo contém todas as rotas de autenticação da API Moneyly
+# Inclui: registro, login, autenticação Google
+
+### Configuração base
 @baseUrl = http://localhost:5000
 @contentType = application/json
-@authToken =  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJkNDFlMTAwYi04OGI1LTRiYzUtODNlMi0yYWY5NzhhOWVkYzUiLCJpYXQiOjE3NTM2NjY4MzQsImV4cCI6MTc1NDI3MTYzNH0.I5FlVCWQvbU5d79urCpfR0ozQmVNIr6suoZYMgrDuf4
+
+### Health Check
+GET {{baseUrl}}/health
+Content-Type: {{contentType}}
 
 ### ========================================
-### 🔐 AUTENTICAÇÃO - REGISTRO E LOGIN
+### AUTENTICAÇÃO
 ### ========================================
 
-### 1. Registrar novo usuário
-# Retorna: user (com monthlyIncome, financialDayStart, financialDayEnd) + token
+### Registrar novo usuário
+# @name signup
 POST {{baseUrl}}/auth/sign-up
 Content-Type: {{contentType}}
 
 {
-  "name": "João Silva",
-  "email": "joao@example.com",
-  "password": "123456"
+  "name": "Usuário Teste",
+  "email": "usuario@teste.com",
+  "password": "Senha123!"
 }
 
-### 2. Fazer login
-# Retorna: user (com monthlyIncome, financialDayStart, financialDayEnd) + token
+### Login de usuário
+# @name signin
 POST {{baseUrl}}/auth/sign-in
 Content-Type: {{contentType}}
 
 {
-  "email": "joao@example.com",
-  "password": "123456"
+  "email": "usuario@teste.com",
+  "password": "Senha123!"
 }
 
-### 3. Buscar dados do usuário logado
-GET {{baseUrl}}/user/me
-Authorization: Bearer {{authToken}}
-
-### 4. Atualizar rendimento mensal
-PUT {{baseUrl}}/user/income
+### Autenticação com Google
+# @name googleAuth
+POST {{baseUrl}}/auth/google
 Content-Type: {{contentType}}
-Authorization: Bearer {{authToken}}
 
 {
-  "monthlyIncome": 5000
-}
-
-### 4.1. Atualizar período financeiro
-PUT {{baseUrl}}/user/financial-period
-Content-Type: {{contentType}}
-Authorization: Bearer {{authToken}}
-
-{
-  "financialDayStart": 5,
-  "financialDayEnd": 5
-}
-
-### 4.2. Atualizar rendimento e período financeiro juntos
-PUT {{baseUrl}}/user/income-and-period
-Content-Type: {{contentType}}
-Authorization: Bearer {{authToken}}
-
-{
-  "monthlyIncome": 5000,
-  "financialDayStart": 5,
-  "financialDayEnd": 5
+  "idToken": "token_do_google_aqui"
 }
 
 ### ========================================
-### 🧪 TESTES DE VALIDAÇÃO
+### EXEMPLOS DE USO
 ### ========================================
 
-### 3. Teste - Email inválido
-POST {{baseUrl}}/auth/sign-up
-Content-Type: {{contentType}}
-
-{
-  "name": "Teste",
-  "email": "email-invalido",
-  "password": "123456"
-}
-
-### 4. Teste - Senha muito curta
-POST {{baseUrl}}/auth/sign-up
-Content-Type: {{contentType}}
-
-{
-  "name": "Teste",
-  "email": "teste@example.com",
-  "password": "123"
-}
-
-### 5. Teste - Nome muito curto
-POST {{baseUrl}}/auth/sign-up
-Content-Type: {{contentType}}
-
-{
-  "name": "A",
-  "email": "teste@example.com",
-  "password": "123456"
-}
-
-
-
-### ========================================
-### 🔒 TESTES DE AUTORIZAÇÃO
-### ========================================
-
-### 6. Teste - Login com usuário inexistente
+### Exemplo: Login e armazenar token
+# @name auth
 POST {{baseUrl}}/auth/sign-in
 Content-Type: {{contentType}}
 
 {
-  "email": "inexistente@example.com",
-  "password": "123456"
+  "email": "seu_email@exemplo.com",
+  "password": "sua_senha"
 }
 
-### 7. Teste - Login com senha incorreta
-POST {{baseUrl}}/auth/sign-in
-Content-Type: {{contentType}}
+### Exemplo: Usar token em outras requisições
+# GET {{baseUrl}}/user/me
+# Authorization: Bearer {{auth.response.body.token}}
+# Content-Type: {{contentType}}
 
-{
-  "email": "joao@example.com",
-  "password": "senha_incorreta"
-}
+### ========================================
+### NOTAS IMPORTANTES
+### ========================================
+
+# 1. Todas as rotas de auth têm rate limiting (máximo 100 requests por 15 minutos)
+# 2. Senhas devem ter pelo menos 6 caracteres
+# 3. Emails devem ser válidos
+# 4. Para autenticação Google, você precisa de um idToken válido do Google
+# 5. Após login bem-sucedido, use o token retornado no header Authorization: Bearer {token}
+# 6. O token JWT expira em 7 dias por padrão

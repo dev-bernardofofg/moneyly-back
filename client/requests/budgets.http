@@ -1,111 +1,123 @@
-### Orçamentos por Categoria
-
-# Configuração base
-@baseUrl = http://localhost:5000
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJmZDcxMTAzNS0wM2VkLTRlOTEtODQ0Ny02ZjcwOTQ3ZjQ0NGEiLCJpYXQiOjE3NTM1MDA4MjgsImV4cCI6MTc1NDEwNTYyOH0.UnelYsWYKFsvtt3Pmr8Ynh_G-zExfismzojdxBT-jQc
-
-### Login para obter token
-POST {{baseUrl}}/auth/sign-in
-Content-Type: application/json
-
-{
-  "email": "joao@example.com",
-  "password": "123456"
-}
+# Arquivo de requests para orçamentos
+# 
+# Este arquivo contém todas as rotas de orçamentos da API Moneyly
+# Inclui: CRUD de orçamentos por categoria
 
 ### ========================================
-### CRUD Orçamentos por Categoria
+### CRUD DE ORÇAMENTOS POR CATEGORIA
 ### ========================================
 
-### 1. Criar orçamento por categoria
+### Criar orçamento para uma categoria
+# @name createCategoryBudget
+@baseUrl = {{baseUrl}}
+@authToken = {{authToken}}
+@contentType = {{contentType}}
+@categoryId = {{categoryId}}
+@budgetId = {{budgetId}}
+
 POST {{baseUrl}}/budgets
 Authorization: Bearer {{authToken}}
-Content-Type: application/json
+Content-Type: {{contentType}}
 
 {
-  "categoryId": "d2769966-e1b0-4d54-95c2-22c5db380467",
-  "monthlyLimit": 800
+  "categoryId": "{{categoryId}}",
+  "monthlyLimit": 500.00
 }
 
-### 2. Buscar orçamentos do usuário
-# Esta rota retorna os orçamentos com informações de progresso incluídas
+### Listar orçamentos do usuário
+# @name getUserBudgets
 GET {{baseUrl}}/budgets
 Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
 
-### 3. Buscar progresso dos orçamentos
-# Esta rota é similar à anterior, mas mantida para compatibilidade
-# Ambas as rotas agora retornam as mesmas informações de progresso
-GET {{baseUrl}}/budgets/progress
+### Atualizar orçamento de uma categoria
+# @name updateCategoryBudget
+PUT {{baseUrl}}/budgets/{{budgetId}}
 Authorization: Bearer {{authToken}}
-
-### 6. Atualizar orçamento
-PUT {{baseUrl}}/budgets/550e8400-e29b-41d4-a716-446655440001
-Authorization: Bearer {{authToken}}
-Content-Type: application/json
+Content-Type: {{contentType}}
 
 {
-  "monthlyLimit": 1000
+  "monthlyLimit": 600.00
 }
 
-### 7. Deletar orçamento
-DELETE {{baseUrl}}/budgets/550e8400-e29b-41d4-a716-446655440001
+### Deletar orçamento de uma categoria
+# @name deleteCategoryBudget
+DELETE {{baseUrl}}/budgets/{{budgetId}}
 Authorization: Bearer {{authToken}}
 
 ### ========================================
-### Exemplos de Resposta
+### EXEMPLOS DE USO
 ### ========================================
 
-### Exemplo de resposta - Criar orçamento
-# {
-#   "success": true,
-#   "data": null,
-#   "message": "Orçamento por categoria criado com sucesso"
-# }
+### Exemplo: Criar orçamento para supermercado
+POST {{baseUrl}}/budgets
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
 
-### Exemplo de resposta - Listar orçamentos
-# {
-#   "success": true,
-#   "data": [
-#     {
-#       "id": "550e8400-e29b-41d4-a716-446655440001",
-#       "monthlyLimit": 800,
-#       "category": {
-#         "id": "550e8400-e29b-41d4-a716-446655440000",
-#         "name": "Alimentação"
-#       },
-#       "spent": 600,
-#       "remaining": 200,
-#       "percentage": 75.0,
-#       "status": "attention"
-#     }
-#   ],
-#   "message": "Orçamentos por categoria recuperados com sucesso"
-# }
+{
+  "categoryId": "{{categoryId}}",
+  "monthlyLimit": 800.00
+}
 
-### Exemplo de resposta - Progresso dos orçamentos
-# {
-#   "success": true,
-#   "data": [
-#     {
-#       "id": "550e8400-e29b-41d4-a716-446655440001",
-#       "monthlyLimit": 800,
-#       "category": {
-#         "id": "550e8400-e29b-41d4-a716-446655440000",
-#         "name": "Alimentação"
-#       },
-#       "spent": 600,
-#       "remaining": 200,
-#       "percentage": 75.0,
-#       "status": "attention"
-#     }
-#   ],
-#   "message": "Progresso dos orçamentos recuperado com sucesso"
-# }
+### Exemplo: Criar orçamento para transporte
+POST {{baseUrl}}/budgets
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+{
+  "categoryId": "{{categoryId}}",
+  "monthlyLimit": 300.00
+}
+
+### Exemplo: Criar orçamento para lazer
+POST {{baseUrl}}/budgets
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+{
+  "categoryId": "{{categoryId}}",
+  "monthlyLimit": 200.00
+}
+
+### Exemplo: Criar orçamento para saúde
+POST {{baseUrl}}/budgets
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+{
+  "categoryId": "{{categoryId}}",
+  "monthlyLimit": 400.00
+}
+
+### Exemplo: Atualizar limite do orçamento de supermercado
+PUT {{baseUrl}}/budgets/{{budgetId}}
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+{
+  "monthlyLimit": 1000.00
+}
+
+### Exemplo: Atualizar limite do orçamento de transporte
+PUT {{baseUrl}}/budgets/{{budgetId}}
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+{
+  "monthlyLimit": 350.00
+}
 
 ### ========================================
-### Status dos Orçamentos
+### NOTAS IMPORTANTES
 ### ========================================
-# status: "safe" (0-74%)
-# status: "attention" (75-89%)
-# status: "warning" (90-99%)
-# status: "exceeded" (100%+) 
+
+# 1. Todas as rotas requerem autenticação (token JWT)
+# 2. O sistema cria automaticamente períodos financeiros quando necessário
+# 3. Orçamentos são vinculados a categorias específicas
+# 4. Limite mensal deve ser positivo
+# 5. categoryId deve ser um UUID válido de uma categoria existente
+# 6. Orçamentos são criados para o período financeiro atual
+# 7. Sistema calcula automaticamente o período baseado na configuração do usuário
+# 8. Use o token retornado pelo login em todas as requisições
+# 9. Orçamentos podem ser atualizados a qualquer momento
+# 10. Deletar um orçamento remove o limite, mas mantém as transações 

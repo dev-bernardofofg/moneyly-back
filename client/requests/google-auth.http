@@ -1,32 +1,47 @@
-### Autenticação com Google OAuth
-POST http://localhost:3333/auth/google
-Content-Type: application/json
+# Arquivo de requests para autenticação Google
+# 
+# Este arquivo contém a rota de autenticação Google da API Moneyly
+# Inclui: autenticação via Google OAuth
+
+### ========================================
+### AUTENTICAÇÃO GOOGLE
+### ========================================
+
+### Autenticação com Google
+# @name googleAuth
+@baseUrl = {{baseUrl}}
+@contentType = {{contentType}}
+
+POST {{baseUrl}}/auth/google
+Content-Type: {{contentType}}
 
 {
-  "idToken": "seu-google-id-token-aqui"
+  "idToken": "seu_id_token_do_google_aqui"
 }
 
-### Exemplo de resposta esperada:
-# {
-#   "success": true,
-#   "data": {
-#     "user": {
-#       "id": "uuid-do-usuario",
-#       "name": "Nome do Usuário",
-#       "email": "email@exemplo.com",
-#       "googleId": "google-id-unico",
-#       "avatar": "https://url-do-avatar.com",
-#       "monthlyIncome": 0,
-#       "financialDayStart": 1,
-#       "financialDayEnd": 31,
-#       "createdAt": "2024-01-01T00:00:00.000Z"
-#     },
-#     "token": "jwt-token-aqui"
-#   },
-#   "message": "Login com Google realizado com sucesso"
-# }
+### ========================================
+### EXEMPLOS DE USO
+### ========================================
 
-### Para testar, você precisa:
-# 1. Configurar o Google OAuth no Google Cloud Console
-# 2. Obter um token ID válido do Google
-# 3. Substituir "seu-google-id-token-aqui" pelo token real 
+### Exemplo: Autenticação com token real (substitua pelo seu)
+POST {{baseUrl}}/auth/google
+Content-Type: {{contentType}}
+
+{
+  "idToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhY2NvdW50cy5nb29nbGUuY29tIiwiYXVkIjoiMTIzNDU2Nzg5MC1hYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ei5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsInN1YiI6IjEyMzQ1Njc4OTAxMjM0NTY3ODkwIiwiZW1haWwiOiJ1c3VhcmlvQGV4ZW1wbG8uY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImF0X2hhc2giOiJhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5eiIsImlhdCI6MTY5OTk5OTk5OSwiZXhwIjoxNzAwMDg2Mzk5fQ.EXEMPLO_DE_TOKEN"
+}
+
+### ========================================
+### NOTAS IMPORTANTES
+### ========================================
+
+# 1. Esta rota tem rate limiting (máximo 100 requests por 15 minutos)
+# 2. idToken deve ser um token válido do Google OAuth
+# 3. O token deve ser obtido através do fluxo OAuth do Google
+# 4. Após autenticação bem-sucedida, você receberá um token JWT
+# 5. Use o token JWT retornado no header Authorization: Bearer {token}
+# 6. O token JWT expira em 7 dias por padrão
+# 7. Para obter um idToken, configure o Google OAuth no seu frontend
+# 8. Esta rota é alternativa ao login tradicional com email/senha
+# 9. Usuários podem ter conta criada automaticamente se não existirem
+# 10. Consulte a documentação do Google OAuth para implementação no frontend 
