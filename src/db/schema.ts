@@ -39,6 +39,10 @@ export const transactions = pgTable("transactions", {
   categoryId: uuid("category_id")
     .notNull()
     .references(() => categories.id, { onDelete: "cascade" }),
+  // ← NOVO CAMPO
+  periodId: uuid("period_id").references(() => financialPeriods.id, {
+    onDelete: "cascade",
+  }),
   description: text("description"),
   date: timestamp("date").defaultNow().notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -117,7 +121,9 @@ export const goalMilestones = pgTable("goal_milestones", {
 // Tabela de períodos financeiros
 export const financialPeriods = pgTable("financial_periods", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
   isActive: boolean("is_active").default(true),
@@ -143,6 +149,10 @@ export const transactionsRelations = relations(transactions, ({ one }) => ({
   category: one(categories, {
     fields: [transactions.categoryId],
     references: [categories.id],
+  }),
+  period: one(financialPeriods, {
+    fields: [transactions.periodId],
+    references: [financialPeriods.id],
   }),
 }));
 
@@ -196,12 +206,16 @@ export const userCategoryPreferencesRelations = relations(
   })
 );
 
-export const financialPeriodsRelations = relations(financialPeriods, ({ one }) => ({
-  user: one(users, {
-    fields: [financialPeriods.userId],
-    references: [users.id],
-  }),
-}));
+export const financialPeriodsRelations = relations(
+  financialPeriods,
+  ({ one, many }) => ({
+    user: one(users, {
+      fields: [financialPeriods.userId],
+      references: [users.id],
+    }),
+    transactions: many(transactions),
+  })
+);
 
 // Tipos TypeScript
 export type User = typeof users.$inferSelect;

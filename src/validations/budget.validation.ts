@@ -19,3 +19,14 @@ export const validateBudgetExistsByCategoryId = async (categoryId: string) => {
     throw new HttpError(404, "Categoria não encontrada");
   }
 };
+
+export const validateBudgetExists = async (
+  budgetId: string,
+  userId: string
+) => {
+  const budget = await BudgetRepository.findByIdAndUserId(budgetId, userId);
+  if (!budget) {
+    throw new HttpError(404, "Orçamento não encontrado");
+  }
+  return budget;
+};
