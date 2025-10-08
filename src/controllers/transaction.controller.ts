@@ -16,7 +16,13 @@ export const createTransaction = async (
   res: Response
 ) => {
   const { type, title, amount, category, description, date } = req.body;
-  const { id: userId } = req.user;
+  const { user } = req;
+
+  if (!user) {
+    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  }
+
+  const { id: userId } = user;
 
   try {
     const newTransaction = await createTransactionService(userId, {
@@ -34,7 +40,11 @@ export const createTransaction = async (
       "Transação criada com sucesso"
     );
   } catch (error) {
-    return ResponseHandler.error(res, "Erro ao criar transação", error);
+    return ResponseHandler.error(
+      res,
+      "Não foi possível criar a transação. Por favor, verifique os dados e tente novamente.",
+      error
+    );
   }
 };
 
@@ -42,8 +52,15 @@ export const getTransactions = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const { id: userId } = req.user;
+  const { user } = req;
   const { category, startDate, endDate, page, limit } = req.body;
+
+  if (!user) {
+    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  }
+
+  const { id: userId } = user;
+
   try {
     const filters: {
       category?: string;
@@ -98,7 +115,7 @@ export const getTransactions = async (
       return ResponseHandler.success(
         res,
         {
-          transactions: result.data,
+          data: result.data,
           pagination: result.pagination,
           totalExpense,
           totalIncome,
@@ -139,7 +156,7 @@ export const getTransactions = async (
       return ResponseHandler.success(
         res,
         {
-          transactions,
+          data: transactions,
           pagination: {
             page: 1,
             limit: transactions.length,
@@ -158,7 +175,11 @@ export const getTransactions = async (
       );
     }
   } catch (error) {
-    return ResponseHandler.error(res, "Erro ao buscar transações", error);
+    return ResponseHandler.error(
+      res,
+      "Não foi possível buscar as transações. Por favor, tente novamente.",
+      error
+    );
   }
 };
 
@@ -166,12 +187,31 @@ export const updateTransaction = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const { id: userId } = req.user;
+  const { user } = req;
+  const { id } = req.params;
+
+  if (!user) {
+    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  }
+
+  if (!id) {
+    return ResponseHandler.badRequest(res, "ID da transação não fornecido");
+  }
+
+  const { id: userId } = user;
+
   try {
-    const { id } = req.params;
     const { type, title, amount, category, description, date } = req.body;
 
-    const updateData: any = {};
+    const updateData: Partial<{
+      type: "income" | "expense";
+      title: string;
+      amount: string;
+      categoryId: string;
+      description: string;
+      date: Date;
+      periodId: string | null;
+    }> = {};
     if (date) updateData.date = new Date(date);
     if (type) updateData.type = type;
     if (title) updateData.title = title;
@@ -187,7 +227,11 @@ export const updateTransaction = async (
       "Transação atualizada com sucesso"
     );
   } catch (error) {
-    return ResponseHandler.error(res, "Erro ao atualizar transação", error);
+    return ResponseHandler.error(
+      res,
+      "Não foi possível atualizar a transação. Verifique se os dados estão corretos e tente novamente.",
+      error
+    );
   }
 };
 
@@ -195,10 +239,20 @@ export const deleteTransaction = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const { id: userId } = req.user;
-  try {
-    const { id } = req.params;
+  const { user } = req;
+  const { id } = req.params;
 
+  if (!user) {
+    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  }
+
+  if (!id) {
+    return ResponseHandler.badRequest(res, "ID da transação não fornecido");
+  }
+
+  const { id: userId } = user;
+
+  try {
     const deleted = await TransactionRepository.delete(id, userId);
 
     if (!deleted) {
@@ -207,7 +261,11 @@ export const deleteTransaction = async (
 
     return ResponseHandler.success(res, null, "Transação deletada com sucesso");
   } catch (error) {
-    return ResponseHandler.error(res, "Erro ao deletar transação", error);
+    return ResponseHandler.error(
+      res,
+      "Não foi possível deletar a transação. Por favor, tente novamente.",
+      error
+    );
   }
 };
 
@@ -215,7 +273,14 @@ export const getTransactionSummary = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const { id: userId } = req.user;
+  const { user } = req;
+
+  if (!user) {
+    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  }
+
+  const { id: userId } = user;
+
   try {
     const transactions = await TransactionRepository.findAllByUserId(userId);
 
@@ -231,7 +296,8 @@ export const getTransactionSummary = async (
         byCategory[tx.category.id] = 0;
       }
 
-      byCategory[tx.category.id] += Number(tx.amount);
+      byCategory[tx.category.id] =
+        (byCategory[tx.category.id] || 0) + Number(tx.amount);
     });
 
     const user = await UserRepository.findById(userId);
@@ -252,9 +318,9 @@ export const getTransactionSummary = async (
     return ResponseHandler.success(
       res,
       {
-        realIncome, // 💰 soma das transações tipo income
+        totalIncome: realIncome, // 💰 soma das transações tipo income
+        totalExpenses: totalExpense, // 💸 soma das expenses
         monthlyIncome, // 💼 salário fixo do usuário
-        totalExpense, // 💸 soma das expenses
         balance, // 💼 - 💸
         percentUsed,
         byCategory,
@@ -263,7 +329,11 @@ export const getTransactionSummary = async (
       "Resumo das transações gerado com sucesso"
     );
   } catch (error) {
-    return ResponseHandler.error(res, "Erro ao gerar resumo", error);
+    return ResponseHandler.error(
+      res,
+      "Não foi possível gerar o resumo das transações. Por favor, tente novamente.",
+      error
+    );
   }
 };
 
@@ -271,10 +341,16 @@ export const getMonthlySummary = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  try {
-    const { id: userId } = req.user;
-    const { startDate, endDate } = req.query;
+  const { user } = req;
+  const { startDate, endDate } = req.query;
 
+  if (!user) {
+    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  }
+
+  const { id: userId } = user;
+
+  try {
     const filters: {
       startDate?: Date;
       endDate?: Date;
@@ -327,6 +403,9 @@ export const getMonthlySummary = async (
     // Calcular percentual usado para cada mês
     Object.keys(summary).forEach((monthKey) => {
       const monthData = summary[monthKey];
+
+      if (!monthData) return;
+
       const totalExpense = monthData.expense;
 
       monthData.percentUsed =
@@ -340,16 +419,23 @@ export const getMonthlySummary = async (
           : null;
     });
 
+    // Transformar summary de objeto para array
+    const summaryArray = Object.entries(summary).map(([month, data]) => ({
+      month,
+      ...data,
+    }));
+
     return ResponseHandler.success(
       res,
-      {
-        summary,
-        monthlyIncome,
-      },
+      summaryArray,
       "Resumo mensal gerado com sucesso"
     );
   } catch (error) {
-    return ResponseHandler.error(res, "Erro ao gerar resumo mensal", error);
+    return ResponseHandler.error(
+      res,
+      "Não foi possível gerar o resumo mensal. Por favor, tente novamente.",
+      error
+    );
   }
 };
 
@@ -357,16 +443,23 @@ export const getCurrentFinancialPeriodSummary = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
+  const { user } = req;
+
+  if (!user) {
+    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  }
+
+  const { id: userId } = user;
+
   try {
-    const { id: userId } = req.user;
-    const user = await UserRepository.findById(userId);
-    if (!user) {
+    const userDetails = await UserRepository.findById(userId);
+    if (!userDetails) {
       return ResponseHandler.notFound(res, "Usuário não encontrado");
     }
 
-    const financialDayStart = user.financialDayStart ?? 1;
-    const financialDayEnd = user.financialDayEnd ?? 31;
-    const monthlyIncome = Number(user.monthlyIncome) ?? 0;
+    const financialDayStart = userDetails.financialDayStart ?? 1;
+    const financialDayEnd = userDetails.financialDayEnd ?? 31;
+    const monthlyIncome = Number(userDetails.monthlyIncome) ?? 0;
 
     // Calcular o período financeiro atual
     const currentPeriod = getCurrentFinancialPeriod(
@@ -392,7 +485,8 @@ export const getCurrentFinancialPeriodSummary = async (
         byCategory[tx.category.id] = 0;
       }
 
-      byCategory[tx.category.id] += Number(tx.amount) ?? 0;
+      byCategory[tx.category.id] =
+        (byCategory[tx.category.id] || 0) + Number(tx.amount);
     });
 
     const balance = monthlyIncome - totalExpense;
@@ -418,9 +512,9 @@ export const getCurrentFinancialPeriodSummary = async (
             "dd/MM/yyyy"
           )} a ${format(currentPeriod.endDate, "dd/MM/yyyy")}`,
         },
-        realIncome, // 💰 soma das transações tipo income no período
+        totalIncome: realIncome, // 💰 soma das transações tipo income no período
+        totalExpenses: totalExpense, // 💸 soma das expenses no período
         monthlyIncome, // 💼 salário fixo do usuário
-        totalExpense, // 💸 soma das expenses no período
         balance, // 💼 - 💸
         percentUsed,
         byCategory,

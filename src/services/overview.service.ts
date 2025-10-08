@@ -1,3 +1,4 @@
+import type { Category } from "../db/schema";
 import {
   getAvailableFinancialPeriods,
   getCurrentFinancialPeriod,
@@ -8,10 +9,8 @@ import {
   calculateStats,
 } from "../helpers/handlers/overview-handlers";
 import { CategoryRepository } from "../repositories/categories.repository";
-import {
-  TransactionRepository,
-  TransactionWithCategory,
-} from "../repositories/transaction.repository";
+import type { TransactionWithCategory } from "../repositories/transaction.repository";
+import { TransactionRepository } from "../repositories/transaction.repository";
 import { validatePeriodId } from "../validations/overview.validation";
 import { getBudgetProgressService } from "./budget.service";
 import { getGoalsProgressService } from "./goal.service";
@@ -22,7 +21,23 @@ export const getTransactionsByUserId = async (
   financial?: { startDay: number; endDay: number },
   periodId?: string
 ) => {
-  const transactions = await TransactionRepository.findByUserId(userId, dates);
+  let transactions: TransactionWithCategory[];
+
+  if (periodId) {
+    // 🎯 NOVA LÓGICA: Buscar por periodId primeiro
+    try {
+      transactions = await TransactionRepository.findByPeriodId(
+        userId,
+        periodId
+      );
+    } catch (error) {
+      // Fallback para busca por data
+      transactions = await TransactionRepository.findByUserId(userId, dates);
+    }
+  } else {
+    // Busca tradicional por data
+    transactions = await TransactionRepository.findByUserId(userId, dates);
+  }
 
   if (financial) {
     const availablePeriods = getAvailableFinancialPeriods(
@@ -60,15 +75,15 @@ export const getStatsOverview = async (
 };
 
 export const getMonthlyHistory = async (
-  transactions: any[],
-  categories: any[]
+  transactions: TransactionWithCategory[],
+  categories: Category[]
 ) => {
   return calculateMonthlyHistory(transactions, categories);
 };
 
 export const getExpensesByCategory = async (
-  transactions: any[],
-  categories: any[]
+  transactions: TransactionWithCategory[],
+  categories: Category[]
 ) => {
   return calculateExpensesByCategory(transactions, categories);
 };
@@ -170,7 +185,7 @@ export const calculatePlanningStats = (
 
 export const calculateAlerts = (
   stats: any,
-  monthlyIncome: number,
+  _monthlyIncome: number,
   budgetProgress: any[],
   goalsProgress: any[]
 ) => {
@@ -284,7 +299,10 @@ export const calculateAlerts = (
 
   // Ordenar alertas por prioridade (high > medium > low)
   const priorityOrder: Record<string, number> = { high: 3, medium: 2, low: 1 };
-  alerts.sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority]);
+  alerts.sort(
+    (a, b) =>
+      (priorityOrder[b.priority] ?? 0) - (priorityOrder[a.priority] ?? 0)
+  );
 
   return alerts;
 };

@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { ResponseHandler } from "../helpers/response-handler";
 import {
   createGoogleSessionService,
@@ -6,7 +6,11 @@ import {
   createUserService,
 } from "../services/user.service";
 
-export const createUser = async (req: Request, res: Response) => {
+export const createUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { user, token } = await createUserService(req.body);
 
@@ -28,11 +32,24 @@ export const createUser = async (req: Request, res: Response) => {
       "Usuário criado com sucesso"
     );
   } catch (error) {
-    return ResponseHandler.error(res, "Erro ao criar usuário", error);
+    // Se for HttpError, repassa para o error handler via next
+    if ((error as any).status || (error as any).statusCode) {
+      return next(error);
+    }
+
+    return ResponseHandler.error(
+      res,
+      "Não foi possível criar sua conta. Verifique se o email já não está cadastrado e tente novamente.",
+      error
+    );
   }
 };
 
-export const createSession = async (req: Request, res: Response) => {
+export const createSession = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { user, token } = await createSessionService(req.body);
 
@@ -54,7 +71,16 @@ export const createSession = async (req: Request, res: Response) => {
       "Login realizado com sucesso"
     );
   } catch (error) {
-    return ResponseHandler.error(res, "Erro ao criar sessão", error);
+    // Se for HttpError (senha inválida, usuário não encontrado), repassa via next
+    if ((error as any).status || (error as any).statusCode) {
+      return next(error);
+    }
+
+    return ResponseHandler.error(
+      res,
+      "Não foi possível fazer login. Verifique suas credenciais e tente novamente.",
+      error
+    );
   }
 };
 

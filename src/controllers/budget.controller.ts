@@ -25,7 +25,7 @@ export const createCategoryBudget = async (
       monthlyLimit,
     });
 
-    return ResponseHandler.success(
+    return ResponseHandler.created(
       res,
       budget,
       "Orçamento por categoria criado com sucesso"
@@ -54,7 +54,7 @@ export const getUserBudgets = async (
 
     return ResponseHandler.success(
       res,
-      { budgets },
+      budgets,
       "Orçamentos por categoria recuperados com sucesso"
     );
   } catch (error) {
@@ -75,6 +75,10 @@ export const updateCategoryBudget = async (
 
   if (!userId) {
     return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  }
+
+  if (!id) {
+    return ResponseHandler.error(res, "ID do orçamento é obrigatório");
   }
 
   try {
@@ -103,6 +107,10 @@ export const deleteCategoryBudget = async (
 
   if (!userId) {
     return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  }
+
+  if (!id) {
+    return ResponseHandler.error(res, "ID do orçamento é obrigatório");
   }
 
   try {

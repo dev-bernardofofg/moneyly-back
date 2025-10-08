@@ -27,7 +27,11 @@ export const createCategory = async (
       "Categoria criada com sucesso"
     );
   } catch (error) {
-    return ResponseHandler.error(res, "Erro ao criar categoria", error);
+    return ResponseHandler.error(
+      res,
+      "Não foi possível criar a categoria. Verifique se o nome não está duplicado e tente novamente.",
+      error
+    );
   }
 };
 
@@ -35,11 +39,15 @@ export const getCategories = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const { id } = req.user;
+  const { userId } = req;
   const { page, limit } = req.body;
 
+  if (!userId) {
+    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  }
+
   try {
-    const result = await getCategoriesService(id, { page, limit });
+    const result = await getCategoriesService(userId, { page, limit });
 
     return ResponseHandler.success(
       res,
@@ -50,7 +58,11 @@ export const getCategories = async (
       "Categorias recuperadas com sucesso"
     );
   } catch (error) {
-    return ResponseHandler.error(res, "Erro ao buscar categorias", error);
+    return ResponseHandler.error(
+      res,
+      "Não foi possível buscar as categorias. Por favor, tente novamente.",
+      error
+    );
   }
 };
 
@@ -66,6 +78,10 @@ export const updateCategory = async (
     return ResponseHandler.unauthorized(res, "Usuário não autenticado");
   }
 
+  if (!id) {
+    return ResponseHandler.badRequest(res, "ID da categoria não fornecido");
+  }
+
   try {
     const category = await updateCategoryService(id, name, userId);
     return ResponseHandler.success(
@@ -74,7 +90,11 @@ export const updateCategory = async (
       "Categoria atualizada com sucesso"
     );
   } catch (error) {
-    return ResponseHandler.error(res, "Erro ao atualizar categoria", error);
+    return ResponseHandler.error(
+      res,
+      "Não foi possível atualizar a categoria. Verifique se o novo nome não está em uso e tente novamente.",
+      error
+    );
   }
 };
 
@@ -89,10 +109,18 @@ export const deleteCategory = async (
     return ResponseHandler.unauthorized(res, "Usuário não autenticado");
   }
 
+  if (!id) {
+    return ResponseHandler.badRequest(res, "ID da categoria não fornecido");
+  }
+
   try {
     await deleteCategoryService(id, userId);
     return ResponseHandler.success(res, null, "Categoria deletada com sucesso");
   } catch (error) {
-    return ResponseHandler.error(res, "Erro ao deletar categoria", error);
+    return ResponseHandler.error(
+      res,
+      "Não foi possível deletar a categoria. Categorias globais não podem ser deletadas.",
+      error
+    );
   }
 };

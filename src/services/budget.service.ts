@@ -2,7 +2,7 @@ import { getCurrentFinancialPeriod } from "../helpers/financial-period";
 import { BudgetRepository } from "../repositories/budget.repository";
 import { TransactionRepository } from "../repositories/transaction.repository";
 import { UserRepository } from "../repositories/user.repository";
-import { validateBudgetExistsByCategoryId } from "../validations/budget.validation";
+import { validateBudgetExists } from "../validations/budget.validation";
 import { validateUserNotAuthenticated } from "../validations/user.validation";
 
 export const createBudgetService = async (
@@ -23,8 +23,53 @@ export const createBudgetService = async (
 };
 
 export const getUserBudgetsService = async (userId: string) => {
-  const budgets = await BudgetRepository.findByUserId(userId);
-  return budgets;
+  // Usar getBudgetWithCategory para incluir informação de categoria
+  const budgets = await BudgetRepository.getBudgetWithCategory(userId);
+
+  // Buscar usuário para pegar período financeiro
+  const user = await UserRepository.findById(userId);
+  if (!user) return budgets;
+
+  const currentPeriod = getCurrentFinancialPeriod(
+    user.financialDayStart ?? 1,
+    user.financialDayEnd ?? 31
+  );
+
+  // Adicionar campos de progresso para cada budget
+  const budgetsWithProgress = await Promise.all(
+    budgets.map(async (budget) => {
+      // Buscar transações do período atual para essa categoria
+      const transactions = await TransactionRepository.findByUserId(userId, {
+        startDate: currentPeriod.startDate,
+        endDate: currentPeriod.endDate,
+      });
+
+      const spent = transactions
+        .filter(
+          (tx) => tx.type === "expense" && tx.category.id === budget.category.id
+        )
+        .reduce((sum, tx) => sum + Number(tx.amount), 0);
+
+      const monthlyLimit = Number(budget.monthlyLimit);
+      const remaining = monthlyLimit - spent;
+      const percentage =
+        monthlyLimit > 0 ? Math.round((spent / monthlyLimit) * 100) : 0;
+
+      let status: "safe" | "warning" | "danger" = "safe";
+      if (percentage >= 90) status = "danger";
+      else if (percentage >= 70) status = "warning";
+
+      return {
+        ...budget,
+        spent,
+        remaining,
+        percentage,
+        status,
+      };
+    })
+  );
+
+  return budgetsWithProgress;
 };
 
 export const updateBudgetService = async (
@@ -33,6 +78,7 @@ export const updateBudgetService = async (
   data: { monthlyLimit: number }
 ) => {
   await validateUserNotAuthenticated(userId);
+  await validateBudgetExists(budgetId, userId);
 
   const budget = await BudgetRepository.update(budgetId, {
     monthlyLimit: data.monthlyLimit.toString(),
@@ -43,7 +89,7 @@ export const updateBudgetService = async (
 
 export const deleteBudgetService = async (userId: string, budgetId: string) => {
   await validateUserNotAuthenticated(userId);
-  await validateBudgetExistsByCategoryId(budgetId);
+  await validateBudgetExists(budgetId, userId);
 
   const budget = await BudgetRepository.delete(budgetId);
   return budget;
@@ -53,14 +99,16 @@ export const getUserBudgets = async (userId: string): Promise<any[]> => {
   // Buscar configurações do usuário
   const user = await UserRepository.findById(userId);
   if (!user) {
-    throw new Error("Usuário não encontrado");
+    throw new Error("Usuário não encontrado. Por favor, faça login novamente.");
   }
 
   const financialDayStart = user.financialDayStart ?? 1;
   const financialDayEnd = user.financialDayEnd ?? 31;
 
   if (!financialDayStart || !financialDayEnd) {
-    throw new Error("Configuração de período financeiro não encontrada");
+    throw new Error(
+      "Configuração de período financeiro não encontrada. Por favor, configure seu período financeiro nas configurações."
+    );
   }
 
   const currentPeriod = getCurrentFinancialPeriod(
@@ -117,12 +165,14 @@ export const updateBudget = async (
   });
 
   if (!budget) {
-    throw new Error("Orçamento não encontrado");
+    throw new Error(
+      "Orçamento não encontrado. Verifique se o ID está correto."
+    );
   }
 
   // Verificar se o orçamento pertence ao usuário
   if (budget.userId !== userId) {
-    throw new Error("Orçamento não pertence ao usuário");
+    throw new Error("Você não tem permissão para modificar este orçamento.");
   }
 
   return budget;
@@ -139,7 +189,9 @@ export const deleteBudget = async (
   );
 
   if (!targetBudget) {
-    throw new Error("Orçamento não encontrado ou não pertence ao usuário");
+    throw new Error(
+      "Orçamento não encontrado. Verifique se o ID está correto e se você tem permissão para acessá-lo."
+    );
   }
 
   // Se chegou até aqui, o orçamento existe e pertence ao usuário
@@ -147,7 +199,9 @@ export const deleteBudget = async (
   const deleted = await BudgetRepository.delete(budgetId);
 
   if (!deleted) {
-    throw new Error("Erro ao deletar orçamento");
+    throw new Error(
+      "Não foi possível deletar o orçamento. Por favor, tente novamente."
+    );
   }
 
   return true;
@@ -230,8 +284,8 @@ export const getBudgetProgressByCategory = async (
   });
 
   const categoryExpenses = transactions
-    .filter((tx: any) => tx.type === "expense" && tx.category.id === categoryId)
-    .reduce((sum: number, tx: any) => sum + Number(tx.amount), 0);
+    .filter((tx) => tx.type === "expense" && tx.category.id === categoryId)
+    .reduce((sum: number, tx) => sum + Number(tx.amount), 0);
 
   const budget = await BudgetRepository.findByCategoryId(categoryId);
 

@@ -62,7 +62,9 @@ export const updateTransactionService = async (
   );
 
   if (!transaction) {
-    throw new Error("Transação não encontrada");
+    throw new Error(
+      "Transação não encontrada. Verifique se o ID está correto e se você tem permissão para acessá-la."
+    );
   }
 
   return transaction;

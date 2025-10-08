@@ -68,7 +68,15 @@ export class FinancialPeriodService {
     }
 
     const { financialDayStart, financialDayEnd } = user;
-    const periods: any[] = [];
+    const periods: Array<{
+      id: string;
+      userId: string;
+      startDate: Date;
+      endDate: Date;
+      isActive: boolean | null;
+      createdAt: Date;
+      updatedAt: Date;
+    }> = [];
 
     // Calcular próximos períodos
     const currentDate = new Date();

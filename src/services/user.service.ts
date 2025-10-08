@@ -63,7 +63,15 @@ export const createGoogleSessionService = async (idToken: string) => {
 
 // Exemplo de serviço que recebe o usuário como parâmetro
 export const updateUserProfileService = async (
-  user: any,
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    monthlyIncome: string | null;
+    financialDayStart: number | null;
+    financialDayEnd: number | null;
+    firstAccess: boolean | null;
+  },
   data: {
     monthlyIncome?: number;
     financialDayStart?: number;
@@ -74,21 +82,23 @@ export const updateUserProfileService = async (
   let updatedUser = user;
 
   if (data.monthlyIncome !== undefined) {
-    updatedUser = await UserRepository.updateMonthlyIncome(
+    const updated = await UserRepository.updateMonthlyIncome(
       user.id,
       data.monthlyIncome
     );
+    if (updated) updatedUser = updated;
   }
 
   if (
     data.financialDayStart !== undefined &&
     data.financialDayEnd !== undefined
   ) {
-    updatedUser = await UserRepository.updateFinancialPeriod(
+    const updated = await UserRepository.updateFinancialPeriod(
       user.id,
       data.financialDayStart,
       data.financialDayEnd
     );
+    if (updated) updatedUser = updated;
   }
 
   return {

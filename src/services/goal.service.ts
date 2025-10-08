@@ -1,4 +1,5 @@
 import { GoalRepository } from "../repositories/goal.repository";
+import { HttpError } from "../validations/errors";
 import {
   validateDeleteGoal,
   validateGoal,
@@ -28,7 +29,30 @@ export const createGoalService = async (
 
 export const getGoalsService = async (userId: string) => {
   const goals = await GoalRepository.findByUserIdActive(userId);
-  return goals;
+
+  // Adicionar progress para cada goal
+  const goalsWithProgress = goals.map((goal) => {
+    const targetAmount = Number(goal.targetAmount);
+    const currentAmount = Number(goal.currentAmount);
+    const percentage =
+      targetAmount > 0 ? Math.round((currentAmount / targetAmount) * 100) : 0;
+
+    const now = new Date();
+    const targetDate = new Date(goal.targetDate);
+    const daysRemaining = Math.ceil(
+      (targetDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    return {
+      ...goal,
+      progress: {
+        percentage,
+        daysRemaining: daysRemaining > 0 ? daysRemaining : 0,
+      },
+    };
+  });
+
+  return goalsWithProgress;
 };
 
 export const getGoalsProgressService = async (userId: string) => {
@@ -43,7 +67,36 @@ export const getGoalsProgressService = async (userId: string) => {
 export const getGoalByIdService = async (userId: string, goalId: string) => {
   const goal = await GoalRepository.findByIdAndUserId(goalId, userId);
   validateGoalExists(goal);
-  return goal;
+
+  if (!goal) {
+    throw new Error("Goal não encontrado"); // Never reached due to validateGoalExists
+  }
+
+  // Buscar milestones e adicionar progress
+  const goalWithMilestones = await GoalRepository.getGoalWithMilestones(goalId);
+
+  if (!goalWithMilestones) {
+    throw new HttpError(404, "Objetivo não encontrado");
+  }
+
+  const targetAmount = Number(goalWithMilestones.targetAmount);
+  const currentAmount = Number(goalWithMilestones.currentAmount);
+  const percentage =
+    targetAmount > 0 ? Math.round((currentAmount / targetAmount) * 100) : 0;
+
+  const now = new Date();
+  const targetDate = new Date(goalWithMilestones.targetDate);
+  const daysRemaining = Math.ceil(
+    (targetDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  return {
+    ...goalWithMilestones,
+    progress: {
+      percentage,
+      daysRemaining: daysRemaining > 0 ? daysRemaining : 0,
+    },
+  };
 };
 
 export const updateGoalService = async (
@@ -61,7 +114,14 @@ export const updateGoalService = async (
   const goal = await GoalRepository.findByIdAndUserId(goalId, userId);
   validateGoal(goal, userId);
 
-  const updateData: any = {};
+  const updateData: Partial<{
+    title: string;
+    description: string | null;
+    targetAmount: string;
+    targetDate: Date;
+    currentAmount: string;
+    isActive: boolean;
+  }> = {};
   if (data.title !== undefined) updateData.title = data.title;
   if (data.description !== undefined) updateData.description = data.description;
   if (data.targetAmount !== undefined)
@@ -81,7 +141,7 @@ export const updateGoalService = async (
 
 export const deleteGoalService = async (userId: string, goalId: string) => {
   const goal = await GoalRepository.findByIdAndUserId(goalId, userId);
-  validateGoal(goal!, userId);
+  validateGoal(goal, userId);
 
   const deleted = await GoalRepository.delete(goalId);
   validateDeleteGoal(deleted);
@@ -115,7 +175,7 @@ export const getGoalStatusService = async (userId: string) => {
         goal.progress.percentage,
         goal.progress.daysRemaining
       ),
-      nextMilestone: getNextMilestone(goal.milestones, goal.currentAmount ?? 0),
+      nextMilestone: getNextMilestone(goal.milestones),
     }));
 };
 
@@ -131,7 +191,21 @@ const calculateGoalStatus = (
   return "just-started";
 };
 
-const getNextMilestone = (milestones: any[], currentAmount: number): any => {
+const getNextMilestone = (
+  milestones: Array<{
+    id: string;
+    percentage: number;
+    amount: string;
+    isReached: boolean | null;
+  }>
+):
+  | {
+      id: string;
+      percentage: number;
+      amount: string;
+      isReached: boolean | null;
+    }
+  | undefined => {
   const unreachedMilestones = milestones.filter((m) => !m.isReached);
-  return unreachedMilestones.length > 0 ? unreachedMilestones[0] : null;
+  return unreachedMilestones[0];
 };

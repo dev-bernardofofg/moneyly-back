@@ -15,35 +15,40 @@ export const getDashboardOverview = async (
   req: AuthenticatedRequest & { body: GetDashboardOverviewRequest },
   res: Response
 ) => {
+  const { user } = req;
+  const { periodId } = req.body;
+
+  if (!user) {
+    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  }
+
   const {
     id: userId,
     financialDayStart,
     financialDayEnd,
     monthlyIncome,
-  } = req.user;
-  const { periodId } = req.body;
+  } = user;
+
   try {
-    // Se há periodId, buscar todas as transações para validar o período
-    // Se não há periodId, usar data atual para buscar transações do período atual
-    const dates = periodId
-      ? { startDate: new Date(0), endDate: new Date() } // Buscar todas as transações
-      : { startDate: new Date(), endDate: new Date() }; // Buscar apenas hoje
+    // 🎯 NOVA LÓGICA: Usar periodId diretamente
+    const { availablePeriods, selectedPeriod } = await getTransactionsByUserId(
+      userId,
+      { startDate: new Date(), endDate: new Date() }, // Fallback
+      { startDay: financialDayStart ?? 1, endDay: financialDayEnd ?? 31 },
+      periodId // ← Passar periodId diretamente
+    );
 
-    const { transactions, availablePeriods, selectedPeriod } =
-      await getTransactionsByUserId(
-        userId,
-        dates,
-        { startDay: financialDayStart ?? 1, endDay: financialDayEnd ?? 31 },
-        periodId
-      );
-
-    // Se há periodId, usar o período selecionado para buscar transações específicas
+    // Se há periodId, usar o período selecionado para validação
     const periodDates = selectedPeriod
       ? { startDate: selectedPeriod.startDate, endDate: selectedPeriod.endDate }
       : { startDate: new Date(), endDate: new Date() };
 
     const { stats, monthlyHistory, expensesByCategory, periodTransactions } =
-      await getDashboardOverviewService(userId, monthlyIncome, periodDates);
+      await getDashboardOverviewService(
+        userId,
+        Number(monthlyIncome) || 0,
+        periodDates
+      );
 
     return ResponseHandler.success(
       res,
@@ -81,7 +86,14 @@ export const getAvailablePeriods = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const { id: userId, financialDayStart, financialDayEnd } = req.user;
+  const { user } = req;
+
+  if (!user) {
+    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  }
+
+  const { id: userId, financialDayStart, financialDayEnd } = user;
+
   try {
     const availablePeriods = await getAvailablePeriodsService(
       userId,
@@ -107,12 +119,19 @@ export const getPlannerOverview = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
+  const { user } = req;
+
+  if (!user) {
+    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  }
+
   const {
     id: userId,
     financialDayStart,
     financialDayEnd,
     monthlyIncome,
-  } = req.user;
+  } = user;
+
   try {
     const currentPeriod = getCurrentFinancialPeriod(
       financialDayStart ?? 1,
@@ -121,7 +140,7 @@ export const getPlannerOverview = async (
 
     const { stats, alerts } = await getPlannerOverviewService(
       userId,
-      monthlyIncome
+      Number(monthlyIncome) || 0
     );
 
     return ResponseHandler.success(

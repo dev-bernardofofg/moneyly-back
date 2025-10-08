@@ -12,14 +12,18 @@ import {
 } from "../services/goal.service";
 
 export const createGoal = async (req: AuthenticatedRequest, res: Response) => {
-  const { id: userId } = req.user;
+  const { userId } = req;
+
+  if (!userId) {
+    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  }
 
   try {
-    await createGoalService(userId, req.body);
+    const goal = await createGoalService(userId, req.body);
 
-    return ResponseHandler.success(
+    return ResponseHandler.created(
       res,
-      null,
+      goal,
       "Objetivo de poupança criado com sucesso"
     );
   } catch (error) {
@@ -35,7 +39,12 @@ export const getUserGoals = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const { id: userId } = req.user;
+  const { userId } = req;
+
+  if (!userId) {
+    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  }
+
   try {
     const goals = await getGoalsService(userId);
 
@@ -50,8 +59,16 @@ export const getUserGoals = async (
 };
 
 export const getGoalById = async (req: AuthenticatedRequest, res: Response) => {
-  const { id: userId } = req.user;
+  const { userId } = req;
   const { id } = req.params;
+
+  if (!userId) {
+    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  }
+
+  if (!id) {
+    return ResponseHandler.badRequest(res, "ID do objetivo não fornecido");
+  }
 
   try {
     const goal = await getGoalByIdService(userId, id);
@@ -70,7 +87,12 @@ export const getGoalsProgress = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const { id: userId } = req.user;
+  const { userId } = req;
+
+  if (!userId) {
+    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  }
+
   try {
     const goalsProgress = await getGoalsProgressService(userId);
 
@@ -91,8 +113,16 @@ export const updateSavingsGoal = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const { id: userId } = req.user;
+  const { userId } = req;
   const { id } = req.params;
+
+  if (!userId) {
+    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  }
+
+  if (!id) {
+    return ResponseHandler.badRequest(res, "ID do objetivo não fornecido");
+  }
 
   try {
     const goal = await updateGoalService(userId, id, req.body);
@@ -111,8 +141,16 @@ export const deleteSavingsGoal = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const { id: userId } = req.user;
+  const { userId } = req;
   const { id } = req.params;
+
+  if (!userId) {
+    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  }
+
+  if (!id) {
+    return ResponseHandler.badRequest(res, "ID do objetivo não fornecido");
+  }
 
   try {
     await deleteGoalService(userId, id);
@@ -131,9 +169,17 @@ export const addAmountToGoal = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const { id: userId } = req.user;
+  const { userId } = req;
   const { id } = req.params;
   const { amount } = req.body;
+
+  if (!userId) {
+    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  }
+
+  if (!id) {
+    return ResponseHandler.badRequest(res, "ID do objetivo não fornecido");
+  }
 
   try {
     const goal = await addAmountToGoalService(userId, id, amount);
@@ -144,7 +190,10 @@ export const addAmountToGoal = async (
       "Valor adicionado ao objetivo com sucesso"
     );
   } catch (error: any) {
-    console.error("Erro ao adicionar valor ao objetivo:", error);
-    return ResponseHandler.error(res, error.message);
+    return ResponseHandler.error(
+      res,
+      "Não foi possível adicionar valor ao objetivo",
+      error
+    );
   }
 };
