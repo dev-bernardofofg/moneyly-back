@@ -9,7 +9,8 @@ import {
 } from "../controllers/goal.controller";
 import { authenticateUser } from "../middlewares/auth";
 import { ensurePeriodExists } from "../middlewares/auto-period-creation";
-import { validateBody } from "../middlewares/validate";
+import { validateBody, validateParams } from "../middlewares/validate";
+import { idParamSchema } from "../schemas/auth.schema";
 import {
   addAmountToGoalSchema,
   createSavingsGoalSchema,
@@ -29,11 +30,12 @@ GoalRouter.post("/", validateBody(createSavingsGoalSchema), createGoal);
 GoalRouter.get("/", getUserGoals);
 
 // Buscar objetivo específico
-GoalRouter.get("/:id", getGoalById);
+GoalRouter.get("/:id", validateParams(idParamSchema), getGoalById);
 
 // Atualizar objetivo
 GoalRouter.put(
   "/:id",
+  validateParams(idParamSchema),
   validateBody(updateSavingsGoalSchema),
   updateSavingsGoal
 );
@@ -41,11 +43,12 @@ GoalRouter.put(
 // Adicionar valor ao objetivo
 GoalRouter.post(
   "/:id/add-amount",
+  validateParams(idParamSchema),
   validateBody(addAmountToGoalSchema),
   addAmountToGoal
 );
 
 // Deletar objetivo
-GoalRouter.delete("/:id", deleteSavingsGoal);
+GoalRouter.delete("/:id", validateParams(idParamSchema), deleteSavingsGoal);
 
 export default GoalRouter;

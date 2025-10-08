@@ -23,7 +23,7 @@ export const env = {
   // Configurações de CORS
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(",")
-    : ["http://localhost:3000", "http://localhost:5173"],
+    : ["http://localhost:5000", "http://localhost:5173"],
 
   // Configurações de rate limiting
   RATE_LIMIT_WINDOW_MS: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000"), // 15 minutos

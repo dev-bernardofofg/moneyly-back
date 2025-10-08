@@ -7,7 +7,8 @@ import {
 } from "../controllers/budget.controller";
 import { authenticateUser } from "../middlewares/auth";
 import { ensurePeriodExists } from "../middlewares/auto-period-creation";
-import { validateBody } from "../middlewares/validate";
+import { validateBody, validateParams } from "../middlewares/validate";
+import { idParamSchema } from "../schemas/auth.schema";
 import {
   createCategoryBudgetSchema,
   updateCategoryBudgetSchema,
@@ -31,11 +32,16 @@ BudgetRouter.get("/", getUserBudgets);
 // Atualizar orçamento
 BudgetRouter.put(
   "/:id",
+  validateParams(idParamSchema),
   validateBody(updateCategoryBudgetSchema),
   updateCategoryBudget
 );
 
 // Deletar orçamento
-BudgetRouter.delete("/:id", deleteCategoryBudget);
+BudgetRouter.delete(
+  "/:id",
+  validateParams(idParamSchema),
+  deleteCategoryBudget
+);
 
 export { BudgetRouter };

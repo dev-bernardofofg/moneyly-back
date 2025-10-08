@@ -28,6 +28,6 @@ app.use(errorHandler);
 // Só inicia o servidor se não estiver em ambiente de teste
 if (process.env.NODE_ENV !== "test") {
   app.listen(env.PORT, () => {
-    console.log(`Servidor rodando na porta ${env.PORT}`);
+    console.log(`🚀 Servidor rodando na porta ${env.PORT}`);
   });
 }
