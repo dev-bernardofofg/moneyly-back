@@ -1,10 +1,52 @@
 import { Response } from "express";
 
-export interface ApiResponse<T = any> {
+/**
+ * Normaliza valores decimais do banco (remove .00 desnecessário)
+ */
+export const normalizeDecimal = (value: string | number | null): string => {
+  if (value === null || value === undefined) return "0";
+  const numValue = typeof value === "string" ? parseFloat(value) : value;
+  // Se for número inteiro, retorna sem decimais
+  if (Number.isInteger(numValue)) {
+    return numValue.toString();
+  }
+  // Se tiver decimais, remove zeros desnecessários no final
+  const fixed = numValue.toFixed(2);
+  // Remove .00 ou converte .50 para .5
+  return fixed.replace(/\.0+$/, "").replace(/(\.\d)0$/, "$1");
+};
+
+/**
+ * Normaliza decimais em objetos recursivamente
+ */
+export const normalizeDecimals = (obj: any): any => {
+  if (obj === null || obj === undefined) return obj;
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => normalizeDecimals(item));
+  }
+
+  if (typeof obj === "object" && !(obj instanceof Date)) {
+    const normalized: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      // Normalizar campos de valores monetários
+      if (typeof value === "string" && /^-?\d+\.\d{2}$/.test(value)) {
+        normalized[key] = normalizeDecimal(value);
+      } else {
+        normalized[key] = normalizeDecimals(value);
+      }
+    }
+    return normalized;
+  }
+
+  return obj;
+};
+
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
-  details?: any;
+  details?: unknown;
   message?: string;
 }
 
@@ -35,9 +77,12 @@ export class ResponseHandler {
     message?: string,
     statusCode = 200
   ): Response<SuccessResponse<T>> {
+    // Normalizar decimais nos dados antes de retornar
+    const normalizedData = normalizeDecimals(data) as T;
+
     const response: SuccessResponse<T> = {
       success: true,
-      data,
+      data: normalizedData,
       ...(message ? { message } : {}),
     };
 
@@ -60,6 +105,7 @@ export class ResponseHandler {
   }
 
   static created<T>(res: Response, data: T, message?: string): Response {
+    // success já normaliza os decimais
     return this.success(res, data, message, 201);
   }
 
@@ -73,6 +119,10 @@ export class ResponseHandler {
 
   static forbidden(res: Response, message = "Acesso negado"): Response {
     return this.error(res, message, undefined, 403);
+  }
+
+  static badRequest(res: Response, message = "Requisição inválida"): Response {
+    return this.error(res, message, undefined, 400);
   }
 
   static serverError(

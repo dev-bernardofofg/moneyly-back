@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
 import { ResponseHandler } from "../helpers/response-handler";
+import { logger } from "../lib/logger";
 interface ErrorWithCode extends Error {
   code?: string;
   statusCode?: number;
@@ -10,15 +11,21 @@ export const errorHandler = (
   error: ErrorWithCode,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void => {
-  console.error("Error Handler:", {
-    message: error.message,
-    stack: error.stack,
+  logger.error("Error Handler", error, {
     url: req.url,
     method: req.method,
     timestamp: new Date().toISOString(),
   });
+
+  // Custom errors with status code (HttpError, etc) - VERIFICAR PRIMEIRO!
+  if (error.statusCode || (error as any).status) {
+    const statusCode = error.statusCode || (error as any).status;
+    const details = (error as any).details;
+    ResponseHandler.error(res, error.message, details, statusCode);
+    return;
+  }
 
   // Zod validation errors
   if (error instanceof ZodError) {
@@ -27,6 +34,19 @@ export const errorHandler = (
       message: err.message,
       code: err.code,
     }));
+
+    // Se o erro é de UUID inválido em um parâmetro de rota (id), retornar 404
+    const hasInvalidUuidParam = error.errors.some(
+      (err) =>
+        err.code === "invalid_string" &&
+        err.validation === "uuid" &&
+        err.path.includes("id")
+    );
+
+    if (hasInvalidUuidParam) {
+      ResponseHandler.notFound(res, "Recurso não encontrado");
+      return;
+    }
 
     ResponseHandler.error(res, "Dados de validação inválidos", details, 400);
     return;
@@ -64,13 +84,6 @@ export const errorHandler = (
 
   if (error.name === "TokenExpiredError") {
     ResponseHandler.unauthorized(res, "Token expirado");
-    return;
-  }
-
-  // Custom errors with status code
-  if (error.statusCode || (error as any).status) {
-    const statusCode = error.statusCode || (error as any).status;
-    ResponseHandler.error(res, error.message, undefined, statusCode);
     return;
   }
 

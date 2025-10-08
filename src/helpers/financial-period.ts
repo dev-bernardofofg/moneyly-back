@@ -1,5 +1,6 @@
 import { formatInTimeZone } from "date-fns-tz";
 import { ptBR } from "date-fns/locale";
+import { TransactionRepository } from "../repositories/transaction.repository";
 import {
   createNormalizedSaoPauloDate,
   getCurrentSaoPauloDate,
@@ -261,6 +262,9 @@ export function getHistoricalStartDate(
     referenceDate
   );
   const oldestPeriod = periods[periods.length - 1];
+  if (!oldestPeriod) {
+    throw new Error("Nenhum período financeiro encontrado");
+  }
   return oldestPeriod.startDate;
 }
 
@@ -278,11 +282,13 @@ export interface IAvailablePeriod {
   endDate: Date;
   label: string;
   transactionCount: number;
+  isStored?: boolean; // ← ADICIONAR ESTE CAMPO
 }
+
 export function getAvailableFinancialPeriods(
   financialDayStart: number,
   financialDayEnd: number,
-  transactions: any[]
+  transactions: Array<{ id: string; date: Date }>
 ): Array<IAvailablePeriod> {
   if (!transactions || transactions.length === 0) {
     return [];
@@ -290,6 +296,7 @@ export function getAvailableFinancialPeriods(
 
   // Encontrar a data mais antiga e mais recente das transações (convertidas para São Paulo)
   const dates = transactions.map((tx) => toSaoPauloTimezone(tx.date));
+
   const minDate = new Date(Math.min(...dates.map((d) => d.getTime())));
   const maxDate = new Date(Math.max(...dates.map((d) => d.getTime())));
 
@@ -303,8 +310,12 @@ export function getAvailableFinancialPeriods(
 
   // Calcular períodos a partir da data mais antiga até a mais recente
   let currentDate = new Date(minDate);
+  let iterationCount = 0;
+  const maxIterations = 50; // Proteção contra loop infinito
 
-  while (currentDate <= maxDate) {
+  while (currentDate <= maxDate && iterationCount < maxIterations) {
+    iterationCount++;
+
     const period = getCurrentFinancialPeriod(
       financialDayStart,
       financialDayEnd,
@@ -357,8 +368,10 @@ export function getAvailableFinancialPeriods(
         char.toUpperCase()
       );
 
+      const periodId = `${period.startDate.toISOString()}_${period.endDate.toISOString()}`;
+
       periods.push({
-        id: `${period.startDate.toISOString()}_${period.endDate.toISOString()}`,
+        id: periodId,
         startDate: period.startDate,
         endDate: period.endDate,
         label: capitalizedLabel,
@@ -367,9 +380,159 @@ export function getAvailableFinancialPeriods(
     }
 
     // Avançar para o próximo mês
+    const previousMonth = currentDate.getMonth();
     currentDate.setMonth(currentDate.getMonth() + 1);
+    const newMonth = currentDate.getMonth();
+
+    // Verificar se não estamos em um loop infinito
+    if (newMonth === previousMonth && iterationCount > 1) {
+      break;
+    }
   }
 
   // Ordenar por data (mais recente primeiro)
   return periods.sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
+}
+
+/**
+ * Gera todos os períodos financeiros disponíveis para um usuário
+ * Inclui períodos passados, atual e futuros, com contagem REAL de transações
+ * @param userId ID do usuário para consultar transações
+ * @param financialDayStart Dia do mês que inicia o período (1-31)
+ * @param financialDayEnd Dia do mês que termina o período (1-31)
+ * @param numberOfPastPeriods Número de períodos passados a incluir (padrão: 6)
+ * @param numberOfFuturePeriods Número de períodos futuros a incluir (padrão: 3)
+ * @returns Array de períodos financeiros com contagem real de transações
+ */
+export async function getAllAvailableFinancialPeriodsWithTransactions(
+  userId: string,
+  financialDayStart: number,
+  financialDayEnd: number,
+  numberOfPastPeriods: number = 6,
+  numberOfFuturePeriods: number = 3
+): Promise<Array<IAvailablePeriod>> {
+  const periods: Array<IAvailablePeriod> = [];
+  const currentDate = getCurrentSaoPauloDate();
+
+  // Períodos passados
+  for (let i = numberOfPastPeriods; i >= 1; i--) {
+    const pastDate = new Date(currentDate);
+    pastDate.setMonth(pastDate.getMonth() - i);
+
+    const period = getCurrentFinancialPeriod(
+      financialDayStart,
+      financialDayEnd,
+      pastDate
+    );
+
+    // 🎯 CONSULTAR BANCO para este período
+    const transactionCount = await getTransactionCountForPeriod(userId, period);
+
+    periods.push({
+      id: `${period.startDate.toISOString()}_${period.endDate.toISOString()}`,
+      startDate: period.startDate,
+      endDate: period.endDate,
+      label: formatPeriodLabel(period.startDate, period.endDate),
+      transactionCount, // ← CONTAGEM REAL do banco!
+    });
+  }
+
+  // Período atual
+  const currentPeriod = getCurrentFinancialPeriod(
+    financialDayStart,
+    financialDayEnd,
+    currentDate
+  );
+
+  // 🎯 CONSULTAR BANCO para período atual
+  const currentTransactionCount = await getTransactionCountForPeriod(
+    userId,
+    currentPeriod
+  );
+
+  periods.push({
+    id: `${currentPeriod.startDate.toISOString()}_${currentPeriod.endDate.toISOString()}`,
+    startDate: currentPeriod.startDate,
+    endDate: currentPeriod.endDate,
+    label: formatPeriodLabel(currentPeriod.startDate, currentPeriod.endDate),
+    transactionCount: currentTransactionCount, // ← CONTAGEM REAL do banco!
+  });
+
+  // Períodos futuros
+  for (let i = 1; i <= numberOfFuturePeriods; i++) {
+    const futureDate = new Date(currentDate);
+    futureDate.setMonth(futureDate.getMonth() + i);
+
+    const period = getCurrentFinancialPeriod(
+      financialDayStart,
+      financialDayEnd,
+      futureDate
+    );
+
+    // 🎯 CONSULTAR BANCO para período futuro
+    const futureTransactionCount = await getTransactionCountForPeriod(
+      userId,
+      period
+    );
+
+    periods.push({
+      id: `${period.startDate.toISOString()}_${period.endDate.toISOString()}`,
+      startDate: period.startDate,
+      endDate: period.endDate,
+      label: formatPeriodLabel(period.startDate, period.endDate),
+      transactionCount: futureTransactionCount, // ← CONTAGEM REAL do banco!
+    });
+  }
+
+  return periods;
+}
+
+/**
+ * Consulta o banco para contar transações em um período específico
+ * @param userId ID do usuário
+ * @param period Período financeiro (startDate e endDate)
+ * @returns Número de transações no período
+ */
+async function getTransactionCountForPeriod(
+  userId: string,
+  period: FinancialPeriod
+): Promise<number> {
+  try {
+    // Buscar transações por data (fallback para quando não há periodId)
+    const transactions = await TransactionRepository.findByUserId(userId, {
+      startDate: period.startDate,
+      endDate: period.endDate,
+    });
+
+    return transactions.length;
+  } catch (error) {
+    return 0;
+  }
+}
+
+/**
+ * Formata o label do período em português
+ */
+function formatPeriodLabel(startDate: Date, endDate: Date): string {
+  const startMonth = formatInTimeZone(startDate, SAO_PAULO_TIMEZONE, "MMMM", {
+    locale: ptBR,
+  });
+  const endMonth = formatInTimeZone(endDate, SAO_PAULO_TIMEZONE, "MMMM", {
+    locale: ptBR,
+  });
+  const startYear = startDate.getFullYear();
+  const endYear = endDate.getFullYear();
+
+  let label: string;
+  if (startYear === endYear) {
+    if (startMonth === endMonth) {
+      label = `${startMonth} ${startYear}`;
+    } else {
+      label = `${startMonth} - ${endMonth} ${startYear}`;
+    }
+  } else {
+    label = `${startMonth} ${startYear} - ${endMonth} ${endYear}`;
+  }
+
+  return label.replace(/\b\w/g, (char) => char.toUpperCase());
 }

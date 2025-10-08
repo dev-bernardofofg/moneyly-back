@@ -8,13 +8,11 @@ export interface ValidationConfig {
 }
 
 export const validate = (config: ValidationConfig) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, _res: Response, next: NextFunction) => {
     try {
       // Validate body
       if (config.body) {
-        console.log("🔍 Debug - validate middleware - body before:", req.body);
         req.body = config.body.parse(req.body);
-        console.log("🔍 Debug - validate middleware - body after:", req.body);
       }
 
       // Validate params

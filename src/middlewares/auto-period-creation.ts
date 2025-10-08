@@ -1,26 +1,26 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Response } from "express";
 import { FinancialPeriodService } from "../services/financial-period.service";
+import { AuthenticatedRequest } from "./auth";
 
 export const ensurePeriodExists = async (
-  req: Request, // Mudança aqui: usar Request padrão
-  res: Response,
+  req: AuthenticatedRequest,
+  _res: Response,
   next: NextFunction
 ) => {
   try {
-    // Type assertion para acessar user
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
 
     if (!userId) {
       return next();
     }
 
-    // Garantir que o período atual existe
+    // Criar apenas período atual + 1 período futuro (para planejamento)
     await FinancialPeriodService.ensureCurrentPeriodExists(userId);
+    await FinancialPeriodService.createNextPeriods(userId, 1); // Só 1 período futuro
 
     next();
   } catch (error) {
-    console.error("Erro ao criar período automaticamente:", error);
-    // Não falhar a requisição, apenas logar o erro
+    // Não logar erro aqui pois não deve bloquear a requisição
     next();
   }
 };

@@ -1,6 +1,11 @@
 import { format } from "date-fns";
+import type { Category } from "../../db/schema";
+import type { TransactionWithCategory } from "../../repositories/transaction.repository";
 
-export const calculateStats = (transactions: any[], monthlyIncome: number) => {
+export const calculateStats = (
+  transactions: TransactionWithCategory[],
+  monthlyIncome: number
+) => {
   const totalIncome = transactions
     .filter((tx) => tx.type === "income")
     .reduce((sum, tx) => sum + Number(tx.amount), 0);
@@ -25,14 +30,14 @@ export const calculateStats = (transactions: any[], monthlyIncome: number) => {
 };
 
 export const calculateMonthlyHistory = (
-  transactions: any[],
-  categories: any[]
+  transactions: TransactionWithCategory[],
+  categories: Category[]
 ) => {
   // Criar um mapa de categorias para facilitar a busca
   const categoriesMap = categories.reduce((map, category) => {
     map[category.id] = category;
     return map;
-  }, {} as Record<string, any>);
+  }, {} as Record<string, Category>);
 
   // Transformar transações em formato desejado
   const monthlyHistory = transactions.map((tx) => {
@@ -59,10 +64,18 @@ export const calculateMonthlyHistory = (
 };
 
 export const calculateExpensesByCategory = (
-  transactions: any[],
-  categories: any[]
+  transactions: TransactionWithCategory[],
+  categories: Category[]
 ) => {
-  const expensesByCategory: Record<string, any> = {};
+  const expensesByCategory: Record<
+    string,
+    {
+      id: string;
+      name: string;
+      amount: number;
+      percentage: number;
+    }
+  > = {};
 
   // Inicializar todas as categorias com 0
   categories.forEach((category) => {
@@ -84,21 +97,24 @@ export const calculateExpensesByCategory = (
   );
 
   expenseTransactions.forEach((tx) => {
-    if (expensesByCategory[tx.category.id]) {
-      expensesByCategory[tx.category.id].amount += Number(tx.amount);
+    const category = expensesByCategory[tx.category.id];
+    if (category) {
+      category.amount += Number(tx.amount);
     }
   });
 
   // Calcular percentuais
   Object.keys(expensesByCategory).forEach((categoryId) => {
     const category = expensesByCategory[categoryId];
-    category.percentage =
-      totalExpenses > 0
-        ? Number(((category.amount / totalExpenses) * 100).toFixed(2))
-        : 0;
+    if (category) {
+      category.percentage =
+        totalExpenses > 0
+          ? Number(((category.amount / totalExpenses) * 100).toFixed(2))
+          : 0;
+    }
   });
 
   return Object.values(expensesByCategory)
     .filter((category) => category.amount > 0)
     .sort((a, b) => b.amount - a.amount);
-}
+};

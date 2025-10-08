@@ -10,25 +10,31 @@ const sanitizeString = (str: string): string => {
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ""); // Remove scripts
 };
 
+// Função para sanitizar qualquer valor
+const sanitizeValue = (value: unknown): unknown => {
+  if (typeof value === "string") {
+    return sanitizeString(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeValue(item));
+  }
+
+  if (typeof value === "object" && value !== null) {
+    return sanitizeObject(value as Record<string, unknown>);
+  }
+
+  return value;
+};
+
 // Função para sanitizar objeto
-const sanitizeObject = (obj: any): any => {
-  if (typeof obj !== "object" || obj === null) {
-    return obj;
-  }
+const sanitizeObject = (
+  obj: Record<string, unknown>
+): Record<string, unknown> => {
+  const sanitized: Record<string, unknown> = {};
 
-  if (Array.isArray(obj)) {
-    return obj.map(sanitizeObject);
-  }
-
-  const sanitized: any = {};
   for (const [key, value] of Object.entries(obj)) {
-    if (typeof value === "string") {
-      sanitized[key] = sanitizeString(value);
-    } else if (typeof value === "object" && value !== null) {
-      sanitized[key] = sanitizeObject(value);
-    } else {
-      sanitized[key] = value;
-    }
+    sanitized[key] = sanitizeValue(value);
   }
 
   return sanitized;
@@ -37,22 +43,26 @@ const sanitizeObject = (obj: any): any => {
 // Middleware de sanitização
 export const sanitizeData = (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ) => {
   // Sanitizar body
   if (req.body && typeof req.body === "object") {
-    req.body = sanitizeObject(req.body);
+    req.body = sanitizeObject(req.body as Record<string, unknown>);
   }
 
   // Sanitizar query parameters
   if (req.query && typeof req.query === "object") {
-    req.query = sanitizeObject(req.query);
+    req.query = sanitizeObject(
+      req.query as Record<string, unknown>
+    ) as typeof req.query;
   }
 
   // Sanitizar params
   if (req.params && typeof req.params === "object") {
-    req.params = sanitizeObject(req.params);
+    req.params = sanitizeObject(
+      req.params as Record<string, unknown>
+    ) as typeof req.params;
   }
 
   next();
@@ -61,7 +71,7 @@ export const sanitizeData = (
 // Middleware específico para campos sensíveis
 export const sanitizeSensitiveFields = (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ) => {
   // Remover campos sensíveis dos logs
