@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { ResponseHandler } from "../helpers/response-handler";
+import type { AuthenticatedRequest } from "../middlewares/auth";
 import {
   createGoogleSessionService,
   createSessionService,
@@ -12,7 +13,9 @@ export const createUser = async (
   next: NextFunction
 ) => {
   try {
-    const { user, token } = await createUserService(req.body);
+    const { user, accessToken, refreshToken } = await createUserService(
+      req.body
+    );
 
     return ResponseHandler.created(
       res,
@@ -27,7 +30,8 @@ export const createUser = async (
           firstAccess: user.firstAccess,
           createdAt: user.createdAt,
         },
-        token,
+        accessToken,
+        refreshToken,
       },
       "Usuário criado com sucesso"
     );
@@ -51,7 +55,9 @@ export const createSession = async (
   next: NextFunction
 ) => {
   try {
-    const { user, token } = await createSessionService(req.body);
+    const { user, accessToken, refreshToken } = await createSessionService(
+      req.body
+    );
 
     return ResponseHandler.success(
       res,
@@ -66,7 +72,8 @@ export const createSession = async (
           firstAccess: user.firstAccess,
           createdAt: user.createdAt,
         },
-        token,
+        accessToken,
+        refreshToken,
       },
       "Login realizado com sucesso"
     );
@@ -87,7 +94,8 @@ export const createSession = async (
 export const createGoogleSession = async (req: Request, res: Response) => {
   const { idToken } = req.body;
   try {
-    const { user, token } = await createGoogleSessionService(idToken);
+    const { user, accessToken, refreshToken } =
+      await createGoogleSessionService(idToken);
 
     return ResponseHandler.success(
       res,
@@ -104,7 +112,8 @@ export const createGoogleSession = async (req: Request, res: Response) => {
           firstAccess: user.firstAccess,
           createdAt: user.createdAt,
         },
-        token,
+        accessToken,
+        refreshToken,
       },
       "Login com Google realizado com sucesso"
     );
@@ -115,5 +124,77 @@ export const createGoogleSession = async (req: Request, res: Response) => {
       undefined,
       401
     );
+  }
+};
+
+export const refreshToken = async (req: Request, res: Response) => {
+  const { refreshToken: refreshTokenValue } = req.body;
+
+  if (!refreshTokenValue) {
+    return ResponseHandler.badRequest(res, "Refresh token não fornecido");
+  }
+
+  try {
+    const { refreshTokenService } = await import("../services/user.service.js");
+    const { user, accessToken } = await refreshTokenService(refreshTokenValue);
+
+    return ResponseHandler.success(
+      res,
+      {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          monthlyIncome: user.monthlyIncome ?? 0,
+          financialDayStart: user.financialDayStart ?? 1,
+          financialDayEnd: user.financialDayEnd ?? 31,
+          firstAccess: user.firstAccess,
+          createdAt: user.createdAt,
+        },
+        accessToken,
+      },
+      "Token renovado com sucesso"
+    );
+  } catch (error) {
+    return ResponseHandler.unauthorized(
+      res,
+      "Refresh token inválido ou expirado"
+    );
+  }
+};
+
+export const logout = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  const { user } = req;
+  const { refreshToken: refreshTokenValue } = req.body;
+
+  if (!user) {
+    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  }
+
+  if (!refreshTokenValue) {
+    return ResponseHandler.badRequest(res, "Refresh token não fornecido");
+  }
+
+  try {
+    const { revokeRefreshTokenService } = await import(
+      "../services/user.service.js"
+    );
+    await revokeRefreshTokenService(user.id, refreshTokenValue);
+
+    return ResponseHandler.success(
+      res,
+      { success: true },
+      "Logout realizado com sucesso"
+    );
+  } catch (error) {
+    if ((error as any).status || (error as any).statusCode) {
+      return next(error);
+    }
+
+    return ResponseHandler.error(res, "Não foi possível fazer logout", error);
   }
 };

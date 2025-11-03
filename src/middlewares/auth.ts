@@ -1,8 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
-import jwt from "jsonwebtoken";
-import { env } from "../env";
+import { verifyAccessToken } from "../helpers/token";
 import { ResponseHandler } from "../helpers/response-handler";
-import type { AuthenticatedUser, JWTPayload } from "../types/auth.types";
+import type { AuthenticatedUser } from "../types/auth.types";
 import { validateUserNotAuthenticated } from "../validations/user.validation";
 
 export interface AuthenticatedRequest extends Request {
@@ -22,7 +21,8 @@ export const authenticateUser = async (
   }
 
   try {
-    const decoded = jwt.verify(token, env.JWT_SECRET) as JWTPayload;
+    // Verificar access token usando a função helper atualizada
+    const decoded = verifyAccessToken(token);
     req.userId = decoded.userId;
 
     const user = await validateUserNotAuthenticated(decoded.userId);
@@ -38,7 +38,7 @@ export const authenticateUser = async (
       }
 
       if (error.name === "TokenExpiredError") {
-        ResponseHandler.unauthorized(res, "Token expirado");
+        ResponseHandler.unauthorized(res, "Token expirado. Use o refresh token para renovar.");
         return;
       }
     }

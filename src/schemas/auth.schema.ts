@@ -195,3 +195,15 @@ export const transactionQuerySchema = z
       }, "A data de fim deve ser uma data válida."),
   })
   .merge(paginationQuerySchema);
+
+// Schema para refresh token
+export const refreshTokenSchema = z.object({
+  refreshToken: z
+    .string({
+      required_error: "O refresh token é obrigatório.",
+      invalid_type_error: "O refresh token deve ser um texto.",
+    })
+    .min(1, "O refresh token não pode estar vazio."),
+});
+
+export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;

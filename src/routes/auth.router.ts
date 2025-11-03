@@ -3,13 +3,17 @@ import {
   createGoogleSession,
   createSession,
   createUser,
+  logout,
+  refreshToken,
 } from "../controllers/auth.controller";
+import { authenticateUser } from "../middlewares/auth";
 import { authRateLimit } from "../middlewares/security";
 import { validateBody } from "../middlewares/validate";
 import {
   createUserSchema,
   googleAuthSchema,
   loginSchema,
+  refreshTokenSchema,
 } from "../schemas/auth.schema";
 
 const AuthRouters: Router = Router();
@@ -32,6 +36,22 @@ AuthRouters.post(
   authRateLimit,
   validateBody(googleAuthSchema),
   createGoogleSession
+);
+
+// Rota para renovar access token
+AuthRouters.post(
+  "/refresh",
+  authRateLimit,
+  validateBody(refreshTokenSchema),
+  refreshToken
+);
+
+// Rota para fazer logout (revogar refresh token)
+AuthRouters.post(
+  "/logout",
+  authenticateUser,
+  validateBody(refreshTokenSchema),
+  logout
 );
 
 export { AuthRouters };
