@@ -53,7 +53,14 @@ export const getTransactions = async (
   res: Response
 ) => {
   const { user } = req;
-  const { category, startDate, endDate, page, limit } = req.body;
+  // Query params já foram validados e transformados pelo middleware
+  const { category, startDate, endDate, page, limit } = req.query as {
+    category?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+  };
 
   if (!user) {
     return ResponseHandler.unauthorized(res, "Usuário não autenticado");
@@ -90,38 +97,16 @@ export const getTransactions = async (
         filters
       );
 
-      // Calcular totais para as transações da página atual
-      const totalExpense = result.data
-        .filter((tx) => tx.type === "expense")
-        .reduce((sum, tx) => sum + Number(tx.amount), 0);
-
-      const totalIncome = result.data
-        .filter((tx) => tx.type === "income")
-        .reduce((sum, tx) => sum + Number(tx.amount), 0);
-
-      const user = await UserRepository.findById(userId);
-      const monthlyIncome = Number(user?.monthlyIncome) ?? 0;
-
-      const percentUsed =
-        monthlyIncome > 0
-          ? Number(((totalExpense / monthlyIncome) * 100).toFixed(2))
-          : null;
-
-      const alert =
-        percentUsed !== null && percentUsed >= 80
-          ? "Você já usou mais de 80% do seu rendimento mensal nesta página!"
-          : null;
-
-      return ResponseHandler.success(
+      return ResponseHandler.paginated(
         res,
+        result.data,
         {
-          data: result.data,
-          pagination: result.pagination,
-          totalExpense,
-          totalIncome,
-          monthlyIncome,
-          percentUsed,
-          alert,
+          page: result.pagination.page,
+          limit: result.pagination.limit,
+          total: result.pagination.total,
+          totalPages: result.pagination.totalPages,
+          hasNext: result.pagination.hasNext,
+          hasPrev: result.pagination.hasPrev,
         },
         "Transações recuperadas com sucesso"
       );

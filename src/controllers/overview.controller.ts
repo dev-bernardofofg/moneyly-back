@@ -3,7 +3,7 @@ import { formatBrazilianDate } from "../helpers/date-utils";
 import { getCurrentFinancialPeriod } from "../helpers/financial-period";
 import { ResponseHandler } from "../helpers/response-handler";
 import { AuthenticatedRequest } from "../middlewares/auth";
-import { GetDashboardOverviewRequest } from "../schemas/overview.schema";
+import { GetDashboardOverviewQuery } from "../schemas/overview.schema";
 import {
   getAvailablePeriodsService,
   getDashboardOverviewService,
@@ -12,11 +12,11 @@ import {
 } from "../services/overview.service";
 
 export const getDashboardOverview = async (
-  req: AuthenticatedRequest & { body: GetDashboardOverviewRequest },
+  req: AuthenticatedRequest & { query: GetDashboardOverviewQuery },
   res: Response
 ) => {
   const { user } = req;
-  const { periodId } = req.body;
+  const { periodId, startDate, endDate } = req.query;
 
   if (!user) {
     return ResponseHandler.unauthorized(res, "Usuário não autenticado");
@@ -31,9 +31,15 @@ export const getDashboardOverview = async (
 
   try {
     // 🎯 NOVA LÓGICA: Usar periodId diretamente
+    // Se há startDate e endDate nos query params, usar eles como fallback
+    const periodDatesFallback =
+      startDate && endDate
+        ? { startDate: new Date(startDate), endDate: new Date(endDate) }
+        : { startDate: new Date(), endDate: new Date() };
+
     const { availablePeriods, selectedPeriod } = await getTransactionsByUserId(
       userId,
-      { startDate: new Date(), endDate: new Date() }, // Fallback
+      periodDatesFallback,
       { startDay: financialDayStart ?? 1, endDay: financialDayEnd ?? 31 },
       periodId // ← Passar periodId diretamente
     );
@@ -41,7 +47,7 @@ export const getDashboardOverview = async (
     // Se há periodId, usar o período selecionado para validação
     const periodDates = selectedPeriod
       ? { startDate: selectedPeriod.startDate, endDate: selectedPeriod.endDate }
-      : { startDate: new Date(), endDate: new Date() };
+      : periodDatesFallback;
 
     const { stats, monthlyHistory, expensesByCategory, periodTransactions } =
       await getDashboardOverviewService(

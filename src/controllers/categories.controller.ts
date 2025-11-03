@@ -40,7 +40,11 @@ export const getCategories = async (
   res: Response
 ) => {
   const { userId } = req;
-  const { page, limit } = req.body;
+  // Query params já foram validados e transformados pelo middleware
+  const { page, limit } = req.query as {
+    page?: number;
+    limit?: number;
+  };
 
   if (!userId) {
     return ResponseHandler.unauthorized(res, "Usuário não autenticado");
@@ -49,11 +53,16 @@ export const getCategories = async (
   try {
     const result = await getCategoriesService(userId, { page, limit });
 
-    return ResponseHandler.success(
+    return ResponseHandler.paginated(
       res,
+      result.data,
       {
-        categories: result.data,
-        pagination: result.pagination,
+        page: result.pagination.page,
+        limit: result.pagination.limit,
+        total: result.pagination.total,
+        totalPages: result.pagination.totalPages,
+        hasNext: result.pagination.hasNext,
+        hasPrev: result.pagination.hasPrev,
       },
       "Categorias recuperadas com sucesso"
     );
