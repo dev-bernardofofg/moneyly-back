@@ -13,7 +13,7 @@
     "db:push": "drizzle-kit push",
     "restore:categories": "ts-node src/lib/seed-categories.ts",
     "migrate:periods": "tsx src/scripts/migrate-transactions-periods.ts",
-    "api:generate": "kubb generate && orval",
+    "api:generate": "kubb generate && orval && node scripts/fix-axios-imports.js",
     "api:docs": "echo 'Swagger UI disponível em http://localhost:5000/api-docs'",
     "test": "jest",
     "test:watch": "jest --watch",

@@ -16,7 +16,19 @@ export default defineConfig({
           path: "./src/lib/axios-instance.ts",
           name: "customInstance",
         },
+        // Customizar os imports gerados para usar o caminho do frontend
+        query: {
+          useQuery: true,
+          useInfinite: false,
+          useInfiniteQueryParam: "limit",
+          options: {
+            staleTime: 10000,
+          },
+        },
       },
+    },
+    hooks: {
+      afterAllFilesWrite: "prettier --write",
     },
   },
 });
