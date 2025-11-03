@@ -27,5 +27,11 @@
     "noUnusedParameters": true
   },
   "include": ["src/**/*", "api/*.ts"],
-  "exclude": ["node_modules", "dist", "src/scripts/**"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/scripts/**",
+    "src/generated/**",
+    "src/lib/axios-instance.ts"
+  ]
 }
