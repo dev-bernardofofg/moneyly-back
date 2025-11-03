@@ -76,3 +76,6 @@ export const transactionBodySchema = z
 
 // Schema para query de categorias (inclui paginação)
 export const categoryQuerySchema = paginationQuerySchema;
+
+// Schema para query de transações (usa query params)
+export const transactionListQuerySchema = transactionQuerySchema;
