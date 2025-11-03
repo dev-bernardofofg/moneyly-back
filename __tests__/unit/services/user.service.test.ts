@@ -2,12 +2,35 @@
  * Testes unitários para UserService
  */
 
+import { randomUUID } from "crypto";
+import { RefreshTokenRepository } from "../../../src/repositories/refresh-token.repository";
 import { UserRepository } from "../../../src/repositories/user.repository";
 import { createUserService } from "../../../src/services/user.service";
 import { HttpError } from "../../../src/validations/errors";
 
-// Mock do repository
+// Mock dos repositories e módulos
 jest.mock("../../../src/repositories/user.repository");
+jest.mock("../../../src/repositories/refresh-token.repository");
+jest.mock("../../../src/db/seed");
+jest.mock("../../../src/helpers/token");
+
+// Mock das funções de token e seed
+const mockGenerateAccessToken = jest.fn(() => "mock-access-token");
+const mockGenerateRefreshToken = jest.fn(() => "mock-refresh-token");
+const mockHashRefreshToken = jest.fn(() =>
+  Promise.resolve("hashed-refresh-token")
+);
+const mockCreateDefaultPreferencesForUser = jest.fn(() => Promise.resolve([]));
+
+jest.mock("../../../src/helpers/token", () => ({
+  generateAccessToken: () => mockGenerateAccessToken(),
+  generateRefreshToken: () => mockGenerateRefreshToken(),
+  hashRefreshToken: () => mockHashRefreshToken(),
+}));
+
+jest.mock("../../../src/db/seed", () => ({
+  createDefaultPreferencesForUser: () => mockCreateDefaultPreferencesForUser(),
+}));
 
 describe("UserService", () => {
   beforeEach(() => {
@@ -22,8 +45,9 @@ describe("UserService", () => {
         password: "password123",
       };
 
+      const mockUserId = randomUUID();
       const mockUser = {
-        id: "user-id",
+        id: mockUserId,
         ...userData,
         password: "hashed-password",
         googleId: null,
@@ -36,14 +60,28 @@ describe("UserService", () => {
         updatedAt: new Date(),
       };
 
+      const mockRefreshToken = {
+        id: randomUUID(),
+        userId: mockUserId,
+        token: "hashed-refresh-token",
+        expiresAt: new Date(),
+        createdAt: new Date(),
+      };
+
       (UserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
       (UserRepository.create as jest.Mock).mockResolvedValue(mockUser);
+      (RefreshTokenRepository.create as jest.Mock).mockResolvedValue(
+        mockRefreshToken
+      );
 
       const result = await createUserService(userData);
 
       expect(result).toHaveProperty("user");
-      expect(result).toHaveProperty("token");
-      expect(result.user.id).toBe("user-id");
+      expect(result).toHaveProperty("accessToken");
+      expect(result).toHaveProperty("refreshToken");
+      expect(result.user.id).toBe(mockUserId);
+      expect(result.accessToken).toBe("mock-access-token");
+      expect(result.refreshToken).toBe("mock-refresh-token");
     });
 
     it("deve lançar erro se email já existe", async () => {

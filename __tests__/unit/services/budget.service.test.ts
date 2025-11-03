@@ -16,7 +16,7 @@ import {
   updateBudget,
   updateBudgetService,
 } from "../../../src/services/budget.service";
-import { validateBudgetExistsByCategoryId } from "../../../src/validations/budget.validation";
+import { validateBudgetExists } from "../../../src/validations/budget.validation";
 import { validateUserNotAuthenticated } from "../../../src/validations/user.validation";
 
 // Mock dos módulos
@@ -89,35 +89,61 @@ describe("BudgetService", () => {
 
   describe("getUserBudgetsService", () => {
     const mockUserId = "user-123";
-    const mockBudgets = [
-      {
-        id: "budget-1",
-        userId: mockUserId,
-        categoryId: "cat-1",
-        monthlyLimit: "1000",
-      },
-      {
-        id: "budget-2",
-        userId: mockUserId,
-        categoryId: "cat-2",
-        monthlyLimit: "500",
-      },
-    ];
 
     it("deve retornar todos os orçamentos do usuário", async () => {
-      (BudgetRepository.findByUserId as jest.Mock).mockResolvedValue(
-        mockBudgets
+      const mockBudgetsWithCategory = [
+        {
+          id: "budget-1",
+          userId: mockUserId,
+          categoryId: "cat-1",
+          monthlyLimit: "1000",
+          category: { id: "cat-1", name: "Alimentação" },
+        },
+        {
+          id: "budget-2",
+          userId: mockUserId,
+          categoryId: "cat-2",
+          monthlyLimit: "500",
+          category: { id: "cat-2", name: "Transporte" },
+        },
+      ];
+
+      const mockUser = {
+        id: mockUserId,
+        financialDayStart: 1,
+        financialDayEnd: 31,
+      };
+
+      (BudgetRepository.getBudgetWithCategory as jest.Mock).mockResolvedValue(
+        mockBudgetsWithCategory
       );
+      (UserRepository.findById as jest.Mock).mockResolvedValue(mockUser);
+      (TransactionRepository.findByUserId as jest.Mock).mockResolvedValue([]);
 
       const result = await getUserBudgetsService(mockUserId);
 
-      expect(BudgetRepository.findByUserId).toHaveBeenCalledWith(mockUserId);
-      expect(result).toEqual(mockBudgets);
+      expect(BudgetRepository.getBudgetWithCategory).toHaveBeenCalledWith(
+        mockUserId
+      );
+      expect(UserRepository.findById).toHaveBeenCalledWith(mockUserId);
       expect(result).toHaveLength(2);
+      expect(result[0]).toHaveProperty("spent");
+      expect(result[0]).toHaveProperty("remaining");
+      expect(result[0]).toHaveProperty("percentage");
+      expect(result[0]).toHaveProperty("status");
     });
 
     it("deve retornar array vazio quando usuário não tem orçamentos", async () => {
-      (BudgetRepository.findByUserId as jest.Mock).mockResolvedValue([]);
+      const mockUser = {
+        id: mockUserId,
+        financialDayStart: 1,
+        financialDayEnd: 31,
+      };
+
+      (BudgetRepository.getBudgetWithCategory as jest.Mock).mockResolvedValue(
+        []
+      );
+      (UserRepository.findById as jest.Mock).mockResolvedValue(mockUser);
 
       const result = await getUserBudgetsService(mockUserId);
 
@@ -165,16 +191,15 @@ describe("BudgetService", () => {
       (validateUserNotAuthenticated as jest.Mock).mockResolvedValue({
         id: mockUserId,
       });
-      (validateBudgetExistsByCategoryId as jest.Mock).mockResolvedValue(
-        undefined
-      );
+      (validateBudgetExists as jest.Mock).mockResolvedValue(undefined);
       (BudgetRepository.delete as jest.Mock).mockResolvedValue(true);
 
       const result = await deleteBudgetService(mockUserId, mockBudgetId);
 
       expect(validateUserNotAuthenticated).toHaveBeenCalledWith(mockUserId);
-      expect(validateBudgetExistsByCategoryId).toHaveBeenCalledWith(
-        mockBudgetId
+      expect(validateBudgetExists).toHaveBeenCalledWith(
+        mockBudgetId,
+        mockUserId
       );
       expect(BudgetRepository.delete).toHaveBeenCalledWith(mockBudgetId);
       expect(result).toBe(true);

@@ -144,8 +144,10 @@ describe("GoalService", () => {
       expect(GoalRepository.findByUserIdActive).toHaveBeenCalledWith(
         mockUserId
       );
-      expect(result).toEqual(mockGoals);
       expect(result).toHaveLength(2);
+      expect(result[0]).toHaveProperty("progress");
+      expect(result[0].progress).toHaveProperty("percentage");
+      expect(result[0].progress).toHaveProperty("daysRemaining");
     });
 
     it("deve retornar array vazio quando usuário não tem metas", async () => {
@@ -209,8 +211,16 @@ describe("GoalService", () => {
     };
 
     it("deve retornar meta específica do usuário", async () => {
+      const mockGoalWithMilestones = {
+        ...mockGoal,
+        milestones: [],
+      };
+
       (GoalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(
         mockGoal
+      );
+      (GoalRepository.getGoalWithMilestones as jest.Mock).mockResolvedValue(
+        mockGoalWithMilestones
       );
       (validateGoalExists as jest.Mock).mockReturnValue(undefined);
 
@@ -221,7 +231,10 @@ describe("GoalService", () => {
         mockUserId
       );
       expect(validateGoalExists).toHaveBeenCalledWith(mockGoal);
-      expect(result).toEqual(mockGoal);
+      expect(GoalRepository.getGoalWithMilestones).toHaveBeenCalledWith(
+        mockGoalId
+      );
+      expect(result).toEqual(mockGoalWithMilestones);
     });
 
     it("deve validar se meta existe", async () => {
@@ -548,5 +561,3 @@ describe("GoalService", () => {
     });
   });
 });
-
-

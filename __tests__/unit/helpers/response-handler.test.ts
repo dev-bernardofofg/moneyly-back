@@ -21,7 +21,6 @@ describe("ResponseHandler", () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith({
-        success: true,
         data,
       });
     });
@@ -33,7 +32,6 @@ describe("ResponseHandler", () => {
       ResponseHandler.success(mockRes, data, message);
 
       expect(mockRes.json).toHaveBeenCalledWith({
-        success: true,
         data,
         message,
       });
@@ -125,7 +123,11 @@ describe("ResponseHandler", () => {
       expect(mockRes.json).toHaveBeenCalledWith({
         success: true,
         data,
-        pagination,
+        pagination: {
+          ...pagination,
+          hasNext: false,
+          hasPrev: false,
+        },
       });
     });
   });

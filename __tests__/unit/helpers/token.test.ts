@@ -27,7 +27,7 @@ describe("TokenHelper", () => {
       expect(decoded.userId).toBe(mockUserId);
     });
 
-    it("deve gerar token com expiração de 7 dias", () => {
+    it("deve gerar token com expiração de 15 minutos", () => {
       const token = generateToken(mockUserId);
       const decoded = jwt.decode(token) as {
         userId: string;
@@ -39,9 +39,9 @@ describe("TokenHelper", () => {
       expect(decoded).toHaveProperty("iat");
 
       const expiresIn = decoded.exp - decoded.iat;
-      const sevenDaysInSeconds = 7 * 24 * 60 * 60;
+      const fifteenMinutesInSeconds = 15 * 60; // 900 segundos
 
-      expect(expiresIn).toBe(sevenDaysInSeconds);
+      expect(expiresIn).toBe(fifteenMinutesInSeconds);
     });
 
     it("deve gerar tokens diferentes para diferentes userIds", () => {
@@ -98,5 +98,3 @@ describe("TokenHelper", () => {
     });
   });
 });
-
-
