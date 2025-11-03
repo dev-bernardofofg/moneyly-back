@@ -1,7 +1,7 @@
 import { Router } from "express";
-import swaggerUi from "swagger-ui-express";
 import { readFileSync } from "fs";
 import { join } from "path";
+import swaggerUi from "swagger-ui-express";
 import { AuthRouters } from "./routes/auth.router";
 import { BudgetRouter } from "./routes/budget.router";
 import { CategoryRouter } from "./routes/category.router";
@@ -17,7 +17,9 @@ try {
   const openApiContent = readFileSync(openApiPath, "utf-8");
   openApiDocument = JSON.parse(openApiContent) as Record<string, unknown>;
 } catch (error) {
-  console.warn("⚠️  openapi.json não encontrado. Swagger docs não estarão disponíveis.");
+  console.warn(
+    "⚠️  openapi.json não encontrado. Swagger docs não estarão disponíveis."
+  );
   openApiDocument = {};
 }
 
