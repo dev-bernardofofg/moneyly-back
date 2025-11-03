@@ -20,14 +20,9 @@ Content-Type: {{contentType}}
 
 ### Listar categorias do usuário
 # @name getCategories
-POST {{baseUrl}}/categories
+GET {{baseUrl}}/categories?page=1&limit=20
 Authorization: Bearer {{authToken}}
 Content-Type: {{contentType}}
-
-{
-  "page": 1,
-  "limit": 20
-}
 
 ### Atualizar categoria
 # @name updateCategory
@@ -112,14 +107,9 @@ Content-Type: {{contentType}}
 }
 
 ### Exemplo: Listar categorias com paginação
-POST {{baseUrl}}/categories
+GET {{baseUrl}}/categories?page=1&limit=10
 Authorization: Bearer {{authToken}}
 Content-Type: {{contentType}}
-
-{
-  "page": 1,
-  "limit": 10
-}
 
 ### Exemplo: Criar orçamento para transporte
 POST {{baseUrl}}/budgets
@@ -153,4 +143,7 @@ Content-Type: {{contentType}}
 # 7. Categorias não podem ser deletadas se tiverem transações
 # 8. Orçamentos são criados para o período financeiro atual
 # 9. Sistema cria automaticamente períodos financeiros quando necessário
-# 10. Use o token retornado pelo login em todas as requisições 
+# 10. Após login/sign-up bem-sucedido, você recebe:
+#     - accessToken: Token de curta duração (15 minutos) - use no header Authorization: Bearer {{accessToken}}
+#     - refreshToken: Token de longa duração (7 dias) - use para renovar o access token
+# 11. Use o accessToken retornado pelo login em todas as requisições 

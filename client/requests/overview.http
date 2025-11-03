@@ -10,27 +10,19 @@
 ### ========================================
 
 ### 1. Buscar períodos financeiros disponíveis
-POST {{baseUrl}}/overview/periods
+GET {{baseUrl}}/overview/periods
 Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
-
-{}
 
 ### 2. Buscar dados do dashboard (período atual - padrão)
-POST {{baseUrl}}/overview/dashboard
+GET {{baseUrl}}/overview/dashboard
 Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
-
-{}
 
 ### 3. Buscar dados do dashboard (período específico)
-POST {{baseUrl}}/overview/dashboard
+GET {{baseUrl}}/overview/dashboard?periodId=2024-07-05T00:00:00.000Z_2024-08-05T00:00:00.000Z
 Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
-
-{
-  "periodId": "2024-07-05T00:00:00.000Z_2024-08-05T00:00:00.000Z"
-}
 
 GET {{baseUrl}}/overview/planner
 Authorization: Bearer {{authToken}}
@@ -45,34 +37,36 @@ Content-Type: application/json
 ### ========================================
 
 ### 4. Teste - Período não encontrado
-POST {{baseUrl}}/overview/dashboard
+GET {{baseUrl}}/overview/dashboard?periodId=periodo-inexistente
 Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
-
-{
-  "periodId": "periodo-inexistente"
-}
 
 ### 5. Teste - UUID inválido (removido - userId agora vem do token)
-POST {{baseUrl}}/overview/periods
+GET {{baseUrl}}/overview/periods
 Content-Type: {{contentType}}
 Authorization: Bearer {{authToken}}
-
-{}
 
 ### ========================================
 ### 🔒 TESTES DE AUTORIZAÇÃO
 ### ========================================
 
 ### 6. Teste - Acesso sem token
-POST {{baseUrl}}/overview/periods
+GET {{baseUrl}}/overview/periods
 Content-Type: {{contentType}}
 
-{}
-
 ### 7. Teste - Token inválido
-POST {{baseUrl}}/overview/dashboard
+GET {{baseUrl}}/overview/dashboard
 Content-Type: {{contentType}}
 Authorization: Bearer token_invalido
 
-{} 
+### ========================================
+### NOTAS IMPORTANTES
+### ========================================
+
+# 1. Todas as rotas requerem autenticação (accessToken no header Authorization: Bearer {{accessToken}})
+# 2. Após login/sign-up bem-sucedido, você recebe:
+#    - accessToken: Token de curta duração (15 minutos) - use no header Authorization
+#    - refreshToken: Token de longa duração (7 dias) - use para renovar o access token
+# 3. Quando o accessToken expirar, use POST /auth/refresh com o refreshToken
+# 4. O sistema cria automaticamente períodos financeiros quando necessário
+# 5. Períodos podem ser filtrados por periodId ou por startDate/endDate 
