@@ -25,7 +25,7 @@ export const getMe = async (req: AuthenticatedRequest, res: Response) => {
 
     return ResponseHandler.success(
       res,
-      { user },
+      user,
       "Dados do usuário recuperados com sucesso"
     );
   } catch (error) {
