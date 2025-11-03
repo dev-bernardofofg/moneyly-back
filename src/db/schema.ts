@@ -139,6 +139,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   goals: many(goals),
   categoryPreferences: many(userCategoryPreferences),
   financialPeriods: many(financialPeriods),
+  refreshTokens: many(refreshTokens),
+  recurringTransactions: many(recurringTransactions),
 }));
 
 export const transactionsRelations = relations(transactions, ({ one }) => ({
@@ -217,6 +219,64 @@ export const financialPeriodsRelations = relations(
   })
 );
 
+// Tabela de refresh tokens
+export const refreshTokens = pgTable("refresh_tokens", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(), // Token hasheado
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Tabela de transações recorrentes
+export const recurringTransactions = pgTable("recurring_transactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  type: text("type", { enum: ["income", "expense"] }).notNull(),
+  title: text("title").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  categoryId: uuid("category_id")
+    .notNull()
+    .references(() => categories.id, { onDelete: "cascade" }),
+  frequency: text("frequency", {
+    enum: ["daily", "weekly", "monthly", "yearly"],
+  }).notNull(),
+  dayOfMonth: integer("day_of_month"), // Para frequência monthly (1-31)
+  dayOfWeek: integer("day_of_week"), // Para frequência weekly (0-6, domingo = 0)
+  nextExecution: timestamp("next_execution").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Relacionamentos para refresh tokens
+export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [refreshTokens.userId],
+    references: [users.id],
+  }),
+}));
+
+// Relacionamentos para transações recorrentes
+export const recurringTransactionsRelations = relations(
+  recurringTransactions,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [recurringTransactions.userId],
+      references: [users.id],
+    }),
+    category: one(categories, {
+      fields: [recurringTransactions.categoryId],
+      references: [categories.id],
+    }),
+  })
+);
+
 // Tipos TypeScript
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -234,3 +294,7 @@ export type UserCategoryPreference =
   typeof userCategoryPreferences.$inferSelect;
 export type NewUserCategoryPreference =
   typeof userCategoryPreferences.$inferInsert;
+export type RefreshToken = typeof refreshTokens.$inferSelect;
+export type NewRefreshToken = typeof refreshTokens.$inferInsert;
+export type RecurringTransaction = typeof recurringTransactions.$inferSelect;
+export type NewRecurringTransaction = typeof recurringTransactions.$inferInsert;
