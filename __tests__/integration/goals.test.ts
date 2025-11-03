@@ -21,7 +21,7 @@ describe("Goal Endpoints", () => {
       .post("/auth/sign-up")
       .send(userData);
 
-    authToken = signUpResponse.body.data.token;
+    authToken = signUpResponse.body.data.accessToken;
   });
 
   describe("POST /goals/", () => {
@@ -39,7 +39,7 @@ describe("Goal Endpoints", () => {
         .send(goalData)
         .expect(201);
 
-      expect(response.body).toHaveProperty("success", true);
+      expect(response.body).toHaveProperty("data");
       expect(response.body.data).toHaveProperty("id");
       expect(response.body.data.title).toBe(goalData.title);
       expect(response.body.data.description).toBe(goalData.description);
@@ -64,7 +64,7 @@ describe("Goal Endpoints", () => {
         .send(goalData)
         .expect(201);
 
-      expect(response.body).toHaveProperty("success", true);
+      expect(response.body).toHaveProperty("data");
       expect(response.body.data.title).toBe(goalData.title);
     });
 
@@ -88,7 +88,7 @@ describe("Goal Endpoints", () => {
         })
         .expect(400);
 
-      expect(response.body).toHaveProperty("success", false);
+      expect(response.body).toHaveProperty("error");
     });
 
     it("deve validar que targetAmount seja positivo", async () => {
@@ -104,7 +104,7 @@ describe("Goal Endpoints", () => {
         .send(goalData)
         .expect(400);
 
-      expect(response.body).toHaveProperty("success", false);
+      expect(response.body).toHaveProperty("error");
     });
 
     it("deve validar formato de data", async () => {
@@ -120,7 +120,7 @@ describe("Goal Endpoints", () => {
         .send(goalData)
         .expect(400);
 
-      expect(response.body).toHaveProperty("success", false);
+      expect(response.body).toHaveProperty("error");
     });
 
     it("deve aceitar valores decimais para targetAmount", async () => {
@@ -147,7 +147,7 @@ describe("Goal Endpoints", () => {
         .set("Authorization", `Bearer ${authToken}`)
         .expect(200);
 
-      expect(response.body).toHaveProperty("success", true);
+      expect(response.body).toHaveProperty("data");
       expect(Array.isArray(response.body.data)).toBe(true);
       expect(response.body.data.length).toBeGreaterThan(0);
     });
@@ -188,7 +188,7 @@ describe("Goal Endpoints", () => {
         .post("/auth/sign-up")
         .send(newUserData);
 
-      const newToken = newUserResponse.body.data.token;
+      const newToken = newUserResponse.body.data.accessToken;
 
       const response = await request(app)
         .get("/goals/")
@@ -210,7 +210,7 @@ describe("Goal Endpoints", () => {
         .set("Authorization", `Bearer ${authToken}`)
         .expect(200);
 
-      expect(response.body).toHaveProperty("success", true);
+      expect(response.body).toHaveProperty("data");
       expect(response.body.data.id).toBe(goalId);
       expect(response.body.data).toHaveProperty("title");
       expect(response.body.data).toHaveProperty("targetAmount");
@@ -235,14 +235,14 @@ describe("Goal Endpoints", () => {
         .post("/auth/sign-up")
         .send(otherUserData);
 
-      const otherToken = otherUserResponse.body.data.token;
+      const otherToken = otherUserResponse.body.data.accessToken;
 
       const response = await request(app)
         .get(`/goals/${goalId}`)
         .set("Authorization", `Bearer ${otherToken}`);
 
       expect(response.status).toBeGreaterThanOrEqual(400);
-      expect(response.body).toHaveProperty("success", false);
+      expect(response.body).toHaveProperty("error");
     });
 
     it("deve rejeitar sem autenticação", async () => {
@@ -264,7 +264,7 @@ describe("Goal Endpoints", () => {
         .send(updateData)
         .expect(200);
 
-      expect(response.body).toHaveProperty("success", true);
+      expect(response.body).toHaveProperty("data");
       expect(response.body.data.title).toBe(updateData.title);
       expect(response.body.data.targetAmount).toBe(
         updateData.targetAmount.toString()
@@ -324,7 +324,7 @@ describe("Goal Endpoints", () => {
         .send(updateData)
         .expect(400);
 
-      expect(response.body).toHaveProperty("success", false);
+      expect(response.body).toHaveProperty("error");
     });
 
     it("deve rejeitar atualização de meta inexistente", async () => {
@@ -359,7 +359,7 @@ describe("Goal Endpoints", () => {
         .post("/auth/sign-up")
         .send(otherUserData);
 
-      const otherToken = otherUserResponse.body.data.token;
+      const otherToken = otherUserResponse.body.data.accessToken;
 
       const updateData = {
         title: "Tentativa de atualização",
@@ -371,7 +371,7 @@ describe("Goal Endpoints", () => {
         .send(updateData);
 
       expect(response.status).toBeGreaterThanOrEqual(400);
-      expect(response.body).toHaveProperty("success", false);
+      expect(response.body).toHaveProperty("error");
     });
   });
 
@@ -387,7 +387,7 @@ describe("Goal Endpoints", () => {
         .send(addAmountData)
         .expect(200);
 
-      expect(response.body).toHaveProperty("success", true);
+      expect(response.body).toHaveProperty("data");
       expect(response.body.data).toHaveProperty("currentAmount");
       expect(Number(response.body.data.currentAmount)).toBeGreaterThanOrEqual(
         500
@@ -405,7 +405,7 @@ describe("Goal Endpoints", () => {
         .send(addAmountData)
         .expect(200);
 
-      expect(response.body).toHaveProperty("success", true);
+      expect(response.body).toHaveProperty("data");
     });
 
     it("deve rejeitar valor negativo", async () => {
@@ -419,7 +419,7 @@ describe("Goal Endpoints", () => {
         .send(addAmountData)
         .expect(400);
 
-      expect(response.body).toHaveProperty("success", false);
+      expect(response.body).toHaveProperty("error");
     });
 
     it("deve rejeitar meta inexistente", async () => {
@@ -498,7 +498,7 @@ describe("Goal Endpoints", () => {
         .set("Authorization", `Bearer ${authToken}`)
         .expect(200);
 
-      expect(response.body).toHaveProperty("success", true);
+      expect(response.body).toHaveProperty("data");
     });
 
     it("deve rejeitar deleção de meta inexistente", async () => {
@@ -524,14 +524,14 @@ describe("Goal Endpoints", () => {
         .post("/auth/sign-up")
         .send(otherUserData);
 
-      const otherToken = otherUserResponse.body.data.token;
+      const otherToken = otherUserResponse.body.data.accessToken;
 
       const response = await request(app)
         .delete(`/goals/${goalId}`)
         .set("Authorization", `Bearer ${otherToken}`);
 
       expect(response.status).toBeGreaterThanOrEqual(400);
-      expect(response.body).toHaveProperty("success", false);
+      expect(response.body).toHaveProperty("error");
     });
 
     it("deve verificar se meta foi realmente deletada", async () => {

@@ -19,9 +19,10 @@ describe("Auth Endpoints", () => {
         .send(userData)
         .expect(201);
 
-      expect(response.body).toHaveProperty("success", true);
+      expect(response.body).toHaveProperty("data");
       expect(response.body.data).toHaveProperty("user");
-      expect(response.body.data).toHaveProperty("token");
+      expect(response.body.data).toHaveProperty("accessToken");
+      expect(response.body.data).toHaveProperty("refreshToken");
       expect(response.body.data.user.email).toBe(userData.email);
     });
 
@@ -41,7 +42,6 @@ describe("Auth Endpoints", () => {
         .send(userData)
         .expect(409);
 
-      expect(response.body).toHaveProperty("success", false);
       expect(response.body).toHaveProperty("error");
     });
 
@@ -54,7 +54,7 @@ describe("Auth Endpoints", () => {
         })
         .expect(400);
 
-      expect(response.body).toHaveProperty("success", false);
+      expect(response.body).toHaveProperty("error");
     });
   });
 
@@ -78,8 +78,9 @@ describe("Auth Endpoints", () => {
         })
         .expect(200);
 
-      expect(response.body).toHaveProperty("success", true);
-      expect(response.body.data).toHaveProperty("token");
+      expect(response.body).toHaveProperty("data");
+      expect(response.body.data).toHaveProperty("accessToken");
+      expect(response.body.data).toHaveProperty("refreshToken");
     });
 
     it("deve rejeitar senha incorreta", async () => {
@@ -101,7 +102,7 @@ describe("Auth Endpoints", () => {
         })
         .expect(401);
 
-      expect(response.body).toHaveProperty("success", false);
+      expect(response.body).toHaveProperty("error");
     });
   });
 });

@@ -22,7 +22,7 @@ describe("Transaction Endpoints", () => {
       .post("/auth/sign-up")
       .send(userData);
 
-    authToken = signUpResponse.body.data.token;
+    authToken = signUpResponse.body.data.accessToken;
 
     // Criar uma categoria para usar nas transações
     const categoryResponse = await request(app)
