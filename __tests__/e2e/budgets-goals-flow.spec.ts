@@ -402,3 +402,5 @@ test.describe("Fluxo Completo de Budgets e Goals E2E", () => {
     expect(Array.isArray(body.data.alerts)).toBe(true);
   });
 });
+
+

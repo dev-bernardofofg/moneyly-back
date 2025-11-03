@@ -46,3 +46,5 @@ setupTestDatabase().catch((error) => {
   console.error("❌ Erro ao configurar banco de teste:", error);
   process.exit(1);
 });
+
+

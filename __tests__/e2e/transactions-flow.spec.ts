@@ -320,3 +320,5 @@ test.describe("Fluxo Completo de Transações E2E", () => {
     expect(body.success).toBe(false);
   });
 });
+
+
