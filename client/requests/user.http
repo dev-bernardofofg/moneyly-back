@@ -117,4 +117,7 @@ Content-Type: {{contentType}}
 #    - Dentro do mês: 1 a 31
 #    - Cruzando meses: 15 a 14 (15º dia a 14º do próximo mês)
 # 5. O sistema cria automaticamente períodos financeiros quando necessário
-# 6. Use o token retornado pelo login em todas as requisições 
+# 6. Após login/sign-up bem-sucedido, você recebe:
+#    - accessToken: Token de curta duração (15 minutos) - use no header Authorization: Bearer {{accessToken}}
+#    - refreshToken: Token de longa duração (7 dias) - use para renovar o access token
+# 7. Use o accessToken retornado pelo login em todas as requisições 

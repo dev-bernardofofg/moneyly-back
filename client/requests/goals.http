@@ -153,5 +153,8 @@ Content-Type: {{contentType}}
 # 6. Valores adicionados devem ser positivos
 # 7. Sistema calcula automaticamente o progresso (currentAmount vs targetAmount)
 # 8. Objetivos podem ser marcados como ativos/inativos
-# 9. Use o token retornado pelo login em todas as requisições
-# 10. Objetivos são vinculados ao usuário logado 
+# 9. Após login/sign-up bem-sucedido, você recebe:
+#    - accessToken: Token de curta duração (15 minutos) - use no header Authorization: Bearer {{accessToken}}
+#    - refreshToken: Token de longa duração (7 dias) - use para renovar o access token
+# 10. Use o accessToken retornado pelo login em todas as requisições
+# 11. Objetivos são vinculados ao usuário logado 

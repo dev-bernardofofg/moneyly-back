@@ -46,10 +46,33 @@ Content-Type: {{contentType}}
 }
 
 ### ========================================
+### REFRESH TOKENS
+### ========================================
+
+### Renovar Access Token (usar refresh token)
+# @name refreshToken
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "cole_o_refresh_token_aqui"
+}
+
+### Fazer Logout (revogar refresh token)
+# @name logout
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{signin.response.body.data.accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "cole_o_refresh_token_aqui"
+}
+
+### ========================================
 ### EXEMPLOS DE USO
 ### ========================================
 
-### Exemplo: Login e armazenar token
+### Exemplo: Login e armazenar tokens
 # @name auth
 POST {{baseUrl}}/auth/sign-in
 Content-Type: {{contentType}}
@@ -59,10 +82,11 @@ Content-Type: {{contentType}}
   "password": "sua_senha"
 }
 
-### Exemplo: Usar token em outras requisições
-# GET {{baseUrl}}/user/me
-# Authorization: Bearer {{auth.response.body.token}}
-# Content-Type: {{contentType}}
+### Exemplo: Usar access token em outras requisições
+# @name getUserProfile
+GET {{baseUrl}}/user/profile
+Authorization: Bearer {{signin.response.body.data.accessToken}}
+Content-Type: {{contentType}}
 
 ### ========================================
 ### NOTAS IMPORTANTES
@@ -72,5 +96,9 @@ Content-Type: {{contentType}}
 # 2. Senhas devem ter pelo menos 6 caracteres
 # 3. Emails devem ser válidos
 # 4. Para autenticação Google, você precisa de um idToken válido do Google
-# 5. Após login bem-sucedido, use o token retornado no header Authorization: Bearer {token}
-# 6. O token JWT expira em 7 dias por padrão
+# 5. Após login/sign-up bem-sucedido, você recebe:
+#    - accessToken: Token de curta duração (15 minutos) - use no header Authorization
+#    - refreshToken: Token de longa duração (7 dias) - use para renovar o access token
+# 6. Quando o accessToken expirar, use POST /auth/refresh com o refreshToken
+# 7. Para fazer logout, use POST /auth/logout com o refreshToken
+# 8. Guarde o refreshToken com segurança (preferencialmente em httpOnly cookie no frontend)

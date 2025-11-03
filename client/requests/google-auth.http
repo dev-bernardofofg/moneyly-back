@@ -38,10 +38,11 @@ Content-Type: {{contentType}}
 # 1. Esta rota tem rate limiting (máximo 100 requests por 15 minutos)
 # 2. idToken deve ser um token válido do Google OAuth
 # 3. O token deve ser obtido através do fluxo OAuth do Google
-# 4. Após autenticação bem-sucedida, você receberá um token JWT
-# 5. Use o token JWT retornado no header Authorization: Bearer {token}
-# 6. O token JWT expira em 7 dias por padrão
-# 7. Para obter um idToken, configure o Google OAuth no seu frontend
-# 8. Esta rota é alternativa ao login tradicional com email/senha
-# 9. Usuários podem ter conta criada automaticamente se não existirem
-# 10. Consulte a documentação do Google OAuth para implementação no frontend 
+# 4. Após autenticação bem-sucedida, você recebe:
+#    - accessToken: Token de curta duração (15 minutos) - use no header Authorization: Bearer {{accessToken}}
+#    - refreshToken: Token de longa duração (7 dias) - use para renovar o access token
+# 5. Quando o accessToken expirar, use POST /auth/refresh com o refreshToken
+# 6. Para obter um idToken, configure o Google OAuth no seu frontend
+# 7. Esta rota é alternativa ao login tradicional com email/senha
+# 8. Usuários podem ter conta criada automaticamente se não existirem
+# 9. Consulte a documentação do Google OAuth para implementação no frontend 

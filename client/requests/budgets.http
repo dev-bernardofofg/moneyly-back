@@ -111,13 +111,17 @@ Content-Type: {{contentType}}
 ### NOTAS IMPORTANTES
 ### ========================================
 
-# 1. Todas as rotas requerem autenticação (token JWT)
+# 1. Todas as rotas requerem autenticação (accessToken no header Authorization: Bearer {{accessToken}})
 # 2. O sistema cria automaticamente períodos financeiros quando necessário
 # 3. Orçamentos são vinculados a categorias específicas
 # 4. Limite mensal deve ser positivo
 # 5. categoryId deve ser um UUID válido de uma categoria existente
 # 6. Orçamentos são criados para o período financeiro atual
 # 7. Sistema calcula automaticamente o período baseado na configuração do usuário
-# 8. Use o token retornado pelo login em todas as requisições
-# 9. Orçamentos podem ser atualizados a qualquer momento
-# 10. Deletar um orçamento remove o limite, mas mantém as transações 
+# 8. Após login/sign-up bem-sucedido, você recebe:
+#    - accessToken: Token de curta duração (15 minutos) - use no header Authorization
+#    - refreshToken: Token de longa duração (7 dias) - use para renovar o access token
+# 9. Quando o accessToken expirar, use POST /auth/refresh com o refreshToken
+# 10. Use o accessToken retornado pelo login em todas as requisições
+# 11. Orçamentos podem ser atualizados a qualquer momento
+# 12. Deletar um orçamento remove o limite, mas mantém as transações 
