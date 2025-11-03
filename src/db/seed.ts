@@ -28,6 +28,19 @@ export const globalCategories = [
 // Função para criar categorias globais (executar apenas uma vez)
 export async function createGlobalCategories() {
   try {
+    // Verificar se já existem categorias globais
+    const existingCategories = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.isGlobal, true));
+
+    if (existingCategories.length > 0) {
+      console.log(
+        `ℹ️ Já existem ${existingCategories.length} categorias globais. Pulando criação.`
+      );
+      return existingCategories;
+    }
+
     const categoriesToInsert = globalCategories.map((category) => ({
       ...category,
       isGlobal: true,
@@ -51,19 +64,39 @@ export async function createGlobalCategories() {
 export async function createDefaultPreferencesForUser(userId: string) {
   try {
     // Buscar todas as categorias globais
-    const globalCategories = await db
+    let globalCategoriesData = await db
       .select()
       .from(categories)
       .where(eq(categories.isGlobal, true));
 
-    if (globalCategories.length === 0) {
+    // Se não existirem categorias globais, criar elas primeiro
+    if (globalCategoriesData.length === 0) {
       console.log(
-        "⚠️ Nenhuma categoria global encontrada. Execute createGlobalCategories primeiro."
+        "⚠️ Nenhuma categoria global encontrada. Criando categorias globais..."
       );
-      return [];
+      try {
+        await createGlobalCategories();
+        // Buscar novamente após criar
+        globalCategoriesData = await db
+          .select()
+          .from(categories)
+          .where(eq(categories.isGlobal, true));
+      } catch (error) {
+        console.error(
+          "❌ Erro ao criar categorias globais automaticamente:",
+          error
+        );
+        // Se ainda não tiver categorias, retornar vazio
+        if (globalCategoriesData.length === 0) {
+          console.log(
+            "⚠️ Não foi possível criar categorias globais. Usuário criado sem categorias padrão."
+          );
+          return [];
+        }
+      }
     }
 
-    const categoryIds = globalCategories.map((cat) => cat.id);
+    const categoryIds = globalCategoriesData.map((cat) => cat.id);
     const preferences =
       await UserCategoryPreferencesRepository.createDefaultPreferencesForUser(
         userId,
