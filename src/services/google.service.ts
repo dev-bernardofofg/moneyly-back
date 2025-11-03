@@ -1,3 +1,4 @@
+import { createDefaultPreferencesForUser } from "../db/seed";
 import { UserRepository } from "../repositories/user.repository";
 import { HttpError } from "../validations/errors";
 import { verifyGoogleToken } from "../validations/google.validation";
@@ -28,6 +29,17 @@ export const authenticateWithGoogle = async (idToken: string) => {
           googleId: googleUser.sub,
           avatar: googleUser.picture,
         });
+
+        // Criar preferências de categorias padrão para o novo usuário
+        try {
+          await createDefaultPreferencesForUser(user.id);
+        } catch (error) {
+          // Log do erro, mas não impede a criação do usuário
+          console.error(
+            "⚠️ Erro ao criar categorias padrão para o usuário Google:",
+            error
+          );
+        }
       }
     }
 
