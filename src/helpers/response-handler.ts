@@ -56,10 +56,11 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
     limit: number;
     total: number;
     totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
   };
 }
 export interface SuccessResponse<T> {
-  success: true;
   data: T;
   message?: string;
 }
@@ -81,7 +82,6 @@ export class ResponseHandler {
     const normalizedData = normalizeDecimals(data) as T;
 
     const response: SuccessResponse<T> = {
-      success: true,
       data: normalizedData,
       ...(message ? { message } : {}),
     };
@@ -140,13 +140,25 @@ export class ResponseHandler {
       limit: number;
       total: number;
       totalPages: number;
+      hasNext?: boolean;
+      hasPrev?: boolean;
     },
     message?: string
   ): Response<PaginatedResponse<T>> {
+    // Normalizar decimais nos dados antes de retornar
+    const normalizedData = normalizeDecimals(data) as T[];
+
     const response: PaginatedResponse<T> = {
       success: true,
-      data,
-      pagination,
+      data: normalizedData,
+      pagination: {
+        page: pagination.page,
+        limit: pagination.limit,
+        total: pagination.total,
+        totalPages: pagination.totalPages,
+        hasNext: pagination.hasNext ?? pagination.page < pagination.totalPages,
+        hasPrev: pagination.hasPrev ?? pagination.page > 1,
+      },
       ...(message ? { message } : {}),
     };
 
