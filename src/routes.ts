@@ -1,5 +1,7 @@
 import { Router } from "express";
 import swaggerUi from "swagger-ui-express";
+import { readFileSync } from "fs";
+import { join } from "path";
 import { AuthRouters } from "./routes/auth.router";
 import { BudgetRouter } from "./routes/budget.router";
 import { CategoryRouter } from "./routes/category.router";
@@ -7,7 +9,17 @@ import savingsGoalRoutes from "./routes/goal.router";
 import { OverviewRouter } from "./routes/overview.router";
 import transactionRoutes from "./routes/transaction.router";
 import { UserRouters } from "./routes/user.router";
-import openApiDocument = require("../openapi.json");
+
+// Carregar openapi.json de forma segura
+let openApiDocument: Record<string, unknown> = {};
+try {
+  const openApiPath = join(__dirname, "../openapi.json");
+  const openApiContent = readFileSync(openApiPath, "utf-8");
+  openApiDocument = JSON.parse(openApiContent) as Record<string, unknown>;
+} catch (error) {
+  console.warn("⚠️  openapi.json não encontrado. Swagger docs não estarão disponíveis.");
+  openApiDocument = {};
+}
 
 const router: Router = Router();
 
