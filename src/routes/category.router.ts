@@ -12,7 +12,7 @@ import {
   createCategorySchema,
   updateCategorySchema,
 } from "../schemas/category.schema";
-import { paginationBodySchema } from "../schemas/pagination.schema";
+import { paginationQuerySchema } from "../schemas/pagination.schema";
 
 const CategoryRouter: Router = Router();
 
@@ -23,10 +23,10 @@ CategoryRouter.post(
   createCategory
 );
 
-CategoryRouter.post(
+CategoryRouter.get(
   "/",
   authenticateUser,
-  validate({ body: paginationBodySchema }),
+  validate({ query: paginationQuerySchema }),
   getCategories
 );
 

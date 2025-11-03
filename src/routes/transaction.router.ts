@@ -12,7 +12,7 @@ import { authenticateUser } from "../middlewares/auth";
 import { ensurePeriodExists } from "../middlewares/auto-period-creation";
 import { validate } from "../middlewares/validate";
 import { idParamSchema } from "../schemas/auth.schema";
-import { transactionBodySchema } from "../schemas/pagination.schema";
+import { transactionListQuerySchema } from "../schemas/pagination.schema";
 import {
   transactionSchema,
   transactionUpdateSchema,
@@ -29,9 +29,9 @@ TransactionsRouter.post(
   createTransaction
 );
 
-TransactionsRouter.post(
+TransactionsRouter.get(
   "/",
-  validate({ body: transactionBodySchema }),
+  validate({ query: transactionListQuerySchema }),
   getTransactions
 );
 
