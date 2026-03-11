@@ -1,6 +1,6 @@
 import type { Category } from "../db/schema";
 import {
-  getAvailableFinancialPeriods,
+  formatPeriodLabel,
   getCurrentFinancialPeriod,
 } from "../helpers/financial-period";
 import {
@@ -9,62 +9,67 @@ import {
   calculateStats,
 } from "../helpers/handlers/overview-handlers";
 import { CategoryRepository } from "../repositories/categories.repository";
+import { FinancialPeriodRepository } from "../repositories/financial-period.repository";
 import type { TransactionWithCategory } from "../repositories/transaction.repository";
 import { TransactionRepository } from "../repositories/transaction.repository";
-import { validatePeriodId } from "../validations/overview.validation";
 import { getBudgetProgressService } from "./budget.service";
 import { getGoalsProgressService } from "./goal.service";
 
 export const getTransactionsByUserId = async (
   userId: string,
-  dates: { startDate: Date; endDate: Date },
   financial?: { startDay: number; endDay: number },
   periodId?: string
 ) => {
-  let transactions: TransactionWithCategory[];
+  // Buscar períodos do banco com contagem real
+  const storedPeriods =
+    await FinancialPeriodRepository.findAllByUserWithTransactionCount(userId);
+
+  const availablePeriods = storedPeriods.map((p) => ({
+    id: p.id,
+    startDate: p.startDate,
+    endDate: p.endDate,
+    label: formatPeriodLabel(p.startDate, p.endDate),
+    transactionCount: p.transactionCount,
+  }));
+
+  let selectedPeriod: (typeof availablePeriods)[0] | undefined;
 
   if (periodId) {
-    // 🎯 NOVA LÓGICA: Buscar por periodId primeiro
-    try {
-      transactions = await TransactionRepository.findByPeriodId(
-        userId,
-        periodId
-      );
-    } catch (error) {
-      // Fallback para busca por data
-      transactions = await TransactionRepository.findByUserId(userId, dates);
-    }
-  } else {
-    // Busca tradicional por data
-    transactions = await TransactionRepository.findByUserId(userId, dates);
-  }
-
-  if (financial) {
-    const availablePeriods = getAvailableFinancialPeriods(
+    selectedPeriod = availablePeriods.find((p) => p.id === periodId);
+  } else if (financial) {
+    const currentPeriod = getCurrentFinancialPeriod(
       financial.startDay,
-      financial.endDay,
-      transactions
+      financial.endDay
     );
-
-    if (periodId) {
-      validatePeriodId(periodId, availablePeriods);
-      const selectedPeriod = availablePeriods.find((p) => p.id === periodId);
-      return { transactions, availablePeriods, selectedPeriod };
-    } else {
-      const currentPeriod = getCurrentFinancialPeriod(
-        financial.startDay,
-        financial.endDay
-      );
-      const selectedPeriod = availablePeriods.find(
-        (p) =>
-          p.startDate.getTime() === currentPeriod.startDate.getTime() &&
-          p.endDate.getTime() === currentPeriod.endDate.getTime()
-      );
-      return { transactions, availablePeriods, selectedPeriod };
-    }
+    selectedPeriod = availablePeriods.find(
+      (p) =>
+        p.startDate.getTime() === currentPeriod.startDate.getTime() &&
+        p.endDate.getTime() === currentPeriod.endDate.getTime()
+    );
   }
 
-  return { transactions };
+  // Buscar transações do período selecionado por UUID real
+  let transactions: TransactionWithCategory[];
+  if (selectedPeriod) {
+    transactions = await TransactionRepository.findByPeriodId(
+      userId,
+      selectedPeriod.id
+    );
+  } else if (periodId) {
+    // periodId fornecido mas não encontrado nos períodos do usuário
+    transactions = [];
+  } else {
+    // Sem período selecionado: buscar transações do período atual por data (fallback)
+    const currentPeriod = financial
+      ? getCurrentFinancialPeriod(financial.startDay, financial.endDay)
+      : { startDate: new Date(), endDate: new Date() };
+    transactions = await TransactionRepository.findByUserId(userId, {
+      startDate: currentPeriod.startDate,
+      endDate: currentPeriod.endDate,
+    });
+  }
+
+  return { transactions, availablePeriods, selectedPeriod };
 };
 
 export const getStatsOverview = async (
@@ -91,15 +96,8 @@ export const getExpensesByCategory = async (
 export const getDashboardOverviewService = async (
   userId: string,
   monthlyIncome: number,
-  dates: { startDate: Date; endDate: Date }
+  periodTransactions: TransactionWithCategory[]
 ) => {
-  const periodTransactionsResult = await getTransactionsByUserId(userId, dates);
-
-  // Extract transactions array from the result
-  const periodTransactions = Array.isArray(periodTransactionsResult)
-    ? periodTransactionsResult
-    : periodTransactionsResult.transactions;
-
   const categories = await CategoryRepository.findByUserId(userId);
 
   const [stats, monthlyHistory, expensesByCategory] = await Promise.all([
@@ -112,22 +110,20 @@ export const getDashboardOverviewService = async (
     stats,
     monthlyHistory,
     expensesByCategory,
-    periodTransactions,
   };
 };
 
-export const getAvailablePeriodsService = async (
-  userId: string,
-  financialDayStart: number,
-  financialDayEnd: number
-) => {
-  const allTransactions = await TransactionRepository.findByUserId(userId);
+export const getAvailablePeriodsService = async (userId: string) => {
+  const storedPeriods =
+    await FinancialPeriodRepository.findAllByUserWithTransactionCount(userId);
 
-  return getAvailableFinancialPeriods(
-    financialDayStart ?? 1,
-    financialDayEnd ?? 31,
-    allTransactions
-  );
+  return storedPeriods.map((p) => ({
+    id: p.id,
+    startDate: p.startDate,
+    endDate: p.endDate,
+    label: formatPeriodLabel(p.startDate, p.endDate),
+    transactionCount: p.transactionCount,
+  }));
 };
 
 export const calculatePlanningStats = (

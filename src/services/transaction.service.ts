@@ -1,5 +1,6 @@
 import { toSaoPauloTimezone } from "../helpers/date-utils";
 import { TransactionRepository } from "../repositories/transaction.repository";
+import { FinancialPeriodService } from "./financial-period.service";
 import { validateCategoryExistsForUser } from "../validations/transaction.validation";
 
 interface ITransaction {
@@ -18,6 +19,15 @@ export const createTransactionService = async (
   // Validar se a categoria existe e pertence ao usuário
   await validateCategoryExistsForUser(transaction.category, userId);
 
+  const transactionDate = transaction.date
+    ? toSaoPauloTimezone(transaction.date)
+    : toSaoPauloTimezone(new Date());
+
+  const periodId = await FinancialPeriodService.findOrCreatePeriodForDate(
+    userId,
+    transactionDate
+  );
+
   const newTransaction = await TransactionRepository.create({
     userId,
     type: transaction.type,
@@ -25,9 +35,8 @@ export const createTransactionService = async (
     amount: transaction.amount,
     categoryId: transaction.category,
     description: transaction.description,
-    date: transaction.date
-      ? toSaoPauloTimezone(transaction.date)
-      : toSaoPauloTimezone(new Date()),
+    date: transactionDate,
+    periodId,
   });
 
   return newTransaction;
@@ -43,6 +52,7 @@ export const updateTransactionService = async (
     categoryId: string;
     description: string;
     date: Date;
+    periodId: string;
   }>
 ) => {
   // Se uma nova categoria está sendo definida, validar se ela existe e pertence ao usuário
@@ -50,9 +60,14 @@ export const updateTransactionService = async (
     await validateCategoryExistsForUser(updateData.categoryId, userId);
   }
 
-  // Se uma nova data está sendo definida, aplicar timezone
+  // Se uma nova data está sendo definida, aplicar timezone e re-resolver período
   if (updateData.date) {
     updateData.date = toSaoPauloTimezone(updateData.date);
+    updateData.periodId =
+      await FinancialPeriodService.findOrCreatePeriodForDate(
+        userId,
+        updateData.date
+      );
   }
 
   const transaction = await TransactionRepository.update(

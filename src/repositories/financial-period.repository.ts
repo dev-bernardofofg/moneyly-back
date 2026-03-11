@@ -1,6 +1,6 @@
-import { and, eq, gte, lte } from "drizzle-orm";
+import { and, count, desc, eq, gte, lte } from "drizzle-orm";
 import { db } from "../db";
-import { financialPeriods } from "../db/schema";
+import { financialPeriods, transactions } from "../db/schema";
 
 // Implementa IFinancialPeriodRepository (métodos estáticos)
 export class FinancialPeriodRepository {
@@ -119,6 +119,44 @@ export class FinancialPeriodRepository {
       isActive: true,
     });
     return newPeriod;
+  }
+
+  static async findAllByUserWithTransactionCount(
+    userId: string
+  ): Promise<
+    Array<{
+      id: string;
+      userId: string;
+      startDate: Date;
+      endDate: Date;
+      isActive: boolean | null;
+      createdAt: Date;
+      updatedAt: Date;
+      transactionCount: number;
+    }>
+  > {
+    const periods = await db
+      .select()
+      .from(financialPeriods)
+      .where(eq(financialPeriods.userId, userId))
+      .orderBy(desc(financialPeriods.startDate));
+
+    if (periods.length === 0) return [];
+
+    const counts = await db
+      .select({ periodId: transactions.periodId, total: count() })
+      .from(transactions)
+      .where(eq(transactions.userId, userId))
+      .groupBy(transactions.periodId);
+
+    const countMap = new Map(
+      counts.map((c) => [c.periodId, Number(c.total)])
+    );
+
+    return periods.map((p) => ({
+      ...p,
+      transactionCount: countMap.get(p.id) ?? 0,
+    }));
   }
 
   static async findById(

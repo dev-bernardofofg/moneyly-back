@@ -513,7 +513,7 @@ async function getTransactionCountForPeriod(
 /**
  * Formata o label do período em português
  */
-function formatPeriodLabel(startDate: Date, endDate: Date): string {
+export function formatPeriodLabel(startDate: Date, endDate: Date): string {
   const startMonth = formatInTimeZone(startDate, SAO_PAULO_TIMEZONE, "MMMM", {
     locale: ptBR,
   });

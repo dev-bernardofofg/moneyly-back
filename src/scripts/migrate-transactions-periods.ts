@@ -15,7 +15,7 @@ export async function migrateTransactionsPeriods() {
     // 1. Verificar se a coluna periodId existe
     const sampleTransaction = await db.select().from(transactions).limit(1);
 
-    if (sampleTransaction.length === 0) {
+    if (sampleTransaction.length === 0 || !sampleTransaction[0]) {
       console.log("❌ Nenhuma transação encontrada na tabela!");
       return;
     }
@@ -115,7 +115,7 @@ export async function migrateTransactionsPeriods() {
         .where(eq(users.id, userId))
         .limit(1);
 
-      if (!user.length) {
+      if (!user.length || !user[0]) {
         console.log(`⚠️ Usuário ${userId} não encontrado, pulando...`);
         continue;
       }
@@ -152,7 +152,7 @@ export async function migrateTransactionsPeriods() {
 
           let periodId: string;
 
-          if (existingPeriod.length > 0) {
+          if (existingPeriod.length > 0 && existingPeriod[0]) {
             periodId = existingPeriod[0].id;
             console.log(`  ✅ Período existente encontrado: ${periodId}`);
           } else {
@@ -167,6 +167,7 @@ export async function migrateTransactionsPeriods() {
               })
               .returning();
 
+            if (!newPeriod) throw new Error("Falha ao criar período");
             periodId = newPeriod.id;
             console.log(`  🆕 Novo período criado: ${periodId}`);
           }

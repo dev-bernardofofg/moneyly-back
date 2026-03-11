@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // Schema para query params do dashboard
 export const getDashboardOverviewQuerySchema = z.object({
-  periodId: z.string().optional(), // ID do período específico (ex: "2024-07-05T00:00:00.000Z_2024-08-05T00:00:00.000Z")
+  periodId: z.string().uuid().optional(), // UUID do período financeiro (obtido via GET /overview/periods)
   startDate: z
     .string()
     .optional()

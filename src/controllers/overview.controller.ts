@@ -16,7 +16,7 @@ export const getDashboardOverview = async (
   res: Response
 ) => {
   const { user } = req;
-  const { periodId, startDate, endDate } = req.query;
+  const { periodId } = req.query;
 
   if (!user) {
     return ResponseHandler.unauthorized(res, "Usuário não autenticado");
@@ -30,30 +30,18 @@ export const getDashboardOverview = async (
   } = user;
 
   try {
-    // 🎯 NOVA LÓGICA: Usar periodId diretamente
-    // Se há startDate e endDate nos query params, usar eles como fallback
-    const periodDatesFallback =
-      startDate && endDate
-        ? { startDate: new Date(startDate), endDate: new Date(endDate) }
-        : { startDate: new Date(), endDate: new Date() };
+    const { transactions, availablePeriods, selectedPeriod } =
+      await getTransactionsByUserId(
+        userId,
+        { startDay: financialDayStart ?? 1, endDay: financialDayEnd ?? 31 },
+        periodId
+      );
 
-    const { availablePeriods, selectedPeriod } = await getTransactionsByUserId(
-      userId,
-      periodDatesFallback,
-      { startDay: financialDayStart ?? 1, endDay: financialDayEnd ?? 31 },
-      periodId // ← Passar periodId diretamente
-    );
-
-    // Se há periodId, usar o período selecionado para validação
-    const periodDates = selectedPeriod
-      ? { startDate: selectedPeriod.startDate, endDate: selectedPeriod.endDate }
-      : periodDatesFallback;
-
-    const { stats, monthlyHistory, expensesByCategory, periodTransactions } =
+    const { stats, monthlyHistory, expensesByCategory } =
       await getDashboardOverviewService(
         userId,
         Number(monthlyIncome) || 0,
-        periodDates
+        transactions
       );
 
     return ResponseHandler.success(
@@ -75,7 +63,7 @@ export const getDashboardOverview = async (
         availablePeriods,
         monthlyHistory,
         expensesByCategory,
-        transactionsCount: periodTransactions.length,
+        transactionsCount: transactions.length,
       },
       "Dados do dashboard recuperados com sucesso"
     );
@@ -98,14 +86,10 @@ export const getAvailablePeriods = async (
     return ResponseHandler.unauthorized(res, "Usuário não autenticado");
   }
 
-  const { id: userId, financialDayStart, financialDayEnd } = user;
+  const { id: userId } = user;
 
   try {
-    const availablePeriods = await getAvailablePeriodsService(
-      userId,
-      financialDayStart ?? 1,
-      financialDayEnd ?? 31
-    );
+    const availablePeriods = await getAvailablePeriodsService(userId);
 
     return ResponseHandler.success(
       res,

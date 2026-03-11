@@ -195,7 +195,6 @@ export const updateTransaction = async (
       categoryId: string;
       description: string;
       date: Date;
-      periodId: string | null;
     }> = {};
     if (date) updateData.date = new Date(date);
     if (type) updateData.type = type;
