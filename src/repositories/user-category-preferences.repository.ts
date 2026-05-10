@@ -1,85 +1,45 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "../db";
-import {
-  userCategoryPreferences,
-  type NewUserCategoryPreference,
-} from "../db/schema";
+import { userCategoryPreferences, type NewUserCategoryPreference, type UserCategoryPreference } from "../db/schema";
+import type { IUserCategoryPreferencesRepository } from "./interfaces/IUserCategoryPreferencesRepository";
 
-// Implementa IUserCategoryPreferencesRepository (métodos estáticos)
-export class UserCategoryPreferencesRepository {
-  static async create(preferenceData: NewUserCategoryPreference) {
-    const [preference] = await db
-      .insert(userCategoryPreferences)
-      .values(preferenceData)
-      .returning();
+export const userCategoryPreferencesRepository = {
+  async create(data: NewUserCategoryPreference): Promise<UserCategoryPreference | undefined> {
+    const [preference] = await db.insert(userCategoryPreferences).values(data).returning();
     return preference;
-  }
+  },
 
-  static async findByUserId(userId: string) {
-    const preferences = await db
+  async findByUserId(userId: string): Promise<UserCategoryPreference[]> {
+    return db.select().from(userCategoryPreferences).where(eq(userCategoryPreferences.userId, userId));
+  },
+
+  async findByUserIdAndCategoryId(userId: string, categoryId: string): Promise<UserCategoryPreference | null> {
+    const [preference] = await db
       .select()
       .from(userCategoryPreferences)
-      .where(eq(userCategoryPreferences.userId, userId));
-    return preferences;
-  }
+      .where(and(eq(userCategoryPreferences.userId, userId), eq(userCategoryPreferences.categoryId, categoryId)));
+    return preference ?? null;
+  },
 
-  static async findByUserIdAndCategoryId(userId: string, categoryId: string) {
-    const preferences = await db
-      .select()
-      .from(userCategoryPreferences)
-      .where(
-        and(
-          eq(userCategoryPreferences.userId, userId),
-          eq(userCategoryPreferences.categoryId, categoryId)
-        )
-      );
-    return preferences[0] || null;
-  }
-
-  static async updateVisibility(
-    userId: string,
-    categoryId: string,
-    isVisible: boolean
-  ) {
+  async updateVisibility(userId: string, categoryId: string, isVisible: boolean): Promise<UserCategoryPreference | undefined> {
     const [preference] = await db
       .update(userCategoryPreferences)
       .set({ isVisible, updatedAt: new Date() })
-      .where(
-        and(
-          eq(userCategoryPreferences.userId, userId),
-          eq(userCategoryPreferences.categoryId, categoryId)
-        )
-      )
+      .where(and(eq(userCategoryPreferences.userId, userId), eq(userCategoryPreferences.categoryId, categoryId)))
       .returning();
     return preference;
-  }
+  },
 
-  static async delete(userId: string, categoryId: string) {
+  async delete(userId: string, categoryId: string): Promise<void> {
     await db
       .delete(userCategoryPreferences)
-      .where(
-        and(
-          eq(userCategoryPreferences.userId, userId),
-          eq(userCategoryPreferences.categoryId, categoryId)
-        )
-      );
-  }
+      .where(and(eq(userCategoryPreferences.userId, userId), eq(userCategoryPreferences.categoryId, categoryId)));
+  },
 
-  static async createDefaultPreferencesForUser(
-    userId: string,
-    globalCategoryIds: string[]
-  ) {
-    const preferencesToInsert = globalCategoryIds.map((categoryId) => ({
-      userId,
-      categoryId,
-      isVisible: true,
-    }));
+  async createDefaultPreferencesForUser(userId: string, globalCategoryIds: string[]): Promise<UserCategoryPreference[]> {
+    const preferencesToInsert = globalCategoryIds.map((categoryId) => ({ userId, categoryId, isVisible: true }));
+    return db.insert(userCategoryPreferences).values(preferencesToInsert).returning();
+  },
+} satisfies IUserCategoryPreferencesRepository;
 
-    const insertedPreferences = await db
-      .insert(userCategoryPreferences)
-      .values(preferencesToInsert)
-      .returning();
-
-    return insertedPreferences;
-  }
-}
+export type { IUserCategoryPreferencesRepository };

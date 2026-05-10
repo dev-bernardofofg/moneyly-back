@@ -1,37 +1,20 @@
 import { and, count, eq, isNull, or } from "drizzle-orm";
 import { db } from "../db";
-import {
-  categories as categoriesTable,
-  userCategoryPreferences,
-  type NewCategory,
-} from "../db/schema";
-import {
-  PaginationHelper,
-  PaginationQuery,
-  PaginationResult,
-} from "../helpers/pagination";
-import { UserCategoryPreferencesRepository } from "./user-category-preferences.repository";
+import { categories as categoriesTable, userCategoryPreferences, type Category, type NewCategory } from "../db/schema";
+import { PaginationHelper, type PaginationQuery, type PaginationResult } from "../helpers/pagination";
+import type { ICategoryRepository } from "./interfaces/ICategoryRepository";
+import { userCategoryPreferencesRepository } from "./user-category-preferences.repository";
 
-// Implementa ICategoryRepository (métodos estáticos)
-export class CategoryRepository {
-  static async create(categoryData: NewCategory) {
-    const [category] = await db
-      .insert(categoriesTable)
-      .values(categoryData)
-      .returning();
+export const categoryRepository = {
+  async create(data: NewCategory): Promise<Category | undefined> {
+    const [category] = await db.insert(categoriesTable).values(data).returning();
     return category;
-  }
+  },
 
-  static async findByUserId(userId: string) {
-    // Buscar categorias pessoais do usuário
-    const personalCategories = await db
-      .select()
-      .from(categoriesTable)
-      .where(eq(categoriesTable.userId, userId));
+  async findByUserId(userId: string): Promise<Category[]> {
+    const personal = await db.select().from(categoriesTable).where(eq(categoriesTable.userId, userId));
 
-    // Buscar categorias globais que o usuário pode ver
-    // Lógica: se não há preferência = visível, se há preferência = verificar isVisible
-    const globalCategories = await db
+    const global = await db
       .select({
         id: categoriesTable.id,
         name: categoriesTable.name,
@@ -43,60 +26,42 @@ export class CategoryRepository {
       .from(categoriesTable)
       .leftJoin(
         userCategoryPreferences,
-        and(
-          eq(categoriesTable.id, userCategoryPreferences.categoryId),
-          eq(userCategoryPreferences.userId, userId)
-        )
+        and(eq(categoriesTable.id, userCategoryPreferences.categoryId), eq(userCategoryPreferences.userId, userId))
       )
       .where(
         and(
           eq(categoriesTable.isGlobal, true),
-          or(
-            isNull(userCategoryPreferences.categoryId), // Não há preferência = visível
-            eq(userCategoryPreferences.isVisible, true) // Há preferência e é visível
-          )
+          or(isNull(userCategoryPreferences.categoryId), eq(userCategoryPreferences.isVisible, true))
         )
       );
 
-    return [...personalCategories, ...globalCategories];
-  }
+    return [...personal, ...global];
+  },
 
-  static async findByUserIdPaginated(
-    userId: string,
-    pagination: PaginationQuery
-  ): Promise<PaginationResult<typeof categoriesTable.$inferSelect>> {
-    // Contar categorias pessoais
+  async findByUserIdPaginated(userId: string, pagination: PaginationQuery): Promise<PaginationResult<Category>> {
     const personalCountResult = await db
       .select({ value: count() })
       .from(categoriesTable)
       .where(eq(categoriesTable.userId, userId));
     const personalCount = personalCountResult[0]?.value ?? 0;
 
-    // Contar categorias globais visíveis (otimizado)
     const globalCountResult = await db
       .select({ value: count() })
       .from(categoriesTable)
       .leftJoin(
         userCategoryPreferences,
-        and(
-          eq(categoriesTable.id, userCategoryPreferences.categoryId),
-          eq(userCategoryPreferences.userId, userId)
-        )
+        and(eq(categoriesTable.id, userCategoryPreferences.categoryId), eq(userCategoryPreferences.userId, userId))
       )
       .where(
         and(
           eq(categoriesTable.isGlobal, true),
-          or(
-            isNull(userCategoryPreferences.categoryId), // Não há preferência = visível
-            eq(userCategoryPreferences.isVisible, true) // Há preferência e é visível
-          )
+          or(isNull(userCategoryPreferences.categoryId), eq(userCategoryPreferences.isVisible, true))
         )
       );
     const globalCount = globalCountResult[0]?.value ?? 0;
 
     const total = personalCount + globalCount;
 
-    // Buscar categorias pessoais
     const personalCategories = await db
       .select()
       .from(categoriesTable)
@@ -104,12 +69,11 @@ export class CategoryRepository {
       .limit(pagination.limit)
       .offset(pagination.offset);
 
-    // Se ainda há espaço para mais categorias, buscar globais
     const remainingLimit = pagination.limit - personalCategories.length;
     const remainingOffset = Math.max(0, pagination.offset - personalCount);
 
-    let globalCategories: (typeof categoriesTable.$inferSelect)[] = [];
-    if (remainingLimit > 0 && remainingOffset >= 0) {
+    let globalCategories: Category[] = [];
+    if (remainingLimit > 0) {
       globalCategories = await db
         .select({
           id: categoriesTable.id,
@@ -122,68 +86,43 @@ export class CategoryRepository {
         .from(categoriesTable)
         .leftJoin(
           userCategoryPreferences,
-          and(
-            eq(categoriesTable.id, userCategoryPreferences.categoryId),
-            eq(userCategoryPreferences.userId, userId)
-          )
+          and(eq(categoriesTable.id, userCategoryPreferences.categoryId), eq(userCategoryPreferences.userId, userId))
         )
         .where(
           and(
             eq(categoriesTable.isGlobal, true),
-            or(
-              isNull(userCategoryPreferences.categoryId), // Não há preferência = visível
-              eq(userCategoryPreferences.isVisible, true) // Há preferência e é visível
-            )
+            or(isNull(userCategoryPreferences.categoryId), eq(userCategoryPreferences.isVisible, true))
           )
         )
         .limit(remainingLimit)
         .offset(remainingOffset);
     }
 
-    const categories = [...personalCategories, ...globalCategories];
     const page = Math.floor(pagination.offset / pagination.limit) + 1;
+    return PaginationHelper.createPaginationResult([...personalCategories, ...globalCategories], total, page, pagination.limit);
+  },
 
-    return PaginationHelper.createPaginationResult(
-      categories,
-      total,
-      page,
-      pagination.limit
-    );
-  }
+  async findByName(name: string): Promise<Category | null> {
+    const [category] = await db.select().from(categoriesTable).where(eq(categoriesTable.name, name));
+    return category ?? null;
+  },
 
-  static async findByName(name: string) {
-    const categories = await db
+  async findByNameAndUserId(name: string, userId: string): Promise<Category | null> {
+    const [category] = await db
       .select()
       .from(categoriesTable)
-      .where(eq(categoriesTable.name, name));
-    return categories[0] || null;
-  }
+      .where(and(eq(categoriesTable.name, name), eq(categoriesTable.userId, userId)));
+    return category ?? null;
+  },
 
-  static async findByNameAndUserId(name: string, userId: string) {
-    const categories = await db
+  async findByIdAndUserId(id: string, userId: string): Promise<Category | null> {
+    const [personal] = await db
       .select()
       .from(categoriesTable)
-      .where(
-        and(eq(categoriesTable.name, name), eq(categoriesTable.userId, userId))
-      );
-    return categories[0] || null;
-  }
+      .where(and(eq(categoriesTable.id, id), eq(categoriesTable.userId, userId)));
+    if (personal) return personal;
 
-  static async findByIdAndUserId(id: string, userId: string) {
-    // Buscar categoria pessoal
-    const personalCategory = await db
-      .select()
-      .from(categoriesTable)
-      .where(
-        and(eq(categoriesTable.id, id), eq(categoriesTable.userId, userId))
-      );
-
-    if (personalCategory[0]) {
-      return personalCategory[0];
-    }
-
-    // Buscar categoria global que o usuário pode ver (otimizado)
-    const globalCategory = await db
+    const [global] = await db
       .select({
         id: categoriesTable.id,
         name: categoriesTable.name,
@@ -195,131 +134,70 @@ export class CategoryRepository {
       .from(categoriesTable)
       .leftJoin(
         userCategoryPreferences,
-        and(
-          eq(categoriesTable.id, userCategoryPreferences.categoryId),
-          eq(userCategoryPreferences.userId, userId)
-        )
+        and(eq(categoriesTable.id, userCategoryPreferences.categoryId), eq(userCategoryPreferences.userId, userId))
       )
       .where(
         and(
           eq(categoriesTable.id, id),
           eq(categoriesTable.isGlobal, true),
-          or(
-            isNull(userCategoryPreferences.categoryId), // Não há preferência = visível
-            eq(userCategoryPreferences.isVisible, true) // Há preferência e é visível
-          )
+          or(isNull(userCategoryPreferences.categoryId), eq(userCategoryPreferences.isVisible, true))
         )
       );
+    return global ?? null;
+  },
 
-    return globalCategory[0] || null;
-  }
-
-  static async update(id: string, categoryData: NewCategory) {
-    const [category] = await db
-      .update(categoriesTable)
-      .set(categoryData)
-      .where(eq(categoriesTable.id, id))
-      .returning();
+  async update(id: string, data: NewCategory): Promise<Category | undefined> {
+    const [category] = await db.update(categoriesTable).set(data).where(eq(categoriesTable.id, id)).returning();
     return category;
-  }
+  },
 
-  static async delete(id: string, userId: string) {
-    const category = await db
+  async delete(id: string, userId: string): Promise<Category[]> {
+    return db
       .delete(categoriesTable)
-      .where(
-        and(eq(categoriesTable.id, id), eq(categoriesTable.userId, userId))
-      )
+      .where(and(eq(categoriesTable.id, id), eq(categoriesTable.userId, userId)))
       .returning();
-    return category;
-  }
+  },
 
-  // Novos métodos para categorias globais
-  static async findGlobalCategories() {
-    const categories = await db
-      .select()
-      .from(categoriesTable)
-      .where(eq(categoriesTable.isGlobal, true));
-    return categories;
-  }
+  async findGlobalCategories(): Promise<Category[]> {
+    return db.select().from(categoriesTable).where(eq(categoriesTable.isGlobal, true));
+  },
 
-  static async createGlobalCategory(name: string) {
+  async createGlobalCategory(name: string): Promise<Category | undefined> {
     const [category] = await db
       .insert(categoriesTable)
-      .values({
-        name,
-        isGlobal: true,
-        userId: null, // Categorias globais não têm userId
-      })
+      .values({ name, isGlobal: true, userId: null })
       .returning();
     return category;
-  }
+  },
 
-  static async hideGlobalCategoryForUser(userId: string, categoryId: string) {
-    // Verificar se a categoria é global
-    const category = await db
+  async hideGlobalCategoryForUser(userId: string, categoryId: string): Promise<unknown> {
+    const [category] = await db
       .select()
       .from(categoriesTable)
-      .where(
-        and(
-          eq(categoriesTable.id, categoryId),
-          eq(categoriesTable.isGlobal, true)
-        )
-      );
+      .where(and(eq(categoriesTable.id, categoryId), eq(categoriesTable.isGlobal, true)));
+    if (!category) throw new Error("Categoria não encontrada ou não é global");
 
-    if (!category[0]) {
-      throw new Error("Categoria não encontrada ou não é global");
+    const existing = await userCategoryPreferencesRepository.findByUserIdAndCategoryId(userId, categoryId);
+    if (existing) {
+      return userCategoryPreferencesRepository.updateVisibility(userId, categoryId, false);
     }
+    return userCategoryPreferencesRepository.create({ userId, categoryId, isVisible: false });
+  },
 
-    // Criar ou atualizar preferência para ocultar
-    const existingPreference =
-      await UserCategoryPreferencesRepository.findByUserIdAndCategoryId(
-        userId,
-        categoryId
-      );
-
-    if (existingPreference) {
-      return await UserCategoryPreferencesRepository.updateVisibility(
-        userId,
-        categoryId,
-        false
-      );
-    } else {
-      return await UserCategoryPreferencesRepository.create({
-        userId,
-        categoryId,
-        isVisible: false,
-      });
-    }
-  }
-
-  static async showGlobalCategoryForUser(userId: string, categoryId: string) {
-    // Verificar se a categoria é global
-    const category = await db
+  async showGlobalCategoryForUser(userId: string, categoryId: string): Promise<{ message: string }> {
+    const [category] = await db
       .select()
       .from(categoriesTable)
-      .where(
-        and(
-          eq(categoriesTable.id, categoryId),
-          eq(categoriesTable.isGlobal, true)
-        )
-      );
+      .where(and(eq(categoriesTable.id, categoryId), eq(categoriesTable.isGlobal, true)));
+    if (!category) throw new Error("Categoria não encontrada ou não é global");
 
-    if (!category[0]) {
-      throw new Error("Categoria não encontrada ou não é global");
-    }
-
-    // Se há preferência, remover (volta ao padrão = visível)
-    const existingPreference =
-      await UserCategoryPreferencesRepository.findByUserIdAndCategoryId(
-        userId,
-        categoryId
-      );
-
-    if (existingPreference) {
-      await UserCategoryPreferencesRepository.delete(userId, categoryId);
+    const existing = await userCategoryPreferencesRepository.findByUserIdAndCategoryId(userId, categoryId);
+    if (existing) {
+      await userCategoryPreferencesRepository.delete(userId, categoryId);
       return { message: "Preferência removida, categoria agora visível" };
-    } else {
-      return { message: "Categoria já estava visível" };
     }
-  }
-}
+    return { message: "Categoria já estava visível" };
+  },
+} satisfies ICategoryRepository;
+
+export type { ICategoryRepository };

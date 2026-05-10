@@ -1,48 +1,35 @@
 import { eq } from "drizzle-orm";
 import { db } from "../db";
 import { users, type NewUser, type User } from "../db/schema";
+import type { IUserRepository } from "./interfaces/IUserRepository";
 
-// Implementa IUserRepository (métodos estáticos)
-export class UserRepository {
-  // Criar usuário
-  static async create(
-    userData: Omit<NewUser, "id" | "createdAt" | "updatedAt">
-  ): Promise<User> {
+export const userRepository = {
+  async create(userData: Omit<NewUser, "id" | "createdAt" | "updatedAt">): Promise<User> {
     const [user] = await db.insert(users).values(userData).returning();
     if (!user) throw new Error("Falha ao criar usuário");
     return user;
-  }
+  },
 
-  static async findAll(): Promise<User[]> {
-    const usersData = await db.select().from(users);
-    return usersData as User[];
-  }
+  async findAll(): Promise<User[]> {
+    return db.select().from(users);
+  },
 
-  // Buscar usuário por email
-  static async findByEmail(email: string): Promise<User | null> {
+  async findByEmail(email: string): Promise<User | null> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user || null;
-  }
+    return user ?? null;
+  },
 
-  // Buscar usuário por Google ID
-  static async findByGoogleId(googleId: string): Promise<User | null> {
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.googleId, googleId));
-    return user || null;
-  }
+  async findByGoogleId(googleId: string): Promise<User | null> {
+    const [user] = await db.select().from(users).where(eq(users.googleId, googleId));
+    return user ?? null;
+  },
 
-  // Buscar usuário por ID
-  static async findById(id: string): Promise<User | null> {
+  async findById(id: string): Promise<User | null> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user || null;
-  }
+    return user ?? null;
+  },
 
-  // Buscar usuário por ID sem senha
-  static async findByIdWithoutPassword(
-    id: string
-  ): Promise<Omit<User, "password"> | null> {
+  async findByIdWithoutPassword(id: string): Promise<Omit<User, "password"> | null> {
     const [user] = await db
       .select({
         id: users.id,
@@ -59,102 +46,53 @@ export class UserRepository {
       })
       .from(users)
       .where(eq(users.id, id));
+    return user ?? null;
+  },
 
-    return user || null;
-  }
-
-  // Atualizar informações do Google
-  static async updateGoogleInfo(
-    id: string,
-    googleInfo: { googleId: string; avatar?: string }
-  ): Promise<User | null> {
+  async updateGoogleInfo(id: string, googleInfo: { googleId: string; avatar?: string }): Promise<User | null> {
     const [user] = await db
       .update(users)
-      .set({
-        googleId: googleInfo.googleId,
-        avatar: googleInfo.avatar,
-        updatedAt: new Date(),
-      })
+      .set({ googleId: googleInfo.googleId, avatar: googleInfo.avatar, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
+    return user ?? null;
+  },
 
-    return user || null;
-  }
-
-  // Atualizar rendimento mensal
-  static async updateMonthlyIncome(
-    id: string,
-    monthlyIncome: number
-  ): Promise<User | null> {
+  async updateMonthlyIncome(id: string, monthlyIncome: number): Promise<User | null> {
     const [user] = await db
       .update(users)
-      .set({
-        monthlyIncome: monthlyIncome.toString(),
-        firstAccess: false, // Marca que não é mais o primeiro acesso
-        updatedAt: new Date(),
-      })
+      .set({ monthlyIncome: monthlyIncome.toString(), firstAccess: false, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
+    return user ?? null;
+  },
 
-    return user || null;
-  }
-
-  // Atualizar período financeiro
-  static async updateFinancialPeriod(
-    id: string,
-    financialDayStart: number,
-    financialDayEnd: number
-  ): Promise<User | null> {
+  async updateFinancialPeriod(id: string, financialDayStart: number, financialDayEnd: number): Promise<User | null> {
     const [user] = await db
       .update(users)
-      .set({
-        financialDayStart,
-        financialDayEnd,
-        firstAccess: false, // Marca que não é mais o primeiro acesso
-        updatedAt: new Date(),
-      })
+      .set({ financialDayStart, financialDayEnd, firstAccess: false, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
+    return user ?? null;
+  },
 
-    return user || null;
-  }
-
-  // Atualizar rendimento e período financeiro
-  static async updateIncomeAndPeriod(
-    id: string,
-    monthlyIncome: number,
-    financialDayStart: number,
-    financialDayEnd: number
-  ): Promise<User | null> {
+  async updateIncomeAndPeriod(id: string, monthlyIncome: number, financialDayStart: number, financialDayEnd: number): Promise<User | null> {
     const [user] = await db
       .update(users)
-      .set({
-        monthlyIncome: monthlyIncome.toString(),
-        financialDayStart,
-        financialDayEnd,
-        firstAccess: false, // Marca que não é mais o primeiro acesso
-        updatedAt: new Date(),
-      })
+      .set({ monthlyIncome: monthlyIncome.toString(), financialDayStart, financialDayEnd, firstAccess: false, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
+    return user ?? null;
+  },
 
-    return user || null;
-  }
-
-  // Atualizar primeiro acesso
-  static async updateFirstAccess(
-    id: string,
-    firstAccess: boolean
-  ): Promise<User | null> {
+  async updateFirstAccess(id: string, firstAccess: boolean): Promise<User | null> {
     const [user] = await db
       .update(users)
-      .set({
-        firstAccess,
-        updatedAt: new Date(),
-      })
+      .set({ firstAccess, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
+    return user ?? null;
+  },
+} satisfies IUserRepository;
 
-    return user || null;
-  }
-}
+export type { IUserRepository };

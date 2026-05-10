@@ -1,11 +1,21 @@
-/**
- * Tipos relacionados a transações
- */
-
 import type { TransactionWithCategory } from "../repositories/transaction.repository";
 
-// Tipo para transação com categoria (reutilizável)
 export type TransactionWithCategoryName = TransactionWithCategory;
+
+export interface ITransaction {
+  type: "income" | "expense";
+  title: string;
+  amount: string;
+  category: string;
+  description: string;
+  date: Date;
+}
+
+export interface TransactionFilters {
+  category?: string;
+  startDate?: Date;
+  endDate?: Date;
+}
 
 // Tipo para sumário de transações
 export interface TransactionSummary {

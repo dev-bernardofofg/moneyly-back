@@ -298,3 +298,5 @@ export type RefreshToken = typeof refreshTokens.$inferSelect;
 export type NewRefreshToken = typeof refreshTokens.$inferInsert;
 export type RecurringTransaction = typeof recurringTransactions.$inferSelect;
 export type NewRecurringTransaction = typeof recurringTransactions.$inferInsert;
+export type FinancialPeriod = typeof financialPeriods.$inferSelect;
+export type NewFinancialPeriod = typeof financialPeriods.$inferInsert;
