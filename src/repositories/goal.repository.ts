@@ -2,6 +2,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { db } from "../db";
 import { Goal, GoalMilestone, goalMilestones, goals, NewGoal, NewGoalMilestone } from "../db/schema";
 import type { GoalWithMilestones, IGoalRepository } from "./interfaces/IGoalRepository";
+import { calculateGoalProgress } from "../helpers/goal-progress";
 
 async function checkMilestones(goalId: string, currentAmount: number): Promise<void> {
   const milestones = await db
@@ -114,11 +115,7 @@ export const goalRepository: IGoalRepository = {
     return {
       ...goal,
       milestones,
-      progress: {
-        percentage: Math.floor(((Number(goal.currentAmount) ?? 0) / Number(goal.targetAmount)) * 100),
-        remaining: Number(goal.targetAmount) - (Number(goal.currentAmount) ?? 0),
-        daysRemaining: Math.ceil((new Date(goal.targetDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)),
-      },
+      progress: calculateGoalProgress(goal),
     };
   },
 };

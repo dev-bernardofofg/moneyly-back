@@ -1,4 +1,5 @@
 import { getCurrentSaoPauloDate } from "../helpers/dates";
+import { calculateGoalProgress } from "../helpers/goal-progress";
 import { goalRepository } from "../repositories/goal.repository";
 import { financialPeriodService } from "./financial-period.service";
 import { HttpError } from "../validations/errors";
@@ -47,29 +48,7 @@ export const createGoalService = async (
 export const getGoalsService = async (userId: string) => {
   const goals = await goalRepository.findByUserIdActive(userId);
 
-  // Adicionar progress para cada goal
-  const goalsWithProgress = goals.map((goal) => {
-    const targetAmount = Number(goal.targetAmount);
-    const currentAmount = Number(goal.currentAmount);
-    const percentage =
-      targetAmount > 0 ? Math.round((currentAmount / targetAmount) * 100) : 0;
-
-    const now = new Date();
-    const targetDate = new Date(goal.targetDate);
-    const daysRemaining = Math.ceil(
-      (targetDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-    );
-
-    return {
-      ...goal,
-      progress: {
-        percentage,
-        daysRemaining: daysRemaining > 0 ? daysRemaining : 0,
-      },
-    };
-  });
-
-  return goalsWithProgress;
+  return goals.map((goal) => ({ ...goal, progress: calculateGoalProgress(goal) }));
 };
 
 export const getGoalsProgressService = async (userId: string) => {
@@ -94,24 +73,7 @@ export const getGoalByIdService = async (userId: string, goalId: string) => {
     throw new HttpError(404, "Objetivo não encontrado");
   }
 
-  const targetAmount = Number(goalWithMilestones.targetAmount);
-  const currentAmount = Number(goalWithMilestones.currentAmount);
-  const percentage =
-    targetAmount > 0 ? Math.round((currentAmount / targetAmount) * 100) : 0;
-
-  const now = new Date();
-  const targetDate = new Date(goalWithMilestones.targetDate);
-  const daysRemaining = Math.ceil(
-    (targetDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-  );
-
-  return {
-    ...goalWithMilestones,
-    progress: {
-      percentage,
-      daysRemaining: daysRemaining > 0 ? daysRemaining : 0,
-    },
-  };
+  return goalWithMilestones;
 };
 
 export const updateGoalService = async (
