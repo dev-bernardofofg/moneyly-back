@@ -1,8 +1,7 @@
 import { z } from "zod";
 
-// Schema para query params do dashboard
 export const getDashboardOverviewQuerySchema = z.object({
-  periodId: z.string().uuid().optional(), // UUID do período financeiro (obtido via GET /overview/periods)
+  periodId: z.string().uuid().optional(),
   startDate: z
     .string()
     .optional()
@@ -21,7 +20,6 @@ export const getDashboardOverviewQuerySchema = z.object({
     }, "Data de fim inválida"),
 });
 
-// Schema vazio para períodos (sem query params)
 export const getAvailablePeriodsQuerySchema = z.object({});
 
 export type GetDashboardOverviewQuery = z.infer<

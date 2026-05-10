@@ -6,7 +6,6 @@ export async function checkSchema() {
   console.log(" Verificando schema da tabela transactions...");
 
   try {
-    // Buscar todas as transações
     const allTransactions = await db
       .select({
         id: transactions.id,
@@ -20,11 +19,9 @@ export async function checkSchema() {
     console.log("📊 Primeiras 5 transações:");
     console.log(JSON.stringify(allTransactions, null, 2));
 
-    // Verificar se periodId existe
     const hasPeriodId = 'periodId' in allTransactions[0];
     console.log(`\n🔍 Campo periodId existe? ${hasPeriodId}`);
 
-    // Contar transações com e sem periodId
     const totalTransactions = await db
       .select({ count: transactions.id })
       .from(transactions);
@@ -35,7 +32,7 @@ export async function checkSchema() {
       const withPeriodId = await db
         .select({ count: transactions.id })
         .from(transactions)
-        .where(eq(transactions.periodId, null));
+        .where(isNull(transactions.periodId));
 
       const withoutPeriodId = await db
         .select({ count: transactions.id })
@@ -51,7 +48,6 @@ export async function checkSchema() {
   }
 }
 
-// Executar se chamado diretamente
 if (require.main === module) {
   checkSchema()
     .then(() => {

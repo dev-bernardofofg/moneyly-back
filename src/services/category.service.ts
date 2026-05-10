@@ -31,7 +31,6 @@ export const getCategoriesService = async (
     return result;
   } else {
     const categories = await categoryRepository.findByUserId(userId);
-    // Retornar estrutura consistente mesmo sem paginação
     return {
       data: categories,
       pagination: {

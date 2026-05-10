@@ -5,15 +5,10 @@ import type { Transaction } from "../db/schema";
 import { toSaoPauloTimezone } from "../helpers/dates";
 import { getCurrentFinancialPeriod } from "../helpers/financial-period";
 
-/**
- * Script para migrar transações existentes e adicionar periodId
- * Execute este script APÓS adicionar a coluna periodId na tabela transactions
- */
 export async function migrateTransactionsPeriods() {
-  console.log("�� Iniciando migração de períodos para transações...");
+  console.log(" Iniciando migração de períodos para transações...");
 
   try {
-    // 1. Verificar se a coluna periodId existe
     const sampleTransaction = await db.select().from(transactions).limit(1);
 
     if (sampleTransaction.length === 0 || !sampleTransaction[0]) {
@@ -31,10 +26,8 @@ export async function migrateTransactionsPeriods() {
       return;
     }
 
-    // 2. Buscar transações de diferentes formas
     let transactionsToMigrate: Transaction[] = [];
 
-    // Tentar buscar por periodId null
     try {
       const nullPeriods = await db
         .select()
@@ -47,7 +40,6 @@ export async function migrateTransactionsPeriods() {
       console.log("⚠️ Erro ao buscar por periodId = null:", error);
     }
 
-    // Tentar buscar por periodId undefined
     try {
       const undefinedPeriods = await db
         .select()
@@ -62,7 +54,6 @@ export async function migrateTransactionsPeriods() {
       console.log("⚠️ Erro ao buscar por periodId undefined:", error);
     }
 
-    // Se ainda não encontrou, buscar todas
     if (transactionsToMigrate.length === 0) {
       console.log("🔍 Buscando todas as transações...");
       const allTransactions = await db.select().from(transactions);
@@ -76,7 +67,6 @@ export async function migrateTransactionsPeriods() {
       console.log(`📊 Transações sem período: ${transactionsToMigrate.length}`);
     }
 
-    // Remover duplicatas
     const uniqueTransactions = transactionsToMigrate.filter(
       (tx, index, self) => index === self.findIndex((t) => t.id === tx.id)
     );
@@ -90,7 +80,6 @@ export async function migrateTransactionsPeriods() {
       return;
     }
 
-    // 2. Agrupar transações por usuário para otimizar
     const transactionsByUser = new Map<string, typeof uniqueTransactions>();
 
     for (const tx of uniqueTransactions) {
@@ -102,11 +91,9 @@ export async function migrateTransactionsPeriods() {
 
     console.log(`👥 Processando ${transactionsByUser.size} usuários`);
 
-    // 3. Processar cada usuário
     for (const [userId, userTransactions] of transactionsByUser) {
       console.log(`\n👤 Processando usuário ${userId}...`);
 
-      // Buscar configuração do usuário
       const user = await db
         .select({
           financialDayStart: users.financialDayStart,
@@ -127,10 +114,8 @@ export async function migrateTransactionsPeriods() {
 
       console.log(`📅 Configuração: dia ${startDay} a ${endDay}`);
 
-      // 4. Processar cada transação do usuário
       for (const tx of userTransactions) {
         try {
-          // Calcular período para a data da transação
           const transactionDate = toSaoPauloTimezone(tx.date);
           const period = getCurrentFinancialPeriod(
             startDay,
@@ -138,7 +123,6 @@ export async function migrateTransactionsPeriods() {
             transactionDate
           );
 
-          // 5. Buscar ou criar período no banco
           const existingPeriod = await db
             .select()
             .from(financialPeriods)
@@ -157,7 +141,6 @@ export async function migrateTransactionsPeriods() {
             periodId = existingPeriod[0].id;
             console.log(`  ✅ Período existente encontrado: ${periodId}`);
           } else {
-            // Criar novo período
             const [newPeriod] = await db
               .insert(financialPeriods)
               .values({
@@ -173,7 +156,6 @@ export async function migrateTransactionsPeriods() {
             console.log(`  🆕 Novo período criado: ${periodId}`);
           }
 
-          // 6. Atualizar transação com periodId
           await db
             .update(transactions)
             .set({ periodId })
@@ -188,14 +170,13 @@ export async function migrateTransactionsPeriods() {
       }
     }
 
-    console.log("\n�� Migração concluída com sucesso!");
+    console.log("\n Migração concluída com sucesso!");
   } catch (error) {
     console.error("❌ Erro durante a migração:", error);
     throw error;
   }
 }
 
-// Executar se chamado diretamente
 if (require.main === module) {
   migrateTransactionsPeriods()
     .then(() => {

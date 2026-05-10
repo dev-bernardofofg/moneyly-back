@@ -13,7 +13,6 @@ export const createTransactionService = async (
   userId: string,
   transaction: ITransaction
 ) => {
-  // Validar se a categoria existe e pertence ao usuário
   await validateCategoryExistsForUser(transaction.category, userId);
 
   const transactionDate = transaction.date
@@ -52,12 +51,10 @@ export const updateTransactionService = async (
     periodId: string;
   }>
 ) => {
-  // Se uma nova categoria está sendo definida, validar se ela existe e pertence ao usuário
   if (updateData.categoryId) {
     await validateCategoryExistsForUser(updateData.categoryId, userId);
   }
-
-  // Se uma nova data está sendo definida, aplicar timezone e re-resolver período
+  
   if (updateData.date) {
     updateData.date = toSaoPauloTimezone(updateData.date);
     updateData.periodId =

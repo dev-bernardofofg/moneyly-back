@@ -12,7 +12,6 @@ import { RecurringTransactionRouter } from "./routes/recurring-transaction.route
 import transactionRoutes from "./routes/transaction.router";
 import { UserRouters } from "./routes/user.router";
 
-// Carregar openapi.json de forma segura
 let openApiDocument: Record<string, unknown> = {};
 try {
   const openApiPath = join(__dirname, "../openapi.json");
@@ -25,7 +24,6 @@ try {
 
 const router: Router = Router();
 
-// Health check endpoint
 router.get("/health", (_req, res) => {
   res.status(200).json({
     status: "OK",
@@ -35,7 +33,6 @@ router.get("/health", (_req, res) => {
   });
 });
 
-// Swagger documentation
 router.use("/api-docs", swaggerUi.serve);
 router.get(
   "/api-docs",
@@ -45,13 +42,11 @@ router.get(
   })
 );
 
-// JSON da especificação OpenAPI
 router.get("/api-docs.json", (_req, res) => {
   res.setHeader("Content-Type", "application/json");
   res.send(openApiDocument);
 });
 
-// Rotas da aplicação
 router.use("/auth", AuthRouters);
 router.use("/user", UserRouters);
 router.use("/transactions", transactionRoutes);

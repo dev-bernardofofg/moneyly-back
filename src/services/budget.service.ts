@@ -1,16 +1,9 @@
-import type { BudgetWithCategory } from "../repositories/interfaces/IBudgetRepository";
 import { budgetRepository } from "../repositories/budget.repository";
 import { transactionRepository } from "../repositories/transaction.repository";
 import { financialPeriodService } from "./financial-period.service";
 import { validateBudgetExists } from "../validations/budget.validation";
 import { requireUser } from "../validations/user.validation";
-
-export type BudgetProgress = BudgetWithCategory & {
-  spent: number;
-  remaining: number;
-  percentage: number;
-  status: string;
-};
+import type { BudgetProgress } from "../types/budget.types";
 
 export const createBudgetService = async (
   userId: string,

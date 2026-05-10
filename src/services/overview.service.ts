@@ -1,6 +1,6 @@
 import type { Category } from "../db/schema";
 import type { GoalWithMilestones } from "../repositories/interfaces/IGoalRepository";
-import type { BudgetProgress } from "./budget.service";
+import type { BudgetProgress } from "../types/budget.types";
 import { getCurrentSaoPauloDate } from "../helpers/dates";
 import {
   formatPeriodLabel,
@@ -25,7 +25,6 @@ export const getTransactionsByUserId = async (
   financial?: { startDay: number; endDay: number },
   periodId?: string
 ) => {
-  // Buscar períodos do banco com contagem real
   const storedPeriods =
     await financialPeriodRepository.findAllByUserWithTransactionCount(userId);
 
@@ -53,7 +52,6 @@ export const getTransactionsByUserId = async (
     );
   }
 
-  // Buscar transações do período selecionado por UUID real
   let transactions: TransactionWithCategory[];
   if (selectedPeriod) {
     transactions = await transactionRepository.findByPeriodId(
@@ -61,10 +59,8 @@ export const getTransactionsByUserId = async (
       selectedPeriod.id
     );
   } else if (periodId) {
-    // periodId fornecido mas não encontrado nos períodos do usuário
     transactions = [];
   } else {
-    // Sem período selecionado: buscar transações do período atual por data (fallback)
     const today = getCurrentSaoPauloDate();
     const currentPeriod = financial
       ? getCurrentFinancialPeriod(financial.startDay, financial.endDay)
@@ -175,19 +171,16 @@ export const calculatePlanningStats = (
     0
   );
 
-  // Calcular percentual de progresso da poupança
   const savingsProgress =
     totalSavingsGoal > 0
       ? Number(((totalSaved / totalSavingsGoal) * 100).toFixed(2))
       : 0;
 
-  // Calcular percentual do orçamento em relação ao rendimento
   const budgetPercentage =
     monthlyIncome > 0
       ? Number(((totalBudgeted / monthlyIncome) * 100).toFixed(2))
       : 0;
 
-  // Calcular percentual da poupança em relação ao rendimento
   const savingsPercentage =
     monthlyIncome > 0
       ? Number(((totalSavingsGoal / monthlyIncome) * 100).toFixed(2))
@@ -245,7 +238,6 @@ export const calculateAlerts = (
     const daysRemaining = goal.progress?.daysRemaining || 0;
     const percentage = goal.progress?.percentage || 0;
 
-    // Alerta para objetivos próximos do prazo (menos de 7 dias)
     if (daysRemaining > 0 && daysRemaining <= 7) {
       alerts.push({
         type: "warning",
@@ -258,7 +250,6 @@ export const calculateAlerts = (
       });
     }
 
-    // Alerta para objetivos próximos do prazo (menos de 30 dias)
     if (daysRemaining > 7 && daysRemaining <= 30) {
       alerts.push({
         type: "info",
@@ -269,7 +260,6 @@ export const calculateAlerts = (
       });
     }
 
-    // Alerta para objetivos atrasados
     if (daysRemaining < 0) {
       alerts.push({
         type: "danger",
@@ -282,7 +272,6 @@ export const calculateAlerts = (
       });
     }
 
-    // Alerta para objetivos com baixo progresso mas próximos do prazo
     if (daysRemaining > 0 && daysRemaining <= 30 && percentage < 50) {
       alerts.push({
         type: "warning",
@@ -295,7 +284,6 @@ export const calculateAlerts = (
     }
   });
 
-  // Alertas de planejamento geral
   if (stats.budgetPercentage > 100) {
     alerts.push({
       type: "danger",
@@ -318,7 +306,6 @@ export const calculateAlerts = (
     });
   }
 
-  // Ordenar alertas por prioridade (high > medium > low)
   const priorityOrder: Record<string, number> = { high: 3, medium: 2, low: 1 };
   alerts.sort(
     (a, b) =>
@@ -371,7 +358,6 @@ export const getFinancialInsightsService = async (
     ((currentExpense / daysElapsed) * totalDays).toFixed(2)
   );
 
-  // Trend: compare last 2 months
   const lastTwo = monthlyData.slice(-2);
   const prevMonth = lastTwo[0] ?? null;
   const currMonth = lastTwo[1] ?? null;
@@ -396,7 +382,6 @@ export const getFinancialInsightsService = async (
         )
       : null;
 
-  // All-time stats
   const totalExpenseAllTime = monthlyData.reduce(
     (s, m) => s + m.expense,
     0
@@ -422,8 +407,7 @@ export const getFinancialInsightsService = async (
   const worstMonth = monthlyData.length
     ? monthlyData.reduce((max, m) => (m.expense > max.expense ? m : max))
     : null;
-
-  // Top categories (all time)
+        
   const categoryMap: Record<string, { name: string; amount: number }> = {};
   allTransactions
     .filter((tx) => tx.type === "expense")

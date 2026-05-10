@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-// Schema para parâmetros de paginação (query string)
 export const paginationQuerySchema = z.object({
   page: z
     .string()
@@ -17,7 +16,6 @@ export const paginationQuerySchema = z.object({
     ),
 });
 
-// Schema para paginação no corpo da requisição (números diretos)
 export const paginationBodySchema = z.object({
   page: z.number().int().positive().optional(),
   limit: z
@@ -28,7 +26,6 @@ export const paginationBodySchema = z.object({
     .optional(),
 });
 
-// Schema para query de transações (inclui paginação)
 export const transactionQuerySchema = z
   .object({
     category: z.string().optional(),
@@ -51,7 +48,6 @@ export const transactionQuerySchema = z
   })
   .merge(paginationQuerySchema);
 
-// Schema para corpo de transações (inclui paginação)
 export const transactionBodySchema = z
   .object({
     category: z.string().optional(),
@@ -74,8 +70,6 @@ export const transactionBodySchema = z
   })
   .merge(paginationBodySchema);
 
-// Schema para query de categorias (inclui paginação)
 export const categoryQuerySchema = paginationQuerySchema;
 
-// Schema para query de transações (usa query params)
 export const transactionListQuerySchema = transactionQuerySchema;

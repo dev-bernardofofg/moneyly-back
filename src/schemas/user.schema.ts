@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-// Schema para atualizar rendimento mensal
 export const updateMonthlyIncomeSchema = z.object({
   monthlyIncome: z
     .union([z.string(), z.number()])
@@ -16,7 +15,6 @@ export const updateMonthlyIncomeSchema = z.object({
     ),
 });
 
-// Schema para atualizar período financeiro
 export const updateFinancialPeriodSchema = z
   .object({
     financialDayStart: z
@@ -30,17 +28,14 @@ export const updateFinancialPeriodSchema = z
   })
   .refine(
     (data) => {
-      // Validar que o período faz sentido (ex: 5 a 5, 1 a 31, etc.)
       if (data.financialDayStart === data.financialDayEnd) {
-        return true; // Período de um dia (ex: 5 a 5)
+        return true;
       }
 
-      // Para períodos que cruzam meses (ex: 5 a 4 do próximo mês)
       if (data.financialDayStart > data.financialDayEnd) {
-        return true; // Válido (ex: 5 a 4)
+        return true;
       }
 
-      // Para períodos dentro do mesmo mês (ex: 1 a 31)
       return data.financialDayStart < data.financialDayEnd;
     },
     {
@@ -50,7 +45,6 @@ export const updateFinancialPeriodSchema = z
     }
   );
 
-// Schema para atualizar rendimento e período financeiro juntos
 export const updateIncomeAndPeriodSchema = z
   .object({
     monthlyIncome: z
@@ -93,7 +87,6 @@ export const updateIncomeAndPeriodSchema = z
     }
   );
 
-// Schema para atualizar perfil do usuário
 export const updateUserProfileSchema = z.object({
   name: z
     .string()
@@ -102,7 +95,6 @@ export const updateUserProfileSchema = z.object({
   email: z.string().email("Email inválido").max(100, "Email muito longo"),
 });
 
-// Schema para atualizar senha
 export const updatePasswordSchema = z
   .object({
     currentPassword: z

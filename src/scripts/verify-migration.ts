@@ -4,15 +4,10 @@ import { eq, and, isNull } from "drizzle-orm";
 import { getCurrentFinancialPeriod } from "../helpers/financial-period";
 import { toSaoPauloTimezone } from "../helpers/dates";
 
-/**
- * Script para migrar transações existentes e adicionar periodId
- * Execute este script APÓS adicionar a coluna periodId na tabela transactions
- */
 export async function migrateTransactionsPeriods() {
   console.log(" Iniciando migração de períodos para transações...");
 
   try {
-    // 1. Buscar todas as transações sem periodId
     const transactionsWithoutPeriod = await db
       .select()
       .from(transactions)
@@ -25,7 +20,6 @@ export async function migrateTransactionsPeriods() {
       return;
     }
 
-    // 2. Agrupar transações por usuário para otimizar
     const transactionsByUser = new Map<string, typeof transactionsWithoutPeriod>();
     
     for (const tx of transactionsWithoutPeriod) {
@@ -37,11 +31,9 @@ export async function migrateTransactionsPeriods() {
 
     console.log(`👥 Processando ${transactionsByUser.size} usuários`);
 
-    // 3. Processar cada usuário
     for (const [userId, userTransactions] of transactionsByUser) {
       console.log(`\n👤 Processando usuário ${userId}...`);
 
-      // Buscar configuração do usuário
       const user = await db
         .select({
           financialDayStart: users.financialDayStart,
@@ -62,10 +54,8 @@ export async function migrateTransactionsPeriods() {
 
       console.log(`📅 Configuração: dia ${startDay} a ${endDay}`);
 
-      // 4. Processar cada transação do usuário
       for (const tx of userTransactions) {
         try {
-          // Calcular período para a data da transação
           const transactionDate = toSaoPauloTimezone(tx.date);
           const period = getCurrentFinancialPeriod(
             startDay,
@@ -73,7 +63,6 @@ export async function migrateTransactionsPeriods() {
             transactionDate
           );
 
-          // 5. Buscar ou criar período no banco
           const existingPeriod = await db
             .select()
             .from(financialPeriods)
@@ -92,7 +81,6 @@ export async function migrateTransactionsPeriods() {
             periodId = existingPeriod[0].id;
             console.log(`  ✅ Período existente encontrado: ${periodId}`);
           } else {
-            // Criar novo período
             const [newPeriod] = await db
               .insert(financialPeriods)
               .values({
@@ -107,7 +95,6 @@ export async function migrateTransactionsPeriods() {
             console.log(`  🆕 Novo período criado: ${periodId}`);
           }
 
-          // 6. Atualizar transação com periodId
           await db
             .update(transactions)
             .set({ periodId })
@@ -129,7 +116,6 @@ export async function migrateTransactionsPeriods() {
   }
 }
 
-// Executar se chamado diretamente
 if (require.main === module) {
   migrateTransactionsPeriods()
     .then(() => {

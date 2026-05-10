@@ -16,7 +16,7 @@ function monthsUntilDate(target: Date): number {
   const months =
     (target.getFullYear() - now.getFullYear()) * 12 +
     (target.getMonth() - now.getMonth()) +
-    1; // +1 inclui o mês alvo
+    1;
   return Math.max(months, 0);
 }
 
@@ -66,7 +66,6 @@ export const getGoalByIdService = async (userId: string, goalId: string) => {
 
   if (!goal) throw new HttpError(404, "Objetivo não encontrado");
 
-  // Buscar milestones e adicionar progress
   const goalWithMilestones = await goalRepository.getGoalWithMilestones(goalId);
 
   if (!goalWithMilestones) {

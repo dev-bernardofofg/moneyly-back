@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-// Schema para criação de usuário (registro)
 export const createUserSchema = z.object({
   name: z
     .string({
@@ -53,7 +52,6 @@ export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type CreateSessionInput = z.infer<typeof createSessionSchema>;
 export type GoogleAuthInput = z.infer<typeof googleAuthSchema>;
 
-// Schema para login
 export const loginSchema = z.object({
   email: z
     .string({
@@ -94,17 +92,14 @@ export const updateFinancialPeriodSchema = z
   })
   .refine(
     (data) => {
-      // Validar que o período faz sentido (ex: 5 a 5, 1 a 31, etc.)
       if (data.financialDayStart === data.financialDayEnd) {
-        return true; // Período de um dia (ex: 5 a 5)
+        return true;
       }
 
-      // Para períodos que cruzam meses (ex: 5 a 4 do próximo mês)
       if (data.financialDayStart > data.financialDayEnd) {
-        return true; // Válido (ex: 5 a 4)
+        return true;
       }
 
-      // Para períodos dentro do mesmo mês (ex: 1 a 31)
       return data.financialDayStart < data.financialDayEnd;
     },
     {
@@ -148,7 +143,6 @@ export const updateIncomeAndPeriodSchema = z
     }
   );
 
-// Schema para parâmetros de ID (usado em várias rotas)
 export const idParamSchema = z.object({
   id: z
     .string({
@@ -196,7 +190,6 @@ export const transactionQuerySchema = z
   })
   .merge(paginationQuerySchema);
 
-// Schema para refresh token
 export const refreshTokenSchema = z.object({
   refreshToken: z
     .string({

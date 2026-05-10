@@ -1,4 +1,4 @@
-import bcrypt from "bcryptjs";
+import { compare } from "../helpers/bcrypt";
 import { userRepository } from "../repositories/user.repository";
 import { authenticateWithGoogle } from "../services/google.service";
 import { HttpError } from "./errors";
@@ -29,7 +29,7 @@ export const validateCreateSession = async (
     throw new HttpError(400, "Conta não possui senha cadastrada");
   }
 
-  const isMatch = await bcrypt.compare(password, user.password);
+  const isMatch = await compare(password, user.password);
   if (!isMatch) {
     throw new HttpError(401, "Senha inválida");
   }

@@ -3,7 +3,7 @@ import { env } from "../env";
 import { HttpError } from "./errors";
 
 interface GoogleUserInfo {
-  sub: string; // Google ID
+  sub: string;
   name: string;
   email: string;
   picture: string;
