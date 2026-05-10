@@ -1,31 +1,31 @@
 import { format } from "date-fns";
-import { Response } from "express";
-import { getCurrentFinancialPeriod } from "../helpers/financial-period";
+import type { NextFunction, Response } from "express";
+import { isHttpError } from "../helpers/errors";
 import { ResponseHandler } from "../helpers/response-handler";
-import { AuthenticatedRequest } from "../middlewares/auth";
-import { TransactionRepository } from "../repositories/transaction.repository";
-import { UserRepository } from "../repositories/user.repository";
+import type { AuthenticatedRequest } from "../middlewares/auth";
 import {
   createTransactionService,
+  deleteTransactionService,
+  getCurrentPeriodSummaryService,
+  getMonthlySummaryService,
+  getTransactionListService,
+  getTransactionsPaginatedService,
+  getTransactionSummaryService,
   updateTransactionService,
 } from "../services/transaction.service";
 import { validatePagination } from "../validations/pagination.validation";
 
 export const createTransaction = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
+  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+
   const { type, title, amount, category, description, date } = req.body;
-  const { user } = req;
-
-  if (!user) {
-    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
-  }
-
-  const { id: userId } = user;
 
   try {
-    const newTransaction = await createTransactionService(userId, {
+    const newTransaction = await createTransactionService(req.user.id, {
       type,
       title,
       amount,
@@ -33,13 +33,9 @@ export const createTransaction = async (
       description,
       date,
     });
-
-    return ResponseHandler.created(
-      res,
-      newTransaction,
-      "Transação criada com sucesso"
-    );
+    return ResponseHandler.created(res, newTransaction, "Transação criada com sucesso");
   } catch (error) {
+    if (isHttpError(error)) return next(error);
     return ResponseHandler.error(
       res,
       "Não foi possível criar a transação. Por favor, verifique os dados e tente novamente.",
@@ -50,10 +46,11 @@ export const createTransaction = async (
 
 export const getTransactions = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
-  const { user } = req;
-  // Query params já foram validados e transformados pelo middleware
+  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+
   const { category, startDate, endDate, page, limit } = req.query as {
     category?: string;
     startDate?: string;
@@ -62,104 +59,49 @@ export const getTransactions = async (
     limit?: number;
   };
 
-  if (!user) {
-    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
-  }
-
-  const { id: userId } = user;
-
   try {
-    const filters: {
-      category?: string;
-      startDate?: Date;
-      endDate?: Date;
-    } = {};
+    const filters: { category?: string; startDate?: Date; endDate?: Date } = {};
+    if (category) filters.category = category;
+    if (startDate) filters.startDate = new Date(startDate);
+    if (endDate) filters.endDate = new Date(endDate);
 
-    if (category) {
-      filters.category = category as string;
-    }
+    const pagination = await validatePagination(page, limit);
 
-    if (startDate) {
-      filters.startDate = new Date(startDate as string);
-    }
-
-    if (endDate) {
-      filters.endDate = new Date(endDate as string);
-    }
-
-    const paginationExists = await validatePagination(page, limit);
-
-    if (paginationExists) {
-      // Usar versão paginada
-      const result = await TransactionRepository.findByUserIdPaginated(
-        userId,
-        paginationExists,
-        filters
-      );
-
+    if (pagination) {
+      const result = await getTransactionsPaginatedService(req.user.id, pagination, filters);
       return ResponseHandler.paginated(
         res,
         result.data,
-        {
-          page: result.pagination.page,
-          limit: result.pagination.limit,
-          total: result.pagination.total,
-          totalPages: result.pagination.totalPages,
-          hasNext: result.pagination.hasNext,
-          hasPrev: result.pagination.hasPrev,
-        },
-        "Transações recuperadas com sucesso"
-      );
-    } else {
-      // Usar versão original (sem paginação)
-      const transactions = await TransactionRepository.findByUserId(
-        userId,
-        filters
-      );
-
-      const totalExpense = transactions
-        .filter((tx) => tx.type === "expense")
-        .reduce((sum, tx) => sum + Number(tx.amount), 0);
-
-      const totalIncome = transactions
-        .filter((tx) => tx.type === "income")
-        .reduce((sum, tx) => sum + Number(tx.amount), 0);
-
-      const user = await UserRepository.findById(userId);
-      const monthlyIncome = Number(user?.monthlyIncome) ?? 0;
-
-      const percentUsed =
-        monthlyIncome > 0
-          ? Number(((totalExpense / monthlyIncome) * 100).toFixed(2))
-          : null;
-
-      const alert =
-        percentUsed !== null && percentUsed >= 80
-          ? "Você já usou mais de 80% do seu rendimento mensal neste filtro!"
-          : null;
-
-      return ResponseHandler.success(
-        res,
-        {
-          data: transactions,
-          pagination: {
-            page: 1,
-            limit: transactions.length,
-            total: transactions.length,
-            totalPages: 1,
-            hasNext: false,
-            hasPrev: false,
-          },
-          totalExpense,
-          totalIncome,
-          monthlyIncome,
-          percentUsed,
-          alert,
-        },
+        result.pagination,
         "Transações recuperadas com sucesso"
       );
     }
+
+    const { transactions, totalExpense, totalIncome, monthlyIncome, percentUsed, alert } =
+      await getTransactionListService(req.user.id, filters);
+
+    return ResponseHandler.success(
+      res,
+      {
+        data: transactions,
+        pagination: {
+          page: 1,
+          limit: transactions.length,
+          total: transactions.length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
+        },
+        totalExpense,
+        totalIncome,
+        monthlyIncome,
+        percentUsed,
+        alert,
+      },
+      "Transações recuperadas com sucesso"
+    );
   } catch (error) {
+    if (isHttpError(error)) return next(error);
     return ResponseHandler.error(
       res,
       "Não foi possível buscar as transações. Por favor, tente novamente.",
@@ -170,20 +112,13 @@ export const getTransactions = async (
 
 export const updateTransaction = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
-  const { user } = req;
+  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+
   const { id } = req.params;
-
-  if (!user) {
-    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
-  }
-
-  if (!id) {
-    return ResponseHandler.badRequest(res, "ID da transação não fornecido");
-  }
-
-  const { id: userId } = user;
+  if (!id) return ResponseHandler.badRequest(res, "ID da transação não fornecido");
 
   try {
     const { type, title, amount, category, description, date } = req.body;
@@ -203,14 +138,10 @@ export const updateTransaction = async (
     if (category) updateData.categoryId = category;
     if (description) updateData.description = description;
 
-    const transaction = await updateTransactionService(id, userId, updateData);
-
-    return ResponseHandler.success(
-      res,
-      transaction,
-      "Transação atualizada com sucesso"
-    );
+    const transaction = await updateTransactionService(id, req.user.id, updateData);
+    return ResponseHandler.success(res, transaction, "Transação atualizada com sucesso");
   } catch (error) {
+    if (isHttpError(error)) return next(error);
     return ResponseHandler.error(
       res,
       "Não foi possível atualizar a transação. Verifique se os dados estão corretos e tente novamente.",
@@ -221,30 +152,19 @@ export const updateTransaction = async (
 
 export const deleteTransaction = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
-  const { user } = req;
+  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+
   const { id } = req.params;
-
-  if (!user) {
-    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
-  }
-
-  if (!id) {
-    return ResponseHandler.badRequest(res, "ID da transação não fornecido");
-  }
-
-  const { id: userId } = user;
+  if (!id) return ResponseHandler.badRequest(res, "ID da transação não fornecido");
 
   try {
-    const deleted = await TransactionRepository.delete(id, userId);
-
-    if (!deleted) {
-      return ResponseHandler.notFound(res, "Transação não encontrada");
-    }
-
+    await deleteTransactionService(id, req.user.id);
     return ResponseHandler.success(res, null, "Transação deletada com sucesso");
   } catch (error) {
+    if (isHttpError(error)) return next(error);
     return ResponseHandler.error(
       res,
       "Não foi possível deletar a transação. Por favor, tente novamente.",
@@ -255,64 +175,16 @@ export const deleteTransaction = async (
 
 export const getTransactionSummary = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
-  const { user } = req;
-
-  if (!user) {
-    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
-  }
-
-  const { id: userId } = user;
+  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
 
   try {
-    const transactions = await TransactionRepository.findAllByUserId(userId);
-
-    let realIncome = 0;
-    let totalExpense = 0;
-    const byCategory: Record<string, number> = {};
-
-    transactions.forEach((tx) => {
-      if (tx.type === "income") realIncome += Number(tx.amount);
-      if (tx.type === "expense") totalExpense += Number(tx.amount);
-
-      if (!byCategory[tx.category.id]) {
-        byCategory[tx.category.id] = 0;
-      }
-
-      byCategory[tx.category.id] =
-        (byCategory[tx.category.id] || 0) + Number(tx.amount);
-    });
-
-    const user = await UserRepository.findById(userId);
-    const monthlyIncome = Number(user?.monthlyIncome) ?? 0;
-
-    const balance = monthlyIncome - totalExpense;
-
-    const percentUsed =
-      monthlyIncome > 0
-        ? Number(((totalExpense / monthlyIncome) * 100).toFixed(2))
-        : null;
-
-    const alert =
-      percentUsed !== null && percentUsed >= 80
-        ? "Você já usou mais de 80% do seu rendimento mensal!"
-        : null;
-
-    return ResponseHandler.success(
-      res,
-      {
-        totalIncome: realIncome, // 💰 soma das transações tipo income
-        totalExpenses: totalExpense, // 💸 soma das expenses
-        monthlyIncome, // 💼 salário fixo do usuário
-        balance, // 💼 - 💸
-        percentUsed,
-        byCategory,
-        alert,
-      },
-      "Resumo das transações gerado com sucesso"
-    );
+    const summary = await getTransactionSummaryService(req.user.id);
+    return ResponseHandler.success(res, summary, "Resumo das transações gerado com sucesso");
   } catch (error) {
+    if (isHttpError(error)) return next(error);
     return ResponseHandler.error(
       res,
       "Não foi possível gerar o resumo das transações. Por favor, tente novamente.",
@@ -323,98 +195,22 @@ export const getTransactionSummary = async (
 
 export const getMonthlySummary = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
-  const { user } = req;
+  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+
   const { startDate, endDate } = req.query;
 
-  if (!user) {
-    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
-  }
-
-  const { id: userId } = user;
-
   try {
-    const filters: {
-      startDate?: Date;
-      endDate?: Date;
-    } = {};
+    const filters: { startDate?: Date; endDate?: Date } = {};
+    if (startDate) filters.startDate = new Date(startDate as string);
+    if (endDate) filters.endDate = new Date(endDate as string);
 
-    if (startDate) {
-      filters.startDate = new Date(startDate as string);
-    }
-
-    if (endDate) {
-      filters.endDate = new Date(endDate as string);
-    }
-
-    const transactions = await TransactionRepository.findByUserId(
-      userId,
-      filters
-    );
-    const user = await UserRepository.findById(userId);
-    const monthlyIncome = Number(user?.monthlyIncome) ?? 0;
-
-    const summary: Record<
-      string,
-      {
-        income: number;
-        expense: number;
-        percentUsed: number | null;
-        alert: string | null;
-      }
-    > = {};
-
-    transactions.forEach((tx) => {
-      const monthKey = format(new Date(tx.date), "yyyy-MM");
-
-      if (!summary[monthKey]) {
-        summary[monthKey] = {
-          income: 0,
-          expense: 0,
-          percentUsed: null,
-          alert: null,
-        };
-      }
-
-      if (tx.type === "income") {
-        summary[monthKey].income += Number(tx.amount);
-      } else {
-        summary[monthKey].expense += Number(tx.amount);
-      }
-    });
-
-    // Calcular percentual usado para cada mês
-    Object.keys(summary).forEach((monthKey) => {
-      const monthData = summary[monthKey];
-
-      if (!monthData) return;
-
-      const totalExpense = monthData.expense;
-
-      monthData.percentUsed =
-        monthlyIncome > 0
-          ? Number(((totalExpense / monthlyIncome) * 100).toFixed(2))
-          : null;
-
-      monthData.alert =
-        monthData.percentUsed !== null && monthData.percentUsed >= 80
-          ? "Você já usou mais de 80% do seu rendimento mensal!"
-          : null;
-    });
-
-    // Transformar summary de objeto para array
-    const summaryArray = Object.entries(summary).map(([month, data]) => ({
-      month,
-      ...data,
-    }));
-
-    return ResponseHandler.success(
-      res,
-      summaryArray,
-      "Resumo mensal gerado com sucesso"
-    );
+    const summaryArray = await getMonthlySummaryService(req.user.id, filters);
+    return ResponseHandler.success(res, summaryArray, "Resumo mensal gerado com sucesso");
   } catch (error) {
+    if (isHttpError(error)) return next(error);
     return ResponseHandler.error(
       res,
       "Não foi possível gerar o resumo mensal. Por favor, tente novamente.",
@@ -423,95 +219,68 @@ export const getMonthlySummary = async (
   }
 };
 
-export const getCurrentFinancialPeriodSummary = async (
+export const exportTransactionsCsv = async (
   req: AuthenticatedRequest,
-  res: Response
-) => {
-  const { user } = req;
-
-  if (!user) {
-    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  if (!req.user) {
+    ResponseHandler.unauthorized(res, "Usuário não autenticado");
+    return;
   }
 
-  const { id: userId } = user;
+  try {
+    const { startDate, endDate } = req.query;
+    const filters: { startDate?: Date; endDate?: Date } = {};
+    if (startDate) filters.startDate = new Date(startDate as string);
+    if (endDate) filters.endDate = new Date(endDate as string);
+
+    const { transactions } = await getTransactionListService(req.user.id, filters);
+
+    const headers = ["ID", "Tipo", "Título", "Valor", "Categoria", "Descrição", "Data"];
+    const rows = transactions.map((tx) => [
+      tx.id,
+      tx.type === "income" ? "Receita" : "Despesa",
+      tx.title,
+      Number(tx.amount).toFixed(2).replace(".", ","),
+      tx.category.name,
+      tx.description ?? "",
+      format(new Date(tx.date), "dd/MM/yyyy"),
+    ]);
+
+    const csv = [headers, ...rows]
+      .map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";"))
+      .join("\r\n");
+
+    const filename = `transacoes-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.send("﻿" + csv);
+  } catch (error) {
+    if (isHttpError(error)) {
+      next(error);
+      return;
+    }
+    ResponseHandler.error(res, "Erro ao exportar transações", error);
+  }
+};
+
+export const getCurrentFinancialPeriodSummary = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
 
   try {
-    const userDetails = await UserRepository.findById(userId);
-    if (!userDetails) {
-      return ResponseHandler.notFound(res, "Usuário não encontrado");
-    }
-
-    const financialDayStart = userDetails.financialDayStart ?? 1;
-    const financialDayEnd = userDetails.financialDayEnd ?? 31;
-    const monthlyIncome = Number(userDetails.monthlyIncome) ?? 0;
-
-    // Calcular o período financeiro atual
-    const currentPeriod = getCurrentFinancialPeriod(
-      financialDayStart,
-      financialDayEnd
-    );
-
-    // Buscar transações do período financeiro atual
-    const transactions = await TransactionRepository.findByUserId(userId, {
-      startDate: currentPeriod.startDate,
-      endDate: currentPeriod.endDate,
-    });
-
-    let realIncome = 0;
-    let totalExpense = 0;
-    const byCategory: Record<string, number> = {};
-
-    transactions.forEach((tx) => {
-      if (tx.type === "income") realIncome += Number(tx.amount);
-      if (tx.type === "expense") totalExpense += Number(tx.amount);
-
-      if (!byCategory[tx.category.id]) {
-        byCategory[tx.category.id] = 0;
-      }
-
-      byCategory[tx.category.id] =
-        (byCategory[tx.category.id] || 0) + Number(tx.amount);
-    });
-
-    const balance = monthlyIncome - totalExpense;
-
-    const percentUsed =
-      monthlyIncome > 0
-        ? Number(((totalExpense / monthlyIncome) * 100).toFixed(2))
-        : null;
-
-    const alert =
-      percentUsed !== null && percentUsed >= 80
-        ? "Você já usou mais de 80% do seu rendimento mensal no período atual!"
-        : null;
-
+    const summary = await getCurrentPeriodSummaryService(req.user.id);
     return ResponseHandler.success(
       res,
-      {
-        currentPeriod: {
-          startDate: currentPeriod.startDate,
-          endDate: currentPeriod.endDate,
-          description: `Período financeiro: ${format(
-            currentPeriod.startDate,
-            "dd/MM/yyyy"
-          )} a ${format(currentPeriod.endDate, "dd/MM/yyyy")}`,
-        },
-        totalIncome: realIncome, // 💰 soma das transações tipo income no período
-        totalExpenses: totalExpense, // 💸 soma das expenses no período
-        monthlyIncome, // 💼 salário fixo do usuário
-        balance, // 💼 - 💸
-        percentUsed,
-        byCategory,
-        alert,
-        transactionsCount: transactions.length,
-      },
+      summary,
       "Resumo do período financeiro atual gerado com sucesso"
     );
   } catch (error) {
-    return ResponseHandler.error(
-      res,
-      "Erro ao gerar resumo do período financeiro",
-      error
-    );
+    if (isHttpError(error)) return next(error);
+    return ResponseHandler.error(res, "Erro ao gerar resumo do período financeiro", error);
   }
 };

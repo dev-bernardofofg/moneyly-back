@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   getAvailablePeriods,
   getDashboardOverview,
+  getFinancialInsights,
   getPlannerOverview,
 } from "../controllers/overview.controller";
 import { authenticateUser } from "../middlewares/auth";
@@ -32,5 +33,7 @@ OverviewRouter.get(
 );
 
 OverviewRouter.get("/planner", getPlannerOverview);
+
+OverviewRouter.get("/insights", getFinancialInsights);
 
 export { OverviewRouter };

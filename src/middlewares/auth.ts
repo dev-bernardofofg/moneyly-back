@@ -2,10 +2,9 @@ import type { NextFunction, Request, Response } from "express";
 import { verifyAccessToken } from "../helpers/token";
 import { ResponseHandler } from "../helpers/response-handler";
 import type { AuthenticatedUser } from "../types/auth.types";
-import { validateUserNotAuthenticated } from "../validations/user.validation";
+import { requireUser } from "../validations/user.validation";
 
 export interface AuthenticatedRequest extends Request {
-  userId?: string;
   user?: AuthenticatedUser;
 }
 
@@ -23,9 +22,7 @@ export const authenticateUser = async (
   try {
     // Verificar access token usando a função helper atualizada
     const decoded = verifyAccessToken(token);
-    req.userId = decoded.userId;
-
-    const user = await validateUserNotAuthenticated(decoded.userId);
+    const user = await requireUser(decoded.userId);
     req.user = user;
 
     next();

@@ -1,33 +1,28 @@
-import { Response } from "express";
-import { formatBrazilianDate } from "../helpers/date-utils";
+import type { NextFunction, Response } from "express";
+import { formatBrazilianDate } from "../helpers/dates";
+import { isHttpError } from "../helpers/errors";
 import { getCurrentFinancialPeriod } from "../helpers/financial-period";
 import { ResponseHandler } from "../helpers/response-handler";
-import { AuthenticatedRequest } from "../middlewares/auth";
-import { GetDashboardOverviewQuery } from "../schemas/overview.schema";
+import type { AuthenticatedRequest } from "../middlewares/auth";
+import type { GetDashboardOverviewQuery } from "../schemas/overview.schema";
 import {
   getAvailablePeriodsService,
   getDashboardOverviewService,
+  getFinancialInsightsService,
   getPlannerOverviewService,
   getTransactionsByUserId,
 } from "../services/overview.service";
 
 export const getDashboardOverview = async (
   req: AuthenticatedRequest & { query: GetDashboardOverviewQuery },
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
+  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+
   const { user } = req;
   const { periodId } = req.query;
-
-  if (!user) {
-    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
-  }
-
-  const {
-    id: userId,
-    financialDayStart,
-    financialDayEnd,
-    monthlyIncome,
-  } = user;
+  const { id: userId, financialDayStart, financialDayEnd, monthlyIncome } = user;
 
   try {
     const { transactions, availablePeriods, selectedPeriod } =
@@ -38,11 +33,7 @@ export const getDashboardOverview = async (
       );
 
     const { stats, monthlyHistory, expensesByCategory } =
-      await getDashboardOverviewService(
-        userId,
-        Number(monthlyIncome) || 0,
-        transactions
-      );
+      await getDashboardOverviewService(userId, Number(monthlyIncome) || 0, transactions);
 
     return ResponseHandler.success(
       res,
@@ -68,59 +59,58 @@ export const getDashboardOverview = async (
       "Dados do dashboard recuperados com sucesso"
     );
   } catch (error) {
-    return ResponseHandler.error(
-      res,
-      "Erro ao buscar dados do dashboard",
-      error
-    );
+    if (isHttpError(error)) return next(error);
+    return ResponseHandler.error(res, "Erro ao buscar dados do dashboard", error);
   }
 };
 
 export const getAvailablePeriods = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
-  const { user } = req;
-
-  if (!user) {
-    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
-  }
-
-  const { id: userId } = user;
+  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
 
   try {
-    const availablePeriods = await getAvailablePeriodsService(userId);
-
+    const availablePeriods = await getAvailablePeriodsService(req.user.id);
     return ResponseHandler.success(
       res,
       availablePeriods,
       "Períodos financeiros disponíveis recuperados com sucesso"
     );
   } catch (error) {
-    return ResponseHandler.error(
-      res,
-      "Erro ao buscar períodos disponíveis",
-      error
+    if (isHttpError(error)) return next(error);
+    return ResponseHandler.error(res, "Erro ao buscar períodos disponíveis", error);
+  }
+};
+
+export const getFinancialInsights = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+
+  try {
+    const insights = await getFinancialInsightsService(
+      req.user.id,
+      Number(req.user.monthlyIncome) || 0
     );
+    return ResponseHandler.success(res, insights, "Insights financeiros gerados com sucesso");
+  } catch (error) {
+    if (isHttpError(error)) return next(error);
+    return ResponseHandler.error(res, "Erro ao gerar insights financeiros", error);
   }
 };
 
 export const getPlannerOverview = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
-  const { user } = req;
+  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
 
-  if (!user) {
-    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
-  }
-
-  const {
-    id: userId,
-    financialDayStart,
-    financialDayEnd,
-    monthlyIncome,
-  } = user;
+  const { id: userId, financialDayStart, financialDayEnd, monthlyIncome } = req.user;
 
   try {
     const currentPeriod = getCurrentFinancialPeriod(
@@ -149,10 +139,7 @@ export const getPlannerOverview = async (
       "Stats do planejamento recuperados com sucesso"
     );
   } catch (error) {
-    return ResponseHandler.error(
-      res,
-      "Erro ao buscar stats do planejamento",
-      error
-    );
+    if (isHttpError(error)) return next(error);
+    return ResponseHandler.error(res, "Erro ao buscar stats do planejamento", error);
   }
 };

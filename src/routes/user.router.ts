@@ -9,7 +9,7 @@ import {
 import { ResponseHandler } from "../helpers/response-handler";
 import { AuthenticatedRequest, authenticateUser } from "../middlewares/auth";
 import { validateBody } from "../middlewares/validate";
-import { FinancialPeriodRepository } from "../repositories/financial-period.repository";
+import { financialPeriodRepository } from "../repositories/financial-period.repository";
 import {
   updateFinancialPeriodSchema,
   updateIncomeAndPeriodSchema,
@@ -61,10 +61,10 @@ export const getFinancialPeriodById = async (
 
   try {
     // Aqui você precisaria adicionar um método no repository
-    // const period = await FinancialPeriodRepository.findById(periodId, userId);
+    // const period = await financialPeriodRepository.findById(periodId, userId);
 
     // Por enquanto, vamos buscar todos e filtrar
-    const periods = await FinancialPeriodRepository.findActiveByUser(userId);
+    const periods = await financialPeriodRepository.findActiveByUser(userId);
     const period = periods.find((p) => p.id === periodId);
 
     if (!period) {

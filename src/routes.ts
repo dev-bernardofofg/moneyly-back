@@ -2,11 +2,13 @@ import { Router } from "express";
 import { readFileSync } from "fs";
 import { join } from "path";
 import swaggerUi from "swagger-ui-express";
+import { logger } from "./lib/logger";
 import { AuthRouters } from "./routes/auth.router";
 import { BudgetRouter } from "./routes/budget.router";
 import { CategoryRouter } from "./routes/category.router";
 import savingsGoalRoutes from "./routes/goal.router";
 import { OverviewRouter } from "./routes/overview.router";
+import { RecurringTransactionRouter } from "./routes/recurring-transaction.router";
 import transactionRoutes from "./routes/transaction.router";
 import { UserRouters } from "./routes/user.router";
 
@@ -17,9 +19,7 @@ try {
   const openApiContent = readFileSync(openApiPath, "utf-8");
   openApiDocument = JSON.parse(openApiContent) as Record<string, unknown>;
 } catch (error) {
-  console.warn(
-    "⚠️  openapi.json não encontrado. Swagger docs não estarão disponíveis."
-  );
+  logger.warn("openapi.json não encontrado. Swagger docs não estarão disponíveis.");
   openApiDocument = {};
 }
 
@@ -59,5 +59,6 @@ router.use("/categories", CategoryRouter);
 router.use("/budgets", BudgetRouter);
 router.use("/goals", savingsGoalRoutes);
 router.use("/overview", OverviewRouter);
+router.use("/recurring-transactions", RecurringTransactionRouter);
 
 export default router;

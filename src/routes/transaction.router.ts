@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   createTransaction,
   deleteTransaction,
+  exportTransactionsCsv,
   getCurrentFinancialPeriodSummary,
   getMonthlySummary,
   getTransactions,
@@ -55,5 +56,7 @@ TransactionsRouter.get(
   "/summary-current-period",
   getCurrentFinancialPeriodSummary
 );
+
+TransactionsRouter.get("/export", exportTransactionsCsv);
 
 export default TransactionsRouter;
