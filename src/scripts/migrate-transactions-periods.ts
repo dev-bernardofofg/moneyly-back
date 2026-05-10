@@ -1,7 +1,8 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "../db";
 import { financialPeriods, transactions, users } from "../db/schema";
-import { toSaoPauloTimezone } from "../helpers/date-utils";
+import type { Transaction } from "../db/schema";
+import { toSaoPauloTimezone } from "../helpers/dates";
 import { getCurrentFinancialPeriod } from "../helpers/financial-period";
 
 /**
@@ -31,7 +32,7 @@ export async function migrateTransactionsPeriods() {
     }
 
     // 2. Buscar transações de diferentes formas
-    let transactionsToMigrate: any[] = [];
+    let transactionsToMigrate: Transaction[] = [];
 
     // Tentar buscar por periodId null
     try {

@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { UserCategoryPreferencesRepository } from "../repositories/user-category-preferences.repository";
+import { userCategoryPreferencesRepository } from "../repositories/user-category-preferences.repository";
 import { db } from "./index";
 import { categories } from "./schema";
 
@@ -98,7 +98,7 @@ export async function createDefaultPreferencesForUser(userId: string) {
 
     const categoryIds = globalCategoriesData.map((cat) => cat.id);
     const preferences =
-      await UserCategoryPreferencesRepository.createDefaultPreferencesForUser(
+      await userCategoryPreferencesRepository.createDefaultPreferencesForUser(
         userId,
         categoryIds
       );

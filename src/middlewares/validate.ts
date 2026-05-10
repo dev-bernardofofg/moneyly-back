@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { ZodError, ZodSchema } from "zod";
+import { ZodSchema } from "zod";
 
 export interface ValidationConfig {
   body?: ZodSchema;
@@ -27,11 +27,7 @@ export const validate = (config: ValidationConfig) => {
 
       next();
     } catch (error) {
-      if (error instanceof ZodError) {
-        next(error); // Pass to error handler
-      } else {
-        next(error);
-      }
+      next(error);
     }
   };
 };

@@ -5,6 +5,8 @@ import { logger } from "../lib/logger";
 interface ErrorWithCode extends Error {
   code?: string;
   statusCode?: number;
+  status?: number;
+  details?: unknown;
 }
 
 export const errorHandler = (
@@ -20,9 +22,9 @@ export const errorHandler = (
   });
 
   // Custom errors with status code (HttpError, etc) - VERIFICAR PRIMEIRO!
-  if (error.statusCode || (error as any).status) {
-    const statusCode = error.statusCode || (error as any).status;
-    const details = (error as any).details;
+  if (error.statusCode || error.status) {
+    const statusCode = error.statusCode || error.status;
+    const details = error.details;
     ResponseHandler.error(res, error.message, details, statusCode);
     return;
   }

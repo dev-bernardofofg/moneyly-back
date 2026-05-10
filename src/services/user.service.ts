@@ -1,13 +1,15 @@
 import bcrypt from "bcryptjs";
 import { createDefaultPreferencesForUser } from "../db/seed";
+import { logger } from "../lib/logger";
 import {
   generateAccessToken,
   generateRefreshToken,
   hashRefreshToken,
   verifyRefreshToken,
 } from "../helpers/token";
-import { RefreshTokenRepository } from "../repositories/refresh-token.repository";
-import { UserRepository } from "../repositories/user.repository";
+import { financialPeriodRepository } from "../repositories/financial-period.repository";
+import { refreshTokenRepository } from "../repositories/refresh-token.repository";
+import { userRepository } from "../repositories/user.repository";
 import {
   ensureEmailNotExists,
   validateCreateSession,
@@ -38,7 +40,7 @@ export const createUserService = async ({
 
   const hashedPassword = await hashPassword(password);
 
-  const user = await UserRepository.create({
+  const user = await userRepository.create({
     name,
     email,
     password: hashedPassword,
@@ -49,7 +51,7 @@ export const createUserService = async ({
     await createDefaultPreferencesForUser(user.id);
   } catch (error) {
     // Log do erro, mas não impede a criação do usuário
-    console.error("⚠️ Erro ao criar categorias padrão para o usuário:", error);
+    logger.error("Erro ao criar categorias padrão para o usuário", error as Error);
   }
 
   // Gerar access token e refresh token
@@ -62,7 +64,7 @@ export const createUserService = async ({
   expiresAt.setDate(expiresAt.getDate() + 7);
 
   // Salvar refresh token no banco
-  await RefreshTokenRepository.create({
+  await refreshTokenRepository.create({
     userId: user.id,
     token: hashedRefreshToken,
     expiresAt,
@@ -91,7 +93,7 @@ export const createSessionService = async ({
   expiresAt.setDate(expiresAt.getDate() + 7);
 
   // Salvar refresh token no banco
-  await RefreshTokenRepository.create({
+  await refreshTokenRepository.create({
     userId: user.id,
     token: hashedRefreshToken,
     expiresAt,
@@ -117,7 +119,7 @@ export const createGoogleSessionService = async (idToken: string) => {
   expiresAt.setDate(expiresAt.getDate() + 7);
 
   // Salvar refresh token no banco
-  await RefreshTokenRepository.create({
+  await refreshTokenRepository.create({
     userId: user.id,
     token: hashedRefreshToken,
     expiresAt,
@@ -134,20 +136,8 @@ export const createGoogleSessionService = async (idToken: string) => {
  * Serviço para renovar access token usando refresh token
  */
 export const refreshTokenService = async (refreshToken: string) => {
-  // Buscar todos os refresh tokens válidos do usuário e verificar um por um
-  // (Não podemos fazer lookup direto porque bcrypt usa salt único)
-  // Em produção, considere usar uma abordagem diferente (ex: token com ID + secret)
-
-  // Buscar todos os tokens válidos (não expirados)
-  // Como não podemos fazer lookup direto, vamos precisar buscar todos e comparar
-  // Para otimizar, vamos usar uma abordagem onde o token tem userId incorporado
-  // ou usar uma tabela de lookup diferente
-
-  // Por enquanto, vamos buscar tokens válidos ordenados por data e comparar
-  // NOTA: Em produção com muitos tokens, isso pode ser lento
-  // Considere usar uma estrutura de token com ID separado para lookup rápido
-
-  const allTokens = await RefreshTokenRepository.findAllValid();
+  // O(n) bcrypt scan — trocar por token com ID lookup se volume crescer
+  const allTokens = await refreshTokenRepository.findAllValid();
 
   // Comparar o refresh token fornecido com cada hash salvo
   let matchingToken = null;
@@ -164,7 +154,7 @@ export const refreshTokenService = async (refreshToken: string) => {
   }
 
   // Buscar usuário
-  const user = await UserRepository.findById(matchingToken.userId);
+  const user = await userRepository.findById(matchingToken.userId);
 
   if (!user) {
     throw new Error("Usuário não encontrado");
@@ -187,7 +177,7 @@ export const revokeRefreshTokenService = async (
   refreshToken: string
 ) => {
   // Buscar todos os refresh tokens do usuário
-  const userTokens = await RefreshTokenRepository.findByUserId(userId);
+  const userTokens = await refreshTokenRepository.findByUserId(userId);
 
   // Comparar o refresh token fornecido com cada hash salvo
   let matchingToken = null;
@@ -204,12 +194,43 @@ export const revokeRefreshTokenService = async (
   }
 
   // Deletar refresh token
-  await RefreshTokenRepository.delete(matchingToken.id);
+  await refreshTokenRepository.delete(matchingToken.id);
 
   return { success: true };
 };
 
-// Exemplo de serviço que recebe o usuário como parâmetro
+export const updatefinancialPeriodService = async (
+  userId: string,
+  financialDayStart: number,
+  financialDayEnd: number
+) => {
+  const user = await userRepository.updateFinancialPeriod(
+    userId,
+    financialDayStart,
+    financialDayEnd
+  );
+  if (!user) throw new Error("Usuário não encontrado");
+  await financialPeriodRepository.deactivatePeriods(userId);
+  return user;
+};
+
+export const updateIncomeAndPeriodService = async (
+  userId: string,
+  monthlyIncome: number,
+  financialDayStart: number,
+  financialDayEnd: number
+) => {
+  const user = await userRepository.updateIncomeAndPeriod(
+    userId,
+    monthlyIncome,
+    financialDayStart,
+    financialDayEnd
+  );
+  if (!user) throw new Error("Usuário não encontrado");
+  await financialPeriodRepository.deactivatePeriods(userId);
+  return user;
+};
+
 export const updateUserProfileService = async (
   user: {
     id: string;
@@ -230,7 +251,7 @@ export const updateUserProfileService = async (
   let updatedUser = user;
 
   if (data.monthlyIncome !== undefined) {
-    const updated = await UserRepository.updateMonthlyIncome(
+    const updated = await userRepository.updateMonthlyIncome(
       user.id,
       data.monthlyIncome
     );
@@ -241,7 +262,7 @@ export const updateUserProfileService = async (
     data.financialDayStart !== undefined &&
     data.financialDayEnd !== undefined
   ) {
-    const updated = await UserRepository.updateFinancialPeriod(
+    const updated = await userRepository.updateFinancialPeriod(
       user.id,
       data.financialDayStart,
       data.financialDayEnd

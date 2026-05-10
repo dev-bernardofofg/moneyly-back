@@ -1,4 +1,4 @@
-import { CategoryRepository } from "../repositories/categories.repository";
+import { categoryRepository } from "../repositories/categories.repository";
 import {
   validateCategoryExists,
   validateCategoryExistsByUserId,
@@ -10,7 +10,7 @@ import { validatePagination } from "../validations/pagination.validation";
 
 export const createCategoryService = async (name: string, userId: string) => {
   await validateCategoryExists(name);
-  const category = await CategoryRepository.create({ name, userId });
+  const category = await categoryRepository.create({ name, userId });
   return category;
 };
 
@@ -24,13 +24,13 @@ export const getCategoriesService = async (
   );
 
   if (paginationExists) {
-    const result = await CategoryRepository.findByUserIdPaginated(
+    const result = await categoryRepository.findByUserIdPaginated(
       userId,
       paginationExists
     );
     return result;
   } else {
-    const categories = await CategoryRepository.findByUserId(userId);
+    const categories = await categoryRepository.findByUserId(userId);
     // Retornar estrutura consistente mesmo sem paginação
     return {
       data: categories,
@@ -55,13 +55,13 @@ export const updateCategoryService = async (
   await validateCategoryExists(name);
   await validateCategoryIsNotGlobal(id, userId);
   await validateCategoryNameIsNotInUse(name, userId);
-  const category = await CategoryRepository.update(id, { name, userId });
+  const category = await categoryRepository.update(id, { name, userId });
   return category;
 };
 
 export const deleteCategoryService = async (id: string, userId: string) => {
   await validateCategoryExistsByUserId(id, userId);
   await validateHideGlobalCategory(id, userId);
-  const category = await CategoryRepository.delete(id, userId);
+  const category = await categoryRepository.delete(id, userId);
   return category;
 };

@@ -1,8 +1,8 @@
 import { db } from "../db";
 import { transactions, financialPeriods, users } from "../db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import { getCurrentFinancialPeriod } from "../helpers/financial-period";
-import { toSaoPauloTimezone } from "../helpers/date-utils";
+import { toSaoPauloTimezone } from "../helpers/dates";
 
 /**
  * Script para migrar transações existentes e adicionar periodId
@@ -16,7 +16,7 @@ export async function migrateTransactionsPeriods() {
     const transactionsWithoutPeriod = await db
       .select()
       .from(transactions)
-      .where(eq(transactions.periodId, null));
+      .where(isNull(transactions.periodId));
 
     console.log(`📊 Encontradas ${transactionsWithoutPeriod.length} transações para migrar`);
 

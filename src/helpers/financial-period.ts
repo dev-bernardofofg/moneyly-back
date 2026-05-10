@@ -1,11 +1,11 @@
 import { formatInTimeZone } from "date-fns-tz";
 import { ptBR } from "date-fns/locale";
-import { TransactionRepository } from "../repositories/transaction.repository";
+import { transactionRepository } from "../repositories/transaction.repository";
 import {
   createNormalizedSaoPauloDate,
   getCurrentSaoPauloDate,
   toSaoPauloTimezone,
-} from "./date-utils";
+} from "./dates";
 
 export interface FinancialPeriod {
   startDate: Date;
@@ -499,7 +499,7 @@ async function getTransactionCountForPeriod(
 ): Promise<number> {
   try {
     // Buscar transações por data (fallback para quando não há periodId)
-    const transactions = await TransactionRepository.findByUserId(userId, {
+    const transactions = await transactionRepository.findByUserId(userId, {
       startDate: period.startDate,
       endDate: period.endDate,
     });

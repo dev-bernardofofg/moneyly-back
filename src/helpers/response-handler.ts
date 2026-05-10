@@ -19,7 +19,7 @@ export const normalizeDecimal = (value: string | number | null): string => {
 /**
  * Normaliza decimais em objetos recursivamente
  */
-export const normalizeDecimals = (obj: any): any => {
+export const normalizeDecimals = (obj: unknown): unknown => {
   if (obj === null || obj === undefined) return obj;
 
   if (Array.isArray(obj)) {
@@ -27,7 +27,7 @@ export const normalizeDecimals = (obj: any): any => {
   }
 
   if (typeof obj === "object" && !(obj instanceof Date)) {
-    const normalized: any = {};
+    const normalized: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj)) {
       // Normalizar campos de valores monetários
       if (typeof value === "string" && /^-?\d+\.\d{2}$/.test(value)) {

@@ -38,13 +38,10 @@ export const verifyRefreshToken = async (
  * Verifica e decodifica um access token
  */
 export const verifyAccessToken = (token: string): { userId: string } => {
-  return jwt.verify(token, env.JWT_SECRET) as { userId: string };
+  const decoded = jwt.verify(token, env.JWT_SECRET);
+  if (typeof decoded !== "object" || decoded === null || !("userId" in decoded) || typeof decoded.userId !== "string") {
+    throw new Error("Token payload inválido");
+  }
+  return { userId: decoded.userId };
 };
 
-/**
- * @deprecated Use generateAccessToken e generateRefreshToken separadamente
- * Mantido para compatibilidade durante a migração
- */
-export const generateToken = (userId: string): string => {
-  return generateAccessToken(userId);
-};

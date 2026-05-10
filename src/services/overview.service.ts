@@ -1,17 +1,22 @@
 import type { Category } from "../db/schema";
+import type { GoalWithMilestones } from "../repositories/interfaces/IGoalRepository";
+import type { BudgetProgress } from "./budget.service";
+import { getCurrentSaoPauloDate } from "../helpers/dates";
 import {
   formatPeriodLabel,
   getCurrentFinancialPeriod,
 } from "../helpers/financial-period";
 import {
   calculateExpensesByCategory,
-  calculateMonthlyHistory,
+  calculateMonthlyAggregates,
   calculateStats,
+  getRecentTransactions,
 } from "../helpers/handlers/overview-handlers";
-import { CategoryRepository } from "../repositories/categories.repository";
-import { FinancialPeriodRepository } from "../repositories/financial-period.repository";
+import { categoryRepository } from "../repositories/categories.repository";
+import { financialPeriodRepository } from "../repositories/financial-period.repository";
 import type { TransactionWithCategory } from "../repositories/transaction.repository";
-import { TransactionRepository } from "../repositories/transaction.repository";
+import { transactionRepository } from "../repositories/transaction.repository";
+import { userRepository } from "../repositories/user.repository";
 import { getBudgetProgressService } from "./budget.service";
 import { getGoalsProgressService } from "./goal.service";
 
@@ -22,7 +27,7 @@ export const getTransactionsByUserId = async (
 ) => {
   // Buscar períodos do banco com contagem real
   const storedPeriods =
-    await FinancialPeriodRepository.findAllByUserWithTransactionCount(userId);
+    await financialPeriodRepository.findAllByUserWithTransactionCount(userId);
 
   const availablePeriods = storedPeriods.map((p) => ({
     id: p.id,
@@ -51,7 +56,7 @@ export const getTransactionsByUserId = async (
   // Buscar transações do período selecionado por UUID real
   let transactions: TransactionWithCategory[];
   if (selectedPeriod) {
-    transactions = await TransactionRepository.findByPeriodId(
+    transactions = await transactionRepository.findByPeriodId(
       userId,
       selectedPeriod.id
     );
@@ -60,10 +65,11 @@ export const getTransactionsByUserId = async (
     transactions = [];
   } else {
     // Sem período selecionado: buscar transações do período atual por data (fallback)
+    const today = getCurrentSaoPauloDate();
     const currentPeriod = financial
       ? getCurrentFinancialPeriod(financial.startDay, financial.endDay)
-      : { startDate: new Date(), endDate: new Date() };
-    transactions = await TransactionRepository.findByUserId(userId, {
+      : { startDate: new Date(today.getFullYear(), today.getMonth(), 1), endDate: today };
+    transactions = await transactionRepository.findByUserId(userId, {
       startDate: currentPeriod.startDate,
       endDate: currentPeriod.endDate,
     });
@@ -79,11 +85,11 @@ export const getStatsOverview = async (
   return calculateStats(transactions, monthlyIncome);
 };
 
-export const getMonthlyHistory = async (
+export const getRecentTransactionsService = (
   transactions: TransactionWithCategory[],
   categories: Category[]
 ) => {
-  return calculateMonthlyHistory(transactions, categories);
+  return getRecentTransactions(transactions, categories);
 };
 
 export const getExpensesByCategory = async (
@@ -98,24 +104,34 @@ export const getDashboardOverviewService = async (
   monthlyIncome: number,
   periodTransactions: TransactionWithCategory[]
 ) => {
-  const categories = await CategoryRepository.findByUserId(userId);
+  const [categories, allTransactions] = await Promise.all([
+    categoryRepository.findByUserId(userId),
+    transactionRepository.findAllByUserId(userId),
+  ]);
 
-  const [stats, monthlyHistory, expensesByCategory] = await Promise.all([
+  const [stats, expensesByCategory] = await Promise.all([
     getStatsOverview(periodTransactions, monthlyIncome),
-    getMonthlyHistory(periodTransactions, categories),
     getExpensesByCategory(periodTransactions, categories),
   ]);
+
+  const recentTransactions = getRecentTransactionsService(
+    periodTransactions,
+    categories
+  );
+
+  const monthlyHistory = calculateMonthlyAggregates(allTransactions);
 
   return {
     stats,
     monthlyHistory,
+    recentTransactions,
     expensesByCategory,
   };
 };
 
 export const getAvailablePeriodsService = async (userId: string) => {
   const storedPeriods =
-    await FinancialPeriodRepository.findAllByUserWithTransactionCount(userId);
+    await financialPeriodRepository.findAllByUserWithTransactionCount(userId);
 
   return storedPeriods.map((p) => ({
     id: p.id,
@@ -126,26 +142,36 @@ export const getAvailablePeriodsService = async (userId: string) => {
   }));
 };
 
+type AlertSeverity = "danger" | "warning" | "info";
+type AlertPriority = "high" | "medium" | "low";
+
+export type Alert = {
+  type: AlertSeverity;
+  message: string;
+  priority: AlertPriority;
+  category?: string;
+  goal?: string;
+  percentage?: number;
+  daysRemaining?: number;
+};
+
 export const calculatePlanningStats = (
-  budgetProgress: any[],
-  goalsProgress: any[],
+  budgetProgress: BudgetProgress[],
+  goalsProgress: (GoalWithMilestones | null)[],
   monthlyIncome: number
 ) => {
-  // Calcular total orçado (soma de todos os orçamentos)
   const totalBudgeted = budgetProgress.reduce(
     (sum, budget) => sum + Number(budget.monthlyLimit),
     0
   );
 
-  // Calcular meta de poupança (soma das metas ativas)
   const totalSavingsGoal = goalsProgress.reduce(
-    (sum, goal) => sum + Number(goal.targetAmount),
+    (sum, goal) => sum + Number(goal?.targetAmount ?? 0),
     0
   );
 
-  // Calcular já poupado (soma do valor atual de todos os objetivos ativos)
   const totalSaved = goalsProgress.reduce(
-    (sum, goal) => sum + Number(goal.currentAmount || 0),
+    (sum, goal) => sum + Number(goal?.currentAmount ?? 0),
     0
   );
 
@@ -180,14 +206,13 @@ export const calculatePlanningStats = (
 };
 
 export const calculateAlerts = (
-  stats: any,
+  stats: ReturnType<typeof calculatePlanningStats>,
   _monthlyIncome: number,
-  budgetProgress: any[],
-  goalsProgress: any[]
-) => {
-  const alerts: any[] = [];
+  budgetProgress: BudgetProgress[],
+  goalsProgress: (GoalWithMilestones | null)[]
+): Alert[] => {
+  const alerts: Alert[] = [];
 
-  // Alertas de orçamento por categoria
   budgetProgress.forEach((budget) => {
     const percentage = budget.percentage;
 
@@ -215,8 +240,8 @@ export const calculateAlerts = (
     }
   });
 
-  // Alertas de objetivos de poupança
   goalsProgress.forEach((goal) => {
+    if (!goal) return;
     const daysRemaining = goal.progress?.daysRemaining || 0;
     const percentage = goal.progress?.percentage || 0;
 
@@ -301,6 +326,155 @@ export const calculateAlerts = (
   );
 
   return alerts;
+};
+
+export const getFinancialInsightsService = async (
+  userId: string,
+  monthlyIncome: number
+) => {
+  const user = await userRepository.findById(userId);
+  if (!user) throw new Error("Usuário não encontrado");
+
+  const allTransactions = await transactionRepository.findAllByUserId(userId);
+  const monthlyData = calculateMonthlyAggregates(allTransactions);
+
+  const currentPeriod = getCurrentFinancialPeriod(
+    user.financialDayStart ?? 1,
+    user.financialDayEnd ?? 31
+  );
+
+  const now = getCurrentSaoPauloDate();
+  const totalDays = Math.max(
+    1,
+    Math.ceil(
+      (currentPeriod.endDate.getTime() - currentPeriod.startDate.getTime()) /
+        86400000
+    )
+  );
+  const daysElapsed = Math.max(
+    1,
+    Math.ceil(
+      (now.getTime() - currentPeriod.startDate.getTime()) / 86400000
+    )
+  );
+
+  const currentPeriodTx = allTransactions.filter((tx) => {
+    const d = new Date(tx.date);
+    return d >= currentPeriod.startDate && d <= currentPeriod.endDate;
+  });
+
+  const currentExpense = currentPeriodTx
+    .filter((tx) => tx.type === "expense")
+    .reduce((sum, tx) => sum + Number(tx.amount), 0);
+
+  const projectedExpense = Number(
+    ((currentExpense / daysElapsed) * totalDays).toFixed(2)
+  );
+
+  // Trend: compare last 2 months
+  const lastTwo = monthlyData.slice(-2);
+  const prevMonth = lastTwo[0] ?? null;
+  const currMonth = lastTwo[1] ?? null;
+
+  const expenseChange =
+    prevMonth && prevMonth.expense > 0
+      ? Number(
+          (
+            ((currMonth!.expense - prevMonth.expense) / prevMonth.expense) *
+            100
+          ).toFixed(1)
+        )
+      : null;
+
+  const incomeChange =
+    prevMonth && prevMonth.income > 0
+      ? Number(
+          (
+            ((currMonth!.income - prevMonth.income) / prevMonth.income) *
+            100
+          ).toFixed(1)
+        )
+      : null;
+
+  // All-time stats
+  const totalExpenseAllTime = monthlyData.reduce(
+    (s, m) => s + m.expense,
+    0
+  );
+  const avgMonthlyExpense =
+    monthlyData.length > 0
+      ? Number((totalExpenseAllTime / monthlyData.length).toFixed(2))
+      : 0;
+
+  const avgMonthlyIncome =
+    monthlyData.length > 0
+      ? Number(
+          (
+            monthlyData.reduce((s, m) => s + m.income, 0) / monthlyData.length
+          ).toFixed(2)
+        )
+      : 0;
+
+  const bestMonth = monthlyData.length
+    ? monthlyData.reduce((min, m) => (m.expense < min.expense ? m : min))
+    : null;
+
+  const worstMonth = monthlyData.length
+    ? monthlyData.reduce((max, m) => (m.expense > max.expense ? m : max))
+    : null;
+
+  // Top categories (all time)
+  const categoryMap: Record<string, { name: string; amount: number }> = {};
+  allTransactions
+    .filter((tx) => tx.type === "expense")
+    .forEach((tx) => {
+      if (!categoryMap[tx.category.id]) {
+        categoryMap[tx.category.id] = { name: tx.category.name, amount: 0 };
+      }
+      categoryMap[tx.category.id]!.amount += Number(tx.amount);
+    });
+
+  const topCategories = Object.values(categoryMap)
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 5)
+    .map((c) => ({
+      name: c.name,
+      amount: Number(c.amount.toFixed(2)),
+      percentage:
+        totalExpenseAllTime > 0
+          ? Number(((c.amount / totalExpenseAllTime) * 100).toFixed(1))
+          : 0,
+    }));
+
+  return {
+    currentPeriod: {
+      daysElapsed,
+      totalDays,
+      completionPercentage: Math.min(
+        100,
+        Math.round((daysElapsed / totalDays) * 100)
+      ),
+      currentExpense: Number(currentExpense.toFixed(2)),
+      projectedExpense,
+      isOnTrack: projectedExpense <= monthlyIncome,
+    },
+    trend: {
+      previousMonth: prevMonth,
+      currentMonth: currMonth,
+      expenseChange,
+      incomeChange,
+    },
+    allTime: {
+      averageMonthlyExpense: avgMonthlyExpense,
+      averageMonthlyIncome: avgMonthlyIncome,
+      bestMonth,
+      worstMonth,
+      totalMonths: monthlyData.length,
+      totalTransactions: allTransactions.length,
+    },
+    topCategories,
+    monthlyHistory: monthlyData,
+  };
 };
 
 export const getPlannerOverviewService = async (

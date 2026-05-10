@@ -1,11 +1,23 @@
-import { GoalRepository } from "../repositories/goal.repository";
+import { getCurrentSaoPauloDate } from "../helpers/dates";
+import { goalRepository } from "../repositories/goal.repository";
+import { financialPeriodService } from "./financial-period.service";
 import { HttpError } from "../validations/errors";
+
 import {
   validateDeleteGoal,
   validateGoal,
   validateGoalExists,
   validateUpdateGoal,
 } from "../validations/goal.validation";
+
+function monthsUntilDate(target: Date): number {
+  const now = getCurrentSaoPauloDate();
+  const months =
+    (target.getFullYear() - now.getFullYear()) * 12 +
+    (target.getMonth() - now.getMonth()) +
+    1; // +1 inclui o mês alvo
+  return Math.max(months, 0);
+}
 
 export const createGoalService = async (
   userId: string,
@@ -16,19 +28,24 @@ export const createGoalService = async (
     targetDate: string;
   }
 ) => {
-  const goal = await GoalRepository.create({
-    userId,
-    title: data.title,
-    description: data.description,
-    targetAmount: data.targetAmount.toString(),
-    targetDate: new Date(data.targetDate),
-  });
+  const targetDate = new Date(data.targetDate);
+
+  const [goal] = await Promise.all([
+    goalRepository.create({
+      userId,
+      title: data.title,
+      description: data.description,
+      targetAmount: data.targetAmount.toString(),
+      targetDate,
+    }),
+    financialPeriodService.createNextPeriods(userId, monthsUntilDate(targetDate)),
+  ]);
 
   return goal;
 };
 
 export const getGoalsService = async (userId: string) => {
-  const goals = await GoalRepository.findByUserIdActive(userId);
+  const goals = await goalRepository.findByUserIdActive(userId);
 
   // Adicionar progress para cada goal
   const goalsWithProgress = goals.map((goal) => {
@@ -59,21 +76,19 @@ export const getGoalsProgressService = async (userId: string) => {
   const goals = await getGoalsService(userId);
 
   const goalsWithProgress = await Promise.all(
-    goals.map((goal) => GoalRepository.getGoalWithMilestones(goal.id))
+    goals.map((goal) => goalRepository.getGoalWithMilestones(goal.id))
   );
   return goalsWithProgress;
 };
 
 export const getGoalByIdService = async (userId: string, goalId: string) => {
-  const goal = await GoalRepository.findByIdAndUserId(goalId, userId);
+  const goal = await goalRepository.findByIdAndUserId(goalId, userId);
   validateGoalExists(goal);
 
-  if (!goal) {
-    throw new Error("Goal não encontrado"); // Never reached due to validateGoalExists
-  }
+  if (!goal) throw new HttpError(404, "Objetivo não encontrado");
 
   // Buscar milestones e adicionar progress
-  const goalWithMilestones = await GoalRepository.getGoalWithMilestones(goalId);
+  const goalWithMilestones = await goalRepository.getGoalWithMilestones(goalId);
 
   if (!goalWithMilestones) {
     throw new HttpError(404, "Objetivo não encontrado");
@@ -111,7 +126,7 @@ export const updateGoalService = async (
     isActive?: boolean;
   }
 ) => {
-  const goal = await GoalRepository.findByIdAndUserId(goalId, userId);
+  const goal = await goalRepository.findByIdAndUserId(goalId, userId);
   validateGoal(goal, userId);
 
   const updateData: Partial<{
@@ -126,24 +141,30 @@ export const updateGoalService = async (
   if (data.description !== undefined) updateData.description = data.description;
   if (data.targetAmount !== undefined)
     updateData.targetAmount = data.targetAmount.toString();
-  if (data.targetDate !== undefined)
-    updateData.targetDate = new Date(data.targetDate);
+  if (data.targetDate !== undefined) {
+    const newTargetDate = new Date(data.targetDate);
+    updateData.targetDate = newTargetDate;
+    await financialPeriodService.createNextPeriods(
+      userId,
+      monthsUntilDate(newTargetDate)
+    );
+  }
   if (data.currentAmount !== undefined)
     updateData.currentAmount = data.currentAmount.toString();
   if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
-  const updatedGoal = await GoalRepository.update(goalId, updateData);
+  const updatedGoal = await goalRepository.update(goalId, updateData);
 
   validateUpdateGoal(updatedGoal!);
 
-  return GoalRepository.getGoalWithMilestones(goalId);
+  return goalRepository.getGoalWithMilestones(goalId);
 };
 
 export const deleteGoalService = async (userId: string, goalId: string) => {
-  const goal = await GoalRepository.findByIdAndUserId(goalId, userId);
+  const goal = await goalRepository.findByIdAndUserId(goalId, userId);
   validateGoal(goal, userId);
 
-  const deleted = await GoalRepository.delete(goalId);
+  const deleted = await goalRepository.delete(goalId);
   validateDeleteGoal(deleted);
   return deleted;
 };
@@ -153,19 +174,20 @@ export const addAmountToGoalService = async (
   goalId: string,
   amount: number
 ) => {
-  const goal = await GoalRepository.findByIdAndUserId(goalId, userId);
-  validateGoal(goal!, userId);
+  const goal = await goalRepository.findByIdAndUserId(goalId, userId);
+  validateGoal(goal, userId);
 
-  const updatedGoal = await GoalRepository.addAmount(goalId, amount);
-  validateUpdateGoal(updatedGoal!);
+  const updatedGoal = await goalRepository.addAmount(goalId, amount);
+  if (!updatedGoal) throw new HttpError(404, "Objetivo não encontrado");
+  validateUpdateGoal(updatedGoal);
 
-  return GoalRepository.getGoalWithMilestones(goalId);
+  return goalRepository.getGoalWithMilestones(goalId);
 };
 
 export const getGoalStatusService = async (userId: string) => {
   const goals = await getGoalsService(userId);
   const goalsWithProgress = await Promise.all(
-    goals.map((goal) => GoalRepository.getGoalWithMilestones(goal.id))
+    goals.map((goal) => goalRepository.getGoalWithMilestones(goal.id))
   );
   return goalsWithProgress
     .filter((goal) => goal !== null)

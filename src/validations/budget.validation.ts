@@ -1,11 +1,11 @@
-import { BudgetRepository } from "../repositories/budget.repository";
+import { budgetRepository } from "../repositories/budget.repository";
 import { HttpError } from "../services/errors";
 
 export const validateBudgetExistsByUserId = async (
   categoryId: string,
   userId: string
 ) => {
-  const budget = await BudgetRepository.findByIdAndUserId(categoryId, userId);
+  const budget = await budgetRepository.findByIdAndUserId(categoryId, userId);
   if (!budget) {
     throw new HttpError(404, "Categoria não encontrada");
   } else {
@@ -14,7 +14,7 @@ export const validateBudgetExistsByUserId = async (
 };
 
 export const validateBudgetExistsByCategoryId = async (categoryId: string) => {
-  const budget = await BudgetRepository.findByCategoryId(categoryId);
+  const budget = await budgetRepository.findByCategoryId(categoryId);
   if (!budget) {
     throw new HttpError(404, "Categoria não encontrada");
   }
@@ -24,7 +24,7 @@ export const validateBudgetExists = async (
   budgetId: string,
   userId: string
 ) => {
-  const budget = await BudgetRepository.findByIdAndUserId(budgetId, userId);
+  const budget = await budgetRepository.findByIdAndUserId(budgetId, userId);
   if (!budget) {
     throw new HttpError(404, "Orçamento não encontrado");
   }

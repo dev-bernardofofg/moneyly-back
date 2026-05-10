@@ -1,5 +1,6 @@
 import { NextFunction, Response } from "express";
-import { FinancialPeriodService } from "../services/financial-period.service";
+import { logger } from "../lib/logger";
+import { financialPeriodService } from "../services/financial-period.service";
 import { AuthenticatedRequest } from "./auth";
 
 export const ensurePeriodExists = async (
@@ -15,12 +16,12 @@ export const ensurePeriodExists = async (
     }
 
     // Criar apenas período atual + 1 período futuro (para planejamento)
-    await FinancialPeriodService.ensureCurrentPeriodExists(userId);
-    await FinancialPeriodService.createNextPeriods(userId, 1); // Só 1 período futuro
+    await financialPeriodService.ensureCurrentPeriodExists(userId);
+    await financialPeriodService.createNextPeriods(userId, 1); // Só 1 período futuro
 
     next();
   } catch (error) {
-    // Não logar erro aqui pois não deve bloquear a requisição
+    logger.warn("ensurePeriodExists failed silently", { error });
     next();
   }
 };
