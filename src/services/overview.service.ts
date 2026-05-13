@@ -1,4 +1,3 @@
-import type { Category } from "../db/schema";
 import type { GoalWithMilestones } from "../repositories/interfaces/IGoalRepository";
 import type { BudgetProgress } from "../types/budget.types";
 import { getCurrentSaoPauloDate } from "../helpers/dates";
@@ -12,7 +11,6 @@ import {
   calculateStats,
   getRecentTransactions,
 } from "../helpers/handlers/overview-handlers";
-import { categoryRepository } from "../repositories/categories.repository";
 import { financialPeriodRepository } from "../repositories/financial-period.repository";
 import type { TransactionWithCategory } from "../repositories/transaction.repository";
 import { transactionRepository } from "../repositories/transaction.repository";
@@ -82,31 +80,20 @@ export const getStatsOverview = async (
 };
 
 export const getRecentTransactionsService = (
-  transactions: TransactionWithCategory[],
-  categories: Category[]
+  transactions: TransactionWithCategory[]
 ) => {
-  return getRecentTransactions(transactions, categories);
+  return getRecentTransactions(transactions);
 };
 
 export const getDashboardOverviewService = async (
-  userId: string,
   monthlyIncome: number,
   periodTransactions: TransactionWithCategory[]
 ) => {
-  const categories = await categoryRepository.findByUserId(userId);
+  const stats = await getStatsOverview(periodTransactions, monthlyIncome);
+  const chart = calculatePeriodChartData(periodTransactions);
+  const recentTransactions = getRecentTransactionsService(periodTransactions);
 
-  const [stats, chart] = await Promise.all([
-    getStatsOverview(periodTransactions, monthlyIncome),
-    Promise.resolve(calculatePeriodChartData(periodTransactions)),
-  ]);
-
-  const recentTransactions = getRecentTransactionsService(periodTransactions, categories);
-
-  return {
-    stats,
-    chart,
-    recentTransactions,
-  };
+  return { stats, chart, recentTransactions };
 };
 
 export const getAvailablePeriodsService = async (userId: string) => {

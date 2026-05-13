@@ -33,7 +33,7 @@ export const getDashboardOverview = async (
       );
 
     const { stats, chart, recentTransactions } =
-      await getDashboardOverviewService(userId, Number(monthlyIncome) || 0, transactions);
+      await getDashboardOverviewService(Number(monthlyIncome) || 0, transactions);
 
     return ResponseHandler.success(
       res,
