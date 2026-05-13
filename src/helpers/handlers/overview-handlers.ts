@@ -30,10 +30,19 @@ export const calculateStats = (
   };
 };
 
+export type RecentTransactionItem = {
+  id: string;
+  type: "income" | "expense";
+  amount: number;
+  date: string;
+  category: string;
+  description: string;
+};
+
 export const getRecentTransactions = (
   transactions: TransactionWithCategory[],
   categories: Category[]
-) => {
+): RecentTransactionItem[] => {
   const categoriesMap = categories.reduce((map, category) => {
     map[category.id] = category;
     return map;
@@ -59,60 +68,44 @@ export const getRecentTransactions = (
     .slice(0, 5);
 };
 
-export const calculateExpensesByCategory = (
-  transactions: TransactionWithCategory[],
-  categories: Category[]
-) => {
-  const expensesByCategory: Record<
-    string,
-    {
-      id: string;
-      name: string;
-      amount: number;
-      percentage: number;
-    }
-  > = {};
+export type CategoryChartItem = {
+  name: string;
+  income: number;
+  expense: number;
+};
 
-  // Inicializar todas as categorias com 0
-  categories.forEach((category) => {
-    expensesByCategory[category.id] = {
-      id: category.id,
-      name: category.name,
-      amount: 0,
-      percentage: 0,
-    };
-  });
+export type ChartCategory = {
+  id: string;
+  name: string;
+};
 
-  // Calcular gastos por categoria
-  const expenseTransactions = transactions.filter(
-    (tx) => tx.type === "expense"
-  );
-  const totalExpenses = expenseTransactions.reduce(
-    (sum, tx) => sum + Number(tx.amount),
-    0
-  );
+export const calculatePeriodChartData = (
+  transactions: TransactionWithCategory[]
+): { data: CategoryChartItem[]; categories: ChartCategory[] } => {
+  const categoryMap: Record<string, { id: string; income: number; expense: number }> = {};
 
-  expenseTransactions.forEach((tx) => {
-    const category = expensesByCategory[tx.category.id];
-    if (category) {
-      category.amount += Number(tx.amount);
+  transactions.forEach((tx) => {
+    const { id, name } = tx.category;
+    if (!categoryMap[name]) categoryMap[name] = { id, income: 0, expense: 0 };
+    if (tx.type === "income") {
+      categoryMap[name]!.income += Number(tx.amount);
+    } else {
+      categoryMap[name]!.expense += Number(tx.amount);
     }
   });
 
-  // Calcular percentuais
-  Object.keys(expensesByCategory).forEach((categoryId) => {
-    const category = expensesByCategory[categoryId];
-    if (category) {
-      category.percentage =
-        totalExpenses > 0
-          ? Number(((category.amount / totalExpenses) * 100).toFixed(2))
-          : 0;
-    }
-  });
+  const data: CategoryChartItem[] = Object.entries(categoryMap).map(([name, vals]) => ({
+    name,
+    income: Number(vals.income.toFixed(2)),
+    expense: Number(vals.expense.toFixed(2)),
+  }));
 
-  return Object.values(expensesByCategory)
-    .filter((category) => category.amount > 0)
-    .sort((a, b) => b.amount - a.amount);
+  const categories: ChartCategory[] = Object.entries(categoryMap).map(([name, vals]) => ({
+    id: vals.id,
+    name,
+  }));
+
+  return { data, categories };
 };
 
 export const calculateMonthlyAggregates = (

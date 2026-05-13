@@ -17,7 +17,7 @@ export const getDashboardOverview = async (
   req: AuthenticatedRequest & { query: GetDashboardOverviewQuery },
   res: Response,
   next: NextFunction
-) => {
+): Promise<Response | void> => {
   if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
 
   const { user } = req;
@@ -32,7 +32,7 @@ export const getDashboardOverview = async (
         periodId
       );
 
-    const { stats, monthlyHistory, expensesByCategory } =
+    const { stats, chart, recentTransactions } =
       await getDashboardOverviewService(userId, Number(monthlyIncome) || 0, transactions);
 
     return ResponseHandler.success(
@@ -52,8 +52,8 @@ export const getDashboardOverview = async (
             }
           : null,
         availablePeriods,
-        monthlyHistory,
-        expensesByCategory,
+        chart,
+        recentTransactions,
         transactionsCount: transactions.length,
       },
       "Dados do dashboard recuperados com sucesso"
@@ -68,7 +68,7 @@ export const getAvailablePeriods = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
-) => {
+): Promise<Response | void> => {
   if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
 
   try {
@@ -88,7 +88,7 @@ export const getFinancialInsights = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
-) => {
+): Promise<Response | void> => {
   if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
 
   try {
@@ -107,7 +107,7 @@ export const getPlannerOverview = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
-) => {
+): Promise<Response | void> => {
   if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
 
   const { id: userId, financialDayStart, financialDayEnd, monthlyIncome } = req.user;

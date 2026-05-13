@@ -65,7 +65,9 @@ export const financialPeriodRepository = {
       .groupBy(transactions.periodId);
 
     const countMap = new Map(counts.map((c) => [c.periodId, Number(c.total)]));
-    return periods.map((p) => ({ ...p, transactionCount: countMap.get(p.id) ?? 0 }));
+    return periods
+      .map((p) => ({ ...p, transactionCount: countMap.get(p.id) ?? 0 }))
+      .filter((p) => p.isActive || p.transactionCount > 0);
   },
 
   async findById(periodId: string, userId: string): Promise<FinancialPeriod | undefined> {

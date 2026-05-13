@@ -77,6 +77,7 @@ export const financialPeriodService = {
       label: formatPeriodLabel(p.startDate, p.endDate),
       transactionCount: p.transactionCount,
       isStored: true,
+      isCurrent: p.isActive,
     }));
   },
 

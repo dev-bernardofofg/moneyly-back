@@ -7,8 +7,8 @@ import {
   getCurrentFinancialPeriod,
 } from "../helpers/financial-period";
 import {
-  calculateExpensesByCategory,
   calculateMonthlyAggregates,
+  calculatePeriodChartData,
   calculateStats,
   getRecentTransactions,
 } from "../helpers/handlers/overview-handlers";
@@ -88,40 +88,24 @@ export const getRecentTransactionsService = (
   return getRecentTransactions(transactions, categories);
 };
 
-export const getExpensesByCategory = async (
-  transactions: TransactionWithCategory[],
-  categories: Category[]
-) => {
-  return calculateExpensesByCategory(transactions, categories);
-};
-
 export const getDashboardOverviewService = async (
   userId: string,
   monthlyIncome: number,
   periodTransactions: TransactionWithCategory[]
 ) => {
-  const [categories, allTransactions] = await Promise.all([
-    categoryRepository.findByUserId(userId),
-    transactionRepository.findAllByUserId(userId),
-  ]);
+  const categories = await categoryRepository.findByUserId(userId);
 
-  const [stats, expensesByCategory] = await Promise.all([
+  const [stats, chart] = await Promise.all([
     getStatsOverview(periodTransactions, monthlyIncome),
-    getExpensesByCategory(periodTransactions, categories),
+    Promise.resolve(calculatePeriodChartData(periodTransactions)),
   ]);
 
-  const recentTransactions = getRecentTransactionsService(
-    periodTransactions,
-    categories
-  );
-
-  const monthlyHistory = calculateMonthlyAggregates(allTransactions);
+  const recentTransactions = getRecentTransactionsService(periodTransactions, categories);
 
   return {
     stats,
-    monthlyHistory,
+    chart,
     recentTransactions,
-    expensesByCategory,
   };
 };
 

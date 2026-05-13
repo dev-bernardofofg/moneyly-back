@@ -18,14 +18,12 @@ const OverviewRouter: Router = Router();
 OverviewRouter.use(authenticateUser);
 OverviewRouter.use(ensurePeriodExists);
 
-// Buscar períodos financeiros disponíveis
 OverviewRouter.get(
   "/periods",
   validate({ query: getAvailablePeriodsQuerySchema }),
   getAvailablePeriods
 );
 
-// Rota principal do dashboard - retorna dados de um período específico
 OverviewRouter.get(
   "/dashboard",
   validate({ query: getDashboardOverviewQuerySchema }),
