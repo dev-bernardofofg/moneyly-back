@@ -8,6 +8,27 @@
       "when": 1778633916853,
       "tag": "0000_smiling_shadow_king",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778726156642,
+      "tag": "0001_little_captain_cross",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778727574100,
+      "tag": "0002_lowly_joshua_kane",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778728803707,
+      "tag": "0003_abnormal_aqueduct",
+      "breakpoints": true
     }
   ]
 }

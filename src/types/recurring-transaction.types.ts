@@ -9,6 +9,8 @@ export interface CreateRecurringTransactionInput {
   dayOfMonth?: number;
   dayOfWeek?: number;
   description?: string;
+  totalInstallments?: number;
+  startDate?: Date;
 }
 
 export interface UpdateRecurringTransactionInput {
@@ -20,4 +22,5 @@ export interface UpdateRecurringTransactionInput {
   dayOfWeek?: number;
   description?: string;
   isActive?: boolean;
+  totalInstallments?: number;
 }

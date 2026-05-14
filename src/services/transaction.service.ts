@@ -33,6 +33,7 @@ export const createTransactionService = async (
     description: transaction.description,
     date: transactionDate,
     periodId,
+    recurringTransactionId: transaction.recurringTransactionId ?? null,
   });
 
   return newTransaction;

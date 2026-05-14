@@ -11,6 +11,7 @@ export type TransactionWithCategory = Omit<Transaction, "categoryId" | "userId">
 const BASE_SELECT = {
   id: transactions.id,
   periodId: transactions.periodId,
+  recurringTransactionId: transactions.recurringTransactionId,
   type: transactions.type,
   title: transactions.title,
   amount: transactions.amount,
@@ -114,6 +115,23 @@ export const transactionRepository = {
       .from(transactions)
       .innerJoin(categories, eq(transactions.categoryId, categories.id))
       .where(and(eq(transactions.userId, userId), eq(transactions.periodId, periodId)))
+      .orderBy(desc(transactions.date));
+  },
+
+  async findByRecurringTransactionId(
+    recurringTransactionId: string,
+    userId: string
+  ): Promise<TransactionWithCategory[]> {
+    return db
+      .select(BASE_SELECT)
+      .from(transactions)
+      .innerJoin(categories, eq(transactions.categoryId, categories.id))
+      .where(
+        and(
+          eq(transactions.userId, userId),
+          eq(transactions.recurringTransactionId, recurringTransactionId)
+        )
+      )
       .orderBy(desc(transactions.date));
   },
 

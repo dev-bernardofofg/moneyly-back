@@ -1,0 +1,2 @@
+ALTER TABLE "recurring_transactions" ADD COLUMN "total_installments" integer;--> statement-breakpoint
+ALTER TABLE "recurring_transactions" ADD COLUMN "executed_installments" integer DEFAULT 0 NOT NULL;

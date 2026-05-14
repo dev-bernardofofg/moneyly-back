@@ -9,6 +9,7 @@ export interface ITransaction {
   category: string;
   description: string;
   date: Date;
+  recurringTransactionId?: string;
 }
 
 export interface TransactionFilters {

@@ -1,0 +1,1 @@
+ALTER TABLE "transactions" ADD COLUMN "recurring_transaction_id" uuid;

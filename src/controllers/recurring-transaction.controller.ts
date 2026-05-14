@@ -6,7 +6,9 @@ import {
   createRecurringTransactionService,
   deactivateRecurringTransactionService,
   deleteRecurringTransactionService,
+  getRecurringTransactionHistoryService,
   getRecurringTransactionsService,
+  reactivateRecurringTransactionService,
   updateRecurringTransactionService,
 } from "../services/recurring-transaction.service";
 
@@ -18,7 +20,7 @@ export const createRecurringTransaction = async (
   if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
 
   try {
-    const { type, title, amount, categoryId, frequency, dayOfMonth, dayOfWeek, description } =
+    const { type, title, amount, categoryId, frequency, dayOfMonth, dayOfWeek, description, totalInstallments, startDate } =
       req.body;
     const recurring = await createRecurringTransactionService(req.user.id, {
       type,
@@ -29,6 +31,8 @@ export const createRecurringTransaction = async (
       dayOfMonth,
       dayOfWeek,
       description,
+      totalInstallments,
+      startDate,
     });
     return ResponseHandler.created(res, recurring, "Transação recorrente criada com sucesso");
   } catch (error) {
@@ -45,11 +49,13 @@ export const getRecurringTransactions = async (
   if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
 
   try {
-    const includeInactive = req.query.includeInactive === "true";
-    const recurring = await getRecurringTransactionsService(req.user.id, includeInactive);
-    return ResponseHandler.success(
+    const includeInactive = Boolean(req.query.includeInactive);
+    const { page, limit } = req.query as { page?: number; limit?: number };
+    const result = await getRecurringTransactionsService(req.user.id, { page, limit }, includeInactive);
+    return ResponseHandler.paginated(
       res,
-      recurring,
+      result.data,
+      result.pagination,
       "Transações recorrentes recuperadas com sucesso"
     );
   } catch (error) {
@@ -78,6 +84,26 @@ export const updateRecurringTransaction = async (
   }
 };
 
+export const reactivateRecurringTransaction = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+
+  const { id } = req.params;
+  if (!id) return ResponseHandler.badRequest(res, "ID não fornecido");
+
+  try {
+    const updated = await reactivateRecurringTransactionService(id, req.user.id);
+    if (!updated) return ResponseHandler.notFound(res, "Transação recorrente não encontrada");
+    return ResponseHandler.success(res, updated, "Transação recorrente reativada com sucesso");
+  } catch (error) {
+    if (isHttpError(error)) return next(error);
+    return ResponseHandler.error(res, "Erro ao reativar transação recorrente", error);
+  }
+};
+
 export const deactivateRecurringTransaction = async (
   req: AuthenticatedRequest,
   res: Response,
@@ -95,6 +121,25 @@ export const deactivateRecurringTransaction = async (
   } catch (error) {
     if (isHttpError(error)) return next(error);
     return ResponseHandler.error(res, "Erro ao desativar transação recorrente", error);
+  }
+};
+
+export const getRecurringTransactionHistory = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+
+  const { id } = req.params;
+  if (!id) return ResponseHandler.badRequest(res, "ID não fornecido");
+
+  try {
+    const transactions = await getRecurringTransactionHistoryService(id, req.user.id);
+    return ResponseHandler.success(res, transactions, "Histórico de transações recuperado com sucesso");
+  } catch (error) {
+    if (isHttpError(error)) return next(error);
+    return ResponseHandler.error(res, "Erro ao buscar histórico de transações", error);
   }
 };
 

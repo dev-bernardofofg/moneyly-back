@@ -27,4 +27,5 @@ export interface ITransactionRepository {
     periodId?: string,
     dateRange?: { startDate: Date; endDate: Date }
   ): Promise<TransactionWithCategory[]>;
+  findByRecurringTransactionId(recurringTransactionId: string, userId: string): Promise<TransactionWithCategory[]>;
 }

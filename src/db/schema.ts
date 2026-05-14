@@ -43,6 +43,7 @@ export const transactions = pgTable("transactions", {
   periodId: uuid("period_id").references(() => financialPeriods.id, {
     onDelete: "cascade",
   }),
+  recurringTransactionId: uuid("recurring_transaction_id"),
   description: text("description"),
   date: timestamp("date").defaultNow().notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -156,6 +157,10 @@ export const transactionsRelations = relations(transactions, ({ one }) => ({
     fields: [transactions.periodId],
     references: [financialPeriods.id],
   }),
+  recurringTransaction: one(recurringTransactions, {
+    fields: [transactions.recurringTransactionId],
+    references: [recurringTransactions.id],
+  }),
 }));
 
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
@@ -247,6 +252,9 @@ export const recurringTransactions = pgTable("recurring_transactions", {
   }).notNull(),
   dayOfMonth: integer("day_of_month"), // Para frequência monthly (1-31)
   dayOfWeek: integer("day_of_week"), // Para frequência weekly (0-6, domingo = 0)
+  startDate: timestamp("start_date"),
+  totalInstallments: integer("total_installments"),
+  executedInstallments: integer("executed_installments").default(0).notNull(),
   nextExecution: timestamp("next_execution").notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   description: text("description"),
@@ -265,11 +273,12 @@ export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
 // Relacionamentos para transações recorrentes
 export const recurringTransactionsRelations = relations(
   recurringTransactions,
-  ({ one }) => ({
+  ({ one, many }) => ({
     user: one(users, {
       fields: [recurringTransactions.userId],
       references: [users.id],
     }),
+    transactions: many(transactions),
     category: one(categories, {
       fields: [recurringTransactions.categoryId],
       references: [categories.id],

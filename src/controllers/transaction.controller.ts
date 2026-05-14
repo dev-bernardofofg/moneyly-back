@@ -67,36 +67,44 @@ export const getTransactions = async (
 
     const pagination = await validatePagination(page, limit);
 
-    if (pagination) {
-      const result = await getTransactionsPaginatedService(req.user.id, pagination, filters);
-      return ResponseHandler.paginated(
-        res,
-        result.data,
-        result.pagination,
-        "Transações recuperadas com sucesso"
-      );
-    }
+    const [paginatedResult, summary] = await Promise.all([
+      pagination
+        ? getTransactionsPaginatedService(req.user.id, pagination, filters)
+        : null,
+      getTransactionListService(req.user.id, filters),
+    ]);
 
-    const { transactions, totalExpense, totalIncome, monthlyIncome, percentUsed, alert } =
-      await getTransactionListService(req.user.id, filters);
+    const transactionSummary = {
+      totalExpense: summary.totalExpense,
+      totalIncome: summary.totalIncome,
+      monthlyIncome: summary.monthlyIncome,
+      percentUsed: summary.percentUsed,
+      alert: summary.alert,
+    };
+
+    if (pagination && paginatedResult) {
+      return res.status(200).json({
+        success: true,
+        data: paginatedResult.data,
+        pagination: paginatedResult.pagination,
+        summary: transactionSummary,
+        message: "Transações recuperadas com sucesso",
+      });
+    }
 
     return ResponseHandler.success(
       res,
       {
-        data: transactions,
+        data: summary.transactions,
         pagination: {
           page: 1,
-          limit: transactions.length,
-          total: transactions.length,
+          limit: summary.transactions.length,
+          total: summary.transactions.length,
           totalPages: 1,
           hasNext: false,
           hasPrev: false,
         },
-        totalExpense,
-        totalIncome,
-        monthlyIncome,
-        percentUsed,
-        alert,
+        summary: transactionSummary,
       },
       "Transações recuperadas com sucesso"
     );

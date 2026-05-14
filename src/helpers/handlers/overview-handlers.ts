@@ -14,7 +14,7 @@ export const calculateStats = (
     .filter((tx) => tx.type === "expense")
     .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
-  const balance = monthlyIncome - totalExpense;
+  const balance = (monthlyIncome + totalIncome) - totalExpense;
   const percentUsed =
     monthlyIncome > 0
       ? Number(((totalExpense / monthlyIncome) * 100).toFixed(2))
@@ -44,7 +44,7 @@ export const getRecentTransactions = (
   return transactions
     .slice()
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5)
+    .slice(0, 10)
     .map((tx) => ({
       id: tx.id,
       type: tx.type,
