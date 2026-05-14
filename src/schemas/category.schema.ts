@@ -28,3 +28,7 @@ export const updateCategoryBudgetSchema = z.object({
     })
     .pipe(z.number().positive("Limite mensal deve ser positivo")),
 });
+
+export const getBudgetsQuerySchema = z.object({
+  periodId: z.string().uuid("periodId inválido").optional(),
+});

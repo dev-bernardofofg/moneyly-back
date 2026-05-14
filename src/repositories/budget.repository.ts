@@ -19,6 +19,14 @@ export const budgetRepository = {
     return budget ?? null;
   },
 
+  async findByUserIdAndCategoryId(userId: string, categoryId: string): Promise<CategoryBudget | null> {
+    const [budget] = await db
+      .select()
+      .from(budgets)
+      .where(and(eq(budgets.userId, userId), eq(budgets.categoryId, categoryId)));
+    return budget ?? null;
+  },
+
   async findByIdAndUserId(id: string, userId: string): Promise<CategoryBudget | null> {
     const [budget] = await db
       .select()

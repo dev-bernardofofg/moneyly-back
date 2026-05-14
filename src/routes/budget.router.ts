@@ -7,10 +7,11 @@ import {
 } from "../controllers/budget.controller";
 import { authenticateUser } from "../middlewares/auth";
 import { ensurePeriodExists } from "../middlewares/auto-period-creation";
-import { validateBody, validateParams } from "../middlewares/validate";
+import { validateBody, validateParams, validateQuery } from "../middlewares/validate";
 import { idParamSchema } from "../schemas/auth.schema";
 import {
   createCategoryBudgetSchema,
+  getBudgetsQuerySchema,
   updateCategoryBudgetSchema,
 } from "../schemas/category.schema";
 
@@ -27,7 +28,7 @@ BudgetRouter.post(
 );
 
 // Buscar orçamentos do usuário
-BudgetRouter.get("/", getUserBudgets);
+BudgetRouter.get("/", validateQuery(getBudgetsQuerySchema), getUserBudgets);
 
 // Atualizar orçamento
 BudgetRouter.put(

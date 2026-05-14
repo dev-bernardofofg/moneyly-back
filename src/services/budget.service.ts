@@ -4,6 +4,7 @@ import { financialPeriodService } from "./financial-period.service";
 import { validateBudgetExists } from "../validations/budget.validation";
 import { requireUser } from "../validations/user.validation";
 import type { BudgetProgress } from "../types/budget.types";
+import { HttpError } from "../validations/errors";
 
 export const createBudgetService = async (
   userId: string,
@@ -14,6 +15,9 @@ export const createBudgetService = async (
 ) => {
   await requireUser(userId);
 
+  const existing = await budgetRepository.findByUserIdAndCategoryId(userId, data.categoryId);
+  if (existing) throw new HttpError(409, "Já existe um orçamento para esta categoria");
+
   const budget = await budgetRepository.create({
     userId,
     categoryId: data.categoryId,
@@ -22,11 +26,17 @@ export const createBudgetService = async (
   return budget;
 };
 
-export const getUserBudgetsService = async (userId: string) => {
-  const [budgets, currentPeriod] = await Promise.all([
+export const getUserBudgetsService = async (userId: string, periodId?: string) => {
+  const [budgets, period] = await Promise.all([
     budgetRepository.getBudgetWithCategory(userId),
-    financialPeriodService.ensureCurrentPeriodExists(userId),
+    periodId
+      ? financialPeriodService.getPeriodById(periodId, userId)
+      : financialPeriodService.ensureCurrentPeriodExists(userId),
   ]);
+
+  if (!period) throw new HttpError(404, "Período não encontrado");
+
+  const currentPeriod = period;
 
   const transactions = await transactionRepository.findByPeriodId(
     userId,

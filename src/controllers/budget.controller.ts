@@ -33,8 +33,10 @@ export const getUserBudgets = async (
 ) => {
   if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
 
+  const { periodId } = req.query as { periodId?: string };
+
   try {
-    const budgets = await getUserBudgetsService(req.user.id);
+    const budgets = await getUserBudgetsService(req.user.id, periodId);
     return ResponseHandler.success(res, budgets, "Orçamentos por categoria recuperados com sucesso");
   } catch (error) {
     if (isHttpError(error)) return next(error);
