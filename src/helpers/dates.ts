@@ -20,8 +20,8 @@ export function createSaoPauloDate(
   minutes = 0,
   seconds = 0
 ): Date {
-  const dateString = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-  return toZonedTime(new Date(dateString), SAO_PAULO_TIMEZONE);
+  // Use numeric constructor so month overflow (-1 → Dec, 12 → Jan) is handled correctly
+  return toZonedTime(new Date(year, month, day, hours, minutes, seconds), SAO_PAULO_TIMEZONE);
 }
 
 export function normalizeDayForMonthSaoPaulo(
