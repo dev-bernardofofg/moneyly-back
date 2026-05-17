@@ -31,6 +31,7 @@ import {
   ForecastResponseSchema,
   GoalSchema,
   MonthlySummaryItemSchema,
+  NotificationSchema,
   PlannerOverviewSchema,
   RecurringTransactionSchema,
   TransactionListSummarySchema,
@@ -94,6 +95,11 @@ const transactionsListQuery = z.object({
 const categoriesQuery = z.object({ page: intQuery, limit: intQuery });
 const recurringListQuery = z.object({
   includeInactive: z.coerce.boolean().optional(),
+  page: intQuery,
+  limit: intQuery,
+});
+const notificationsQuery = z.object({
+  unreadOnly: z.coerce.boolean().optional(),
   page: intQuery,
   limit: intQuery,
 });
@@ -233,3 +239,8 @@ route({ method: "get", path: "/recurring-transactions/{id}/transactions", tag: "
 route({ method: "patch", path: "/recurring-transactions/{id}/reactivate", tag: "RecurringTransactions", summary: "Reativar recorrente", params: idParamSchema, ok: ok(wrapSuccess(RecurringTransactionSchema)) });
 route({ method: "patch", path: "/recurring-transactions/{id}/deactivate", tag: "RecurringTransactions", summary: "Desativar recorrente", params: idParamSchema, ok: ok(nullData) });
 route({ method: "delete", path: "/recurring-transactions/{id}", tag: "RecurringTransactions", summary: "Deletar recorrente", params: idParamSchema, ok: ok(nullData) });
+
+/* ───────────────────────── notifications ───────────────────────── */
+route({ method: "get", path: "/notifications/", tag: "Notifications", summary: "Listar notificações (paginado)", query: notificationsQuery, ok: ok(wrapPaginated(NotificationSchema)) });
+route({ method: "patch", path: "/notifications/read-all", tag: "Notifications", summary: "Marcar todas como lidas", ok: ok(wrapSuccess(z.object({ updatedCount: z.number().int() }))) });
+route({ method: "patch", path: "/notifications/{id}/read", tag: "Notifications", summary: "Marcar notificação como lida", params: idParamSchema, ok: ok(wrapSuccess(NotificationSchema)) });

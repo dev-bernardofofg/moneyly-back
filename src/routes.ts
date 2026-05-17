@@ -7,6 +7,7 @@ import { AuthRouters } from "./routes/auth.router";
 import { BudgetRouter } from "./routes/budget.router";
 import { CategoryRouter } from "./routes/category.router";
 import savingsGoalRoutes from "./routes/goal.router";
+import { NotificationRouter } from "./routes/notification.router";
 import { OverviewRouter } from "./routes/overview.router";
 import { RecurringTransactionRouter } from "./routes/recurring-transaction.router";
 import transactionRoutes from "./routes/transaction.router";
@@ -55,5 +56,6 @@ router.use("/budgets", BudgetRouter);
 router.use("/goals", savingsGoalRoutes);
 router.use("/overview", OverviewRouter);
 router.use("/recurring-transactions", RecurringTransactionRouter);
+router.use("/notifications", NotificationRouter);
 
 export default router;

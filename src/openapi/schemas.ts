@@ -337,6 +337,23 @@ export const PlannerOverviewSchema = registry.register(
   })
 );
 
+export const NotificationSchema = registry.register(
+  "Notification",
+  z.object({
+    id: z.string().uuid(),
+    userId: z.string().uuid(),
+    type: z.enum(["budget_alert"]),
+    severity: z.enum(["info", "warning", "danger"]),
+    title: z.string(),
+    message: z.string(),
+    relatedId: z.string().uuid().nullable(),
+    periodId: z.string().uuid().nullable(),
+    dedupeKey: z.string(),
+    isRead: z.boolean(),
+    createdAt: isoDate,
+  })
+);
+
 export const ForecastResponseSchema = registry.register(
   "ForecastResponse",
   z.object({

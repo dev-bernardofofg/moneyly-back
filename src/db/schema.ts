@@ -286,6 +286,32 @@ export const recurringTransactionsRelations = relations(
   })
 );
 
+// Tabela de notificações (F2 — alertas de orçamento, extensível)
+export const notifications = pgTable("notifications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  type: text("type", { enum: ["budget_alert"] }).notNull(),
+  severity: text("severity", { enum: ["info", "warning", "danger"] }).notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  relatedId: uuid("related_id"), // ex: budgetId (nullable p/ outros tipos futuros)
+  periodId: uuid("period_id").references(() => financialPeriods.id, {
+    onDelete: "cascade",
+  }),
+  dedupeKey: text("dedupe_key").notNull().unique(), // idempotência
+  isRead: boolean("is_read").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+}));
+
 // Tipos TypeScript
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -309,3 +335,5 @@ export type RecurringTransaction = typeof recurringTransactions.$inferSelect;
 export type NewRecurringTransaction = typeof recurringTransactions.$inferInsert;
 export type FinancialPeriod = typeof financialPeriods.$inferSelect;
 export type NewFinancialPeriod = typeof financialPeriods.$inferInsert;
+export type Notification = typeof notifications.$inferSelect;
+export type NewNotification = typeof notifications.$inferInsert;

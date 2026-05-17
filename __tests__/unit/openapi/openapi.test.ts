@@ -14,6 +14,7 @@ const ROUTER_PREFIX: Record<string, string> = {
   "goal.router.ts": "/goals",
   "overview.router.ts": "/overview",
   "recurring-transaction.router.ts": "/recurring-transactions",
+  "notification.router.ts": "/notifications",
 };
 
 const ROUTES_DIR = join(__dirname, "../../../src/routes");
