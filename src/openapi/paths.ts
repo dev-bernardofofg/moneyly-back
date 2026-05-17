@@ -21,6 +21,7 @@ import {
   BudgetProgressSchema,
   BudgetSchema,
   CategorySchema,
+  ComparativeInsightsSchema,
   FinancialPeriodUpdateSchema,
   IncomeAndPeriodUpdateSchema,
   IncomeUpdateSchema,
@@ -32,6 +33,7 @@ import {
   GoalSchema,
   MonthlySummaryItemSchema,
   NotificationSchema,
+  SubscriptionCandidateSchema,
   PlannerOverviewSchema,
   RecurringTransactionSchema,
   TransactionListSummarySchema,
@@ -203,6 +205,7 @@ route({ method: "get", path: "/transactions/summary", tag: "Transactions", summa
 route({ method: "get", path: "/transactions/summary-by-month", tag: "Transactions", summary: "Resumo agregado por mês", ok: ok(wrapSuccess(z.array(MonthlySummaryItemSchema))) });
 route({ method: "get", path: "/transactions/summary-current-period", tag: "Transactions", summary: "Resumo do período atual" });
 route({ method: "get", path: "/transactions/export", tag: "Transactions", summary: "Exportar transações em CSV", query: exportQuery, csv: true });
+route({ method: "get", path: "/transactions/subscriptions", tag: "Transactions", summary: "Detectar assinaturas (heurística)", ok: ok(wrapSuccess(z.array(SubscriptionCandidateSchema))) });
 
 /* ───────────────────────── categories ───────────────────────── */
 route({ method: "post", path: "/categories/create", tag: "Categories", summary: "Criar categoria", body: createCategorySchema, ok: created(wrapSuccess(CategorySchema)) });
@@ -230,6 +233,7 @@ route({ method: "get", path: "/overview/dashboard", tag: "Overview", summary: "D
 route({ method: "get", path: "/overview/planner", tag: "Overview", summary: "Planejamento financeiro", ok: ok(wrapSuccess(PlannerOverviewSchema)) });
 route({ method: "get", path: "/overview/insights", tag: "Overview", summary: "Insights financeiros", ok: ok(wrapSuccess(FinancialInsightsSchema)) });
 route({ method: "get", path: "/overview/forecast", tag: "Overview", summary: "Saldo projetado (cash-flow forecast)", query: z.object({ periodId: z.string().uuid().optional() }), ok: ok(wrapSuccess(ForecastResponseSchema)) });
+route({ method: "get", path: "/overview/insights/comparison", tag: "Overview", summary: "Insights comparativos (período atual vs média)", query: z.object({ periodsBack: z.coerce.number().int().min(1).max(12).optional() }), ok: ok(wrapSuccess(ComparativeInsightsSchema)) });
 
 /* ───────────────────────── recurring-transactions ───────────────────────── */
 route({ method: "post", path: "/recurring-transactions/", tag: "RecurringTransactions", summary: "Criar transação recorrente", body: recurringTransactionSchema, ok: created(wrapSuccess(RecurringTransactionSchema)) });

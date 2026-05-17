@@ -5,6 +5,7 @@ import {
   exportTransactionsCsv,
   getCurrentFinancialPeriodSummary,
   getMonthlySummary,
+  getSubscriptions,
   getTransactions,
   getTransactionSummary,
   updateTransaction,
@@ -58,5 +59,7 @@ TransactionsRouter.get(
 );
 
 TransactionsRouter.get("/export", exportTransactionsCsv);
+
+TransactionsRouter.get("/subscriptions", getSubscriptions);
 
 export default TransactionsRouter;

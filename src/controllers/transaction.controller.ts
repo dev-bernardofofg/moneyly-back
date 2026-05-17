@@ -14,6 +14,7 @@ import {
   updateTransactionService,
 } from "../services/transaction.service";
 import { validatePagination } from "../validations/pagination.validation";
+import { detectSubscriptionsService } from "../services/subscription.service";
 
 export const createTransaction = async (
   req: AuthenticatedRequest,
@@ -270,6 +271,26 @@ export const exportTransactionsCsv = async (
       return;
     }
     ResponseHandler.error(res, "Erro ao exportar transações", error);
+  }
+};
+
+export const getSubscriptions = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+
+  try {
+    const candidates = await detectSubscriptionsService(req.user.id);
+    return ResponseHandler.success(
+      res,
+      candidates,
+      "Possíveis assinaturas detectadas"
+    );
+  } catch (error) {
+    if (isHttpError(error)) return next(error);
+    return ResponseHandler.error(res, "Erro ao detectar assinaturas", error);
   }
 };
 
