@@ -28,6 +28,7 @@ import {
   FinancialInsightsSchema,
   FinancialPeriodSchema,
   FinancialPeriodSummarySchema,
+  ForecastResponseSchema,
   GoalSchema,
   MonthlySummaryItemSchema,
   PlannerOverviewSchema,
@@ -222,6 +223,7 @@ route({ method: "get", path: "/overview/periods", tag: "Overview", summary: "Per
 route({ method: "get", path: "/overview/dashboard", tag: "Overview", summary: "Dados do dashboard", query: getDashboardOverviewQuerySchema, ok: ok(wrapSuccess(DashboardOverviewSchema)) });
 route({ method: "get", path: "/overview/planner", tag: "Overview", summary: "Planejamento financeiro", ok: ok(wrapSuccess(PlannerOverviewSchema)) });
 route({ method: "get", path: "/overview/insights", tag: "Overview", summary: "Insights financeiros", ok: ok(wrapSuccess(FinancialInsightsSchema)) });
+route({ method: "get", path: "/overview/forecast", tag: "Overview", summary: "Saldo projetado (cash-flow forecast)", query: z.object({ periodId: z.string().uuid().optional() }), ok: ok(wrapSuccess(ForecastResponseSchema)) });
 
 /* ───────────────────────── recurring-transactions ───────────────────────── */
 route({ method: "post", path: "/recurring-transactions/", tag: "RecurringTransactions", summary: "Criar transação recorrente", body: recurringTransactionSchema, ok: created(wrapSuccess(RecurringTransactionSchema)) });

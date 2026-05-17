@@ -337,6 +337,38 @@ export const PlannerOverviewSchema = registry.register(
   })
 );
 
+export const ForecastResponseSchema = registry.register(
+  "ForecastResponse",
+  z.object({
+    period: z.object({
+      id: z.string().uuid(),
+      startDate: isoDate,
+      endDate: isoDate,
+      label: z.string(),
+    }),
+    realized: z.object({
+      income: z.number(),
+      expense: z.number(),
+      balance: z.number(),
+    }),
+    projected: z.object({
+      recurringIncome: z.number(),
+      recurringExpense: z.number(),
+      occurrences: z.array(
+        z.object({
+          recurringTransactionId: z.string().uuid(),
+          title: z.string(),
+          type: z.enum(["income", "expense"]),
+          amount: z.number(),
+          date: isoDate,
+        })
+      ),
+    }),
+    projectedEndBalance: z.number(),
+    asOf: isoDate,
+  })
+);
+
 export const TransactionListSummarySchema = registry.register(
   "TransactionListSummary",
   z.object({

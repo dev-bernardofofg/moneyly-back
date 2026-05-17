@@ -12,6 +12,7 @@ import {
   getPlannerOverviewService,
   getTransactionsByUserId,
 } from "../services/overview.service";
+import { getForecastService } from "../services/forecast.service";
 
 export const getDashboardOverview = async (
   req: AuthenticatedRequest & { query: GetDashboardOverviewQuery },
@@ -100,6 +101,28 @@ export const getFinancialInsights = async (
   } catch (error) {
     if (isHttpError(error)) return next(error);
     return ResponseHandler.error(res, "Erro ao gerar insights financeiros", error);
+  }
+};
+
+export const getForecast = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
+  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+
+  const { periodId } = req.query as { periodId?: string };
+
+  try {
+    const forecast = await getForecastService(req.user.id, periodId);
+    return ResponseHandler.success(
+      res,
+      forecast,
+      "Projeção de saldo gerada com sucesso"
+    );
+  } catch (error) {
+    if (isHttpError(error)) return next(error);
+    return ResponseHandler.error(res, "Erro ao gerar projeção de saldo", error);
   }
 };
 

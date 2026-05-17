@@ -22,6 +22,10 @@ export const getDashboardOverviewQuerySchema = z.object({
 
 export const getAvailablePeriodsQuerySchema = z.object({});
 
+export const forecastQuerySchema = z.object({
+  periodId: z.string().uuid("periodId inválido").optional(),
+});
+
 export type GetDashboardOverviewQuery = z.infer<
   typeof getDashboardOverviewQuerySchema
 >;

@@ -3,12 +3,14 @@ import {
   getAvailablePeriods,
   getDashboardOverview,
   getFinancialInsights,
+  getForecast,
   getPlannerOverview,
 } from "../controllers/overview.controller";
 import { authenticateUser } from "../middlewares/auth";
 import { ensurePeriodExists } from "../middlewares/auto-period-creation";
 import { validate } from "../middlewares/validate";
 import {
+  forecastQuerySchema,
   getAvailablePeriodsQuerySchema,
   getDashboardOverviewQuerySchema,
 } from "../schemas/overview.schema";
@@ -33,5 +35,11 @@ OverviewRouter.get(
 OverviewRouter.get("/planner", getPlannerOverview);
 
 OverviewRouter.get("/insights", getFinancialInsights);
+
+OverviewRouter.get(
+  "/forecast",
+  validate({ query: forecastQuerySchema }),
+  getForecast
+);
 
 export { OverviewRouter };
