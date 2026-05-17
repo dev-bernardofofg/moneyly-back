@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   getAvailablePeriods,
+  getComparativeInsights,
   getDashboardOverview,
   getFinancialInsights,
   getForecast,
@@ -10,6 +11,7 @@ import { authenticateUser } from "../middlewares/auth";
 import { ensurePeriodExists } from "../middlewares/auto-period-creation";
 import { validate } from "../middlewares/validate";
 import {
+  comparativeInsightsQuerySchema,
   forecastQuerySchema,
   getAvailablePeriodsQuerySchema,
   getDashboardOverviewQuerySchema,
@@ -40,6 +42,12 @@ OverviewRouter.get(
   "/forecast",
   validate({ query: forecastQuerySchema }),
   getForecast
+);
+
+OverviewRouter.get(
+  "/insights/comparison",
+  validate({ query: comparativeInsightsQuerySchema }),
+  getComparativeInsights
 );
 
 export { OverviewRouter };

@@ -13,6 +13,7 @@ import {
   getTransactionsByUserId,
 } from "../services/overview.service";
 import { getForecastService } from "../services/forecast.service";
+import { getComparativeInsightsService } from "../services/comparative-insights.service";
 
 export const getDashboardOverview = async (
   req: AuthenticatedRequest & { query: GetDashboardOverviewQuery },
@@ -123,6 +124,28 @@ export const getForecast = async (
   } catch (error) {
     if (isHttpError(error)) return next(error);
     return ResponseHandler.error(res, "Erro ao gerar projeção de saldo", error);
+  }
+};
+
+export const getComparativeInsights = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
+  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+
+  const { periodsBack } = req.query as { periodsBack?: number };
+
+  try {
+    const data = await getComparativeInsightsService(req.user.id, periodsBack);
+    return ResponseHandler.success(
+      res,
+      data,
+      "Insights comparativos gerados com sucesso"
+    );
+  } catch (error) {
+    if (isHttpError(error)) return next(error);
+    return ResponseHandler.error(res, "Erro ao gerar insights comparativos", error);
   }
 };
 
