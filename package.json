@@ -13,7 +13,8 @@
     "db:push": "drizzle-kit push",
     "restore:categories": "ts-node src/lib/seed-categories.ts",
     "migrate:periods": "tsx src/scripts/migrate-transactions-periods.ts",
-    "api:generate": "kubb generate && orval && node scripts/fix-axios-imports.js",
+    "openapi:gen": "tsx src/openapi/generate.ts",
+    "api:generate": "pnpm openapi:gen && kubb generate && orval && node scripts/fix-axios-imports.js",
     "api:docs": "echo 'Swagger UI disponível em http://localhost:5000/api-docs'",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -47,6 +48,7 @@
     "zod": "^3.24.3"
   },
   "devDependencies": {
+    "@asteasolutions/zod-to-openapi": "^7.3.4",
     "@kubb/cli": "^4.1.2",
     "@kubb/core": "^4.1.2",
     "@kubb/plugin-oas": "^4.1.2",
