@@ -33,6 +33,7 @@ Cada módulo segue camadas: `routes/<x>.router.ts` → `controllers/<x>.controll
 ## Overview / Dashboard (`/overview`)
 - `POST /overview/periods` períodos disponíveis · `POST /overview/dashboard` dados dashboard · `GET /overview/planner` planejamento · insights.
 - `overview.*`, `helpers/handlers/overview-handlers.ts`, `helpers/mappers.ts`. Schema `overview.schema.ts`.
+- `GET /overview/forecast?periodId=` (F1) saldo projetado: `forecast.service.ts` — reusa recurring + período + transactions, projeta ocorrências futuras até `endDate`. Sem schema DB. Read-only.
 
 ## Recurring Transactions (`/recurring-transactions`)
 - CRUD de transações recorrentes (`daily|weekly|monthly|yearly`, parcelas).
