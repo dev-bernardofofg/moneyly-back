@@ -36,6 +36,10 @@ Fonte de verdade: `src/db/schema.ts` (Drizzle). Atualizar este doc quando o sche
 `id` · `userId`→users · `startDate` · `endDate` · `isActive` bool default true · timestamps.
 > Materialização do período financeiro. Criado/garantido pelo middleware `ensurePeriodExists` (atual + 1 futuro). Transações referenciam via `periodId`.
 
+### `notifications` (F2 — alertas)
+`id` · `userId`→users (cascade) · `type` enum `budget_alert` · `severity` enum `info|warning|danger` · `title` · `message` · `relatedId` uuid nullable (ex budgetId) · `periodId`→financial_periods (cascade, nullable) · `dedupeKey` text **unique** · `isRead` bool default false · `createdAt`.
+> **Idempotência:** `dedupeKey = budget:<budgetId>:<periodId>:<status>` — 1 notificação por budget/período/nível. Geração interna (`processBudgetAlerts` no scheduler 1h, sem create manual). Migration `0004_happy_veda.sql`.
+
 ### `refresh_tokens`
 `id` · `userId`→users · `token` unique (hasheado) · `expiresAt` · createdAt.
 

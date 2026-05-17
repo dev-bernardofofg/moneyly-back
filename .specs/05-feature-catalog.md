@@ -39,6 +39,10 @@ Cada módulo segue camadas: `routes/<x>.router.ts` → `controllers/<x>.controll
 - CRUD de transações recorrentes (`daily|weekly|monthly|yearly`, parcelas).
 - `recurring-transaction.*`. **Scheduler:** `processRecurringTransactions()` (src/server.ts) roda a cada 1h + startup, materializa em `transactions` quando `nextExecution` vence. Scripts backfill em `src/scripts/`.
 
+## Notifications (`/notifications`) — F2
+- `GET /notifications?unreadOnly=&page=&limit=` paginado · `PATCH /notifications/:id/read` · `PATCH /notifications/read-all`.
+- `notification.*` (controller/service/repository). `processBudgetAlerts` ligado ao scheduler de `src/server.ts` (mesmo `setInterval` do recurring). Idempotência via `notifications.dedupeKey` unique. Geração reusa `getBudgetProgressService`.
+
 ## Financial Periods (interno, sem router próprio)
 - `financial-period.service` + `financial-period.repository` + `helpers/financial-period.ts`.
 - Middleware `ensurePeriodExists` (`middlewares/auto-period-creation.ts`): garante período atual + 1 futuro por request autenticado.
