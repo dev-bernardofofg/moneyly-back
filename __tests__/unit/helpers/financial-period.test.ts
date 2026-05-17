@@ -2,7 +2,7 @@
  * Testes unitários para financial-period helper
  */
 
-import { createSaoPauloDate } from "../../../src/helpers/date-utils";
+import { createSaoPauloDate } from "../../../src/helpers/dates";
 import {
   getAvailableFinancialPeriods,
   getCurrentFinancialPeriod,

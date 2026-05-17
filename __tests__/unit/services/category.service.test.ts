@@ -2,7 +2,7 @@
  * Testes unitários para CategoryService
  */
 
-import { CategoryRepository } from "../../../src/repositories/categories.repository";
+import { categoryRepository } from "../../../src/repositories/categories.repository";
 import {
   createCategoryService,
   deleteCategoryService,
@@ -44,14 +44,14 @@ describe("CategoryService", () => {
 
     it("deve criar uma categoria com sucesso", async () => {
       (validateCategoryExists as jest.Mock).mockResolvedValue(undefined);
-      (CategoryRepository.create as jest.Mock).mockResolvedValue(
+      (categoryRepository.create as jest.Mock).mockResolvedValue(
         mockCreatedCategory
       );
 
       const result = await createCategoryService(mockCategoryName, mockUserId);
 
       expect(validateCategoryExists).toHaveBeenCalledWith(mockCategoryName);
-      expect(CategoryRepository.create).toHaveBeenCalledWith({
+      expect(categoryRepository.create).toHaveBeenCalledWith({
         name: mockCategoryName,
         userId: mockUserId,
       });
@@ -67,7 +67,7 @@ describe("CategoryService", () => {
         createCategoryService(mockCategoryName, mockUserId)
       ).rejects.toThrow("Categoria já existe");
 
-      expect(CategoryRepository.create).not.toHaveBeenCalled();
+      expect(categoryRepository.create).not.toHaveBeenCalled();
     });
   });
 
@@ -94,14 +94,14 @@ describe("CategoryService", () => {
       };
 
       (validatePagination as jest.Mock).mockResolvedValue(pagination);
-      (CategoryRepository.findByUserIdPaginated as jest.Mock).mockResolvedValue(
+      (categoryRepository.findByUserIdPaginated as jest.Mock).mockResolvedValue(
         mockPaginatedResult
       );
 
       const result = await getCategoriesService(mockUserId, pagination);
 
       expect(validatePagination).toHaveBeenCalledWith(1, 10);
-      expect(CategoryRepository.findByUserIdPaginated).toHaveBeenCalledWith(
+      expect(categoryRepository.findByUserIdPaginated).toHaveBeenCalledWith(
         mockUserId,
         pagination
       );
@@ -110,13 +110,13 @@ describe("CategoryService", () => {
 
     it("deve retornar todas as categorias sem paginação quando não especificada", async () => {
       (validatePagination as jest.Mock).mockResolvedValue(null);
-      (CategoryRepository.findByUserId as jest.Mock).mockResolvedValue(
+      (categoryRepository.findByUserId as jest.Mock).mockResolvedValue(
         mockCategories
       );
 
       const result = await getCategoriesService(mockUserId, {});
 
-      expect(CategoryRepository.findByUserId).toHaveBeenCalledWith(mockUserId);
+      expect(categoryRepository.findByUserId).toHaveBeenCalledWith(mockUserId);
       expect(result).toEqual({
         data: mockCategories,
         pagination: {
@@ -132,7 +132,7 @@ describe("CategoryService", () => {
 
     it("deve retornar estrutura vazia quando usuário não tem categorias", async () => {
       (validatePagination as jest.Mock).mockResolvedValue(null);
-      (CategoryRepository.findByUserId as jest.Mock).mockResolvedValue([]);
+      (categoryRepository.findByUserId as jest.Mock).mockResolvedValue([]);
 
       const result = await getCategoriesService(mockUserId, {});
 
@@ -164,7 +164,7 @@ describe("CategoryService", () => {
       };
 
       (validatePagination as jest.Mock).mockResolvedValue(pagination);
-      (CategoryRepository.findByUserIdPaginated as jest.Mock).mockResolvedValue(
+      (categoryRepository.findByUserIdPaginated as jest.Mock).mockResolvedValue(
         mockPaginatedResult
       );
 
@@ -198,7 +198,7 @@ describe("CategoryService", () => {
       (validateCategoryNameIsNotInUse as jest.Mock).mockResolvedValue(
         undefined
       );
-      (CategoryRepository.update as jest.Mock).mockResolvedValue(
+      (categoryRepository.update as jest.Mock).mockResolvedValue(
         mockUpdatedCategory
       );
 
@@ -221,7 +221,7 @@ describe("CategoryService", () => {
         mockNewName,
         mockUserId
       );
-      expect(CategoryRepository.update).toHaveBeenCalledWith(mockCategoryId, {
+      expect(categoryRepository.update).toHaveBeenCalledWith(mockCategoryId, {
         name: mockNewName,
         userId: mockUserId,
       });
@@ -237,7 +237,7 @@ describe("CategoryService", () => {
         updateCategoryService(mockCategoryId, mockNewName, mockUserId)
       ).rejects.toThrow("Categoria não encontrada");
 
-      expect(CategoryRepository.update).not.toHaveBeenCalled();
+      expect(categoryRepository.update).not.toHaveBeenCalled();
     });
 
     it("deve lançar erro quando tentar atualizar categoria global", async () => {
@@ -253,7 +253,7 @@ describe("CategoryService", () => {
         updateCategoryService(mockCategoryId, mockNewName, mockUserId)
       ).rejects.toThrow("Não é possível atualizar categoria global");
 
-      expect(CategoryRepository.update).not.toHaveBeenCalled();
+      expect(categoryRepository.update).not.toHaveBeenCalled();
     });
 
     it("deve lançar erro quando novo nome já está em uso", async () => {
@@ -270,7 +270,7 @@ describe("CategoryService", () => {
         updateCategoryService(mockCategoryId, mockNewName, mockUserId)
       ).rejects.toThrow("Nome já está em uso");
 
-      expect(CategoryRepository.update).not.toHaveBeenCalled();
+      expect(categoryRepository.update).not.toHaveBeenCalled();
     });
   });
 
@@ -283,7 +283,7 @@ describe("CategoryService", () => {
         undefined
       );
       (validateHideGlobalCategory as jest.Mock).mockResolvedValue(undefined);
-      (CategoryRepository.delete as jest.Mock).mockResolvedValue(true);
+      (categoryRepository.delete as jest.Mock).mockResolvedValue(true);
 
       const result = await deleteCategoryService(mockCategoryId, mockUserId);
 
@@ -295,7 +295,7 @@ describe("CategoryService", () => {
         mockCategoryId,
         mockUserId
       );
-      expect(CategoryRepository.delete).toHaveBeenCalledWith(
+      expect(categoryRepository.delete).toHaveBeenCalledWith(
         mockCategoryId,
         mockUserId
       );
@@ -311,7 +311,7 @@ describe("CategoryService", () => {
         deleteCategoryService(mockCategoryId, mockUserId)
       ).rejects.toThrow("Categoria não encontrada");
 
-      expect(CategoryRepository.delete).not.toHaveBeenCalled();
+      expect(categoryRepository.delete).not.toHaveBeenCalled();
     });
 
     it("deve lançar erro quando tentar deletar categoria global", async () => {
@@ -326,7 +326,7 @@ describe("CategoryService", () => {
         deleteCategoryService(mockCategoryId, mockUserId)
       ).rejects.toThrow("Não é possível deletar categoria global");
 
-      expect(CategoryRepository.delete).not.toHaveBeenCalled();
+      expect(categoryRepository.delete).not.toHaveBeenCalled();
     });
 
     it("deve permitir apenas ocultar categoria global", async () => {
@@ -335,7 +335,7 @@ describe("CategoryService", () => {
         undefined
       );
       (validateHideGlobalCategory as jest.Mock).mockResolvedValue(undefined);
-      (CategoryRepository.delete as jest.Mock).mockResolvedValue(true);
+      (categoryRepository.delete as jest.Mock).mockResolvedValue(true);
 
       const result = await deleteCategoryService(globalCategoryId, mockUserId);
 

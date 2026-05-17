@@ -12,7 +12,7 @@ import {
   isValidSaoPauloDate,
   normalizeDayForMonthSaoPaulo,
   toSaoPauloTimezone,
-} from "../../../src/helpers/date-utils";
+} from "../../../src/helpers/dates";
 
 describe("DateUtils", () => {
   describe("toSaoPauloTimezone", () => {

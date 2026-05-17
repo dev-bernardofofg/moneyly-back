@@ -3,8 +3,8 @@
  */
 
 import { randomUUID } from "crypto";
-import { RefreshTokenRepository } from "../../../src/repositories/refresh-token.repository";
-import { UserRepository } from "../../../src/repositories/user.repository";
+import { refreshTokenRepository } from "../../../src/repositories/refresh-token.repository";
+import { userRepository } from "../../../src/repositories/user.repository";
 import { createUserService } from "../../../src/services/user.service";
 import { HttpError } from "../../../src/validations/errors";
 
@@ -68,9 +68,9 @@ describe("UserService", () => {
         createdAt: new Date(),
       };
 
-      (UserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
-      (UserRepository.create as jest.Mock).mockResolvedValue(mockUser);
-      (RefreshTokenRepository.create as jest.Mock).mockResolvedValue(
+      (userRepository.findByEmail as jest.Mock).mockResolvedValue(null);
+      (userRepository.create as jest.Mock).mockResolvedValue(mockUser);
+      (refreshTokenRepository.create as jest.Mock).mockResolvedValue(
         mockRefreshToken
       );
 
@@ -91,7 +91,7 @@ describe("UserService", () => {
         password: "password123",
       };
 
-      (UserRepository.findByEmail as jest.Mock).mockResolvedValue({
+      (userRepository.findByEmail as jest.Mock).mockResolvedValue({
         id: "existing-user",
         email: "existing@example.com",
       });

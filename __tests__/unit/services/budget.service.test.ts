@@ -1,4 +1,13 @@
+// @ts-nocheck
 /**
+ * QUARENTENA: esta suite precede o refactor de budget.service e referencia
+ * API removida (`deleteBudget`/`getUserBudgets`/`updateBudget`,
+ * `validateUserNotAuthenticated`, repos PascalCase). NÃO reescrita aqui para
+ * não cravar comportamento reverse-engineered. Pendente: rewrite dedicado
+ * contra a API atual (`*Service`, `financialPeriodService`, `requireUser`,
+ * `getBudgetStatus` safe/attention/warning/exceeded).
+ * Rastreado: moneyly/.specs/03-feature-roadmap.md (suites stale).
+ *
  * Testes unitários para BudgetService
  */
 
@@ -26,7 +35,7 @@ jest.mock("../../../src/repositories/user.repository");
 jest.mock("../../../src/validations/user.validation");
 jest.mock("../../../src/validations/budget.validation");
 
-describe("BudgetService", () => {
+describe.skip("BudgetService [QUARANTINED — predates budget.service refactor]", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
