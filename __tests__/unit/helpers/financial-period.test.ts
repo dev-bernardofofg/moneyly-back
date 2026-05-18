@@ -1,5 +1,5 @@
 /**
- * Testes unitários para financial-period helper
+ * Unit tests for financial-period helper
  */
 
 import { createSaoPauloDate } from "../../../src/helpers/dates";
@@ -15,19 +15,19 @@ import {
 
 describe("FinancialPeriodHelper", () => {
   describe("normalizeDayForMonth", () => {
-    it("deve retornar o dia quando é válido para o mês", () => {
+    it("returns the day when it is valid for the month", () => {
       const result = normalizeDayForMonth(2024, 0, 15); // Janeiro, dia 15
 
       expect(result).toBe(15);
     });
 
-    it("deve normalizar dia 31 para fevereiro", () => {
+    it("normalizes day 31 for February", () => {
       const result = normalizeDayForMonth(2024, 1, 31); // Fevereiro
 
       expect(result).toBeLessThanOrEqual(29); // 2024 é bissexto
     });
 
-    it("deve lidar com abril (30 dias)", () => {
+    it("handles April (30 days)", () => {
       const result = normalizeDayForMonth(2024, 3, 31); // Abril
 
       expect(result).toBe(30);
@@ -35,7 +35,7 @@ describe("FinancialPeriodHelper", () => {
   });
 
   describe("getCurrentFinancialPeriod", () => {
-    it("deve calcular período quando dia atual >= dia de início (mesmo mês)", () => {
+    it("computes period when current day >= start day (same month)", () => {
       // Supondo que hoje é 15/01/2024 e período é 5 a 25
       const referenceDate = createSaoPauloDate(2024, 0, 15);
       const period = getCurrentFinancialPeriod(5, 25, referenceDate);
@@ -46,7 +46,7 @@ describe("FinancialPeriodHelper", () => {
       expect(period.endDate.getMonth()).toBe(0); // Janeiro
     });
 
-    it("deve calcular período quando dia atual < dia de início (mês anterior)", () => {
+    it("computes period when current day < start day (previous month)", () => {
       // Supondo que hoje é 03/01/2024 e período é 5 a 25
       const referenceDate = createSaoPauloDate(2024, 0, 3);
       const period = getCurrentFinancialPeriod(5, 25, referenceDate);
@@ -59,7 +59,7 @@ describe("FinancialPeriodHelper", () => {
       expect(period.endDate).toBeInstanceOf(Date);
     });
 
-    it("deve lidar com período que cruza meses (ex: 25 a 5)", () => {
+    it("handles a period that crosses months (e.g. 25 to 5)", () => {
       // Supondo que hoje é 28/01/2024 e período é 25 a 5
       const referenceDate = createSaoPauloDate(2024, 0, 28);
       const period = getCurrentFinancialPeriod(25, 5, referenceDate);
@@ -70,7 +70,7 @@ describe("FinancialPeriodHelper", () => {
       expect(period.endDate.getMonth()).toBe(1); // Fevereiro
     });
 
-    it("deve lidar com período de um único dia (ex: 15 a 15)", () => {
+    it("handles a single-day period (e.g. 15 to 15)", () => {
       // Supondo que hoje é 15/01/2024 e período é 15 a 15
       const referenceDate = createSaoPauloDate(2024, 0, 15);
       const period = getCurrentFinancialPeriod(15, 15, referenceDate);
@@ -81,7 +81,7 @@ describe("FinancialPeriodHelper", () => {
       expect(period.endDate.getMonth()).toBe(1); // Fevereiro (próximo mês)
     });
 
-    it("deve lidar com período padrão (1 a 31)", () => {
+    it("handles the default period (1 to 31)", () => {
       const referenceDate = createSaoPauloDate(2024, 0, 15);
       const period = getCurrentFinancialPeriod(1, 31, referenceDate);
 
@@ -91,7 +91,7 @@ describe("FinancialPeriodHelper", () => {
       expect(period.endDate.getMonth()).toBe(0); // Janeiro
     });
 
-    it("deve normalizar dia 31 para meses com menos dias", () => {
+    it("normalizes day 31 for months with fewer days", () => {
       // Período 31 a 31 em fevereiro
       const referenceDate = createSaoPauloDate(2024, 1, 15);
       const period = getCurrentFinancialPeriod(31, 31, referenceDate);
@@ -104,7 +104,7 @@ describe("FinancialPeriodHelper", () => {
   });
 
   describe("getFinancialPeriodForMonth", () => {
-    it("deve calcular período para mês específico (não cruza meses)", () => {
+    it("computes period for a specific month (no month crossing)", () => {
       const period = getFinancialPeriodForMonth(5, 25, 2024, 1); // Janeiro
 
       expect(period.startDate.getDate()).toBe(5);
@@ -113,7 +113,7 @@ describe("FinancialPeriodHelper", () => {
       expect(period.endDate.getMonth()).toBe(0); // Janeiro
     });
 
-    it("deve calcular período para mês específico (cruza meses)", () => {
+    it("computes period for a specific month (crosses months)", () => {
       const period = getFinancialPeriodForMonth(25, 5, 2024, 1); // Janeiro
 
       expect(period.startDate.getDate()).toBe(25);
@@ -122,7 +122,7 @@ describe("FinancialPeriodHelper", () => {
       expect(period.endDate.getMonth()).toBe(1); // Fevereiro
     });
 
-    it("deve converter month corretamente (1-12 para 0-11)", () => {
+    it("converts month correctly (1-12 to 0-11)", () => {
       const period = getFinancialPeriodForMonth(1, 31, 2024, 6); // Junho
 
       expect(period.startDate.getMonth()).toBe(5); // Junho (index 5)
@@ -131,7 +131,7 @@ describe("FinancialPeriodHelper", () => {
   });
 
   describe("isDateInCurrentFinancialPeriod", () => {
-    it("deve retornar true quando data está no período atual", () => {
+    it("returns true when the date is within the current period", () => {
       const referenceDate = createSaoPauloDate(2024, 0, 15);
       const testDate = createSaoPauloDate(2024, 0, 10);
 
@@ -145,7 +145,7 @@ describe("FinancialPeriodHelper", () => {
       expect(result).toBe(true);
     });
 
-    it("deve retornar false quando data está fora do período", () => {
+    it("returns false when the date is outside the period", () => {
       const referenceDate = createSaoPauloDate(2024, 0, 15);
       const testDate = createSaoPauloDate(2024, 0, 30); // Fora do período 5-25
 
@@ -159,7 +159,7 @@ describe("FinancialPeriodHelper", () => {
       expect(result).toBe(false);
     });
 
-    it("deve incluir data no início do período", () => {
+    it("includes the date at the start of the period", () => {
       const referenceDate = createSaoPauloDate(2024, 0, 15);
       const testDate = createSaoPauloDate(2024, 0, 5); // Início do período
 
@@ -173,7 +173,7 @@ describe("FinancialPeriodHelper", () => {
       expect(result).toBe(true);
     });
 
-    it("deve incluir data no fim do período", () => {
+    it("includes the date at the end of the period", () => {
       const referenceDate = createSaoPauloDate(2024, 0, 15);
       const testDate = createSaoPauloDate(2024, 0, 25); // Fim do período
 
@@ -189,25 +189,25 @@ describe("FinancialPeriodHelper", () => {
   });
 
   describe("getFinancialPeriodDescription", () => {
-    it("deve retornar descrição para período de um dia", () => {
+    it("returns description for a single-day period", () => {
       const result = getFinancialPeriodDescription(15, 15);
 
       expect(result).toBe("Dia 15 de cada mês");
     });
 
-    it("deve retornar descrição para período que cruza meses", () => {
+    it("returns description for a period that crosses months", () => {
       const result = getFinancialPeriodDescription(25, 5);
 
       expect(result).toBe("Dia 25 a 5 do próximo mês");
     });
 
-    it("deve retornar descrição para período no mesmo mês", () => {
+    it("returns description for a period within the same month", () => {
       const result = getFinancialPeriodDescription(5, 25);
 
       expect(result).toBe("Dia 5 a 25 do mesmo mês");
     });
 
-    it("deve retornar descrição para período padrão (1 a 31)", () => {
+    it("returns description for the default period (1 to 31)", () => {
       const result = getFinancialPeriodDescription(1, 31);
 
       expect(result).toBe("Dia 1 a 31 do mesmo mês");
@@ -215,7 +215,7 @@ describe("FinancialPeriodHelper", () => {
   });
 
   describe("getPreviousFinancialPeriods", () => {
-    it("deve retornar períodos anteriores incluindo o atual", () => {
+    it("returns previous periods including the current one", () => {
       const referenceDate = createSaoPauloDate(2024, 0, 15);
       const periods = getPreviousFinancialPeriods(5, 25, 3, referenceDate);
 
@@ -226,7 +226,7 @@ describe("FinancialPeriodHelper", () => {
       }
     });
 
-    it("deve retornar períodos em ordem do mais recente ao mais antigo", () => {
+    it("returns periods ordered from most recent to oldest", () => {
       const referenceDate = createSaoPauloDate(2024, 2, 15); // Março
       const periods = getPreviousFinancialPeriods(1, 31, 3, referenceDate);
 
@@ -239,7 +239,7 @@ describe("FinancialPeriodHelper", () => {
       }
     });
 
-    it("deve retornar período único quando numberOfPeriods é 1", () => {
+    it("returns a single period when numberOfPeriods is 1", () => {
       const referenceDate = createSaoPauloDate(2024, 0, 15);
       const periods = getPreviousFinancialPeriods(5, 25, 1, referenceDate);
 
@@ -255,13 +255,13 @@ describe("FinancialPeriodHelper", () => {
       { id: "trans-4", date: new Date("2024-03-05") },
     ];
 
-    it("deve retornar array vazio quando não há transações", () => {
+    it("returns an empty array when there are no transactions", () => {
       const periods = getAvailableFinancialPeriods(1, 31, []);
 
       expect(periods).toEqual([]);
     });
 
-    it("deve calcular períodos baseado nas transações fornecidas", () => {
+    it("computes periods based on the provided transactions", () => {
       const periods = getAvailableFinancialPeriods(1, 31, mockTransactions);
 
       expect(periods.length).toBeGreaterThan(0);
@@ -272,7 +272,7 @@ describe("FinancialPeriodHelper", () => {
       expect(periods[0]).toHaveProperty("transactionCount");
     });
 
-    it("deve contar transações por período corretamente", () => {
+    it("counts transactions per period correctly", () => {
       const periods = getAvailableFinancialPeriods(1, 31, mockTransactions);
 
       const totalTransactions = periods.reduce(
@@ -286,7 +286,7 @@ describe("FinancialPeriodHelper", () => {
       expect(totalTransactions).toBeGreaterThan(0);
     });
 
-    it("deve retornar períodos ordenados do mais recente ao mais antigo", () => {
+    it("returns periods ordered from most recent to oldest", () => {
       const periods = getAvailableFinancialPeriods(1, 31, mockTransactions);
 
       const firstPeriod = periods[0];
@@ -299,7 +299,7 @@ describe("FinancialPeriodHelper", () => {
       }
     });
 
-    it("deve criar labels formatados em português", () => {
+    it("creates labels formatted in Portuguese", () => {
       const periods = getAvailableFinancialPeriods(1, 31, mockTransactions);
 
       const firstPeriod = periods[0];
@@ -311,7 +311,7 @@ describe("FinancialPeriodHelper", () => {
       }
     });
 
-    it("deve capitalizar primeira letra dos meses no label", () => {
+    it("capitalizes the first letter of months in the label", () => {
       const periods = getAvailableFinancialPeriods(1, 31, mockTransactions);
 
       // Verificar que não começa com letra minúscula
@@ -322,7 +322,7 @@ describe("FinancialPeriodHelper", () => {
       }
     });
 
-    it("deve lidar com períodos que cruzam anos", () => {
+    it("handles periods that cross years", () => {
       const transactionsAcrossYears = [
         { id: "trans-1", date: new Date("2023-12-15") },
         { id: "trans-2", date: new Date("2024-01-15") },
@@ -345,7 +345,7 @@ describe("FinancialPeriodHelper", () => {
       });
     });
 
-    it("não deve ter períodos duplicados", () => {
+    it("has no duplicate periods", () => {
       const periods = getAvailableFinancialPeriods(1, 31, mockTransactions);
 
       const periodIds = periods.map((p) => p.id);
@@ -354,7 +354,7 @@ describe("FinancialPeriodHelper", () => {
       expect(periodIds.length).toBe(uniqueIds.size);
     });
 
-    it("deve proteger contra loop infinito (máximo 50 iterações)", () => {
+    it("guards against infinite loop (max 50 iterations)", () => {
       // Criar muitas transações
       const manyTransactions = Array.from({ length: 100 }, (_, i) => ({
         id: `trans-${i}`,
@@ -368,25 +368,25 @@ describe("FinancialPeriodHelper", () => {
   });
 
   describe("getFinancialPeriodDescription", () => {
-    it("deve descrever período de um dia corretamente", () => {
+    it("describes a single-day period correctly", () => {
       const description = getFinancialPeriodDescription(10, 10);
 
       expect(description).toBe("Dia 10 de cada mês");
     });
 
-    it("deve descrever período dentro do mesmo mês", () => {
+    it("describes a period within the same month", () => {
       const description = getFinancialPeriodDescription(1, 31);
 
       expect(description).toBe("Dia 1 a 31 do mesmo mês");
     });
 
-    it("deve descrever período que cruza meses", () => {
+    it("describes a period that crosses months", () => {
       const description = getFinancialPeriodDescription(25, 5);
 
       expect(description).toBe("Dia 25 a 5 do próximo mês");
     });
 
-    it("deve descrever período médio do mês", () => {
+    it("describes a mid-month period", () => {
       const description = getFinancialPeriodDescription(10, 20);
 
       expect(description).toBe("Dia 10 a 20 do mesmo mês");
@@ -394,7 +394,7 @@ describe("FinancialPeriodHelper", () => {
   });
 
   describe("getPreviousFinancialPeriods", () => {
-    it("deve incluir período atual como primeiro item", () => {
+    it("includes the current period as the first item", () => {
       const referenceDate = createSaoPauloDate(2024, 0, 15);
       const periods = getPreviousFinancialPeriods(1, 31, 3, referenceDate);
 
@@ -415,7 +415,7 @@ describe("FinancialPeriodHelper", () => {
       }
     });
 
-    it("deve calcular períodos anteriores corretamente", () => {
+    it("computes previous periods correctly", () => {
       const referenceDate = createSaoPauloDate(2024, 2, 15); // Março
       const periods = getPreviousFinancialPeriods(1, 31, 3, referenceDate);
 
@@ -431,7 +431,7 @@ describe("FinancialPeriodHelper", () => {
       }
     });
 
-    it("deve lidar com transição de ano", () => {
+    it("handles year transition", () => {
       const referenceDate = createSaoPauloDate(2024, 0, 15); // Janeiro 2024
       const periods = getPreviousFinancialPeriods(1, 31, 3, referenceDate);
 
@@ -444,7 +444,7 @@ describe("FinancialPeriodHelper", () => {
       }
     });
 
-    it("deve retornar número correto de períodos", () => {
+    it("returns the correct number of periods", () => {
       const referenceDate = createSaoPauloDate(2024, 5, 15);
       const periods = getPreviousFinancialPeriods(1, 31, 10, referenceDate);
 
@@ -453,7 +453,7 @@ describe("FinancialPeriodHelper", () => {
   });
 
   describe("Edge Cases", () => {
-    it("deve lidar com ano bissexto em fevereiro", () => {
+    it("handles a leap year in February", () => {
       const referenceDate = createSaoPauloDate(2024, 1, 15); // Fevereiro 2024
       const period = getCurrentFinancialPeriod(1, 31, referenceDate);
 
@@ -461,7 +461,7 @@ describe("FinancialPeriodHelper", () => {
       expect(period.endDate.getDate()).toBe(29);
     });
 
-    it("deve lidar com ano não bissexto em fevereiro", () => {
+    it("handles a non-leap year in February", () => {
       const referenceDate = createSaoPauloDate(2023, 1, 15); // Fevereiro 2023
       const period = getCurrentFinancialPeriod(1, 31, referenceDate);
 
@@ -469,7 +469,7 @@ describe("FinancialPeriodHelper", () => {
       expect(period.endDate.getDate()).toBe(28);
     });
 
-    it("deve lidar com mudança de horário de verão", () => {
+    it("handles daylight saving time change", () => {
       // São Paulo muda para horário de verão entre outubro e fevereiro
       const winterDate = createSaoPauloDate(2024, 5, 15); // Junho (inverno)
       const summerDate = createSaoPauloDate(2024, 0, 15); // Janeiro (verão)

@@ -10,7 +10,7 @@ describe("TokenHelper", () => {
   describe("generateAccessToken", () => {
     const mockUserId = "user-123";
 
-    it("deve gerar um token JWT válido", () => {
+    it("generates a valid JWT token", () => {
       const token = generateAccessToken(mockUserId);
 
       expect(token).toBeDefined();
@@ -18,7 +18,7 @@ describe("TokenHelper", () => {
       expect(token.length).toBeGreaterThan(0);
     });
 
-    it("deve incluir userId no payload do token", () => {
+    it("includes userId in the token payload", () => {
       const token = generateAccessToken(mockUserId);
       const decoded = jwt.verify(token, env.JWT_SECRET) as {
         userId: string;
@@ -27,7 +27,7 @@ describe("TokenHelper", () => {
       expect(decoded.userId).toBe(mockUserId);
     });
 
-    it("deve gerar token com expiração de 15 minutos", () => {
+    it("generates a token with 15-minute expiration", () => {
       const token = generateAccessToken(mockUserId);
       const decoded = jwt.decode(token) as {
         userId: string;
@@ -44,7 +44,7 @@ describe("TokenHelper", () => {
       expect(expiresIn).toBe(fifteenMinutesInSeconds);
     });
 
-    it("deve gerar tokens diferentes para diferentes userIds", () => {
+    it("generates different tokens for different userIds", () => {
       const token1 = generateAccessToken("user-1");
       const token2 = generateAccessToken("user-2");
 
@@ -61,7 +61,7 @@ describe("TokenHelper", () => {
       expect(decoded2.userId).toBe("user-2");
     });
 
-    it("deve ser verificável com JWT_SECRET", () => {
+    it("is verifiable with JWT_SECRET", () => {
       const token = generateAccessToken(mockUserId);
 
       expect(() => {
@@ -69,7 +69,7 @@ describe("TokenHelper", () => {
       }).not.toThrow();
     });
 
-    it("deve falhar verificação com secret incorreto", () => {
+    it("fails verification with an incorrect secret", () => {
       const token = generateAccessToken(mockUserId);
 
       expect(() => {
@@ -77,7 +77,7 @@ describe("TokenHelper", () => {
       }).toThrow();
     });
 
-    it("deve gerar tokens únicos mesmo para mesmo userId", () => {
+    it("generates unique tokens even for the same userId", () => {
       // Tokens gerados em momentos diferentes devem ser diferentes (iat diferente)
       const token1 = generateAccessToken(mockUserId);
 

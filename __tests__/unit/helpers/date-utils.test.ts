@@ -1,5 +1,5 @@
 /**
- * Testes unitários para date-utils helper
+ * Unit tests for date-utils helper
  */
 
 import {
@@ -16,7 +16,7 @@ import {
 
 describe("DateUtils", () => {
   describe("toSaoPauloTimezone", () => {
-    it("deve converter Date para timezone de São Paulo", () => {
+    it("converts a Date to the São Paulo timezone", () => {
       const date = new Date("2024-01-15T12:00:00Z");
       const result = toSaoPauloTimezone(date);
 
@@ -24,7 +24,7 @@ describe("DateUtils", () => {
       expect(result.getTime()).toBeDefined();
     });
 
-    it("deve converter string para timezone de São Paulo", () => {
+    it("converts a string to the São Paulo timezone", () => {
       const dateString = "2024-01-15T12:00:00Z";
       const result = toSaoPauloTimezone(dateString);
 
@@ -34,7 +34,7 @@ describe("DateUtils", () => {
   });
 
   describe("createSaoPauloDate", () => {
-    it("deve criar data no timezone de São Paulo com apenas data", () => {
+    it("creates a São Paulo date with date only", () => {
       const result = createSaoPauloDate(2024, 0, 15); // Janeiro
 
       expect(result.getFullYear()).toBe(2024);
@@ -42,7 +42,7 @@ describe("DateUtils", () => {
       expect(result.getDate()).toBe(15);
     });
 
-    it("deve criar data no timezone de São Paulo com data e hora", () => {
+    it("creates a São Paulo date with date and time", () => {
       const result = createSaoPauloDate(2024, 0, 15, 14, 30, 45);
 
       expect(result.getFullYear()).toBe(2024);
@@ -52,7 +52,7 @@ describe("DateUtils", () => {
       expect(result.getMinutes()).toBeGreaterThanOrEqual(0);
     });
 
-    it("deve usar valores padrão para hora, minuto e segundo", () => {
+    it("uses default values for hour, minute and second", () => {
       const result = createSaoPauloDate(2024, 5, 10);
 
       expect(result.getFullYear()).toBe(2024);
@@ -61,25 +61,25 @@ describe("DateUtils", () => {
   });
 
   describe("normalizeDayForMonthSaoPaulo", () => {
-    it("deve retornar o dia quando é válido para o mês", () => {
+    it("returns the day when it is valid for the month", () => {
       const result = normalizeDayForMonthSaoPaulo(2024, 0, 15); // Janeiro, dia 15
 
       expect(result).toBe(15);
     });
 
-    it("deve normalizar para último dia do mês quando dia excede", () => {
+    it("normalizes to the last day of the month when the day exceeds it", () => {
       const result = normalizeDayForMonthSaoPaulo(2024, 1, 31); // Fevereiro, dia 31
 
       expect(result).toBeLessThanOrEqual(29); // 2024 é bissexto
     });
 
-    it("deve lidar com meses de 30 dias", () => {
+    it("handles 30-day months", () => {
       const result = normalizeDayForMonthSaoPaulo(2024, 3, 31); // Abril, dia 31
 
       expect(result).toBe(30); // Abril tem 30 dias
     });
 
-    it("deve lidar com fevereiro em ano não bissexto", () => {
+    it("handles February in a non-leap year", () => {
       const result = normalizeDayForMonthSaoPaulo(2023, 1, 29); // Fevereiro 2023
 
       expect(result).toBe(28);
@@ -87,7 +87,7 @@ describe("DateUtils", () => {
   });
 
   describe("createNormalizedSaoPauloDate", () => {
-    it("deve criar data normalizada", () => {
+    it("creates a normalized date", () => {
       const result = createNormalizedSaoPauloDate(2024, 0, 15);
 
       expect(result.getFullYear()).toBe(2024);
@@ -95,7 +95,7 @@ describe("DateUtils", () => {
       expect(result.getDate()).toBe(15);
     });
 
-    it("deve normalizar dia quando excede último dia do mês", () => {
+    it("normalizes the day when it exceeds the last day of the month", () => {
       const result = createNormalizedSaoPauloDate(2024, 3, 31); // Abril tem 30 dias
 
       expect(result.getDate()).toBe(30);
@@ -103,14 +103,14 @@ describe("DateUtils", () => {
   });
 
   describe("getCurrentSaoPauloDate", () => {
-    it("deve retornar data atual no timezone de São Paulo", () => {
+    it("returns the current date in the São Paulo timezone", () => {
       const result = getCurrentSaoPauloDate();
 
       expect(result).toBeInstanceOf(Date);
       expect(result.getTime()).toBeGreaterThan(0);
     });
 
-    it("deve retornar data diferente em chamadas próximas", () => {
+    it("returns a near-identical date on close calls", () => {
       const date1 = getCurrentSaoPauloDate();
       // Pequeno delay
       const date2 = getCurrentSaoPauloDate();
@@ -121,14 +121,14 @@ describe("DateUtils", () => {
   });
 
   describe("formatBrazilianDate", () => {
-    it("deve formatar Date no formato brasileiro", () => {
+    it("formats a Date in the Brazilian format", () => {
       const date = new Date("2024-01-15T12:00:00Z");
       const result = formatBrazilianDate(date);
 
       expect(result).toMatch(/\d{2}\/\d{2}\/\d{4}/);
     });
 
-    it("deve formatar string no formato brasileiro", () => {
+    it("formats a string in the Brazilian format", () => {
       const dateString = "2024-01-15T12:00:00Z";
       const result = formatBrazilianDate(dateString);
 
@@ -137,14 +137,14 @@ describe("DateUtils", () => {
   });
 
   describe("formatBrazilianDateTime", () => {
-    it("deve formatar Date com hora no formato brasileiro", () => {
+    it("formats a Date with time in the Brazilian format", () => {
       const date = new Date("2024-01-15T12:00:00Z");
       const result = formatBrazilianDateTime(date);
 
       expect(result).toMatch(/\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}/);
     });
 
-    it("deve formatar string com hora no formato brasileiro", () => {
+    it("formats a string with time in the Brazilian format", () => {
       const dateString = "2024-01-15T14:30:00Z";
       const result = formatBrazilianDateTime(dateString);
 
@@ -153,27 +153,27 @@ describe("DateUtils", () => {
   });
 
   describe("isValidSaoPauloDate", () => {
-    it("deve retornar true para data válida", () => {
+    it("returns true for a valid date", () => {
       const date = new Date("2024-01-15T12:00:00Z");
       const result = isValidSaoPauloDate(date);
 
       expect(result).toBe(true);
     });
 
-    it("deve retornar true para string de data válida", () => {
+    it("returns true for a valid date string", () => {
       const dateString = "2024-01-15T12:00:00Z";
       const result = isValidSaoPauloDate(dateString);
 
       expect(result).toBe(true);
     });
 
-    it("deve retornar false para data inválida", () => {
+    it("returns false for an invalid date", () => {
       const result = isValidSaoPauloDate("data-invalida");
 
       expect(result).toBe(false);
     });
 
-    it("deve retornar false para string vazia", () => {
+    it("returns false for an empty string", () => {
       const result = isValidSaoPauloDate("");
 
       expect(result).toBe(false);
@@ -181,7 +181,7 @@ describe("DateUtils", () => {
   });
 
   describe("formatSaoPauloISO", () => {
-    it("deve formatar Date em ISO string", () => {
+    it("formats a Date into an ISO string", () => {
       const date = new Date("2024-01-15T12:00:00Z");
       const result = formatSaoPauloISO(date);
 
@@ -190,7 +190,7 @@ describe("DateUtils", () => {
       expect(result).toMatch(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
     });
 
-    it("deve formatar string em ISO string", () => {
+    it("formats a string into an ISO string", () => {
       const dateString = "2024-01-15T12:00:00Z";
       const result = formatSaoPauloISO(dateString);
 
@@ -199,5 +199,3 @@ describe("DateUtils", () => {
     });
   });
 });
-
-

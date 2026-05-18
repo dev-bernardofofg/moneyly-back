@@ -49,7 +49,7 @@ describe("TransactionService", () => {
       updatedAt: new Date(),
     };
 
-    it("deve criar uma transação com sucesso", async () => {
+    it("creates a transaction successfully", async () => {
       (validateCategoryExistsForUser as jest.Mock).mockResolvedValue(undefined);
       (transactionRepository.create as jest.Mock).mockResolvedValue(
         mockCreatedTransaction
@@ -77,7 +77,7 @@ describe("TransactionService", () => {
       expect(result).toEqual(mockCreatedTransaction);
     });
 
-    it("deve criar transação com data atual quando data não é fornecida", async () => {
+    it("creates a transaction with the current date when no date is provided", async () => {
       const dataWithoutDate = { ...mockTransactionData };
       delete (dataWithoutDate as Partial<typeof mockTransactionData>).date;
 
@@ -96,7 +96,7 @@ describe("TransactionService", () => {
       );
     });
 
-    it("deve lançar erro quando categoria não existe", async () => {
+    it("throws an error when the category does not exist", async () => {
       (validateCategoryExistsForUser as jest.Mock).mockRejectedValue(
         new Error("Categoria não encontrada")
       );
@@ -108,7 +108,7 @@ describe("TransactionService", () => {
       expect(transactionRepository.create).not.toHaveBeenCalled();
     });
 
-    it("deve lançar erro quando categoria não pertence ao usuário", async () => {
+    it("throws an error when the category does not belong to the user", async () => {
       (validateCategoryExistsForUser as jest.Mock).mockRejectedValue(
         new Error("Categoria não pertence ao usuário")
       );
@@ -139,7 +139,7 @@ describe("TransactionService", () => {
       updatedAt: new Date(),
     };
 
-    it("deve atualizar uma transação com sucesso", async () => {
+    it("updates a transaction successfully", async () => {
       const updateData = {
         title: "Jantar Atualizado",
         amount: "80.00",
@@ -169,7 +169,7 @@ describe("TransactionService", () => {
       expect(result).toEqual(mockUpdatedTransaction);
     });
 
-    it("deve atualizar transação sem validar categoria quando categoria não é alterada", async () => {
+    it("updates a transaction without validating the category when it is unchanged", async () => {
       const updateData = {
         title: "Título Atualizado",
         amount: "100.00",
@@ -189,7 +189,7 @@ describe("TransactionService", () => {
       );
     });
 
-    it("deve lançar erro quando transação não é encontrada", async () => {
+    it("throws an error when the transaction is not found", async () => {
       (transactionRepository.update as jest.Mock).mockResolvedValue(null);
 
       await expect(
@@ -199,7 +199,7 @@ describe("TransactionService", () => {
       ).rejects.toThrow("Transação não encontrada");
     });
 
-    it("deve lançar erro quando nova categoria não existe", async () => {
+    it("throws an error when the new category does not exist", async () => {
       (validateCategoryExistsForUser as jest.Mock).mockRejectedValue(
         new Error("Categoria não encontrada")
       );
@@ -213,7 +213,7 @@ describe("TransactionService", () => {
       expect(transactionRepository.update).not.toHaveBeenCalled();
     });
 
-    it("deve aplicar timezone quando data é atualizada", async () => {
+    it("applies timezone when the date is updated", async () => {
       const updateData = {
         date: new Date("2024-02-01T10:00:00Z"),
       };

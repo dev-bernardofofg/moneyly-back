@@ -1,5 +1,5 @@
 /**
- * Testes unitários para GoalService
+ * Unit tests for GoalService
  */
 
 import { goalRepository } from "../../../src/repositories/goal.repository";
@@ -57,7 +57,7 @@ describe("GoalService", () => {
       updatedAt: new Date(),
     };
 
-    it("deve criar uma meta com sucesso", async () => {
+    it("creates a goal successfully", async () => {
       (goalRepository.create as jest.Mock).mockResolvedValue(mockCreatedGoal);
 
       const result = await createGoalService(mockUserId, mockGoalData);
@@ -72,7 +72,7 @@ describe("GoalService", () => {
       expect(result).toEqual(mockCreatedGoal);
     });
 
-    it("deve criar meta sem descrição", async () => {
+    it("creates a goal without description", async () => {
       const dataWithoutDescription = {
         title: "Nova Meta",
         targetAmount: 5000,
@@ -93,7 +93,7 @@ describe("GoalService", () => {
       );
     });
 
-    it("deve converter targetAmount para string", async () => {
+    it("converts targetAmount to string", async () => {
       (goalRepository.create as jest.Mock).mockResolvedValue(mockCreatedGoal);
 
       await createGoalService(mockUserId, {
@@ -108,7 +108,7 @@ describe("GoalService", () => {
       );
     });
 
-    it("deve converter targetDate para Date", async () => {
+    it("converts targetDate to Date", async () => {
       (goalRepository.create as jest.Mock).mockResolvedValue(mockCreatedGoal);
 
       await createGoalService(mockUserId, mockGoalData);
@@ -140,7 +140,7 @@ describe("GoalService", () => {
       },
     ];
 
-    it("deve retornar todas as metas ativas do usuário", async () => {
+    it("returns all active goals for the user", async () => {
       (goalRepository.findByUserIdActive as jest.Mock).mockResolvedValue(
         mockGoals
       );
@@ -156,7 +156,7 @@ describe("GoalService", () => {
       expect(result[0]!.progress).toHaveProperty("daysRemaining");
     });
 
-    it("deve retornar array vazio quando usuário não tem metas", async () => {
+    it("returns an empty array when the user has no goals", async () => {
       (goalRepository.findByUserIdActive as jest.Mock).mockResolvedValue([]);
 
       const result = await getGoalsService(mockUserId);
@@ -185,7 +185,7 @@ describe("GoalService", () => {
       },
     ];
 
-    it("deve retornar metas com progresso calculado", async () => {
+    it("returns goals with computed progress", async () => {
       (goalRepository.findByUserIdActive as jest.Mock).mockResolvedValue(
         mockGoals
       );
@@ -216,7 +216,7 @@ describe("GoalService", () => {
       targetAmount: "5000",
     };
 
-    it("deve retornar meta específica do usuário", async () => {
+    it("returns the user's specific goal", async () => {
       const mockGoalWithMilestones = {
         ...mockGoal,
         milestones: [],
@@ -243,7 +243,7 @@ describe("GoalService", () => {
       expect(result).toEqual(mockGoalWithMilestones);
     });
 
-    it("deve validar se meta existe", async () => {
+    it("validates whether the goal exists", async () => {
       (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(null);
       (validateGoalExists as jest.Mock).mockImplementation((goal) => {
         if (!goal) throw new Error("Meta não encontrada");
@@ -273,7 +273,7 @@ describe("GoalService", () => {
       milestones: [],
     };
 
-    it("deve atualizar uma meta com sucesso", async () => {
+    it("updates a goal successfully", async () => {
       (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(
         mockGoal
       );
@@ -302,7 +302,7 @@ describe("GoalService", () => {
       expect(result).toEqual(mockUpdatedGoalWithMilestones);
     });
 
-    it("deve atualizar apenas campos fornecidos", async () => {
+    it("updates only the provided fields", async () => {
       (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(
         mockGoal
       );
@@ -322,7 +322,7 @@ describe("GoalService", () => {
       });
     });
 
-    it("deve converter targetDate para Date quando fornecido", async () => {
+    it("converts targetDate to Date when provided", async () => {
       (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(
         mockGoal
       );
@@ -345,7 +345,7 @@ describe("GoalService", () => {
       );
     });
 
-    it("deve validar se meta pertence ao usuário", async () => {
+    it("validates that the goal belongs to the user", async () => {
       (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(
         mockGoal
       );
@@ -370,7 +370,7 @@ describe("GoalService", () => {
       title: "Meta a Deletar",
     };
 
-    it("deve deletar uma meta com sucesso", async () => {
+    it("deletes a goal successfully", async () => {
       (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(
         mockGoal
       );
@@ -390,7 +390,7 @@ describe("GoalService", () => {
       expect(result).toBe(true);
     });
 
-    it("deve validar se meta pertence ao usuário antes de deletar", async () => {
+    it("validates goal ownership before deleting", async () => {
       (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(
         mockGoal
       );
@@ -422,7 +422,7 @@ describe("GoalService", () => {
       milestones: [],
     };
 
-    it("deve adicionar valor à meta com sucesso", async () => {
+    it("adds amount to the goal successfully", async () => {
       (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(
         mockGoal
       );
@@ -442,7 +442,7 @@ describe("GoalService", () => {
       expect(result).toEqual(mockUpdatedGoalWithMilestones);
     });
 
-    it("deve validar se meta pertence ao usuário antes de adicionar valor", async () => {
+    it("validates goal ownership before adding amount", async () => {
       (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(
         mockGoal
       );
@@ -482,7 +482,7 @@ describe("GoalService", () => {
       },
     ];
 
-    it("deve retornar metas com status calculado", async () => {
+    it("returns goals with computed status", async () => {
       (goalRepository.findByUserIdActive as jest.Mock).mockResolvedValue(
         mockGoals
       );
@@ -507,7 +507,7 @@ describe("GoalService", () => {
       });
     });
 
-    it("deve filtrar metas nulas", async () => {
+    it("filters out null goals", async () => {
       (goalRepository.findByUserIdActive as jest.Mock).mockResolvedValue([
         { id: "goal-1" },
         { id: "goal-2" },
@@ -522,7 +522,7 @@ describe("GoalService", () => {
       expect(result[0]!.id).toBe("goal-1");
     });
 
-    it("deve calcular status 'overdue' para metas atrasadas", async () => {
+    it("computes 'overdue' status for late goals", async () => {
       (goalRepository.findByUserIdActive as jest.Mock).mockResolvedValue([
         { id: "goal-1" },
       ]);
@@ -538,7 +538,7 @@ describe("GoalService", () => {
       expect(result[0]!.status).toBe("overdue");
     });
 
-    it("deve calcular diferentes status baseado na porcentagem", async () => {
+    it("computes different statuses based on percentage", async () => {
       const testCases = [
         { percentage: 100, expected: "completed" },
         { percentage: 80, expected: "on-track" },

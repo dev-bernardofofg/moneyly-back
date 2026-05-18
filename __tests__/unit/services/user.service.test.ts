@@ -38,7 +38,7 @@ describe("UserService", () => {
   });
 
   describe("createUserService", () => {
-    it("deve criar um usuário com sucesso", async () => {
+    it("creates a user successfully", async () => {
       const userData = {
         name: "John Doe",
         email: "john@example.com",
@@ -84,7 +84,7 @@ describe("UserService", () => {
       expect(result.refreshToken).toBe("mock-refresh-token");
     });
 
-    it("deve lançar erro se email já existe", async () => {
+    it("throws an error if the email already exists", async () => {
       const userData = {
         name: "John Doe",
         email: "existing@example.com",
