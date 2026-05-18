@@ -8,6 +8,7 @@ import type { GetDashboardOverviewQuery } from "../schemas/overview.schema";
 import {
   getAvailablePeriodsService,
   getDashboardOverviewService,
+  getDashboardPreviewsService,
   getFinancialInsightsService,
   getPlannerOverviewService,
   getTransactionsByUserId,
@@ -37,10 +38,17 @@ export const getDashboardOverview = async (
     const { stats, chart, recentTransactions } =
       await getDashboardOverviewService(Number(monthlyIncome) || 0, transactions);
 
+    const previews = await getDashboardPreviewsService(
+      userId,
+      financialDayStart ?? 1,
+      financialDayEnd ?? 31
+    );
+
     return ResponseHandler.success(
       res,
       {
         stats,
+        previews,
         selectedPeriod: selectedPeriod
           ? {
               id: selectedPeriod.id,

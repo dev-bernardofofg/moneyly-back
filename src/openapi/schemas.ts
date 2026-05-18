@@ -266,6 +266,18 @@ export const DashboardOverviewSchema = registry.register(
     }),
     recentTransactions: z.array(RecentTransactionItemSchema),
     transactionsCount: z.number().int(),
+    previews: z.object({
+      subscriptions: z.object({
+        count: z.number().int(),
+        topMonthlyCost: z.number().nullable(),
+        topTitle: z.string().nullable(),
+      }),
+      comparison: z.object({
+        signal: z.enum(["up", "down", "stable"]),
+        deltaPct: z.number().nullable(),
+        topHighlight: z.string().nullable(),
+      }),
+    }),
   })
 );
 
