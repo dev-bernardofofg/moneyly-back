@@ -35,8 +35,10 @@ import {
   NotificationSchema,
   SubscriptionCandidateSchema,
   PlannerOverviewSchema,
+  CurrentPeriodSummarySchema,
   RecurringTransactionSchema,
   TransactionListSummarySchema,
+  TransactionSummarySchema,
   TransactionSchema,
   UserSchema,
 } from "./schemas";
@@ -201,9 +203,9 @@ route({ method: "post", path: "/transactions/create", tag: "Transactions", summa
 route({ method: "get", path: "/transactions/", tag: "Transactions", summary: "Listar transações (paginado)", query: transactionsListQuery, ok: ok(wrapPaginatedWithSummary(TransactionSchema, TransactionListSummarySchema)) });
 route({ method: "put", path: "/transactions/{id}", tag: "Transactions", summary: "Atualizar transação", body: transactionUpdateSchema, params: idParamSchema, ok: ok(wrapSuccess(TransactionSchema)) });
 route({ method: "delete", path: "/transactions/{id}", tag: "Transactions", summary: "Deletar transação", params: idParamSchema, ok: ok(nullData) });
-route({ method: "get", path: "/transactions/summary", tag: "Transactions", summary: "Resumo financeiro" });
+route({ method: "get", path: "/transactions/summary", tag: "Transactions", summary: "Resumo financeiro", ok: ok(wrapSuccess(TransactionSummarySchema)) });
 route({ method: "get", path: "/transactions/summary-by-month", tag: "Transactions", summary: "Resumo agregado por mês", ok: ok(wrapSuccess(z.array(MonthlySummaryItemSchema))) });
-route({ method: "get", path: "/transactions/summary-current-period", tag: "Transactions", summary: "Resumo do período atual" });
+route({ method: "get", path: "/transactions/summary-current-period", tag: "Transactions", summary: "Resumo do período atual", ok: ok(wrapSuccess(CurrentPeriodSummarySchema)) });
 route({ method: "get", path: "/transactions/export", tag: "Transactions", summary: "Exportar transações em CSV", query: exportQuery, csv: true });
 route({ method: "get", path: "/transactions/subscriptions", tag: "Transactions", summary: "Detectar assinaturas (heurística)", ok: ok(wrapSuccess(z.array(SubscriptionCandidateSchema))) });
 

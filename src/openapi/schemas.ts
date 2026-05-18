@@ -416,6 +416,38 @@ export const NotificationSchema = registry.register(
   })
 );
 
+export const TransactionSummarySchema = registry.register(
+  "TransactionSummary",
+  z.object({
+    totalIncome: z.number(),
+    totalExpenses: z.number(),
+    monthlyIncome: z.number(),
+    balance: z.number(),
+    percentUsed: z.number().nullable(),
+    byCategory: z.record(z.string(), z.number()),
+    alert: z.string().nullable(),
+  })
+);
+
+export const CurrentPeriodSummarySchema = registry.register(
+  "CurrentPeriodSummary",
+  z.object({
+    currentPeriod: z.object({
+      startDate: isoDate,
+      endDate: isoDate,
+      description: z.string(),
+    }),
+    totalIncome: z.number(),
+    totalExpenses: z.number(),
+    monthlyIncome: z.number(),
+    balance: z.number(),
+    percentUsed: z.number().nullable(),
+    byCategory: z.record(z.string(), z.number()),
+    alert: z.string().nullable(),
+    transactionsCount: z.number().int(),
+  })
+);
+
 export const ForecastResponseSchema = registry.register(
   "ForecastResponse",
   z.object({
