@@ -65,6 +65,13 @@ Nunca `res.status().json()` direto. Métodos: `success`, `created`, `paginated`,
 - Criar data: `createNormalizedSaoPauloDate(year, month0-11, day)` — normaliza dia inválido para último dia do mês.
 - Período financeiro do usuário: `financialDayStart`/`financialDayEnd` (colunas em `users`). Lógica em `getCurrentFinancialPeriod`.
 
+## Migrations (Drizzle)
+
+- Schema histórico foi aplicado via `db:push`; tracking `drizzle.__drizzle_migrations` ficava vazio → `db:migrate` colidia ("relation already exists").
+- **Resolvido:** `pnpm db:baseline` (`src/scripts/baseline-migrations.ts`) registra migrations do journal já existentes (hash sha256 idêntico ao drizzle + `created_at=journal.when`). Idempotente.
+- Fluxo agora: `db:generate` → revisar `.sql` → `db:migrate` (limpo, idempotente). `db:push` ainda ok p/ dev rápido, mas migrate é a fonte rastreável.
+- Se um ambiente novo acusar desync push/migrate, rodar `pnpm db:baseline` 1x antes do `db:migrate`.
+
 ## Idioma & commits
 
 - Código/identificadores em inglês. Mensagens de API/erro e docs em **português**.

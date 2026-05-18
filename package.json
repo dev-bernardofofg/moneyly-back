@@ -11,6 +11,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:push": "drizzle-kit push",
+    "db:baseline": "tsx src/scripts/baseline-migrations.ts",
     "restore:categories": "ts-node src/lib/seed-categories.ts",
     "migrate:periods": "tsx src/scripts/migrate-transactions-periods.ts",
     "openapi:gen": "tsx src/openapi/generate.ts",
