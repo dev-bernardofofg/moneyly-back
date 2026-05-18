@@ -100,6 +100,30 @@ describe("openapi generator", () => {
     expect(page?.schema?.type).toBe("integer");
   });
 
+  it("não emite allOf:[{$ref},{nullable}] (forma canônica nullable+allOf)", () => {
+    const d = doc as unknown as Record<string, unknown>;
+    let bad = 0;
+    const walk = (o: unknown): void => {
+      if (Array.isArray(o)) return o.forEach(walk);
+      if (o && typeof o === "object") {
+        const obj = o as Record<string, unknown>;
+        const allOf = obj.allOf as Array<Record<string, unknown>> | undefined;
+        if (
+          Array.isArray(allOf) &&
+          allOf.some(
+            (m) => m && m.nullable === true && Object.keys(m).length === 1
+          ) &&
+          allOf.some((m) => m && typeof m.$ref === "string")
+        ) {
+          bad++;
+        }
+        Object.values(obj).forEach(walk);
+      }
+    };
+    walk(d);
+    expect(bad).toBe(0);
+  });
+
   it("regressão router↔openapi: todo endpoint declarado nos routers está no doc", () => {
     const missing = scanRouters().filter(
       (r) => !(doc.paths as Record<string, Record<string, unknown>>)?.[r.path]?.[

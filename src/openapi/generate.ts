@@ -4,11 +4,40 @@ import { join } from "path";
 import { registry } from "./registry";
 import "./paths"; // side-effect: registra todos os endpoints
 
+/**
+ * zod-to-openapi v7 emite ref-nullable como `{ allOf: [ {$ref}, {nullable:true} ] }`.
+ * Forma OpenAPI 3.0 canônica (e que consumers zod/strict como Kubb aceitam):
+ * `{ nullable: true, allOf: [ {$ref} ] }`. Normaliza recursivamente.
+ */
+function normalizeNullableRefs<T>(node: T): T {
+  if (Array.isArray(node)) {
+    return node.map((n) => normalizeNullableRefs(n)) as unknown as T;
+  }
+  if (node && typeof node === "object") {
+    const obj = node as Record<string, unknown>;
+    const allOf = obj.allOf as Array<Record<string, unknown>> | undefined;
+    if (
+      Array.isArray(allOf) &&
+      allOf.some((m) => m && m.nullable === true && Object.keys(m).length === 1) &&
+      allOf.some((m) => m && typeof m.$ref === "string")
+    ) {
+      const refs = allOf.filter((m) => !(m.nullable === true && Object.keys(m).length === 1));
+      const rest: Record<string, unknown> = { ...obj, nullable: true, allOf: refs };
+      return normalizeNullableRefs(rest) as T;
+    }
+    for (const k of Object.keys(obj)) {
+      obj[k] = normalizeNullableRefs(obj[k]);
+    }
+    return obj as T;
+  }
+  return node;
+}
+
 export function generateOpenApiDocument(): ReturnType<
   OpenApiGeneratorV3["generateDocument"]
 > {
   const generator = new OpenApiGeneratorV3(registry.definitions);
-  return generator.generateDocument({
+  const doc = generator.generateDocument({
     openapi: "3.0.0",
     info: {
       title: "Moneyly API",
@@ -21,6 +50,7 @@ export function generateOpenApiDocument(): ReturnType<
       { url: "/", description: "Relativo (deploy)" },
     ],
   });
+  return normalizeNullableRefs(doc);
 }
 
 // Execução direta (tsx src/openapi/generate.ts) → escreve openapi.json na raiz do back
