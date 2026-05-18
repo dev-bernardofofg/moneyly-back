@@ -38,7 +38,7 @@ beforeEach(() => {
 });
 
 describe("processUserBudgetAlerts", () => {
-  it("cria notificação p/ orçamento excedido (severity danger)", async () => {
+  it("creates notification for exceeded budget (danger severity)", async () => {
     mockedBudget.mockResolvedValue([budget("exceeded")]);
     mockedRepo.findByDedupeKey.mockResolvedValue(null);
     mockedRepo.create.mockResolvedValue({} as never);
@@ -51,7 +51,7 @@ describe("processUserBudgetAlerts", () => {
     expect(arg.dedupeKey).toBe(`budget:b1:${PERIOD.id}:exceeded`);
   });
 
-  it("idempotente: dedupeKey já existe → não cria", async () => {
+  it("idempotent: dedupeKey already exists → no create", async () => {
     mockedBudget.mockResolvedValue([budget("warning")]);
     mockedRepo.findByDedupeKey.mockResolvedValue({ id: "n1" } as never);
 
@@ -60,14 +60,14 @@ describe("processUserBudgetAlerts", () => {
     expect(mockedRepo.create).not.toHaveBeenCalled();
   });
 
-  it("status safe → nenhuma notificação", async () => {
+  it("safe status → no notification", async () => {
     mockedBudget.mockResolvedValue([budget("safe")]);
     await processUserBudgetAlerts(USER);
     expect(mockedRepo.findByDedupeKey).not.toHaveBeenCalled();
     expect(mockedRepo.create).not.toHaveBeenCalled();
   });
 
-  it("corrida do scheduler: create lança → não propaga", async () => {
+  it("scheduler race: create throws → does not propagate", async () => {
     mockedBudget.mockResolvedValue([budget("warning")]);
     mockedRepo.findByDedupeKey.mockResolvedValue(null);
     mockedRepo.create.mockRejectedValue(new Error("unique violation"));
@@ -77,7 +77,7 @@ describe("processUserBudgetAlerts", () => {
 });
 
 describe("markNotificationReadService", () => {
-  it("não encontrada → HttpError 404", async () => {
+  it("not found → HttpError 404", async () => {
     mockedRepo.markRead.mockResolvedValue(null);
     await expect(
       markNotificationReadService("x", USER)

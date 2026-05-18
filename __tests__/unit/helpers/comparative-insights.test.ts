@@ -28,7 +28,7 @@ const periods: ComparativePeriod[] = [
 ];
 
 describe("buildComparison", () => {
-  it("alta de categoria → signal up + deltaPct", () => {
+  it("category increase → signal up + deltaPct", () => {
     const r = buildComparison(
       [
         tx({ date: new Date("2026-03-15"), amount: "140" }), // current
@@ -45,7 +45,7 @@ describe("buildComparison", () => {
     expect(r.highlights[0]).toContain("Restaurante");
   });
 
-  it("categoria nova (sem histórico) → deltaPct null", () => {
+  it("new category (no history) → deltaPct null", () => {
     const r = buildComparison(
       [tx({ date: new Date("2026-03-10"), amount: "50" })],
       periods
@@ -55,7 +55,7 @@ describe("buildComparison", () => {
     expect(r.byCategory[0]!.message).toContain("Novo gasto");
   });
 
-  it("variação <10% → stable", () => {
+  it("variation <10% → stable", () => {
     const r = buildComparison(
       [
         tx({ date: new Date("2026-03-15"), amount: "105" }),
@@ -68,7 +68,7 @@ describe("buildComparison", () => {
     expect(r.highlights).toHaveLength(0);
   });
 
-  it("sem períodos → vazio seguro", () => {
+  it("no periods → safe empty", () => {
     const r = buildComparison([tx({})], []);
     expect(r.totals.deltaPct).toBeNull();
     expect(r.byCategory).toEqual([]);

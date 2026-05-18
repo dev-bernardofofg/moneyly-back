@@ -18,11 +18,11 @@ describe("Insights features (F1/F3/F4/F5)", () => {
   });
 
   describe("GET /overview/forecast (F1)", () => {
-    it("401 sem token", async () => {
+    it("401 without token", async () => {
       await request(app).get("/overview/forecast").expect(401);
     });
 
-    it("200 com shape de projeção", async () => {
+    it("200 with forecast shape", async () => {
       const r = await request(app)
         .get("/overview/forecast")
         .set("Authorization", `Bearer ${token}`)
@@ -37,11 +37,11 @@ describe("Insights features (F1/F3/F4/F5)", () => {
   });
 
   describe("GET /transactions/subscriptions (F3)", () => {
-    it("401 sem token", async () => {
+    it("401 without token", async () => {
       await request(app).get("/transactions/subscriptions").expect(401);
     });
 
-    it("200 array (vazio p/ usuário novo)", async () => {
+    it("200 array (empty for new user)", async () => {
       const r = await request(app)
         .get("/transactions/subscriptions")
         .set("Authorization", `Bearer ${token}`)
@@ -52,11 +52,11 @@ describe("Insights features (F1/F3/F4/F5)", () => {
   });
 
   describe("GET /overview/insights/comparison (F4)", () => {
-    it("401 sem token", async () => {
+    it("401 without token", async () => {
       await request(app).get("/overview/insights/comparison").expect(401);
     });
 
-    it("200 com totals/byCategory/highlights", async () => {
+    it("200 with totals/byCategory/highlights", async () => {
       const r = await request(app)
         .get("/overview/insights/comparison?periodsBack=3")
         .set("Authorization", `Bearer ${token}`)
@@ -71,7 +71,7 @@ describe("Insights features (F1/F3/F4/F5)", () => {
   });
 
   describe("GET /overview/dashboard previews (F5)", () => {
-    it("data.previews aditivo presente", async () => {
+    it("additive data.previews present", async () => {
       const r = await request(app)
         .get("/overview/dashboard")
         .set("Authorization", `Bearer ${token}`)

@@ -30,7 +30,7 @@ const expense = (amount: string, date: Date, title = "Spotify") => ({
 beforeEach(() => jest.clearAllMocks());
 
 describe("getDashboardPreviewsService", () => {
-  it("sem transações → nulls e signal stable", async () => {
+  it("no transactions → nulls and stable signal", async () => {
     txRepo.findAllByUserId.mockResolvedValue([] as never);
 
     const r = await getDashboardPreviewsService(USER, 1, 31);
@@ -45,7 +45,7 @@ describe("getDashboardPreviewsService", () => {
     expect(r.comparison.topHighlight).toBeNull();
   });
 
-  it("detecta assinatura recorrente (resumo top)", async () => {
+  it("detects recurring subscription (top summary)", async () => {
     txRepo.findAllByUserId.mockResolvedValue([
       expense("19.90", new Date("2026-01-10")),
       expense("19.90", new Date("2026-02-10")),

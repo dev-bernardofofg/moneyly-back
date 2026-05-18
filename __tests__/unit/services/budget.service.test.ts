@@ -59,7 +59,7 @@ beforeEach(() => {
 });
 
 describe("createBudgetService", () => {
-  it("cria orçamento (limite vira string)", async () => {
+  it("creates budget (limit becomes string)", async () => {
     budgetRepo.findByUserIdAndCategoryId.mockResolvedValue(null);
     budgetRepo.create.mockResolvedValue({ id: "b1" } as never);
 
@@ -76,7 +76,7 @@ describe("createBudgetService", () => {
     expect(r).toEqual({ id: "b1" });
   });
 
-  it("rejeita duplicado (409)", async () => {
+  it("rejects duplicate (409)", async () => {
     budgetRepo.findByUserIdAndCategoryId.mockResolvedValue({ id: "x" } as never);
     await expect(
       createBudgetService(USER, { categoryId: "cat-1", monthlyLimit: 100 })
@@ -86,7 +86,7 @@ describe("createBudgetService", () => {
 });
 
 describe("getUserBudgetsService", () => {
-  it("calcula spent/remaining/percentage/status do período atual", async () => {
+  it("computes spent/remaining/percentage/status for current period", async () => {
     budgetRepo.getBudgetWithCategory.mockResolvedValue([
       budgetWithCat(),
     ] as never);
@@ -106,7 +106,7 @@ describe("getUserBudgetsService", () => {
     });
   });
 
-  it("usa getPeriodById quando periodId informado", async () => {
+  it("uses getPeriodById when periodId provided", async () => {
     budgetRepo.getBudgetWithCategory.mockResolvedValue([] as never);
     txRepo.findByPeriodId.mockResolvedValue([] as never);
 
@@ -115,7 +115,7 @@ describe("getUserBudgetsService", () => {
     expect(periodSvc.getPeriodById).toHaveBeenCalledWith("period-9", USER);
   });
 
-  it("período inexistente → 404", async () => {
+  it("nonexistent period → 404", async () => {
     budgetRepo.getBudgetWithCategory.mockResolvedValue([] as never);
     periodSvc.ensureCurrentPeriodExists.mockResolvedValue(null as never);
 
@@ -124,7 +124,7 @@ describe("getUserBudgetsService", () => {
 });
 
 describe("updateBudgetService", () => {
-  it("valida existência e atualiza com limite string", async () => {
+  it("validates existence and updates with string limit", async () => {
     mockedValidateBudgetExists.mockResolvedValue(undefined);
     budgetRepo.update.mockResolvedValue({ id: "b1" } as never);
 
@@ -137,7 +137,7 @@ describe("updateBudgetService", () => {
     expect(r).toEqual({ id: "b1" });
   });
 
-  it("propaga erro de validação", async () => {
+  it("propagates validation error", async () => {
     mockedValidateBudgetExists.mockRejectedValue(
       new HttpError(404, "Orçamento não encontrado")
     );
@@ -149,7 +149,7 @@ describe("updateBudgetService", () => {
 });
 
 describe("deleteBudgetService", () => {
-  it("valida existência e deleta", async () => {
+  it("validates existence and deletes", async () => {
     mockedValidateBudgetExists.mockResolvedValue(undefined);
     budgetRepo.delete.mockResolvedValue(true as never);
 
@@ -175,7 +175,7 @@ describe("getBudgetStatus", () => {
 });
 
 describe("getBudgetProgressService", () => {
-  it("percentage limitado a 100 e remaining não-negativo", async () => {
+  it("percentage capped at 100 and remaining non-negative", async () => {
     budgetRepo.getBudgetWithCategory.mockResolvedValue([
       budgetWithCat(),
     ] as never);
@@ -193,7 +193,7 @@ describe("getBudgetProgressService", () => {
 });
 
 describe("getBudgetProgressByCategory", () => {
-  it("sem orçamento → safe 0%", async () => {
+  it("no budget → safe 0%", async () => {
     budgetRepo.findByCategoryId.mockResolvedValue(null);
 
     const r = await getBudgetProgressByCategory(USER, "cat-1");
@@ -201,7 +201,7 @@ describe("getBudgetProgressByCategory", () => {
     expect(r).toEqual({ percentage: 0, status: "safe" });
   });
 
-  it("com orçamento calcula percentage/status", async () => {
+  it("with budget computes percentage/status", async () => {
     budgetRepo.findByCategoryId.mockResolvedValue({
       monthlyLimit: "1000",
     } as never);

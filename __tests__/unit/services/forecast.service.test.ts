@@ -41,7 +41,7 @@ beforeEach(() => {
 });
 
 describe("getForecastService", () => {
-  it("só realizado, sem recorrentes → projeção zerada", async () => {
+  it("realized only, no recurrences → zeroed projection", async () => {
     const now = new Date();
     mockedPeriodSvc.ensureCurrentPeriodExists.mockResolvedValue(
       periodAround(now) as never
@@ -61,7 +61,7 @@ describe("getForecastService", () => {
     expect(r.projectedEndBalance).toBe(700);
   });
 
-  it("conta recorrente futura dentro da janela do período", async () => {
+  it("counts a future recurrence within the period window", async () => {
     const now = new Date();
     mockedPeriodSvc.ensureCurrentPeriodExists.mockResolvedValue(
       periodAround(now) as never
@@ -91,7 +91,7 @@ describe("getForecastService", () => {
     expect(r.projectedEndBalance).toBe(1000 - 200);
   });
 
-  it("ignora recorrente com parcelas esgotadas", async () => {
+  it("ignores a recurrence with exhausted installments", async () => {
     const now = new Date();
     mockedPeriodSvc.ensureCurrentPeriodExists.mockResolvedValue(
       periodAround(now) as never
@@ -117,7 +117,7 @@ describe("getForecastService", () => {
     expect(r.projectedEndBalance).toBe(0);
   });
 
-  it("periodId inválido → HttpError 404", async () => {
+  it("invalid periodId → HttpError 404", async () => {
     mockedPeriodSvc.getPeriodById.mockResolvedValue(null as never);
     await expect(
       getForecastService(USER, "99999999-9999-9999-9999-999999999999")

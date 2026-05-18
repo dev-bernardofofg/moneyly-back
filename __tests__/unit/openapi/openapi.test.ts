@@ -49,18 +49,18 @@ function scanRouters(): Array<{ method: string; path: string; file: string }> {
 }
 
 describe("openapi generator", () => {
-  it("gera documento OpenAPI 3.0 válido", () => {
+  it("generates a valid OpenAPI 3.0 document", () => {
     expect(doc.openapi).toBe("3.0.0");
     expect(Object.keys(doc.paths ?? {}).length).toBeGreaterThan(30);
   });
 
-  it("expõe endpoints que estavam ausentes no openapi.json podre (R2/R4/R5)", () => {
+  it("exposes endpoints that were missing in the stale openapi.json (R2/R4/R5)", () => {
     expect(doc.paths?.["/transactions/export"]?.get).toBeDefined();
     expect(doc.paths?.["/overview/insights"]?.get).toBeDefined();
     expect(doc.paths?.["/transactions/summary-by-month"]?.get).toBeDefined();
   });
 
-  it("rotas públicas não exigem auth; rotas privadas exigem bearer", () => {
+  it("public routes require no auth; private routes require bearer", () => {
     expect(doc.paths?.["/auth/sign-up"]?.post?.security).toEqual([]);
     expect(doc.paths?.["/overview/insights"]?.get?.security).toEqual([
       { bearerAuth: [] },
@@ -68,7 +68,7 @@ describe("openapi generator", () => {
     expect(doc.components?.securitySchemes?.bearerAuth).toBeDefined();
   });
 
-  it("components.schemas povoado com entidades nomeadas (I1 parte-2)", () => {
+  it("components.schemas populated with named entities (I1 part-2)", () => {
     const schemas = doc.components?.schemas ?? {};
     expect(Object.keys(schemas).length).toBeGreaterThanOrEqual(15);
     for (const name of [
@@ -84,7 +84,7 @@ describe("openapi generator", () => {
     }
   });
 
-  it("data referencia $ref (não mais {} genérico)", () => {
+  it("data references $ref (no longer generic {})", () => {
     const d = doc as unknown as Record<string, any>;
     const dataSchema =
       d.paths["/overview/insights"].get.responses["200"].content[
@@ -93,14 +93,14 @@ describe("openapi generator", () => {
     expect(dataSchema.$ref).toBe("#/components/schemas/FinancialInsights");
   });
 
-  it("query page/limit tipados como integer no contrato", () => {
+  it("query page/limit typed as integer in the contract", () => {
     const d = doc as unknown as Record<string, any>;
     const params = d.paths["/transactions/"].get.parameters ?? [];
     const page = params.find((p: { name: string }) => p.name === "page");
     expect(page?.schema?.type).toBe("integer");
   });
 
-  it("não emite allOf:[{$ref},{nullable}] (forma canônica nullable+allOf)", () => {
+  it("does not emit allOf:[{$ref},{nullable}] (canonical nullable+allOf)", () => {
     const d = doc as unknown as Record<string, unknown>;
     let bad = 0;
     const walk = (o: unknown): void => {
@@ -124,7 +124,7 @@ describe("openapi generator", () => {
     expect(bad).toBe(0);
   });
 
-  it("regressão router↔openapi: todo endpoint declarado nos routers está no doc", () => {
+  it("router↔openapi regression: every router-declared endpoint is in the doc", () => {
     const missing = scanRouters().filter(
       (r) => !(doc.paths as Record<string, Record<string, unknown>>)?.[r.path]?.[
         r.method

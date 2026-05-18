@@ -17,11 +17,11 @@ describe("Notification Endpoints (F2)", () => {
   });
 
   describe("GET /notifications", () => {
-    it("401 sem token", async () => {
+    it("401 without token", async () => {
       await request(app).get("/notifications").expect(401);
     });
 
-    it("200 paginado (vazio p/ usuário novo)", async () => {
+    it("200 paginated (empty for new user)", async () => {
       const r = await request(app)
         .get("/notifications")
         .set("Authorization", `Bearer ${token}`)
@@ -32,7 +32,7 @@ describe("Notification Endpoints (F2)", () => {
       expect(r.body).toHaveProperty("pagination");
     });
 
-    it("aceita ?unreadOnly=true", async () => {
+    it("accepts ?unreadOnly=true", async () => {
       const r = await request(app)
         .get("/notifications?unreadOnly=true")
         .set("Authorization", `Bearer ${token}`)
@@ -43,7 +43,7 @@ describe("Notification Endpoints (F2)", () => {
   });
 
   describe("PATCH /notifications/read-all", () => {
-    it("200 com updatedCount", async () => {
+    it("200 with updatedCount", async () => {
       const r = await request(app)
         .patch("/notifications/read-all")
         .set("Authorization", `Bearer ${token}`)
@@ -53,20 +53,20 @@ describe("Notification Endpoints (F2)", () => {
       expect(typeof r.body.data.updatedCount).toBe("number");
     });
 
-    it("401 sem token", async () => {
+    it("401 without token", async () => {
       await request(app).patch("/notifications/read-all").expect(401);
     });
   });
 
   describe("PATCH /notifications/:id/read", () => {
-    it("404 p/ id inexistente", async () => {
+    it("404 for nonexistent id", async () => {
       await request(app)
         .patch("/notifications/00000000-0000-0000-0000-000000000000/read")
         .set("Authorization", `Bearer ${token}`)
         .expect(404);
     });
 
-    it("404 p/ id mal-formado (uuid inválido)", async () => {
+    it("404 for malformed id (invalid uuid)", async () => {
       await request(app)
         .patch("/notifications/not-a-uuid/read")
         .set("Authorization", `Bearer ${token}`)

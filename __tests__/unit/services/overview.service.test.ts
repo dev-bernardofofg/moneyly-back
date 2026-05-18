@@ -47,8 +47,8 @@ const tx = (type: "income" | "expense", amount: string, catId = "c1") => ({
 
 beforeEach(() => jest.clearAllMocks());
 
-describe("getStatsOverview (puro via handlers)", () => {
-  it("soma income/expense e calcula balance/percentUsed", async () => {
+describe("getStatsOverview (pure via handlers)", () => {
+  it("sums income/expense and computes balance/percentUsed", async () => {
     const r = await getStatsOverview(
       [tx("income", "1000"), tx("expense", "400")] as never,
       2000
@@ -62,7 +62,7 @@ describe("getStatsOverview (puro via handlers)", () => {
 });
 
 describe("getDashboardOverviewService", () => {
-  it("retorna stats + chart + recentTransactions", async () => {
+  it("returns stats + chart + recentTransactions", async () => {
     const r = await getDashboardOverviewService(3000, [
       tx("expense", "100", "c1"),
       tx("income", "500", "c2"),
@@ -77,8 +77,8 @@ describe("getDashboardOverviewService", () => {
   });
 });
 
-describe("calculatePlanningStats (puro)", () => {
-  it("agrega orçado/poupança e percentuais", () => {
+describe("calculatePlanningStats (pure)", () => {
+  it("aggregates budgeted/savings and percentages", () => {
     const budgetProgress = [
       { monthlyLimit: "1000" },
       { monthlyLimit: "500" },
@@ -98,15 +98,15 @@ describe("calculatePlanningStats (puro)", () => {
     expect(r.availableForBudget).toBe(2000); // 4000-2000
   });
 
-  it("monthlyIncome 0 → percentuais 0 sem divisão por zero", () => {
+  it("monthlyIncome 0 → percentages 0, no division by zero", () => {
     const r = calculatePlanningStats([], [], 0);
     expect(r.budgetPercentage).toBe(0);
     expect(r.savingsPercentage).toBe(0);
   });
 });
 
-describe("calculateAlerts (puro)", () => {
-  it("gera danger p/ orçamento excedido e ordena por prioridade", () => {
+describe("calculateAlerts (pure)", () => {
+  it("emits danger for exceeded budget and sorts by priority", () => {
     const budgetProgress = [
       { percentage: 120, category: { name: "Comida" } },
       { percentage: 85, category: { name: "Lazer" } },
@@ -123,7 +123,7 @@ describe("calculateAlerts (puro)", () => {
     expect(alerts.some((a) => a.type === "danger")).toBe(true);
   });
 
-  it("sem alertas quando tudo saudável", () => {
+  it("no alerts when everything healthy", () => {
     const alerts = calculateAlerts(
       { budgetPercentage: 10, savingsPercentage: 0 } as never,
       1000,
@@ -135,7 +135,7 @@ describe("calculateAlerts (puro)", () => {
 });
 
 describe("getPlannerOverviewService", () => {
-  it("combina stats + alerts dos serviços de budget/goal", async () => {
+  it("combines stats + alerts from budget/goal services", async () => {
     mockedBudgetProgress.mockResolvedValue([{ monthlyLimit: "1000" }]);
     mockedGoalsProgress.mockResolvedValue([
       { targetAmount: "2000", currentAmount: "0" },
@@ -152,7 +152,7 @@ describe("getPlannerOverviewService", () => {
 });
 
 describe("getTransactionsByUserId", () => {
-  it("periodId existente → busca por período", async () => {
+  it("existing periodId → fetch by period", async () => {
     fpRepo.findAllByUserWithTransactionCount.mockResolvedValue([
       {
         id: "sel",
@@ -172,7 +172,7 @@ describe("getTransactionsByUserId", () => {
     expect(r.selectedPeriod?.id).toBe("sel");
   });
 
-  it("periodId inexistente → transações vazias", async () => {
+  it("nonexistent periodId → empty transactions", async () => {
     fpRepo.findAllByUserWithTransactionCount.mockResolvedValue([] as never);
 
     const r = await getTransactionsByUserId(USER, undefined, "nope");

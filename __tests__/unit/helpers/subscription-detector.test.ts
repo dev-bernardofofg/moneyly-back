@@ -22,14 +22,14 @@ const tx = (over: Partial<Tx>): Tx =>
   }) as Tx;
 
 describe("normalizeTitle", () => {
-  it("remove acento e sufixo numérico", () => {
+  it("strips accents and trailing numeric suffix", () => {
     expect(normalizeTitle("Spotify 03/12")).toBe("spotify");
     expect(normalizeTitle("Energia Elétrica")).toBe("energia eletrica");
   });
 });
 
 describe("groupSubscriptionCandidates", () => {
-  it("3 cobranças mensais mesmo valor → 1 candidato monthly", () => {
+  it("3 monthly charges same amount → 1 monthly candidate", () => {
     const r = groupSubscriptionCandidates([
       tx({ date: new Date("2026-01-10") }),
       tx({ date: new Date("2026-02-10") }),
@@ -41,7 +41,7 @@ describe("groupSubscriptionCandidates", () => {
     expect(r[0]!.monthlyCost).toBeCloseTo(19.9);
   });
 
-  it("<3 ocorrências → vazio", () => {
+  it("<3 occurrences → empty", () => {
     const r = groupSubscriptionCandidates([
       tx({ date: new Date("2026-01-10") }),
       tx({ date: new Date("2026-02-10") }),
@@ -49,7 +49,7 @@ describe("groupSubscriptionCandidates", () => {
     expect(r).toEqual([]);
   });
 
-  it("já modelado como recorrente → excluído", () => {
+  it("already modeled as recurring → excluded", () => {
     const r = groupSubscriptionCandidates([
       tx({ date: new Date("2026-01-10"), recurringTransactionId: "r1" }),
       tx({ date: new Date("2026-02-10"), recurringTransactionId: "r1" }),
@@ -58,7 +58,7 @@ describe("groupSubscriptionCandidates", () => {
     expect(r).toEqual([]);
   });
 
-  it("valor inconsistente (>10%) → não agrupa", () => {
+  it("inconsistent amount (>10%) → does not group", () => {
     const r = groupSubscriptionCandidates([
       tx({ date: new Date("2026-01-10"), amount: "10" }),
       tx({ date: new Date("2026-02-10"), amount: "100" }),
@@ -67,7 +67,7 @@ describe("groupSubscriptionCandidates", () => {
     expect(r).toEqual([]);
   });
 
-  it("cadência irregular → descarta", () => {
+  it("irregular cadence → discarded", () => {
     const r = groupSubscriptionCandidates([
       tx({ date: new Date("2026-01-01") }),
       tx({ date: new Date("2026-01-03") }),
