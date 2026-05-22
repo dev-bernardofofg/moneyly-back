@@ -438,7 +438,6 @@ describe("Budget Endpoints", () => {
 
       const budget = response.body.data.find((b: any) => b.id === testBudgetId);
 
-      // Com apenas 250 de 1000, deveria estar em safe
       expect(budget.status).toBe("safe");
     });
   });

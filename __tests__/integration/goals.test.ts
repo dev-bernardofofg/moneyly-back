@@ -1,5 +1,5 @@
 /**
- * Testes de integração para endpoints de goals
+ * Integration tests for goal endpoints
  */
 
 import request from "supertest";
@@ -9,7 +9,6 @@ describe("Goal Endpoints", () => {
   let authToken: string;
   let goalId: string;
 
-  // Setup: Criar usuário e obter token
   beforeAll(async () => {
     const userData = {
       name: "Test User Goals",
@@ -25,10 +24,10 @@ describe("Goal Endpoints", () => {
   });
 
   describe("POST /goals/", () => {
-    it("deve criar uma meta com sucesso", async () => {
+    it("creates a goal successfully", async () => {
       const goalData = {
-        title: "Viagem para Europa",
-        description: "Férias de verão 2025",
+        title: "Trip to Europe",
+        description: "Summer vacation 2025",
         targetAmount: 10000,
         targetDate: "2025-06-30",
       };
@@ -47,13 +46,12 @@ describe("Goal Endpoints", () => {
         goalData.targetAmount.toString()
       );
 
-      // Salvar ID para testes posteriores
       goalId = response.body.data.id;
     });
 
-    it("deve criar meta sem descrição", async () => {
+    it("creates a goal without description", async () => {
       const goalData = {
-        title: "Emergência",
+        title: "Emergency Fund",
         targetAmount: 5000,
         targetDate: "2025-12-31",
       };
@@ -68,9 +66,9 @@ describe("Goal Endpoints", () => {
       expect(response.body.data.title).toBe(goalData.title);
     });
 
-    it("deve rejeitar criação sem autenticação", async () => {
+    it("rejects creation without authentication", async () => {
       const goalData = {
-        title: "Teste",
+        title: "Test",
         targetAmount: 5000,
         targetDate: "2025-12-31",
       };
@@ -78,22 +76,21 @@ describe("Goal Endpoints", () => {
       await request(app).post("/goals/").send(goalData).expect(401);
     });
 
-    it("deve validar campos obrigatórios", async () => {
+    it("validates required fields", async () => {
       const response = await request(app)
         .post("/goals/")
         .set("Authorization", `Bearer ${authToken}`)
         .send({
-          // Faltando campos obrigatórios
-          title: "Apenas título",
+          title: "Title only",
         })
         .expect(400);
 
       expect(response.body).toHaveProperty("error");
     });
 
-    it("deve validar que targetAmount seja positivo", async () => {
+    it("validates that targetAmount is positive", async () => {
       const goalData = {
-        title: "Meta Inválida",
+        title: "Invalid Goal",
         targetAmount: -1000,
         targetDate: "2025-12-31",
       };
@@ -107,11 +104,11 @@ describe("Goal Endpoints", () => {
       expect(response.body).toHaveProperty("error");
     });
 
-    it("deve validar formato de data", async () => {
+    it("validates date format", async () => {
       const goalData = {
-        title: "Meta com data inválida",
+        title: "Goal with invalid date",
         targetAmount: 1000,
-        targetDate: "data-invalida",
+        targetDate: "invalid-date",
       };
 
       const response = await request(app)
@@ -123,9 +120,9 @@ describe("Goal Endpoints", () => {
       expect(response.body).toHaveProperty("error");
     });
 
-    it("deve aceitar valores decimais para targetAmount", async () => {
+    it("accepts decimal values for targetAmount", async () => {
       const goalData = {
-        title: "Meta Decimal",
+        title: "Decimal Goal",
         targetAmount: 7500.75,
         targetDate: "2025-09-30",
       };
@@ -141,7 +138,7 @@ describe("Goal Endpoints", () => {
   });
 
   describe("GET /goals/", () => {
-    it("deve retornar lista de metas do usuário", async () => {
+    it("returns the user's goal list", async () => {
       const response = await request(app)
         .get("/goals/")
         .set("Authorization", `Bearer ${authToken}`)
@@ -152,7 +149,7 @@ describe("Goal Endpoints", () => {
       expect(response.body.data.length).toBeGreaterThan(0);
     });
 
-    it("deve retornar metas com informações de progresso", async () => {
+    it("returns goals with progress information", async () => {
       const response = await request(app)
         .get("/goals/")
         .set("Authorization", `Bearer ${authToken}`)
@@ -164,7 +161,7 @@ describe("Goal Endpoints", () => {
       expect(goal.progress).toHaveProperty("daysRemaining");
     });
 
-    it("deve retornar apenas metas ativas", async () => {
+    it("returns only active goals", async () => {
       const response = await request(app)
         .get("/goals/")
         .set("Authorization", `Bearer ${authToken}`)
@@ -176,8 +173,7 @@ describe("Goal Endpoints", () => {
       expect(inactiveGoals).toHaveLength(0);
     });
 
-    it("deve retornar array vazio para usuário sem metas", async () => {
-      // Criar novo usuário
+    it("returns empty array for user with no goals", async () => {
       const newUserData = {
         name: "New User Goals",
         email: `newgoals${Date.now()}@test.com`,
@@ -198,13 +194,13 @@ describe("Goal Endpoints", () => {
       expect(response.body.data).toEqual([]);
     });
 
-    it("deve rejeitar sem autenticação", async () => {
+    it("rejects without authentication", async () => {
       await request(app).get("/goals/").expect(401);
     });
   });
 
   describe("GET /goals/:id", () => {
-    it("deve retornar meta específica", async () => {
+    it("returns a specific goal", async () => {
       const response = await request(app)
         .get(`/goals/${goalId}`)
         .set("Authorization", `Bearer ${authToken}`)
@@ -216,15 +212,14 @@ describe("Goal Endpoints", () => {
       expect(response.body.data).toHaveProperty("targetAmount");
     });
 
-    it("deve rejeitar busca de meta inexistente", async () => {
+    it("rejects lookup of non-existent goal", async () => {
       await request(app)
         .get("/goals/invalid-id-999")
         .set("Authorization", `Bearer ${authToken}`)
         .expect(404);
     });
 
-    it("não deve permitir buscar meta de outro usuário", async () => {
-      // Criar outro usuário
+    it("does not allow fetching another user's goal", async () => {
       const otherUserData = {
         name: "Other User",
         email: `othergoal${Date.now()}@test.com`,
@@ -245,16 +240,16 @@ describe("Goal Endpoints", () => {
       expect(response.body).toHaveProperty("error");
     });
 
-    it("deve rejeitar sem autenticação", async () => {
+    it("rejects without authentication", async () => {
       await request(app).get(`/goals/${goalId}`).expect(401);
     });
   });
 
   describe("PUT /goals/:id", () => {
-    it("deve atualizar uma meta com sucesso", async () => {
+    it("updates a goal successfully", async () => {
       const updateData = {
-        title: "Viagem para Europa Atualizada",
-        description: "Atualização da descrição",
+        title: "Trip to Europe Updated",
+        description: "Updated description",
         targetAmount: 12000,
       };
 
@@ -271,9 +266,9 @@ describe("Goal Endpoints", () => {
       );
     });
 
-    it("deve permitir atualização parcial", async () => {
+    it("allows partial update", async () => {
       const updateData = {
-        title: "Apenas título atualizado",
+        title: "Title only updated",
       };
 
       const response = await request(app)
@@ -285,10 +280,9 @@ describe("Goal Endpoints", () => {
       expect(response.body.data.title).toBe(updateData.title);
     });
 
-    it("deve permitir desativar meta", async () => {
-      // Criar uma meta para desativar
+    it("allows deactivating a goal", async () => {
       const goalData = {
-        title: "Meta para desativar",
+        title: "Goal to deactivate",
         targetAmount: 1000,
         targetDate: "2025-12-31",
       };
@@ -300,55 +294,41 @@ describe("Goal Endpoints", () => {
 
       const idToDeactivate = createResponse.body.data.id;
 
-      const updateData = {
-        isActive: false,
-      };
-
       const response = await request(app)
         .put(`/goals/${idToDeactivate}`)
         .set("Authorization", `Bearer ${authToken}`)
-        .send(updateData)
+        .send({ isActive: false })
         .expect(200);
 
       expect(response.body.data.isActive).toBe(false);
     });
 
-    it("deve rejeitar atualização com valor negativo", async () => {
-      const updateData = {
-        targetAmount: -500,
-      };
-
+    it("rejects update with negative value", async () => {
       const response = await request(app)
         .put(`/goals/${goalId}`)
         .set("Authorization", `Bearer ${authToken}`)
-        .send(updateData)
+        .send({ targetAmount: -500 })
         .expect(400);
 
       expect(response.body).toHaveProperty("error");
     });
 
-    it("deve rejeitar atualização de meta inexistente", async () => {
-      const updateData = {
-        title: "Teste",
-      };
-
+    it("rejects update of non-existent goal", async () => {
       await request(app)
         .put("/goals/invalid-id-999")
         .set("Authorization", `Bearer ${authToken}`)
-        .send(updateData)
+        .send({ title: "Test" })
         .expect(404);
     });
 
-    it("deve rejeitar atualização sem autenticação", async () => {
-      const updateData = {
-        title: "Teste",
-      };
-
-      await request(app).put(`/goals/${goalId}`).send(updateData).expect(401);
+    it("rejects update without authentication", async () => {
+      await request(app)
+        .put(`/goals/${goalId}`)
+        .send({ title: "Test" })
+        .expect(401);
     });
 
-    it("não deve permitir atualizar meta de outro usuário", async () => {
-      // Criar outro usuário
+    it("does not allow updating another user's goal", async () => {
       const otherUserData = {
         name: "Other User Update",
         email: `otherupdate${Date.now()}@test.com`,
@@ -361,14 +341,10 @@ describe("Goal Endpoints", () => {
 
       const otherToken = otherUserResponse.body.data.accessToken;
 
-      const updateData = {
-        title: "Tentativa de atualização",
-      };
-
       const response = await request(app)
         .put(`/goals/${goalId}`)
         .set("Authorization", `Bearer ${otherToken}`)
-        .send(updateData);
+        .send({ title: "Attempted update" });
 
       expect(response.status).toBeGreaterThanOrEqual(400);
       expect(response.body).toHaveProperty("error");
@@ -376,15 +352,11 @@ describe("Goal Endpoints", () => {
   });
 
   describe("POST /goals/:id/add-amount", () => {
-    it("deve adicionar valor à meta com sucesso", async () => {
-      const addAmountData = {
-        amount: 500,
-      };
-
+    it("adds amount to goal successfully", async () => {
       const response = await request(app)
         .post(`/goals/${goalId}/add-amount`)
         .set("Authorization", `Bearer ${authToken}`)
-        .send(addAmountData)
+        .send({ amount: 500 })
         .expect(200);
 
       expect(response.body).toHaveProperty("data");
@@ -394,59 +366,42 @@ describe("Goal Endpoints", () => {
       );
     });
 
-    it("deve aceitar valores decimais", async () => {
-      const addAmountData = {
-        amount: 250.75,
-      };
-
+    it("accepts decimal values", async () => {
       const response = await request(app)
         .post(`/goals/${goalId}/add-amount`)
         .set("Authorization", `Bearer ${authToken}`)
-        .send(addAmountData)
+        .send({ amount: 250.75 })
         .expect(200);
 
       expect(response.body).toHaveProperty("data");
     });
 
-    it("deve rejeitar valor negativo", async () => {
-      const addAmountData = {
-        amount: -100,
-      };
-
+    it("rejects negative value", async () => {
       const response = await request(app)
         .post(`/goals/${goalId}/add-amount`)
         .set("Authorization", `Bearer ${authToken}`)
-        .send(addAmountData)
+        .send({ amount: -100 })
         .expect(400);
 
       expect(response.body).toHaveProperty("error");
     });
 
-    it("deve rejeitar meta inexistente", async () => {
-      const addAmountData = {
-        amount: 100,
-      };
-
+    it("rejects non-existent goal", async () => {
       await request(app)
         .post("/goals/invalid-id-999/add-amount")
         .set("Authorization", `Bearer ${authToken}`)
-        .send(addAmountData)
+        .send({ amount: 100 })
         .expect(404);
     });
 
-    it("deve rejeitar sem autenticação", async () => {
-      const addAmountData = {
-        amount: 100,
-      };
-
+    it("rejects without authentication", async () => {
       await request(app)
         .post(`/goals/${goalId}/add-amount`)
-        .send(addAmountData)
+        .send({ amount: 100 })
         .expect(401);
     });
 
-    it("deve atualizar progresso após adicionar valor", async () => {
-      // Buscar estado atual
+    it("updates progress after adding amount", async () => {
       const beforeResponse = await request(app)
         .get(`/goals/${goalId}`)
         .set("Authorization", `Bearer ${authToken}`);
@@ -455,17 +410,11 @@ describe("Goal Endpoints", () => {
         beforeResponse.body.data.currentAmount || 0
       );
 
-      // Adicionar valor
-      const addAmountData = {
-        amount: 1000,
-      };
-
       await request(app)
         .post(`/goals/${goalId}/add-amount`)
         .set("Authorization", `Bearer ${authToken}`)
-        .send(addAmountData);
+        .send({ amount: 1000 });
 
-      // Verificar estado depois
       const afterResponse = await request(app)
         .get(`/goals/${goalId}`)
         .set("Authorization", `Bearer ${authToken}`);
@@ -478,10 +427,9 @@ describe("Goal Endpoints", () => {
   });
 
   describe("DELETE /goals/:id", () => {
-    it("deve deletar uma meta com sucesso", async () => {
-      // Criar uma meta para deletar
+    it("deletes a goal successfully", async () => {
       const goalData = {
-        title: "Meta para deletar",
+        title: "Goal to delete",
         targetAmount: 500,
         targetDate: "2025-12-31",
       };
@@ -501,19 +449,18 @@ describe("Goal Endpoints", () => {
       expect(response.body).toHaveProperty("data");
     });
 
-    it("deve rejeitar deleção de meta inexistente", async () => {
+    it("rejects deletion of non-existent goal", async () => {
       await request(app)
         .delete("/goals/invalid-id-999")
         .set("Authorization", `Bearer ${authToken}`)
         .expect(404);
     });
 
-    it("deve rejeitar deleção sem autenticação", async () => {
+    it("rejects deletion without authentication", async () => {
       await request(app).delete(`/goals/${goalId}`).expect(401);
     });
 
-    it("não deve permitir deletar meta de outro usuário", async () => {
-      // Criar outro usuário
+    it("does not allow deleting another user's goal", async () => {
       const otherUserData = {
         name: "Other User Delete",
         email: `otherdelete${Date.now()}@test.com`,
@@ -534,10 +481,9 @@ describe("Goal Endpoints", () => {
       expect(response.body).toHaveProperty("error");
     });
 
-    it("deve verificar se meta foi realmente deletada", async () => {
-      // Criar e deletar meta
+    it("verifies that the goal was actually deleted", async () => {
       const goalData = {
-        title: "Verificar deleção",
+        title: "Verify deletion",
         targetAmount: 300,
         targetDate: "2025-12-31",
       };
@@ -549,13 +495,11 @@ describe("Goal Endpoints", () => {
 
       const idToDelete = createResponse.body.data.id;
 
-      // Deletar
       await request(app)
         .delete(`/goals/${idToDelete}`)
         .set("Authorization", `Bearer ${authToken}`)
         .expect(200);
 
-      // Tentar buscar meta deletada - deveria não encontrar na lista
       const listResponse = await request(app)
         .get("/goals/")
         .set("Authorization", `Bearer ${authToken}`)
@@ -572,9 +516,8 @@ describe("Goal Endpoints", () => {
     let progressGoalId: string;
 
     beforeAll(async () => {
-      // Criar meta para testes de progresso
       const goalData = {
-        title: "Meta de Progresso",
+        title: "Progress Goal",
         targetAmount: 1000,
         targetDate: "2025-12-31",
       };
@@ -587,8 +530,7 @@ describe("Goal Endpoints", () => {
       progressGoalId = response.body.data.id;
     });
 
-    it("deve calcular progresso corretamente", async () => {
-      // Adicionar 50% do valor
+    it("calculates progress correctly", async () => {
       await request(app)
         .post(`/goals/${progressGoalId}/add-amount`)
         .set("Authorization", `Bearer ${authToken}`)
@@ -603,7 +545,7 @@ describe("Goal Endpoints", () => {
       expect(response.body.data.progress.percentage).toBeLessThanOrEqual(55);
     });
 
-    it("deve retornar milestones da meta", async () => {
+    it("returns goal milestones", async () => {
       const response = await request(app)
         .get(`/goals/${progressGoalId}`)
         .set("Authorization", `Bearer ${authToken}`)
@@ -613,8 +555,7 @@ describe("Goal Endpoints", () => {
       expect(Array.isArray(response.body.data.milestones)).toBe(true);
     });
 
-    it("deve marcar milestones como atingidos", async () => {
-      // Adicionar valor para atingir milestones
+    it("marks milestones as reached", async () => {
       await request(app)
         .post(`/goals/${progressGoalId}/add-amount`)
         .set("Authorization", `Bearer ${authToken}`)

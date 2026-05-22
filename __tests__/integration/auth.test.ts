@@ -1,5 +1,5 @@
 /**
- * Testes de integração para autenticação
+ * Integration tests for auth endpoints
  */
 
 import request from "supertest";
@@ -7,7 +7,7 @@ import { app } from "../../src/server";
 
 describe("Auth Endpoints", () => {
   describe("POST /auth/sign-up", () => {
-    it("deve criar um novo usuário", async () => {
+    it("creates a new user", async () => {
       const userData = {
         name: "Test User",
         email: `test${Date.now()}@example.com`,
@@ -26,17 +26,15 @@ describe("Auth Endpoints", () => {
       expect(response.body.data.user.email).toBe(userData.email);
     });
 
-    it("deve rejeitar email duplicado", async () => {
+    it("rejects duplicate email", async () => {
       const userData = {
         name: "Test User",
         email: "duplicate@example.com",
         password: "password123",
       };
 
-      // Primeiro cadastro
       await request(app).post("/auth/sign-up").send(userData);
 
-      // Tentativa de cadastro duplicado
       const response = await request(app)
         .post("/auth/sign-up")
         .send(userData)
@@ -45,12 +43,11 @@ describe("Auth Endpoints", () => {
       expect(response.body).toHaveProperty("error");
     });
 
-    it("deve validar campos obrigatórios", async () => {
+    it("validates required fields", async () => {
       const response = await request(app)
         .post("/auth/sign-up")
         .send({
           name: "Test",
-          // email e password faltando
         })
         .expect(400);
 
@@ -59,8 +56,7 @@ describe("Auth Endpoints", () => {
   });
 
   describe("POST /auth/sign-in", () => {
-    it("deve fazer login com credenciais válidas", async () => {
-      // Primeiro criar usuário
+    it("signs in with valid credentials", async () => {
       const userData = {
         name: "Login Test",
         email: `login${Date.now()}@example.com`,
@@ -69,7 +65,6 @@ describe("Auth Endpoints", () => {
 
       await request(app).post("/auth/sign-up").send(userData);
 
-      // Fazer login
       const response = await request(app)
         .post("/auth/sign-in")
         .send({
@@ -83,8 +78,7 @@ describe("Auth Endpoints", () => {
       expect(response.body.data).toHaveProperty("refreshToken");
     });
 
-    it("deve rejeitar senha incorreta", async () => {
-      // Criar usuário primeiro
+    it("rejects wrong password", async () => {
       const userData = {
         name: "Wrong Password Test",
         email: `wrongpass${Date.now()}@example.com`,
@@ -93,7 +87,6 @@ describe("Auth Endpoints", () => {
 
       await request(app).post("/auth/sign-up").send(userData);
 
-      // Tentar login com senha incorreta
       const response = await request(app)
         .post("/auth/sign-in")
         .send({
