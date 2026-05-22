@@ -52,17 +52,21 @@ export const getTransactions = async (
 ) => {
   if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
 
-  const { category, startDate, endDate, page, limit } = req.query as {
+  const { category, startDate, endDate, periodId, type, page, limit } = req.query as {
     category?: string;
     startDate?: string;
     endDate?: string;
+    periodId?: string;
+    type?: "income" | "expense";
     page?: number;
     limit?: number;
   };
 
   try {
-    const filters: { category?: string; startDate?: Date; endDate?: Date } = {};
+    const filters: { category?: string; startDate?: Date; endDate?: Date; periodId?: string; type?: "income" | "expense" } = {};
     if (category) filters.category = category;
+    if (periodId) filters.periodId = periodId;
+    if (type) filters.type = type;
     if (startDate) filters.startDate = new Date(startDate);
     if (endDate) filters.endDate = new Date(endDate);
 
@@ -239,8 +243,10 @@ export const exportTransactionsCsv = async (
   }
 
   try {
-    const { startDate, endDate } = req.query;
-    const filters: { startDate?: Date; endDate?: Date } = {};
+    const { startDate, endDate, periodId, type } = req.query;
+    const filters: { startDate?: Date; endDate?: Date; periodId?: string; type?: "income" | "expense" } = {};
+    if (periodId) filters.periodId = periodId as string;
+    if (type) filters.type = type as "income" | "expense";
     if (startDate) filters.startDate = new Date(startDate as string);
     if (endDate) filters.endDate = new Date(endDate as string);
 

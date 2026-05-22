@@ -15,7 +15,10 @@ Cada módulo segue camadas: `routes/<x>.router.ts` → `controllers/<x>.controll
 - `user.controller`/`user.service`/`user.repository`. Schema `user.schema.ts`. `requireUser` em `validations/user.validation.ts`.
 
 ## Transactions (`/transactions`)
-- `POST /transactions/create` criar · `POST /transactions/` listar (paginado) · `PUT /transactions/:id` · `DELETE /transactions/:id` · `GET /transactions/summary` resumo · `GET /transactions/summary-current-period` resumo período atual.
+- `POST /transactions/create` criar · `GET /transactions/` listar (paginado) · `PUT /transactions/:id` · `DELETE /transactions/:id` · `GET /transactions/summary` resumo · `GET /transactions/summary-current-period` resumo período atual.
+- `GET /transactions/` aceita query params: `category` (uuid), `periodId` (uuid), `type` (`income|expense`), `startDate`, `endDate`, `page`, `limit`. Quando `periodId` é passado, filtra diretamente pela coluna — mais preciso que range de data.
+- `GET /transactions/export` CSV aceita os mesmos filtros (sem paginação): `periodId`, `type`, `startDate`, `endDate`.
+- Filtros reutilizáveis em `src/schemas/filter.schema.ts` (`baseFilterSchema` + primitivos `dateRange/period/type/category`). Novos módulos compõem via `.merge()`.
 - `transaction.*`. Paginação via `helpers/pagination.ts` + `schemas/pagination.schema.ts`. Vincula `periodId` (período financeiro).
 
 ## Categories (`/categories`)

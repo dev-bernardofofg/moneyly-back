@@ -16,6 +16,8 @@ export interface TransactionFilters {
   category?: string;
   startDate?: Date;
   endDate?: Date;
+  periodId?: string;
+  type?: "income" | "expense";
 }
 
 export interface TransactionSummary {

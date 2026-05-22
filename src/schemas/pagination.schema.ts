@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { baseFilterSchema } from "./filter.schema";
 
 export const paginationQuerySchema = z.object({
   page: z
@@ -26,50 +27,6 @@ export const paginationBodySchema = z.object({
     .optional(),
 });
 
-export const transactionQuerySchema = z
-  .object({
-    category: z.string().optional(),
-    startDate: z
-      .string()
-      .optional()
-      .refine((val) => {
-        if (!val) return true;
-        const date = new Date(val);
-        return !isNaN(date.getTime());
-      }, "Data de início inválida"),
-    endDate: z
-      .string()
-      .optional()
-      .refine((val) => {
-        if (!val) return true;
-        const date = new Date(val);
-        return !isNaN(date.getTime());
-      }, "Data de fim inválida"),
-  })
-  .merge(paginationQuerySchema);
-
-export const transactionBodySchema = z
-  .object({
-    category: z.string().optional(),
-    startDate: z
-      .string()
-      .optional()
-      .refine((val) => {
-        if (!val) return true;
-        const date = new Date(val);
-        return !isNaN(date.getTime());
-      }, "Data de início inválida"),
-    endDate: z
-      .string()
-      .optional()
-      .refine((val) => {
-        if (!val) return true;
-        const date = new Date(val);
-        return !isNaN(date.getTime());
-      }, "Data de fim inválida"),
-  })
-  .merge(paginationBodySchema);
-
 export const categoryQuerySchema = paginationQuerySchema;
 
-export const transactionListQuerySchema = transactionQuerySchema;
+export const transactionListQuerySchema = baseFilterSchema.merge(paginationQuerySchema);

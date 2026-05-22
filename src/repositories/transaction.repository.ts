@@ -32,10 +32,12 @@ export const transactionRepository = {
   async findByUserIdPaginated(
     userId: string,
     pagination: PaginationQuery,
-    filters?: { category?: string; startDate?: Date; endDate?: Date }
+    filters?: { category?: string; startDate?: Date; endDate?: Date; periodId?: string; type?: "income" | "expense" }
   ): Promise<PaginationResult<TransactionWithCategory>> {
     const conditions = [eq(transactions.userId, userId)];
     if (filters?.category) conditions.push(eq(transactions.categoryId, filters.category));
+    if (filters?.periodId) conditions.push(eq(transactions.periodId, filters.periodId));
+    if (filters?.type) conditions.push(eq(transactions.type, filters.type));
     if (filters?.startDate) conditions.push(gte(transactions.date, filters.startDate));
     if (filters?.endDate) conditions.push(lte(transactions.date, filters.endDate));
 
@@ -56,10 +58,12 @@ export const transactionRepository = {
 
   async findByUserId(
     userId: string,
-    filters?: { category?: string; startDate?: Date; endDate?: Date }
+    filters?: { category?: string; startDate?: Date; endDate?: Date; periodId?: string; type?: "income" | "expense" }
   ): Promise<TransactionWithCategory[]> {
     const conditions = [eq(transactions.userId, userId)];
     if (filters?.category) conditions.push(eq(transactions.categoryId, filters.category));
+    if (filters?.periodId) conditions.push(eq(transactions.periodId, filters.periodId));
+    if (filters?.type) conditions.push(eq(transactions.type, filters.type));
     if (filters?.startDate) conditions.push(gte(transactions.date, filters.startDate));
     if (filters?.endDate) conditions.push(lte(transactions.date, filters.endDate));
 

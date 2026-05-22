@@ -88,11 +88,19 @@ const periodIdParam = z.object({ periodId: z.string().uuid() });
 const intQuery = z.coerce.number().int().positive().optional();
 const dateQuery = z.string().optional();
 
-const exportQuery = z.object({ startDate: dateQuery, endDate: dateQuery });
+const transactionTypeQuery = z.enum(["income", "expense"]).optional();
+const exportQuery = z.object({
+  startDate: dateQuery,
+  endDate: dateQuery,
+  periodId: z.string().uuid().optional(),
+  type: transactionTypeQuery,
+});
 const transactionsListQuery = z.object({
   category: z.string().optional(),
   startDate: dateQuery,
   endDate: dateQuery,
+  periodId: z.string().uuid().optional(),
+  type: transactionTypeQuery,
   page: intQuery,
   limit: intQuery,
 });
