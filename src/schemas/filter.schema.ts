@@ -1,25 +1,22 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 const isoDateField = (label: string) =>
   z
     .string()
     .optional()
-    .refine(
-      (val) => !val || !isNaN(new Date(val).getTime()),
-      `${label} inválida`
-    );
+    .refine((val) => !val || !isNaN(new Date(val).getTime()), `${label} inválida`);
 
 export const dateRangeFilterSchema = z.object({
-  startDate: isoDateField("Data de início"),
-  endDate: isoDateField("Data de fim"),
+  startDate: isoDateField('Data de início'),
+  endDate: isoDateField('Data de fim'),
 });
 
 export const periodFilterSchema = z.object({
-  periodId: z.string().uuid("periodId deve ser um UUID válido").optional(),
+  periodId: z.string().uuid('periodId deve ser um UUID válido').optional(),
 });
 
 export const typeFilterSchema = z.object({
-  type: z.enum(["income", "expense"]).optional(),
+  type: z.enum(['income', 'expense']).optional(),
 });
 
 export const categoryFilterSchema = z.object({

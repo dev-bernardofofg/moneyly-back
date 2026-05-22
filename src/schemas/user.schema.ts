@@ -1,17 +1,14 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const updateMonthlyIncomeSchema = z.object({
   monthlyIncome: z
     .union([z.string(), z.number()])
     .transform((val) => {
-      const num = typeof val === "string" ? parseFloat(val) : val;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
       return isNaN(num) ? 0 : num;
     })
     .pipe(
-      z
-        .number()
-        .positive("Rendimento deve ser positivo")
-        .max(999999999.99, "Rendimento muito alto")
+      z.number().positive('Rendimento deve ser positivo').max(999999999.99, 'Rendimento muito alto')
     ),
 });
 
@@ -19,12 +16,12 @@ export const updateFinancialPeriodSchema = z
   .object({
     financialDayStart: z
       .number()
-      .min(1, "Dia de início deve ser entre 1 e 31")
-      .max(31, "Dia de início deve ser entre 1 e 31"),
+      .min(1, 'Dia de início deve ser entre 1 e 31')
+      .max(31, 'Dia de início deve ser entre 1 e 31'),
     financialDayEnd: z
       .number()
-      .min(1, "Dia de fim deve ser entre 1 e 31")
-      .max(31, "Dia de fim deve ser entre 1 e 31"),
+      .min(1, 'Dia de fim deve ser entre 1 e 31')
+      .max(31, 'Dia de fim deve ser entre 1 e 31'),
   })
   .refine(
     (data) => {
@@ -40,8 +37,8 @@ export const updateFinancialPeriodSchema = z
     },
     {
       message:
-        "Período financeiro inválido. Exemplos válidos: dia 5 a dia 5, dia 1 a dia 31, dia 15 a dia 14",
-      path: ["financialDayEnd"],
+        'Período financeiro inválido. Exemplos válidos: dia 5 a dia 5, dia 1 a dia 31, dia 15 a dia 14',
+      path: ['financialDayEnd'],
     }
   );
 
@@ -50,23 +47,23 @@ export const updateIncomeAndPeriodSchema = z
     monthlyIncome: z
       .union([z.string(), z.number()])
       .transform((val) => {
-        const num = typeof val === "string" ? parseFloat(val) : val;
+        const num = typeof val === 'string' ? parseFloat(val) : val;
         return isNaN(num) ? 0 : num;
       })
       .pipe(
         z
           .number()
-          .positive("Rendimento deve ser positivo")
-          .max(999999999.99, "Rendimento muito alto")
+          .positive('Rendimento deve ser positivo')
+          .max(999999999.99, 'Rendimento muito alto')
       ),
     financialDayStart: z
       .number()
-      .min(1, "Dia de início deve ser entre 1 e 31")
-      .max(31, "Dia de início deve ser entre 1 e 31"),
+      .min(1, 'Dia de início deve ser entre 1 e 31')
+      .max(31, 'Dia de início deve ser entre 1 e 31'),
     financialDayEnd: z
       .number()
-      .min(1, "Dia de fim deve ser entre 1 e 31")
-      .max(31, "Dia de fim deve ser entre 1 e 31"),
+      .min(1, 'Dia de fim deve ser entre 1 e 31')
+      .max(31, 'Dia de fim deve ser entre 1 e 31'),
   })
   .refine(
     (data) => {
@@ -82,35 +79,30 @@ export const updateIncomeAndPeriodSchema = z
     },
     {
       message:
-        "Período financeiro inválido. Exemplos válidos: dia 5 a dia 5, dia 1 a dia 31, dia 15 a dia 14",
-      path: ["financialDayEnd"],
+        'Período financeiro inválido. Exemplos válidos: dia 5 a dia 5, dia 1 a dia 31, dia 15 a dia 14',
+      path: ['financialDayEnd'],
     }
   );
 
 export const updateUserProfileSchema = z.object({
-  name: z
-    .string()
-    .min(2, "Nome deve ter pelo menos 2 caracteres")
-    .max(100, "Nome muito longo"),
-  email: z.string().email("Email inválido").max(100, "Email muito longo"),
+  name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').max(100, 'Nome muito longo'),
+  email: z.string().email('Email inválido').max(100, 'Email muito longo'),
 });
 
 export const updatePasswordSchema = z
   .object({
-    currentPassword: z
-      .string()
-      .min(6, "Senha atual deve ter pelo menos 6 caracteres"),
+    currentPassword: z.string().min(6, 'Senha atual deve ter pelo menos 6 caracteres'),
     newPassword: z
       .string()
-      .min(6, "Nova senha deve ter pelo menos 6 caracteres")
-      .max(100, "Nova senha muito longa"),
+      .min(6, 'Nova senha deve ter pelo menos 6 caracteres')
+      .max(100, 'Nova senha muito longa'),
   })
   .refine(
     (data) => {
       return data.currentPassword !== data.newPassword;
     },
     {
-      message: "Nova senha deve ser diferente da senha atual",
-      path: ["newPassword"],
+      message: 'Nova senha deve ser diferente da senha atual',
+      path: ['newPassword'],
     }
   );

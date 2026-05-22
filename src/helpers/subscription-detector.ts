@@ -1,6 +1,6 @@
-import type { TransactionWithCategory } from "../repositories/transaction.repository";
+import type { TransactionWithCategory } from '../repositories/transaction.repository';
 
-export type SubscriptionCadence = "weekly" | "monthly" | "yearly";
+export type SubscriptionCadence = 'weekly' | 'monthly' | 'yearly';
 
 export interface SubscriptionCandidate {
   title: string;
@@ -22,29 +22,29 @@ const AMOUNT_TOLERANCE = 0.1; // ±10%
 export function normalizeTitle(title: string): string {
   return title
     .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[\d/\-.]+\s*$/g, "")
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\d/\-.]+\s*$/g, '')
     .trim();
 }
 
 function classifyCadence(avgDays: number): SubscriptionCadence | null {
-  if (avgDays >= 5 && avgDays <= 9) return "weekly";
-  if (avgDays >= 25 && avgDays <= 35) return "monthly";
-  if (avgDays >= 350 && avgDays <= 380) return "yearly";
+  if (avgDays >= 5 && avgDays <= 9) return 'weekly';
+  if (avgDays >= 25 && avgDays <= 35) return 'monthly';
+  if (avgDays >= 350 && avgDays <= 380) return 'yearly';
   return null;
 }
 
 function monthlyFactor(cadence: SubscriptionCadence): number {
-  if (cadence === "weekly") return 4.3333;
-  if (cadence === "yearly") return 1 / 12;
+  if (cadence === 'weekly') return 4.3333;
+  if (cadence === 'yearly') return 1 / 12;
   return 1;
 }
 
 function addCadence(date: Date, cadence: SubscriptionCadence): Date {
   const d = new Date(date);
-  if (cadence === "weekly") d.setDate(d.getDate() + 7);
-  else if (cadence === "monthly") d.setMonth(d.getMonth() + 1);
+  if (cadence === 'weekly') d.setDate(d.getDate() + 7);
+  else if (cadence === 'monthly') d.setMonth(d.getMonth() + 1);
   else d.setFullYear(d.getFullYear() + 1);
   return d;
 }
@@ -56,9 +56,7 @@ function addCadence(date: Date, cadence: SubscriptionCadence): Date {
 export function groupSubscriptionCandidates(
   transactions: TransactionWithCategory[]
 ): SubscriptionCandidate[] {
-  const expenses = transactions.filter(
-    (t) => t.type === "expense" && !t.recurringTransactionId
-  );
+  const expenses = transactions.filter((t) => t.type === 'expense' && !t.recurringTransactionId);
 
   const groups = new Map<string, TransactionWithCategory[]>();
   for (const tx of expenses) {
@@ -75,8 +73,7 @@ export function groupSubscriptionCandidates(
     if (items.length < MIN_OCCURRENCES) continue;
 
     const amounts = items.map((i) => Number(i.amount));
-    const avgAmount =
-      amounts.reduce((s, a) => s + a, 0) / amounts.length;
+    const avgAmount = amounts.reduce((s, a) => s + a, 0) / amounts.length;
     if (avgAmount <= 0) continue;
 
     // Consistência de valor: todos dentro de ±tolerância da média
@@ -85,18 +82,13 @@ export function groupSubscriptionCandidates(
     );
     if (!amountConsistent) continue;
 
-    const sorted = items
-      .map((i) => new Date(i.date))
-      .sort((a, b) => a.getTime() - b.getTime());
+    const sorted = items.map((i) => new Date(i.date)).sort((a, b) => a.getTime() - b.getTime());
 
     const intervals: number[] = [];
     for (let i = 1; i < sorted.length; i++) {
-      intervals.push(
-        (sorted[i]!.getTime() - sorted[i - 1]!.getTime()) / 86400000
-      );
+      intervals.push((sorted[i]!.getTime() - sorted[i - 1]!.getTime()) / 86400000);
     }
-    const avgInterval =
-      intervals.reduce((s, v) => s + v, 0) / intervals.length;
+    const avgInterval = intervals.reduce((s, v) => s + v, 0) / intervals.length;
 
     const cadence = classifyCadence(avgInterval);
     if (!cadence) continue;

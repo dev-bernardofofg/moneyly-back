@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router } from 'express';
 import {
   getAvailablePeriods,
   getComparativeInsights,
@@ -6,16 +6,16 @@ import {
   getFinancialInsights,
   getForecast,
   getPlannerOverview,
-} from "../controllers/overview.controller";
-import { authenticateUser } from "../middlewares/auth";
-import { ensurePeriodExists } from "../middlewares/auto-period-creation";
-import { validate } from "../middlewares/validate";
+} from '../controllers/overview.controller';
+import { authenticateUser } from '../middlewares/auth';
+import { ensurePeriodExists } from '../middlewares/auto-period-creation';
+import { validate } from '../middlewares/validate';
 import {
   comparativeInsightsQuerySchema,
   forecastQuerySchema,
   getAvailablePeriodsQuerySchema,
   getDashboardOverviewQuerySchema,
-} from "../schemas/overview.schema";
+} from '../schemas/overview.schema';
 
 const OverviewRouter: Router = Router();
 
@@ -23,29 +23,25 @@ OverviewRouter.use(authenticateUser);
 OverviewRouter.use(ensurePeriodExists);
 
 OverviewRouter.get(
-  "/periods",
+  '/periods',
   validate({ query: getAvailablePeriodsQuerySchema }),
   getAvailablePeriods
 );
 
 OverviewRouter.get(
-  "/dashboard",
+  '/dashboard',
   validate({ query: getDashboardOverviewQuerySchema }),
   getDashboardOverview
 );
 
-OverviewRouter.get("/planner", getPlannerOverview);
+OverviewRouter.get('/planner', getPlannerOverview);
 
-OverviewRouter.get("/insights", getFinancialInsights);
+OverviewRouter.get('/insights', getFinancialInsights);
 
-OverviewRouter.get(
-  "/forecast",
-  validate({ query: forecastQuerySchema }),
-  getForecast
-);
+OverviewRouter.get('/forecast', validate({ query: forecastQuerySchema }), getForecast);
 
 OverviewRouter.get(
-  "/insights/comparison",
+  '/insights/comparison',
   validate({ query: comparativeInsightsQuerySchema }),
   getComparativeInsights
 );

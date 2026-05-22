@@ -1,8 +1,8 @@
-import { createDefaultPreferencesForUser } from "../db/seed";
-import { logger } from "../lib/logger";
-import { userRepository } from "../repositories/user.repository";
-import { HttpError } from "../validations/errors";
-import { verifyGoogleToken } from "../validations/google.validation";
+import { createDefaultPreferencesForUser } from '../db/seed';
+import { logger } from '../lib/logger';
+import { userRepository } from '../repositories/user.repository';
+import { HttpError } from '../validations/errors';
+import { verifyGoogleToken } from '../validations/google.validation';
 
 export const authenticateWithGoogle = async (idToken: string) => {
   try {
@@ -29,13 +29,13 @@ export const authenticateWithGoogle = async (idToken: string) => {
         try {
           await createDefaultPreferencesForUser(user.id);
         } catch (error) {
-          logger.error("Erro ao criar categorias padrão para o usuário Google", error as Error);
+          logger.error('Erro ao criar categorias padrão para o usuário Google', error as Error);
         }
       }
     }
 
     return user;
   } catch (error) {
-    throw new HttpError(401, "Falha na autenticação com Google");
+    throw new HttpError(401, 'Falha na autenticação com Google');
   }
 };

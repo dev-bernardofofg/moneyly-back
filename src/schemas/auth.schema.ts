@@ -1,51 +1,51 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const createUserSchema = z.object({
   name: z
     .string({
-      required_error: "O nome é obrigatório.",
-      invalid_type_error: "O nome deve ser um texto.",
+      required_error: 'O nome é obrigatório.',
+      invalid_type_error: 'O nome deve ser um texto.',
     })
-    .min(1, "O nome deve ter pelo menos 1 caractere.")
-    .max(100, "O nome pode ter no máximo 100 caracteres."),
+    .min(1, 'O nome deve ter pelo menos 1 caractere.')
+    .max(100, 'O nome pode ter no máximo 100 caracteres.'),
   email: z
     .string({
-      required_error: "O email é obrigatório.",
-      invalid_type_error: "O email deve ser um texto.",
+      required_error: 'O email é obrigatório.',
+      invalid_type_error: 'O email deve ser um texto.',
     })
-    .email("Por favor, forneça um email válido (exemplo: usuario@exemplo.com).")
-    .max(100, "O email pode ter no máximo 100 caracteres."),
+    .email('Por favor, forneça um email válido (exemplo: usuario@exemplo.com).')
+    .max(100, 'O email pode ter no máximo 100 caracteres.'),
   password: z
     .string({
-      required_error: "A senha é obrigatória.",
-      invalid_type_error: "A senha deve ser um texto.",
+      required_error: 'A senha é obrigatória.',
+      invalid_type_error: 'A senha deve ser um texto.',
     })
-    .min(6, "A senha deve ter pelo menos 6 caracteres.")
-    .max(128, "A senha pode ter no máximo 128 caracteres."),
+    .min(6, 'A senha deve ter pelo menos 6 caracteres.')
+    .max(128, 'A senha pode ter no máximo 128 caracteres.'),
 });
 
 export const createSessionSchema = z.object({
   email: z
     .string({
-      required_error: "O email é obrigatório para fazer login.",
-      invalid_type_error: "O email deve ser um texto.",
+      required_error: 'O email é obrigatório para fazer login.',
+      invalid_type_error: 'O email deve ser um texto.',
     })
-    .email("Por favor, forneça um email válido."),
+    .email('Por favor, forneça um email válido.'),
   password: z
     .string({
-      required_error: "A senha é obrigatória para fazer login.",
-      invalid_type_error: "A senha deve ser um texto.",
+      required_error: 'A senha é obrigatória para fazer login.',
+      invalid_type_error: 'A senha deve ser um texto.',
     })
-    .min(1, "A senha não pode estar vazia."),
+    .min(1, 'A senha não pode estar vazia.'),
 });
 
 export const googleAuthSchema = z.object({
   idToken: z
     .string({
-      required_error: "O token do Google é obrigatório.",
-      invalid_type_error: "O token deve ser um texto.",
+      required_error: 'O token do Google é obrigatório.',
+      invalid_type_error: 'O token deve ser um texto.',
     })
-    .min(1, "O token do Google não pode estar vazio."),
+    .min(1, 'O token do Google não pode estar vazio.'),
 });
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;
@@ -55,40 +55,40 @@ export type GoogleAuthInput = z.infer<typeof googleAuthSchema>;
 export const loginSchema = z.object({
   email: z
     .string({
-      required_error: "O email é obrigatório.",
-      invalid_type_error: "O email deve ser um texto.",
+      required_error: 'O email é obrigatório.',
+      invalid_type_error: 'O email deve ser um texto.',
     })
-    .email("Por favor, forneça um email válido.")
-    .max(100, "O email pode ter no máximo 100 caracteres."),
+    .email('Por favor, forneça um email válido.')
+    .max(100, 'O email pode ter no máximo 100 caracteres.'),
   password: z
     .string({
-      required_error: "A senha é obrigatória.",
-      invalid_type_error: "A senha deve ser um texto.",
+      required_error: 'A senha é obrigatória.',
+      invalid_type_error: 'A senha deve ser um texto.',
     })
-    .min(1, "A senha não pode estar vazia.")
-    .max(128, "A senha pode ter no máximo 128 caracteres."),
+    .min(1, 'A senha não pode estar vazia.')
+    .max(128, 'A senha pode ter no máximo 128 caracteres.'),
 });
 
 export const updateMonthlyIncomeSchema = z.object({
   monthlyIncome: z
     .number({
-      required_error: "O rendimento mensal é obrigatório.",
-      invalid_type_error: "O rendimento deve ser um número.",
+      required_error: 'O rendimento mensal é obrigatório.',
+      invalid_type_error: 'O rendimento deve ser um número.',
     })
-    .positive("O rendimento mensal deve ser um valor positivo.")
-    .max(999999999, "O rendimento não pode ser maior que 999.999.999."),
+    .positive('O rendimento mensal deve ser um valor positivo.')
+    .max(999999999, 'O rendimento não pode ser maior que 999.999.999.'),
 });
 
 export const updateFinancialPeriodSchema = z
   .object({
     financialDayStart: z
       .number()
-      .min(1, "Dia de início deve ser entre 1 e 31")
-      .max(31, "Dia de início deve ser entre 1 e 31"),
+      .min(1, 'Dia de início deve ser entre 1 e 31')
+      .max(31, 'Dia de início deve ser entre 1 e 31'),
     financialDayEnd: z
       .number()
-      .min(1, "Dia de fim deve ser entre 1 e 31")
-      .max(31, "Dia de fim deve ser entre 1 e 31"),
+      .min(1, 'Dia de fim deve ser entre 1 e 31')
+      .max(31, 'Dia de fim deve ser entre 1 e 31'),
   })
   .refine(
     (data) => {
@@ -103,9 +103,8 @@ export const updateFinancialPeriodSchema = z
       return data.financialDayStart < data.financialDayEnd;
     },
     {
-      message:
-        "Período financeiro inválido. Exemplos válidos: 5 a 5, 1 a 31, 15 a 14",
-      path: ["financialDayEnd"],
+      message: 'Período financeiro inválido. Exemplos válidos: 5 a 5, 1 a 31, 15 a 14',
+      path: ['financialDayEnd'],
     }
   );
 
@@ -113,16 +112,16 @@ export const updateIncomeAndPeriodSchema = z
   .object({
     monthlyIncome: z
       .number()
-      .positive("Rendimento deve ser positivo")
-      .max(999999999, "Rendimento muito alto"),
+      .positive('Rendimento deve ser positivo')
+      .max(999999999, 'Rendimento muito alto'),
     financialDayStart: z
       .number()
-      .min(1, "Dia de início deve ser entre 1 e 31")
-      .max(31, "Dia de início deve ser entre 1 e 31"),
+      .min(1, 'Dia de início deve ser entre 1 e 31')
+      .max(31, 'Dia de início deve ser entre 1 e 31'),
     financialDayEnd: z
       .number()
-      .min(1, "Dia de fim deve ser entre 1 e 31")
-      .max(31, "Dia de fim deve ser entre 1 e 31"),
+      .min(1, 'Dia de fim deve ser entre 1 e 31')
+      .max(31, 'Dia de fim deve ser entre 1 e 31'),
   })
   .refine(
     (data) => {
@@ -137,19 +136,18 @@ export const updateIncomeAndPeriodSchema = z
       return data.financialDayStart < data.financialDayEnd;
     },
     {
-      message:
-        "Período financeiro inválido. Exemplos válidos: 5 a 5, 1 a 31, 15 a 14",
-      path: ["financialDayEnd"],
+      message: 'Período financeiro inválido. Exemplos válidos: 5 a 5, 1 a 31, 15 a 14',
+      path: ['financialDayEnd'],
     }
   );
 
 export const idParamSchema = z.object({
   id: z
     .string({
-      required_error: "O ID é obrigatório.",
-      invalid_type_error: "O ID deve ser um texto.",
+      required_error: 'O ID é obrigatório.',
+      invalid_type_error: 'O ID deve ser um texto.',
     })
-    .uuid("O ID deve ser um UUID válido."),
+    .uuid('O ID deve ser um UUID válido.'),
 });
 
 export const paginationQuerySchema = z.object({
@@ -157,14 +155,14 @@ export const paginationQuerySchema = z.object({
     .string()
     .optional()
     .transform((val) => (val ? parseInt(val, 10) : 1))
-    .refine((val) => val > 0, "O número da página deve ser maior que 0."),
+    .refine((val) => val > 0, 'O número da página deve ser maior que 0.'),
   limit: z
     .string()
     .optional()
     .transform((val) => (val ? parseInt(val, 10) : 10))
     .refine(
       (val) => val > 0 && val <= 100,
-      "O limite de itens por página deve estar entre 1 e 100."
+      'O limite de itens por página deve estar entre 1 e 100.'
     ),
 });
 
@@ -178,7 +176,7 @@ export const transactionQuerySchema = z
         if (!val) return true;
         const date = new Date(val);
         return !isNaN(date.getTime());
-      }, "A data de início deve ser uma data válida."),
+      }, 'A data de início deve ser uma data válida.'),
     endDate: z
       .string()
       .optional()
@@ -186,17 +184,17 @@ export const transactionQuerySchema = z
         if (!val) return true;
         const date = new Date(val);
         return !isNaN(date.getTime());
-      }, "A data de fim deve ser uma data válida."),
+      }, 'A data de fim deve ser uma data válida.'),
   })
   .merge(paginationQuerySchema);
 
 export const refreshTokenSchema = z.object({
   refreshToken: z
     .string({
-      required_error: "O refresh token é obrigatório.",
-      invalid_type_error: "O refresh token deve ser um texto.",
+      required_error: 'O refresh token é obrigatório.',
+      invalid_type_error: 'O refresh token deve ser um texto.',
     })
-    .min(1, "O refresh token não pode estar vazio."),
+    .min(1, 'O refresh token não pode estar vazio.'),
 });
 
 export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;

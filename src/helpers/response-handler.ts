@@ -1,11 +1,11 @@
-import { Response } from "express";
+import { Response } from 'express';
 
 /**
  * Normaliza valores decimais do banco (remove .00 desnecessário)
  */
 export const normalizeDecimal = (value: string | number | null): string => {
-  if (value === null || value === undefined) return "0";
-  const numValue = typeof value === "string" ? parseFloat(value) : value;
+  if (value === null || value === undefined) return '0';
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
   // Se for número inteiro, retorna sem decimais
   if (Number.isInteger(numValue)) {
     return numValue.toString();
@@ -13,7 +13,7 @@ export const normalizeDecimal = (value: string | number | null): string => {
   // Se tiver decimais, remove zeros desnecessários no final
   const fixed = numValue.toFixed(2);
   // Remove .00 ou converte .50 para .5
-  return fixed.replace(/\.0+$/, "").replace(/(\.\d)0$/, "$1");
+  return fixed.replace(/\.0+$/, '').replace(/(\.\d)0$/, '$1');
 };
 
 /**
@@ -26,11 +26,11 @@ export const normalizeDecimals = (obj: unknown): unknown => {
     return obj.map((item) => normalizeDecimals(item));
   }
 
-  if (typeof obj === "object" && !(obj instanceof Date)) {
+  if (typeof obj === 'object' && !(obj instanceof Date)) {
     const normalized: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj)) {
       // Normalizar campos de valores monetários
-      if (typeof value === "string" && /^-?\d+\.\d{2}$/.test(value)) {
+      if (typeof value === 'string' && /^-?\d+\.\d{2}$/.test(value)) {
         normalized[key] = normalizeDecimal(value);
       } else {
         normalized[key] = normalizeDecimals(value);
@@ -109,26 +109,23 @@ export class ResponseHandler {
     return this.success(res, data, message, 201);
   }
 
-  static notFound(res: Response, message = "Recurso não encontrado"): Response {
+  static notFound(res: Response, message = 'Recurso não encontrado'): Response {
     return this.error(res, message, undefined, 404);
   }
 
-  static unauthorized(res: Response, message = "Não autorizado"): Response {
+  static unauthorized(res: Response, message = 'Não autorizado'): Response {
     return this.error(res, message, undefined, 401);
   }
 
-  static forbidden(res: Response, message = "Acesso negado"): Response {
+  static forbidden(res: Response, message = 'Acesso negado'): Response {
     return this.error(res, message, undefined, 403);
   }
 
-  static badRequest(res: Response, message = "Requisição inválida"): Response {
+  static badRequest(res: Response, message = 'Requisição inválida'): Response {
     return this.error(res, message, undefined, 400);
   }
 
-  static serverError(
-    res: Response,
-    message = "Erro interno do servidor"
-  ): Response {
+  static serverError(res: Response, message = 'Erro interno do servidor'): Response {
     return this.error(res, message, undefined, 500);
   }
 

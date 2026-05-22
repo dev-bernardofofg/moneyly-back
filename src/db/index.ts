@@ -1,8 +1,8 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
-import { env } from "../env";
-import { logger } from "../lib/logger";
-import * as schema from "./schema";
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+import { env } from '../env';
+import { logger } from '../lib/logger';
+import * as schema from './schema';
 
 // Configuração da conexão com PostgreSQL
 const connectionString = env.DATABASE_URL!;
@@ -18,14 +18,14 @@ export const connectDB = async () => {
   try {
     // Testar a conexão
     await client`SELECT 1`;
-    logger.info("PostgreSQL conectado com sucesso");
+    logger.info('PostgreSQL conectado com sucesso');
   } catch (err) {
-    logger.error("Erro ao conectar com PostgreSQL", err as Error);
+    logger.error('Erro ao conectar com PostgreSQL', err as Error);
     process.exit(1);
   }
 };
 
 export const disconnectDB = async () => {
   await client.end();
-  logger.info("Conexão com PostgreSQL fechada");
+  logger.info('Conexão com PostgreSQL fechada');
 };

@@ -1,22 +1,20 @@
-import { getCurrentSaoPauloDate } from "../helpers/dates";
-import { calculateGoalProgress } from "../helpers/goal-progress";
-import { goalRepository } from "../repositories/goal.repository";
-import { financialPeriodService } from "./financial-period.service";
-import { HttpError } from "../validations/errors";
+import { getCurrentSaoPauloDate } from '../helpers/dates';
+import { calculateGoalProgress } from '../helpers/goal-progress';
+import { goalRepository } from '../repositories/goal.repository';
+import { financialPeriodService } from './financial-period.service';
+import { HttpError } from '../validations/errors';
 
 import {
   validateDeleteGoal,
   validateGoal,
   validateGoalExists,
   validateUpdateGoal,
-} from "../validations/goal.validation";
+} from '../validations/goal.validation';
 
 function monthsUntilDate(target: Date): number {
   const now = getCurrentSaoPauloDate();
   const months =
-    (target.getFullYear() - now.getFullYear()) * 12 +
-    (target.getMonth() - now.getMonth()) +
-    1;
+    (target.getFullYear() - now.getFullYear()) * 12 + (target.getMonth() - now.getMonth()) + 1;
   return Math.max(months, 0);
 }
 
@@ -64,12 +62,12 @@ export const getGoalByIdService = async (userId: string, goalId: string) => {
   const goal = await goalRepository.findByIdAndUserId(goalId, userId);
   validateGoalExists(goal);
 
-  if (!goal) throw new HttpError(404, "Objetivo não encontrado");
+  if (!goal) throw new HttpError(404, 'Objetivo não encontrado');
 
   const goalWithMilestones = await goalRepository.getGoalWithMilestones(goalId);
 
   if (!goalWithMilestones) {
-    throw new HttpError(404, "Objetivo não encontrado");
+    throw new HttpError(404, 'Objetivo não encontrado');
   }
 
   return goalWithMilestones;
@@ -100,18 +98,13 @@ export const updateGoalService = async (
   }> = {};
   if (data.title !== undefined) updateData.title = data.title;
   if (data.description !== undefined) updateData.description = data.description;
-  if (data.targetAmount !== undefined)
-    updateData.targetAmount = data.targetAmount.toString();
+  if (data.targetAmount !== undefined) updateData.targetAmount = data.targetAmount.toString();
   if (data.targetDate !== undefined) {
     const newTargetDate = new Date(data.targetDate);
     updateData.targetDate = newTargetDate;
-    await financialPeriodService.createNextPeriods(
-      userId,
-      monthsUntilDate(newTargetDate)
-    );
+    await financialPeriodService.createNextPeriods(userId, monthsUntilDate(newTargetDate));
   }
-  if (data.currentAmount !== undefined)
-    updateData.currentAmount = data.currentAmount.toString();
+  if (data.currentAmount !== undefined) updateData.currentAmount = data.currentAmount.toString();
   if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
   const updatedGoal = await goalRepository.update(goalId, updateData);
@@ -130,16 +123,12 @@ export const deleteGoalService = async (userId: string, goalId: string) => {
   return deleted;
 };
 
-export const addAmountToGoalService = async (
-  userId: string,
-  goalId: string,
-  amount: number
-) => {
+export const addAmountToGoalService = async (userId: string, goalId: string, amount: number) => {
   const goal = await goalRepository.findByIdAndUserId(goalId, userId);
   validateGoal(goal, userId);
 
   const updatedGoal = await goalRepository.addAmount(goalId, amount);
-  if (!updatedGoal) throw new HttpError(404, "Objetivo não encontrado");
+  if (!updatedGoal) throw new HttpError(404, 'Objetivo não encontrado');
   validateUpdateGoal(updatedGoal);
 
   return goalRepository.getGoalWithMilestones(goalId);
@@ -154,24 +143,18 @@ export const getGoalStatusService = async (userId: string) => {
     .filter((goal) => goal !== null)
     .map((goal) => ({
       ...goal,
-      status: calculateGoalStatus(
-        goal.progress.percentage,
-        goal.progress.daysRemaining
-      ),
+      status: calculateGoalStatus(goal.progress.percentage, goal.progress.daysRemaining),
       nextMilestone: getNextMilestone(goal.milestones),
     }));
 };
 
-const calculateGoalStatus = (
-  percentage: number,
-  daysRemaining: number
-): string => {
-  if (percentage >= 100) return "completed";
-  if (daysRemaining < 0) return "overdue";
-  if (percentage >= 75) return "on-track";
-  if (percentage >= 50) return "good-progress";
-  if (percentage >= 25) return "early-stage";
-  return "just-started";
+const calculateGoalStatus = (percentage: number, daysRemaining: number): string => {
+  if (percentage >= 100) return 'completed';
+  if (daysRemaining < 0) return 'overdue';
+  if (percentage >= 75) return 'on-track';
+  if (percentage >= 50) return 'good-progress';
+  if (percentage >= 25) return 'early-stage';
+  return 'just-started';
 };
 
 const getNextMilestone = (

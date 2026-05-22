@@ -1,4 +1,4 @@
-import { z } from "./registry";
+import { z } from './registry';
 
 /**
  * Envelopes de resposta do ResponseHandler (ver moneyly-back/.specs/02-conventions.md).
@@ -32,10 +32,7 @@ export const wrapPaginated = (item: z.ZodTypeAny = z.unknown()) =>
   });
 
 /** Envelope custom de GET /transactions/ : data[] + pagination + summary */
-export const wrapPaginatedWithSummary = (
-  item: z.ZodTypeAny,
-  summary: z.ZodTypeAny
-) =>
+export const wrapPaginatedWithSummary = (item: z.ZodTypeAny, summary: z.ZodTypeAny) =>
   z.object({
     success: z.literal(true),
     data: z.array(item),

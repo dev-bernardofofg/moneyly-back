@@ -1,7 +1,7 @@
-import type { NewRefreshToken, RefreshToken } from "../../db/schema";
+import type { NewRefreshToken, RefreshToken } from '../../db/schema';
 
 export interface IRefreshTokenRepository {
-  create(tokenData: Omit<NewRefreshToken, "id" | "createdAt">): Promise<RefreshToken>;
+  create(tokenData: Omit<NewRefreshToken, 'id' | 'createdAt'>): Promise<RefreshToken>;
   findByToken(hashedToken: string): Promise<RefreshToken | null>;
   findValidToken(hashedToken: string): Promise<RefreshToken | null>;
   findByUserId(userId: string): Promise<RefreshToken[]>;

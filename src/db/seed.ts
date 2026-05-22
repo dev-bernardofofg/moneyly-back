@@ -1,28 +1,28 @@
-import { eq } from "drizzle-orm";
-import { userCategoryPreferencesRepository } from "../repositories/user-category-preferences.repository";
-import { db } from "./index";
-import { categories } from "./schema";
+import { eq } from 'drizzle-orm';
+import { userCategoryPreferencesRepository } from '../repositories/user-category-preferences.repository';
+import { db } from './index';
+import { categories } from './schema';
 
 // Categorias globais padrão
 export const globalCategories = [
   // Receitas
-  { name: "Salário" },
-  { name: "Freelance" },
-  { name: "Investimentos" },
-  { name: "Presentes" },
-  { name: "Outros" },
+  { name: 'Salário' },
+  { name: 'Freelance' },
+  { name: 'Investimentos' },
+  { name: 'Presentes' },
+  { name: 'Outros' },
 
   // Despesas
-  { name: "Alimentação" },
-  { name: "Transporte" },
-  { name: "Moradia" },
-  { name: "Saúde" },
-  { name: "Educação" },
-  { name: "Lazer" },
-  { name: "Vestuário" },
-  { name: "Contas" },
-  { name: "Compras" },
-  { name: "Emergências" },
+  { name: 'Alimentação' },
+  { name: 'Transporte' },
+  { name: 'Moradia' },
+  { name: 'Saúde' },
+  { name: 'Educação' },
+  { name: 'Lazer' },
+  { name: 'Vestuário' },
+  { name: 'Contas' },
+  { name: 'Compras' },
+  { name: 'Emergências' },
 ];
 
 // Função para criar categorias globais (executar apenas uma vez)
@@ -47,15 +47,12 @@ export async function createGlobalCategories() {
       userId: null, // Categorias globais não têm userId
     }));
 
-    const insertedCategories = await db
-      .insert(categories)
-      .values(categoriesToInsert)
-      .returning();
+    const insertedCategories = await db.insert(categories).values(categoriesToInsert).returning();
 
     console.log(`✅ Criadas ${insertedCategories.length} categorias globais`);
     return insertedCategories;
   } catch (error) {
-    console.error("❌ Erro ao criar categorias globais:", error);
+    console.error('❌ Erro ao criar categorias globais:', error);
     throw error;
   }
 }
@@ -71,9 +68,7 @@ export async function createDefaultPreferencesForUser(userId: string) {
 
     // Se não existirem categorias globais, criar elas primeiro
     if (globalCategoriesData.length === 0) {
-      console.log(
-        "⚠️ Nenhuma categoria global encontrada. Criando categorias globais..."
-      );
+      console.log('⚠️ Nenhuma categoria global encontrada. Criando categorias globais...');
       try {
         await createGlobalCategories();
         // Buscar novamente após criar
@@ -82,14 +77,11 @@ export async function createDefaultPreferencesForUser(userId: string) {
           .from(categories)
           .where(eq(categories.isGlobal, true));
       } catch (error) {
-        console.error(
-          "❌ Erro ao criar categorias globais automaticamente:",
-          error
-        );
+        console.error('❌ Erro ao criar categorias globais automaticamente:', error);
         // Se ainda não tiver categorias, retornar vazio
         if (globalCategoriesData.length === 0) {
           console.log(
-            "⚠️ Não foi possível criar categorias globais. Usuário criado sem categorias padrão."
+            '⚠️ Não foi possível criar categorias globais. Usuário criado sem categorias padrão.'
           );
           return [];
         }
@@ -97,18 +89,15 @@ export async function createDefaultPreferencesForUser(userId: string) {
     }
 
     const categoryIds = globalCategoriesData.map((cat) => cat.id);
-    const preferences =
-      await userCategoryPreferencesRepository.createDefaultPreferencesForUser(
-        userId,
-        categoryIds
-      );
-
-    console.log(
-      `✅ Criadas ${preferences.length} preferências padrão para o usuário ${userId}`
+    const preferences = await userCategoryPreferencesRepository.createDefaultPreferencesForUser(
+      userId,
+      categoryIds
     );
+
+    console.log(`✅ Criadas ${preferences.length} preferências padrão para o usuário ${userId}`);
     return preferences;
   } catch (error) {
-    console.error("❌ Erro ao criar preferências padrão:", error);
+    console.error('❌ Erro ao criar preferências padrão:', error);
     throw error;
   }
 }

@@ -1,5 +1,5 @@
-import { NextFunction, Request, Response } from "express";
-import { ZodSchema } from "zod";
+import { NextFunction, Request, Response } from 'express';
+import { ZodSchema } from 'zod';
 
 export interface ValidationConfig {
   body?: ZodSchema;
@@ -45,9 +45,6 @@ export const validateQuery = (schema: ZodSchema) => {
   return validate({ query: schema });
 };
 
-export const validateBodyAndParams = (
-  bodySchema: ZodSchema,
-  paramsSchema: ZodSchema
-) => {
+export const validateBodyAndParams = (bodySchema: ZodSchema, paramsSchema: ZodSchema) => {
   return validate({ body: bodySchema, params: paramsSchema });
 };

@@ -1,6 +1,6 @@
-import type { TransactionWithCategory } from "../repositories/transaction.repository";
+import type { TransactionWithCategory } from '../repositories/transaction.repository';
 
-export type CompareSignal = "up" | "down" | "stable";
+export type CompareSignal = 'up' | 'down' | 'stable';
 
 export interface ComparativePeriod {
   startDate: Date;
@@ -37,9 +37,9 @@ const STABLE_THRESHOLD = 10; // |deltaPct| < 10% = stable
 const MIN_AVG_FOR_HIGHLIGHT = 1;
 
 function signalOf(deltaPct: number | null): CompareSignal {
-  if (deltaPct === null) return "stable";
-  if (Math.abs(deltaPct) < STABLE_THRESHOLD) return "stable";
-  return deltaPct > 0 ? "up" : "down";
+  if (deltaPct === null) return 'stable';
+  if (Math.abs(deltaPct) < STABLE_THRESHOLD) return 'stable';
+  return deltaPct > 0 ? 'up' : 'down';
 }
 
 function deltaOf(current: number, average: number): number | null {
@@ -51,18 +51,14 @@ function inPeriod(d: Date, p: ComparativePeriod): boolean {
   return d.getTime() >= p.startDate.getTime() && d.getTime() <= p.endDate.getTime();
 }
 
-function messageFor(
-  name: string,
-  current: number,
-  deltaPct: number | null
-): string {
+function messageFor(name: string, current: number, deltaPct: number | null): string {
   if (deltaPct === null) {
     return current > 0 ? `Novo gasto em ${name}` : `Sem gasto em ${name}`;
   }
   if (Math.abs(deltaPct) < STABLE_THRESHOLD) {
     return `${name} estável vs sua média`;
   }
-  const dir = deltaPct > 0 ? "acima da" : "abaixo da";
+  const dir = deltaPct > 0 ? 'acima da' : 'abaixo da';
   return `${name} ${Math.abs(deltaPct)}% ${dir} sua média`;
 }
 
@@ -77,12 +73,12 @@ export function buildComparison(
   const current = periods[0];
   const previous = periods.slice(1);
 
-  const emptyBasisLabel = current?.label ?? "";
+  const emptyBasisLabel = current?.label ?? '';
   const basis = {
     periodsCompared: previous.length,
     currentPeriod: {
-      startDate: current ? current.startDate.toISOString() : "",
-      endDate: current ? current.endDate.toISOString() : "",
+      startDate: current ? current.startDate.toISOString() : '',
+      endDate: current ? current.endDate.toISOString() : '',
       label: emptyBasisLabel,
     },
   };
@@ -94,20 +90,17 @@ export function buildComparison(
         currentExpense: 0,
         averageExpense: 0,
         deltaPct: null,
-        signal: "stable",
+        signal: 'stable',
       },
       byCategory: [],
       highlights: [],
     };
   }
 
-  const expenses = transactions.filter((t) => t.type === "expense");
+  const expenses = transactions.filter((t) => t.type === 'expense');
 
   // categoria → { current, somaPrev }
-  const map = new Map<
-    string,
-    { name: string; current: number; prevSum: number }
-  >();
+  const map = new Map<string, { name: string; current: number; prevSum: number }>();
   let totalCurrent = 0;
   let totalPrevSum = 0;
 
@@ -115,8 +108,7 @@ export function buildComparison(
     const d = new Date(tx.date);
     const amount = Number(tx.amount);
     const cat = tx.category;
-    const entry =
-      map.get(cat.id) ?? { name: cat.name, current: 0, prevSum: 0 };
+    const entry = map.get(cat.id) ?? { name: cat.name, current: 0, prevSum: 0 };
 
     if (inPeriod(d, current)) {
       entry.current += amount;
@@ -147,9 +139,7 @@ export function buildComparison(
     });
   }
 
-  byCategory.sort(
-    (a, b) => Math.abs(b.deltaPct ?? 0) - Math.abs(a.deltaPct ?? 0)
-  );
+  byCategory.sort((a, b) => Math.abs(b.deltaPct ?? 0) - Math.abs(a.deltaPct ?? 0));
 
   const averageExpense = Number((totalPrevSum / divisor).toFixed(2));
   const currentExpense = Number(totalCurrent.toFixed(2));

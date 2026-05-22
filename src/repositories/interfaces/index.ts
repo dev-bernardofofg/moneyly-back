@@ -20,25 +20,20 @@ import type {
   Transaction,
   User,
   UserCategoryPreference,
-} from "../../db/schema";
-import type {
-  PaginationQuery,
-  PaginationResult,
-} from "../../helpers/pagination";
-import type { TransactionWithCategory } from "../transaction.repository";
+} from '../../db/schema';
+import type { PaginationQuery, PaginationResult } from '../../helpers/pagination';
+import type { TransactionWithCategory } from '../transaction.repository';
 
 // ============================================================
 // USER REPOSITORY INTERFACE
 // ============================================================
 export interface IUserRepository {
-  create(
-    userData: Omit<NewUser, "id" | "createdAt" | "updatedAt">
-  ): Promise<User>;
+  create(userData: Omit<NewUser, 'id' | 'createdAt' | 'updatedAt'>): Promise<User>;
   findAll(): Promise<User[]>;
   findByEmail(email: string): Promise<User | null>;
   findByGoogleId(googleId: string): Promise<User | null>;
   findById(id: string): Promise<User | null>;
-  findByIdWithoutPassword(id: string): Promise<Omit<User, "password"> | null>;
+  findByIdWithoutPassword(id: string): Promise<Omit<User, 'password'> | null>;
   updateGoogleInfo(
     id: string,
     googleInfo: { googleId: string; avatar?: string }
@@ -63,7 +58,7 @@ export interface IUserRepository {
 // ============================================================
 export interface ITransactionRepository {
   create(
-    transactionData: Omit<NewTransaction, "id" | "createdAt" | "updatedAt">
+    transactionData: Omit<NewTransaction, 'id' | 'createdAt' | 'updatedAt'>
   ): Promise<Transaction>;
   findByUserIdPaginated(
     userId: string,
@@ -86,16 +81,11 @@ export interface ITransactionRepository {
   update(
     id: string,
     userId: string,
-    updateData: Partial<
-      Omit<NewTransaction, "id" | "userId" | "createdAt" | "updatedAt">
-    >
+    updateData: Partial<Omit<NewTransaction, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>
   ): Promise<Transaction | null>;
   delete(id: string, userId: string): Promise<Transaction | null>;
   findAllByUserId(userId: string): Promise<TransactionWithCategory[]>;
-  findByPeriodId(
-    userId: string,
-    periodId: string
-  ): Promise<TransactionWithCategory[]>;
+  findByPeriodId(userId: string, periodId: string): Promise<TransactionWithCategory[]>;
   findByPeriodIdOrDate(
     userId: string,
     periodId?: string,
@@ -120,14 +110,8 @@ export interface ICategoryRepository {
   delete(id: string, userId: string): Promise<Category[]>;
   findGlobalCategories(): Promise<Category[]>;
   createGlobalCategory(name: string): Promise<Category>;
-  hideGlobalCategoryForUser(
-    userId: string,
-    categoryId: string
-  ): Promise<UserCategoryPreference>;
-  showGlobalCategoryForUser(
-    userId: string,
-    categoryId: string
-  ): Promise<{ message: string }>;
+  hideGlobalCategoryForUser(userId: string, categoryId: string): Promise<UserCategoryPreference>;
+  showGlobalCategoryForUser(userId: string, categoryId: string): Promise<{ message: string }>;
 }
 
 // ============================================================
@@ -138,10 +122,7 @@ export interface IBudgetRepository {
   findByUserId(userId: string): Promise<CategoryBudget[]>;
   findByCategoryId(categoryId: string): Promise<CategoryBudget | null>;
   findByIdAndUserId(id: string, userId: string): Promise<CategoryBudget | null>;
-  update(
-    id: string,
-    data: Partial<NewCategoryBudget>
-  ): Promise<CategoryBudget | null>;
+  update(id: string, data: Partial<NewCategoryBudget>): Promise<CategoryBudget | null>;
   delete(id: string): Promise<boolean>;
   getBudgetWithCategory(userId: string): Promise<
     Array<{
@@ -169,10 +150,7 @@ export interface IGoalRepository {
   addAmount(id: string, amount: number): Promise<Goal | null>;
   createMilestone(data: NewGoalMilestone): Promise<GoalMilestone>;
   findMilestonesByGoalId(goalId: string): Promise<GoalMilestone[]>;
-  updateMilestone(
-    id: string,
-    data: Partial<NewGoalMilestone>
-  ): Promise<GoalMilestone | null>;
+  updateMilestone(id: string, data: Partial<NewGoalMilestone>): Promise<GoalMilestone | null>;
   getGoalWithMilestones(goalId: string): Promise<{
     id: string;
     userId: string;
@@ -198,9 +176,7 @@ export interface IGoalRepository {
 // USER CATEGORY PREFERENCES REPOSITORY INTERFACE
 // ============================================================
 export interface IUserCategoryPreferencesRepository {
-  create(
-    preferenceData: NewUserCategoryPreference
-  ): Promise<UserCategoryPreference>;
+  create(preferenceData: NewUserCategoryPreference): Promise<UserCategoryPreference>;
   findByUserId(userId: string): Promise<UserCategoryPreference[]>;
   findByUserIdAndCategoryId(
     userId: string,
@@ -222,9 +198,7 @@ export interface IUserCategoryPreferencesRepository {
 // NOTIFICATION REPOSITORY INTERFACE
 // ============================================================
 export interface INotificationRepository {
-  create(
-    data: Omit<NewNotification, "id" | "createdAt">
-  ): Promise<Notification>;
+  create(data: Omit<NewNotification, 'id' | 'createdAt'>): Promise<Notification>;
   findByDedupeKey(dedupeKey: string): Promise<Notification | null>;
   findByUserPaginated(
     userId: string,
@@ -239,12 +213,7 @@ export interface INotificationRepository {
 // FINANCIAL PERIOD REPOSITORY INTERFACE
 // ============================================================
 export interface IFinancialPeriodRepository {
-  create(data: {
-    userId: string;
-    startDate: Date;
-    endDate: Date;
-    isActive: boolean;
-  }): Promise<{
+  create(data: { userId: string; startDate: Date; endDate: Date; isActive: boolean }): Promise<{
     id: string;
     userId: string;
     startDate: Date;

@@ -1,7 +1,7 @@
-import { and, count, desc, eq, gte, lte } from "drizzle-orm";
-import { db } from "../db";
-import { financialPeriods, transactions, type FinancialPeriod } from "../db/schema";
-import type { IFinancialPeriodRepository } from "./interfaces/IFinancialPeriodRepository";
+import { and, count, desc, eq, gte, lte } from 'drizzle-orm';
+import { db } from '../db';
+import { financialPeriods, transactions, type FinancialPeriod } from '../db/schema';
+import type { IFinancialPeriodRepository } from './interfaces/IFinancialPeriodRepository';
 
 async function createPeriod(data: {
   userId: string;
@@ -10,18 +10,28 @@ async function createPeriod(data: {
   isActive: boolean;
 }): Promise<FinancialPeriod> {
   const [period] = await db.insert(financialPeriods).values(data).returning();
-  if (!period) throw new Error("Falha ao criar período financeiro");
+  if (!period) throw new Error('Falha ao criar período financeiro');
   return period;
 }
 
 export const financialPeriodRepository = {
   create: createPeriod,
 
-  async findByUserAndDateRange(userId: string, startDate: Date, endDate: Date): Promise<FinancialPeriod[]> {
+  async findByUserAndDateRange(
+    userId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<FinancialPeriod[]> {
     return db
       .select()
       .from(financialPeriods)
-      .where(and(eq(financialPeriods.userId, userId), gte(financialPeriods.startDate, startDate), lte(financialPeriods.endDate, endDate)));
+      .where(
+        and(
+          eq(financialPeriods.userId, userId),
+          gte(financialPeriods.startDate, startDate),
+          lte(financialPeriods.endDate, endDate)
+        )
+      );
   },
 
   async findActiveByUser(userId: string): Promise<FinancialPeriod[]> {
@@ -39,17 +49,29 @@ export const financialPeriodRepository = {
       .where(eq(financialPeriods.userId, userId));
   },
 
-  async findOrCreatePeriod(userId: string, startDate: Date, endDate: Date): Promise<FinancialPeriod> {
+  async findOrCreatePeriod(
+    userId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<FinancialPeriod> {
     const [existing] = await db
       .select()
       .from(financialPeriods)
-      .where(and(eq(financialPeriods.userId, userId), eq(financialPeriods.startDate, startDate), eq(financialPeriods.endDate, endDate)))
+      .where(
+        and(
+          eq(financialPeriods.userId, userId),
+          eq(financialPeriods.startDate, startDate),
+          eq(financialPeriods.endDate, endDate)
+        )
+      )
       .limit(1);
     if (existing) return existing;
     return createPeriod({ userId, startDate, endDate, isActive: true });
   },
 
-  async findAllByUserWithTransactionCount(userId: string): Promise<(FinancialPeriod & { transactionCount: number })[]> {
+  async findAllByUserWithTransactionCount(
+    userId: string
+  ): Promise<(FinancialPeriod & { transactionCount: number })[]> {
     const periods = await db
       .select()
       .from(financialPeriods)

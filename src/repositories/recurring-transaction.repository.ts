@@ -1,13 +1,23 @@
-import { and, count, eq, lte } from "drizzle-orm";
-import { db } from "../db";
-import { recurringTransactions, type NewRecurringTransaction, type RecurringTransaction } from "../db/schema";
-import { PaginationHelper, type PaginationQuery, type PaginationResult } from "../helpers/pagination";
-import type { IRecurringTransactionRepository } from "./interfaces/IRecurringTransactionRepository";
+import { and, count, eq, lte } from 'drizzle-orm';
+import { db } from '../db';
+import {
+  recurringTransactions,
+  type NewRecurringTransaction,
+  type RecurringTransaction,
+} from '../db/schema';
+import {
+  PaginationHelper,
+  type PaginationQuery,
+  type PaginationResult,
+} from '../helpers/pagination';
+import type { IRecurringTransactionRepository } from './interfaces/IRecurringTransactionRepository';
 
 export const recurringTransactionRepository = {
-  async create(data: Omit<NewRecurringTransaction, "id" | "createdAt" | "updatedAt">): Promise<RecurringTransaction> {
+  async create(
+    data: Omit<NewRecurringTransaction, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<RecurringTransaction> {
     const [recurring] = await db.insert(recurringTransactions).values(data).returning();
-    if (!recurring) throw new Error("Falha ao criar transação recorrente");
+    if (!recurring) throw new Error('Falha ao criar transação recorrente');
     return recurring;
   },
 
@@ -60,13 +70,15 @@ export const recurringTransactionRepository = {
     return db
       .select()
       .from(recurringTransactions)
-      .where(and(eq(recurringTransactions.isActive, true), lte(recurringTransactions.nextExecution, now)));
+      .where(
+        and(eq(recurringTransactions.isActive, true), lte(recurringTransactions.nextExecution, now))
+      );
   },
 
   async update(
     id: string,
     userId: string,
-    data: Partial<Omit<NewRecurringTransaction, "id" | "userId" | "createdAt" | "updatedAt">>
+    data: Partial<Omit<NewRecurringTransaction, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>
   ): Promise<RecurringTransaction | null> {
     const [updated] = await db
       .update(recurringTransactions)
@@ -110,7 +122,11 @@ export const recurringTransactionRepository = {
     return result.length > 0;
   },
 
-  async reactivate(id: string, userId: string, nextExecution: Date): Promise<RecurringTransaction | null> {
+  async reactivate(
+    id: string,
+    userId: string,
+    nextExecution: Date
+  ): Promise<RecurringTransaction | null> {
     const [updated] = await db
       .update(recurringTransactions)
       .set({ isActive: true, nextExecution, updatedAt: new Date() })
@@ -137,10 +153,7 @@ export const recurringTransactionRepository = {
   },
 
   async findAllActive(): Promise<RecurringTransaction[]> {
-    return db
-      .select()
-      .from(recurringTransactions)
-      .where(eq(recurringTransactions.isActive, true));
+    return db.select().from(recurringTransactions).where(eq(recurringTransactions.isActive, true));
   },
 } satisfies IRecurringTransactionRepository;
 

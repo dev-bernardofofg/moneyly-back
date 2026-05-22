@@ -1,9 +1,9 @@
 import {
   groupSubscriptionCandidates,
   type SubscriptionCandidate,
-} from "../helpers/subscription-detector";
-import { transactionRepository } from "../repositories/transaction.repository";
-import { requireUser } from "../validations/user.validation";
+} from '../helpers/subscription-detector';
+import { transactionRepository } from '../repositories/transaction.repository';
+import { requireUser } from '../validations/user.validation';
 
 export const detectSubscriptionsService = async (
   userId: string

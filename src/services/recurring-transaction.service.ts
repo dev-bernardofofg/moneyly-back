@@ -1,29 +1,37 @@
-import type { RecurringTransaction } from "../db/schema";
-import { logger } from "../lib/logger";
+import type { RecurringTransaction } from '../db/schema';
+import { logger } from '../lib/logger';
 import {
   calculateFirstExecution,
   calculateNextExecution,
   getCurrentSaoPauloDate,
-} from "../helpers/dates";
-import { recurringTransactionRepository } from "../repositories/recurring-transaction.repository";
+} from '../helpers/dates';
+import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
 import type {
   CreateRecurringTransactionInput,
   RecurringFrequency,
   UpdateRecurringTransactionInput,
-} from "../types/recurring-transaction.types";
-import { PaginationHelper } from "../helpers/pagination";
-import { transactionRepository } from "../repositories/transaction.repository";
-import { createTransactionService } from "./transaction.service";
-import { financialPeriodService } from "./financial-period.service";
+} from '../types/recurring-transaction.types';
+import { PaginationHelper } from '../helpers/pagination';
+import { transactionRepository } from '../repositories/transaction.repository';
+import { createTransactionService } from './transaction.service';
+import { financialPeriodService } from './financial-period.service';
 
-function calcMonthsNeeded(frequency: RecurringFrequency, totalInstallments?: number | null): number {
+function calcMonthsNeeded(
+  frequency: RecurringFrequency,
+  totalInstallments?: number | null
+): number {
   if (!totalInstallments) return 3;
   switch (frequency) {
-    case "daily":   return Math.ceil(totalInstallments / 30);
-    case "weekly":  return Math.ceil(totalInstallments / 4);
-    case "monthly": return totalInstallments;
-    case "yearly":  return totalInstallments * 12;
-    default:        return 3;
+    case 'daily':
+      return Math.ceil(totalInstallments / 30);
+    case 'weekly':
+      return Math.ceil(totalInstallments / 4);
+    case 'monthly':
+      return totalInstallments;
+    case 'yearly':
+      return totalInstallments * 12;
+    default:
+      return 3;
   }
 }
 
@@ -32,7 +40,7 @@ function generateExecutionDates(
   startDate: Date,
   totalInstallments: number,
   dayOfMonth?: number | null,
-  dayOfWeek?: number | null,
+  dayOfWeek?: number | null
 ): Date[] {
   const dates: Date[] = [startDate];
   let prev = startDate;
@@ -79,7 +87,7 @@ export const createRecurringTransactionService = async (
       startDate,
       data.totalInstallments,
       data.dayOfMonth,
-      data.dayOfWeek,
+      data.dayOfWeek
     );
 
     await Promise.all(
@@ -89,7 +97,7 @@ export const createRecurringTransactionService = async (
           title: data.title,
           amount: data.amount,
           category: data.categoryId,
-          description: data.description ?? "",
+          description: data.description ?? '',
           date,
           recurringTransactionId: recurring.id,
         })
@@ -117,12 +125,17 @@ export const createRecurringTransactionService = async (
       title: data.title,
       amount: data.amount,
       category: data.categoryId,
-      description: data.description ?? "",
+      description: data.description ?? '',
       date: startDate,
       recurringTransactionId: recurring.id,
     });
 
-    const nextExecution = calculateNextExecution(data.frequency, data.dayOfMonth, data.dayOfWeek, startDate);
+    const nextExecution = calculateNextExecution(
+      data.frequency,
+      data.dayOfMonth,
+      data.dayOfWeek,
+      startDate
+    );
     await recurringTransactionRepository.update(recurring.id, userId, {
       executedInstallments: 1,
       nextExecution,
@@ -140,7 +153,11 @@ export const getRecurringTransactionsService = async (
   includeInactive = false
 ) => {
   const paginationQuery = PaginationHelper.validateAndParse(pagination);
-  return recurringTransactionRepository.findByUserIdPaginated(userId, paginationQuery, includeInactive);
+  return recurringTransactionRepository.findByUserIdPaginated(
+    userId,
+    paginationQuery,
+    includeInactive
+  );
 };
 
 export const updateRecurringTransactionService = async (
@@ -169,10 +186,7 @@ export const updateRecurringTransactionService = async (
   });
 };
 
-export const getRecurringTransactionHistoryService = async (
-  id: string,
-  userId: string
-) => {
+export const getRecurringTransactionHistoryService = async (id: string, userId: string) => {
   return transactionRepository.findByRecurringTransactionId(id, userId);
 };
 
@@ -225,27 +239,37 @@ export const processRecurringTransactions = async (): Promise<void> => {
   for (const recurring of due) {
     try {
       if (isOverdue(recurring.nextExecution, recurring.frequency, now)) {
-        logger.warn(`[recurring] skipping overdue ${recurring.id} (${recurring.frequency}, nextExecution: ${recurring.nextExecution.toISOString()})`);
-        const nextExecution = calculateNextExecution(recurring.frequency, recurring.dayOfMonth, recurring.dayOfWeek, now);
+        logger.warn(
+          `[recurring] skipping overdue ${recurring.id} (${recurring.frequency}, nextExecution: ${recurring.nextExecution.toISOString()})`
+        );
+        const nextExecution = calculateNextExecution(
+          recurring.frequency,
+          recurring.dayOfMonth,
+          recurring.dayOfWeek,
+          now
+        );
         await recurringTransactionRepository.updateNextExecution(recurring.id, nextExecution);
         continue;
       }
 
       await createTransactionService(recurring.userId, {
-        type: recurring.type as "income" | "expense",
+        type: recurring.type as 'income' | 'expense',
         title: recurring.title,
         amount: recurring.amount,
         category: recurring.categoryId,
-        description: recurring.description ?? "",
+        description: recurring.description ?? '',
         date: recurring.nextExecution,
         recurringTransactionId: recurring.id,
       });
 
-      const updated = await recurringTransactionRepository.incrementExecutedInstallments(recurring.id);
+      const updated = await recurringTransactionRepository.incrementExecutedInstallments(
+        recurring.id
+      );
       if (!updated) continue;
 
       const hasInstallmentLimit = updated.totalInstallments !== null;
-      const exhausted = hasInstallmentLimit && updated.executedInstallments >= updated.totalInstallments!;
+      const exhausted =
+        hasInstallmentLimit && updated.executedInstallments >= updated.totalInstallments!;
 
       if (exhausted) {
         await recurringTransactionRepository.deactivateById(recurring.id);
@@ -254,7 +278,7 @@ export const processRecurringTransactions = async (): Promise<void> => {
           recurring.frequency,
           recurring.dayOfMonth,
           recurring.dayOfWeek,
-          recurring.nextExecution,
+          recurring.nextExecution
         );
         await recurringTransactionRepository.updateNextExecution(recurring.id, nextExecution);
       }

@@ -1,29 +1,29 @@
-import { defineConfig } from "@kubb/core";
-import { pluginOas } from "@kubb/plugin-oas";
-import { pluginTs } from "@kubb/plugin-ts";
-import { pluginZod } from "@kubb/plugin-zod";
+import { defineConfig } from '@kubb/core';
+import { pluginOas } from '@kubb/plugin-oas';
+import { pluginTs } from '@kubb/plugin-ts';
+import { pluginZod } from '@kubb/plugin-zod';
 
 export default defineConfig({
-  root: ".",
+  root: '.',
   input: {
     // Lê a especificação OpenAPI do arquivo JSON
-    path: "./openapi.json",
+    path: './openapi.json',
   },
   output: {
     // Schemas TypeScript e Zod gerados aqui
-    path: "./src/generated",
+    path: './src/generated',
     clean: true,
   },
   plugins: [
     pluginOas(),
     pluginTs({
       output: {
-        path: "types",
+        path: 'types',
       },
     }),
     pluginZod({
       output: {
-        path: "zod",
+        path: 'zod',
       },
     }),
   ],

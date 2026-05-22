@@ -1,11 +1,7 @@
-import { formatInTimeZone } from "date-fns-tz";
-import { ptBR } from "date-fns/locale";
-import { transactionRepository } from "../repositories/transaction.repository";
-import {
-  createNormalizedSaoPauloDate,
-  getCurrentSaoPauloDate,
-  toSaoPauloTimezone,
-} from "./dates";
+import { formatInTimeZone } from 'date-fns-tz';
+import { ptBR } from 'date-fns/locale';
+import { transactionRepository } from '../repositories/transaction.repository';
+import { createNormalizedSaoPauloDate, getCurrentSaoPauloDate, toSaoPauloTimezone } from './dates';
 
 export interface FinancialPeriod {
   startDate: Date;
@@ -13,7 +9,7 @@ export interface FinancialPeriod {
 }
 
 // Timezone de São Paulo
-const SAO_PAULO_TIMEZONE = "America/Sao_Paulo";
+const SAO_PAULO_TIMEZONE = 'America/Sao_Paulo';
 
 /**
  * Normaliza um dia para o último dia válido do mês no timezone de São Paulo
@@ -22,11 +18,7 @@ const SAO_PAULO_TIMEZONE = "America/Sao_Paulo";
  * @param day Dia desejado
  * @returns Dia normalizado (não excede o último dia do mês)
  */
-export function normalizeDayForMonth(
-  year: number,
-  month: number,
-  day: number
-): number {
+export function normalizeDayForMonth(year: number, month: number, day: number): number {
   const lastDayOfMonth = new Date(year, month + 1, 0);
   const lastDaySaoPaulo = toSaoPauloTimezone(lastDayOfMonth);
   return Math.min(day, lastDaySaoPaulo.getDate());
@@ -39,11 +31,7 @@ export function normalizeDayForMonth(
  * @param day Dia desejado
  * @returns Data normalizada no timezone de São Paulo
  */
-export function createNormalizedDate(
-  year: number,
-  month: number,
-  day: number
-): Date {
+export function createNormalizedDate(year: number, month: number, day: number): Date {
   return createNormalizedSaoPauloDate(year, month, day);
 }
 
@@ -68,47 +56,23 @@ export function getCurrentFinancialPeriod(
 
   // Se o dia atual é maior ou igual ao dia de início, o período começou neste mês
   if (currentDay >= financialDayStart) {
-    startDate = createNormalizedDate(
-      currentYear,
-      currentMonth,
-      financialDayStart
-    );
+    startDate = createNormalizedDate(currentYear, currentMonth, financialDayStart);
 
     // Se o dia de fim é menor ou igual ao dia de início, vai para o próximo mês
     if (financialDayEnd <= financialDayStart) {
-      endDate = createNormalizedDate(
-        currentYear,
-        currentMonth + 1,
-        financialDayEnd
-      );
+      endDate = createNormalizedDate(currentYear, currentMonth + 1, financialDayEnd);
     } else {
-      endDate = createNormalizedDate(
-        currentYear,
-        currentMonth,
-        financialDayEnd
-      );
+      endDate = createNormalizedDate(currentYear, currentMonth, financialDayEnd);
     }
   } else {
     // Se o dia atual é menor que o dia de início, o período começou no mês anterior
-    startDate = createNormalizedDate(
-      currentYear,
-      currentMonth - 1,
-      financialDayStart
-    );
+    startDate = createNormalizedDate(currentYear, currentMonth - 1, financialDayStart);
 
     // Se o dia de fim é menor ou igual ao dia de início, vai para este mês
     if (financialDayEnd <= financialDayStart) {
-      endDate = createNormalizedDate(
-        currentYear,
-        currentMonth,
-        financialDayEnd
-      );
+      endDate = createNormalizedDate(currentYear, currentMonth, financialDayEnd);
     } else {
-      endDate = createNormalizedDate(
-        currentYear,
-        currentMonth - 1,
-        financialDayEnd
-      );
+      endDate = createNormalizedDate(currentYear, currentMonth - 1, financialDayEnd);
     }
   }
 
@@ -160,11 +124,7 @@ export function isDateInCurrentFinancialPeriod(
   financialDayEnd: number,
   referenceDate: Date = getCurrentSaoPauloDate()
 ): boolean {
-  const period = getCurrentFinancialPeriod(
-    financialDayStart,
-    financialDayEnd,
-    referenceDate
-  );
+  const period = getCurrentFinancialPeriod(financialDayStart, financialDayEnd, referenceDate);
 
   const saoPauloDate = toSaoPauloTimezone(date);
   return saoPauloDate >= period.startDate && saoPauloDate <= period.endDate;
@@ -214,26 +174,16 @@ export function getPreviousFinancialPeriods(
     if (i === 0) {
       // Período atual
       periods.push(
-        getCurrentFinancialPeriod(
-          financialDayStart,
-          financialDayEnd,
-          periodReferenceDate
-        )
+        getCurrentFinancialPeriod(financialDayStart, financialDayEnd, periodReferenceDate)
       );
     } else {
       // Períodos anteriores
       // Retroceder pelo número de meses necessários
       const monthsToSubtract = i;
-      periodReferenceDate.setMonth(
-        periodReferenceDate.getMonth() - monthsToSubtract
-      );
+      periodReferenceDate.setMonth(periodReferenceDate.getMonth() - monthsToSubtract);
 
       periods.push(
-        getCurrentFinancialPeriod(
-          financialDayStart,
-          financialDayEnd,
-          periodReferenceDate
-        )
+        getCurrentFinancialPeriod(financialDayStart, financialDayEnd, periodReferenceDate)
       );
     }
   }
@@ -263,7 +213,7 @@ export function getHistoricalStartDate(
   );
   const oldestPeriod = periods[periods.length - 1];
   if (!oldestPeriod) {
-    throw new Error("Nenhum período financeiro encontrado");
+    throw new Error('Nenhum período financeiro encontrado');
   }
   return oldestPeriod.startDate;
 }
@@ -316,11 +266,7 @@ export function getAvailableFinancialPeriods(
   while (currentDate <= maxDate && iterationCount < maxIterations) {
     iterationCount++;
 
-    const period = getCurrentFinancialPeriod(
-      financialDayStart,
-      financialDayEnd,
-      currentDate
-    );
+    const period = getCurrentFinancialPeriod(financialDayStart, financialDayEnd, currentDate);
 
     // Verificar se já temos este período
     const periodExists = periods.find(
@@ -337,18 +283,12 @@ export function getAvailableFinancialPeriods(
       });
 
       // Criar label formatado em português (ex: "Julho - Agosto")
-      const startMonth = formatInTimeZone(
-        period.startDate,
-        SAO_PAULO_TIMEZONE,
-        "MMMM",
-        { locale: ptBR }
-      );
-      const endMonth = formatInTimeZone(
-        period.endDate,
-        SAO_PAULO_TIMEZONE,
-        "MMMM",
-        { locale: ptBR }
-      );
+      const startMonth = formatInTimeZone(period.startDate, SAO_PAULO_TIMEZONE, 'MMMM', {
+        locale: ptBR,
+      });
+      const endMonth = formatInTimeZone(period.endDate, SAO_PAULO_TIMEZONE, 'MMMM', {
+        locale: ptBR,
+      });
       const startYear = period.startDate.getFullYear();
       const endYear = period.endDate.getFullYear();
 
@@ -364,9 +304,7 @@ export function getAvailableFinancialPeriods(
       }
 
       // Capitalizar primeira letra de cada mês
-      const capitalizedLabel = label.replace(/\b\w/g, (char) =>
-        char.toUpperCase()
-      );
+      const capitalizedLabel = label.replace(/\b\w/g, (char) => char.toUpperCase());
 
       const periodId = `${period.startDate.toISOString()}_${period.endDate.toISOString()}`;
 
@@ -419,11 +357,7 @@ export async function getAllAvailableFinancialPeriodsWithTransactions(
     const pastDate = new Date(currentDate);
     pastDate.setMonth(pastDate.getMonth() - i);
 
-    const period = getCurrentFinancialPeriod(
-      financialDayStart,
-      financialDayEnd,
-      pastDate
-    );
+    const period = getCurrentFinancialPeriod(financialDayStart, financialDayEnd, pastDate);
 
     // 🎯 CONSULTAR BANCO para este período
     const transactionCount = await getTransactionCountForPeriod(userId, period);
@@ -438,17 +372,10 @@ export async function getAllAvailableFinancialPeriodsWithTransactions(
   }
 
   // Período atual
-  const currentPeriod = getCurrentFinancialPeriod(
-    financialDayStart,
-    financialDayEnd,
-    currentDate
-  );
+  const currentPeriod = getCurrentFinancialPeriod(financialDayStart, financialDayEnd, currentDate);
 
   // 🎯 CONSULTAR BANCO para período atual
-  const currentTransactionCount = await getTransactionCountForPeriod(
-    userId,
-    currentPeriod
-  );
+  const currentTransactionCount = await getTransactionCountForPeriod(userId, currentPeriod);
 
   periods.push({
     id: `${currentPeriod.startDate.toISOString()}_${currentPeriod.endDate.toISOString()}`,
@@ -463,17 +390,10 @@ export async function getAllAvailableFinancialPeriodsWithTransactions(
     const futureDate = new Date(currentDate);
     futureDate.setMonth(futureDate.getMonth() + i);
 
-    const period = getCurrentFinancialPeriod(
-      financialDayStart,
-      financialDayEnd,
-      futureDate
-    );
+    const period = getCurrentFinancialPeriod(financialDayStart, financialDayEnd, futureDate);
 
     // 🎯 CONSULTAR BANCO para período futuro
-    const futureTransactionCount = await getTransactionCountForPeriod(
-      userId,
-      period
-    );
+    const futureTransactionCount = await getTransactionCountForPeriod(userId, period);
 
     periods.push({
       id: `${period.startDate.toISOString()}_${period.endDate.toISOString()}`,
@@ -514,10 +434,10 @@ async function getTransactionCountForPeriod(
  * Formata o label do período em português
  */
 export function formatPeriodLabel(startDate: Date, endDate: Date): string {
-  const startMonth = formatInTimeZone(startDate, SAO_PAULO_TIMEZONE, "MMMM", {
+  const startMonth = formatInTimeZone(startDate, SAO_PAULO_TIMEZONE, 'MMMM', {
     locale: ptBR,
   });
-  const endMonth = formatInTimeZone(endDate, SAO_PAULO_TIMEZONE, "MMMM", {
+  const endMonth = formatInTimeZone(endDate, SAO_PAULO_TIMEZONE, 'MMMM', {
     locale: ptBR,
   });
   const startYear = startDate.getFullYear();

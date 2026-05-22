@@ -1,8 +1,15 @@
-import { and, desc, eq } from "drizzle-orm";
-import { db } from "../db";
-import { Goal, GoalMilestone, goalMilestones, goals, NewGoal, NewGoalMilestone } from "../db/schema";
-import type { GoalWithMilestones, IGoalRepository } from "./interfaces/IGoalRepository";
-import { calculateGoalProgress } from "../helpers/goal-progress";
+import { and, desc, eq } from 'drizzle-orm';
+import { db } from '../db';
+import {
+  Goal,
+  GoalMilestone,
+  goalMilestones,
+  goals,
+  NewGoal,
+  NewGoalMilestone,
+} from '../db/schema';
+import type { GoalWithMilestones, IGoalRepository } from './interfaces/IGoalRepository';
+import { calculateGoalProgress } from '../helpers/goal-progress';
 
 async function checkMilestones(goalId: string, currentAmount: number): Promise<void> {
   const milestones = await db
@@ -26,12 +33,16 @@ async function checkMilestones(goalId: string, currentAmount: number): Promise<v
 export const goalRepository: IGoalRepository = {
   async create(data: NewGoal): Promise<Goal> {
     const [goal] = await db.insert(goals).values(data).returning();
-    if (!goal) throw new Error("Falha ao criar objetivo");
+    if (!goal) throw new Error('Falha ao criar objetivo');
 
     const milestonePercentages = [25, 50, 75, 100];
     for (const percentage of milestonePercentages) {
       const amount = Math.floor((Number(data.targetAmount) * percentage) / 100);
-      await goalRepository.createMilestone({ goalId: goal.id, percentage, amount: amount.toString() });
+      await goalRepository.createMilestone({
+        goalId: goal.id,
+        percentage,
+        amount: amount.toString(),
+      });
     }
 
     return goal;
@@ -43,7 +54,10 @@ export const goalRepository: IGoalRepository = {
   },
 
   async findByIdAndUserId(id: string, userId: string): Promise<Goal | null> {
-    const [goal] = await db.select().from(goals).where(and(eq(goals.id, id), eq(goals.userId, userId)));
+    const [goal] = await db
+      .select()
+      .from(goals)
+      .where(and(eq(goals.id, id), eq(goals.userId, userId)));
     return goal ?? null;
   },
 
@@ -90,7 +104,7 @@ export const goalRepository: IGoalRepository = {
 
   async createMilestone(data: NewGoalMilestone): Promise<GoalMilestone> {
     const [milestone] = await db.insert(goalMilestones).values(data).returning();
-    if (!milestone) throw new Error("Falha ao criar marco");
+    if (!milestone) throw new Error('Falha ao criar marco');
     return milestone;
   },
 
@@ -102,8 +116,15 @@ export const goalRepository: IGoalRepository = {
       .orderBy(goalMilestones.percentage);
   },
 
-  async updateMilestone(id: string, data: Partial<NewGoalMilestone>): Promise<GoalMilestone | null> {
-    const [milestone] = await db.update(goalMilestones).set(data).where(eq(goalMilestones.id, id)).returning();
+  async updateMilestone(
+    id: string,
+    data: Partial<NewGoalMilestone>
+  ): Promise<GoalMilestone | null> {
+    const [milestone] = await db
+      .update(goalMilestones)
+      .set(data)
+      .where(eq(goalMilestones.id, id))
+      .returning();
     return milestone ?? null;
   },
 

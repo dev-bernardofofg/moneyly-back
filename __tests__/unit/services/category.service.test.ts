@@ -2,38 +2,38 @@
  * Unit tests for CategoryService
  */
 
-import { categoryRepository } from "../../../src/repositories/categories.repository";
+import { categoryRepository } from '../../../src/repositories/categories.repository';
 import {
   createCategoryService,
   deleteCategoryService,
   getCategoriesService,
   updateCategoryService,
-} from "../../../src/services/category.service";
+} from '../../../src/services/category.service';
 import {
   validateCategoryExists,
   validateCategoryExistsByUserId,
   validateCategoryIsNotGlobal,
   validateCategoryNameIsNotInUse,
   validateHideGlobalCategory,
-} from "../../../src/validations/category.validation";
-import { validatePagination } from "../../../src/validations/pagination.validation";
+} from '../../../src/validations/category.validation';
+import { validatePagination } from '../../../src/validations/pagination.validation';
 
 // Mock dos módulos
-jest.mock("../../../src/repositories/categories.repository");
-jest.mock("../../../src/validations/category.validation");
-jest.mock("../../../src/validations/pagination.validation");
+jest.mock('../../../src/repositories/categories.repository');
+jest.mock('../../../src/validations/category.validation');
+jest.mock('../../../src/validations/pagination.validation');
 
-describe("CategoryService", () => {
+describe('CategoryService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe("createCategoryService", () => {
-    const mockUserId = "user-123";
-    const mockCategoryName = "Alimentação";
+  describe('createCategoryService', () => {
+    const mockUserId = 'user-123';
+    const mockCategoryName = 'Alimentação';
 
     const mockCreatedCategory = {
-      id: "cat-123",
+      id: 'cat-123',
       name: mockCategoryName,
       userId: mockUserId,
       icon: null,
@@ -42,11 +42,9 @@ describe("CategoryService", () => {
       updatedAt: new Date(),
     };
 
-    it("creates a category successfully", async () => {
+    it('creates a category successfully', async () => {
       (validateCategoryExists as jest.Mock).mockResolvedValue(undefined);
-      (categoryRepository.create as jest.Mock).mockResolvedValue(
-        mockCreatedCategory
-      );
+      (categoryRepository.create as jest.Mock).mockResolvedValue(mockCreatedCategory);
 
       const result = await createCategoryService(mockCategoryName, mockUserId);
 
@@ -58,28 +56,26 @@ describe("CategoryService", () => {
       expect(result).toEqual(mockCreatedCategory);
     });
 
-    it("validates whether the category already exists before creating", async () => {
-      (validateCategoryExists as jest.Mock).mockRejectedValue(
-        new Error("Categoria já existe")
-      );
+    it('validates whether the category already exists before creating', async () => {
+      (validateCategoryExists as jest.Mock).mockRejectedValue(new Error('Categoria já existe'));
 
-      await expect(
-        createCategoryService(mockCategoryName, mockUserId)
-      ).rejects.toThrow("Categoria já existe");
+      await expect(createCategoryService(mockCategoryName, mockUserId)).rejects.toThrow(
+        'Categoria já existe'
+      );
 
       expect(categoryRepository.create).not.toHaveBeenCalled();
     });
   });
 
-  describe("getCategoriesService", () => {
-    const mockUserId = "user-123";
+  describe('getCategoriesService', () => {
+    const mockUserId = 'user-123';
     const mockCategories = [
-      { id: "cat-1", name: "Alimentação", userId: mockUserId },
-      { id: "cat-2", name: "Transporte", userId: mockUserId },
-      { id: "cat-3", name: "Lazer", userId: mockUserId },
+      { id: 'cat-1', name: 'Alimentação', userId: mockUserId },
+      { id: 'cat-2', name: 'Transporte', userId: mockUserId },
+      { id: 'cat-3', name: 'Lazer', userId: mockUserId },
     ];
 
-    it("returns categories with pagination", async () => {
+    it('returns categories with pagination', async () => {
       const pagination = { page: 1, limit: 10 };
       const mockPaginatedResult = {
         data: mockCategories,
@@ -101,18 +97,13 @@ describe("CategoryService", () => {
       const result = await getCategoriesService(mockUserId, pagination);
 
       expect(validatePagination).toHaveBeenCalledWith(1, 10);
-      expect(categoryRepository.findByUserIdPaginated).toHaveBeenCalledWith(
-        mockUserId,
-        pagination
-      );
+      expect(categoryRepository.findByUserIdPaginated).toHaveBeenCalledWith(mockUserId, pagination);
       expect(result).toEqual(mockPaginatedResult);
     });
 
-    it("returns all categories without pagination when not specified", async () => {
+    it('returns all categories without pagination when not specified', async () => {
       (validatePagination as jest.Mock).mockResolvedValue(null);
-      (categoryRepository.findByUserId as jest.Mock).mockResolvedValue(
-        mockCategories
-      );
+      (categoryRepository.findByUserId as jest.Mock).mockResolvedValue(mockCategories);
 
       const result = await getCategoriesService(mockUserId, {});
 
@@ -130,7 +121,7 @@ describe("CategoryService", () => {
       });
     });
 
-    it("returns an empty structure when the user has no categories", async () => {
+    it('returns an empty structure when the user has no categories', async () => {
       (validatePagination as jest.Mock).mockResolvedValue(null);
       (categoryRepository.findByUserId as jest.Mock).mockResolvedValue([]);
 
@@ -149,7 +140,7 @@ describe("CategoryService", () => {
       });
     });
 
-    it("handles multi-page pagination", async () => {
+    it('handles multi-page pagination', async () => {
       const pagination = { page: 2, limit: 10 };
       const mockPaginatedResult = {
         data: mockCategories.slice(0, 2),
@@ -176,10 +167,10 @@ describe("CategoryService", () => {
     });
   });
 
-  describe("updateCategoryService", () => {
-    const mockUserId = "user-123";
-    const mockCategoryId = "cat-123";
-    const mockNewName = "Alimentação Atualizada";
+  describe('updateCategoryService', () => {
+    const mockUserId = 'user-123';
+    const mockCategoryId = 'cat-123';
+    const mockNewName = 'Alimentação Atualizada';
 
     const mockUpdatedCategory = {
       id: mockCategoryId,
@@ -189,38 +180,19 @@ describe("CategoryService", () => {
       updatedAt: new Date(),
     };
 
-    it("updates a category successfully", async () => {
-      (validateCategoryExistsByUserId as jest.Mock).mockResolvedValue(
-        undefined
-      );
+    it('updates a category successfully', async () => {
+      (validateCategoryExistsByUserId as jest.Mock).mockResolvedValue(undefined);
       (validateCategoryExists as jest.Mock).mockResolvedValue(undefined);
       (validateCategoryIsNotGlobal as jest.Mock).mockResolvedValue(undefined);
-      (validateCategoryNameIsNotInUse as jest.Mock).mockResolvedValue(
-        undefined
-      );
-      (categoryRepository.update as jest.Mock).mockResolvedValue(
-        mockUpdatedCategory
-      );
+      (validateCategoryNameIsNotInUse as jest.Mock).mockResolvedValue(undefined);
+      (categoryRepository.update as jest.Mock).mockResolvedValue(mockUpdatedCategory);
 
-      const result = await updateCategoryService(
-        mockCategoryId,
-        mockNewName,
-        mockUserId
-      );
+      const result = await updateCategoryService(mockCategoryId, mockNewName, mockUserId);
 
-      expect(validateCategoryExistsByUserId).toHaveBeenCalledWith(
-        mockCategoryId,
-        mockUserId
-      );
+      expect(validateCategoryExistsByUserId).toHaveBeenCalledWith(mockCategoryId, mockUserId);
       expect(validateCategoryExists).toHaveBeenCalledWith(mockNewName);
-      expect(validateCategoryIsNotGlobal).toHaveBeenCalledWith(
-        mockCategoryId,
-        mockUserId
-      );
-      expect(validateCategoryNameIsNotInUse).toHaveBeenCalledWith(
-        mockNewName,
-        mockUserId
-      );
+      expect(validateCategoryIsNotGlobal).toHaveBeenCalledWith(mockCategoryId, mockUserId);
+      expect(validateCategoryNameIsNotInUse).toHaveBeenCalledWith(mockNewName, mockUserId);
       expect(categoryRepository.update).toHaveBeenCalledWith(mockCategoryId, {
         name: mockNewName,
         userId: mockUserId,
@@ -228,121 +200,99 @@ describe("CategoryService", () => {
       expect(result).toEqual(mockUpdatedCategory);
     });
 
-    it("throws an error when the category does not exist", async () => {
+    it('throws an error when the category does not exist', async () => {
       (validateCategoryExistsByUserId as jest.Mock).mockRejectedValue(
-        new Error("Categoria não encontrada")
+        new Error('Categoria não encontrada')
       );
 
-      await expect(
-        updateCategoryService(mockCategoryId, mockNewName, mockUserId)
-      ).rejects.toThrow("Categoria não encontrada");
+      await expect(updateCategoryService(mockCategoryId, mockNewName, mockUserId)).rejects.toThrow(
+        'Categoria não encontrada'
+      );
 
       expect(categoryRepository.update).not.toHaveBeenCalled();
     });
 
-    it("throws an error when trying to update a global category", async () => {
-      (validateCategoryExistsByUserId as jest.Mock).mockResolvedValue(
-        undefined
-      );
+    it('throws an error when trying to update a global category', async () => {
+      (validateCategoryExistsByUserId as jest.Mock).mockResolvedValue(undefined);
       (validateCategoryExists as jest.Mock).mockResolvedValue(undefined);
       (validateCategoryIsNotGlobal as jest.Mock).mockRejectedValue(
-        new Error("Não é possível atualizar categoria global")
+        new Error('Não é possível atualizar categoria global')
       );
 
-      await expect(
-        updateCategoryService(mockCategoryId, mockNewName, mockUserId)
-      ).rejects.toThrow("Não é possível atualizar categoria global");
+      await expect(updateCategoryService(mockCategoryId, mockNewName, mockUserId)).rejects.toThrow(
+        'Não é possível atualizar categoria global'
+      );
 
       expect(categoryRepository.update).not.toHaveBeenCalled();
     });
 
-    it("throws an error when the new name is already in use", async () => {
-      (validateCategoryExistsByUserId as jest.Mock).mockResolvedValue(
-        undefined
-      );
+    it('throws an error when the new name is already in use', async () => {
+      (validateCategoryExistsByUserId as jest.Mock).mockResolvedValue(undefined);
       (validateCategoryExists as jest.Mock).mockResolvedValue(undefined);
       (validateCategoryIsNotGlobal as jest.Mock).mockResolvedValue(undefined);
       (validateCategoryNameIsNotInUse as jest.Mock).mockRejectedValue(
-        new Error("Nome já está em uso")
+        new Error('Nome já está em uso')
       );
 
-      await expect(
-        updateCategoryService(mockCategoryId, mockNewName, mockUserId)
-      ).rejects.toThrow("Nome já está em uso");
+      await expect(updateCategoryService(mockCategoryId, mockNewName, mockUserId)).rejects.toThrow(
+        'Nome já está em uso'
+      );
 
       expect(categoryRepository.update).not.toHaveBeenCalled();
     });
   });
 
-  describe("deleteCategoryService", () => {
-    const mockUserId = "user-123";
-    const mockCategoryId = "cat-123";
+  describe('deleteCategoryService', () => {
+    const mockUserId = 'user-123';
+    const mockCategoryId = 'cat-123';
 
-    it("deletes a category successfully", async () => {
-      (validateCategoryExistsByUserId as jest.Mock).mockResolvedValue(
-        undefined
-      );
+    it('deletes a category successfully', async () => {
+      (validateCategoryExistsByUserId as jest.Mock).mockResolvedValue(undefined);
       (validateHideGlobalCategory as jest.Mock).mockResolvedValue(undefined);
       (categoryRepository.delete as jest.Mock).mockResolvedValue(true);
 
       const result = await deleteCategoryService(mockCategoryId, mockUserId);
 
-      expect(validateCategoryExistsByUserId).toHaveBeenCalledWith(
-        mockCategoryId,
-        mockUserId
-      );
-      expect(validateHideGlobalCategory).toHaveBeenCalledWith(
-        mockCategoryId,
-        mockUserId
-      );
-      expect(categoryRepository.delete).toHaveBeenCalledWith(
-        mockCategoryId,
-        mockUserId
-      );
+      expect(validateCategoryExistsByUserId).toHaveBeenCalledWith(mockCategoryId, mockUserId);
+      expect(validateHideGlobalCategory).toHaveBeenCalledWith(mockCategoryId, mockUserId);
+      expect(categoryRepository.delete).toHaveBeenCalledWith(mockCategoryId, mockUserId);
       expect(result).toBe(true);
     });
 
-    it("throws an error when the category does not exist", async () => {
+    it('throws an error when the category does not exist', async () => {
       (validateCategoryExistsByUserId as jest.Mock).mockRejectedValue(
-        new Error("Categoria não encontrada")
+        new Error('Categoria não encontrada')
       );
 
-      await expect(
-        deleteCategoryService(mockCategoryId, mockUserId)
-      ).rejects.toThrow("Categoria não encontrada");
+      await expect(deleteCategoryService(mockCategoryId, mockUserId)).rejects.toThrow(
+        'Categoria não encontrada'
+      );
 
       expect(categoryRepository.delete).not.toHaveBeenCalled();
     });
 
-    it("throws an error when trying to delete a global category", async () => {
-      (validateCategoryExistsByUserId as jest.Mock).mockResolvedValue(
-        undefined
-      );
+    it('throws an error when trying to delete a global category', async () => {
+      (validateCategoryExistsByUserId as jest.Mock).mockResolvedValue(undefined);
       (validateHideGlobalCategory as jest.Mock).mockRejectedValue(
-        new Error("Não é possível deletar categoria global")
+        new Error('Não é possível deletar categoria global')
       );
 
-      await expect(
-        deleteCategoryService(mockCategoryId, mockUserId)
-      ).rejects.toThrow("Não é possível deletar categoria global");
+      await expect(deleteCategoryService(mockCategoryId, mockUserId)).rejects.toThrow(
+        'Não é possível deletar categoria global'
+      );
 
       expect(categoryRepository.delete).not.toHaveBeenCalled();
     });
 
-    it("allows only hiding a global category", async () => {
-      const globalCategoryId = "global-cat-123";
-      (validateCategoryExistsByUserId as jest.Mock).mockResolvedValue(
-        undefined
-      );
+    it('allows only hiding a global category', async () => {
+      const globalCategoryId = 'global-cat-123';
+      (validateCategoryExistsByUserId as jest.Mock).mockResolvedValue(undefined);
       (validateHideGlobalCategory as jest.Mock).mockResolvedValue(undefined);
       (categoryRepository.delete as jest.Mock).mockResolvedValue(true);
 
       const result = await deleteCategoryService(globalCategoryId, mockUserId);
 
-      expect(validateHideGlobalCategory).toHaveBeenCalledWith(
-        globalCategoryId,
-        mockUserId
-      );
+      expect(validateHideGlobalCategory).toHaveBeenCalledWith(globalCategoryId, mockUserId);
       expect(result).toBe(true);
     });
   });

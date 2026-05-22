@@ -1,4 +1,4 @@
-import type { Goal, GoalMilestone, NewGoal, NewGoalMilestone } from "../../db/schema";
+import type { Goal, GoalMilestone, NewGoal, NewGoalMilestone } from '../../db/schema';
 
 export type GoalWithMilestones = Goal & {
   milestones: GoalMilestone[];

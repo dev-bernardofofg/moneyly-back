@@ -1,15 +1,9 @@
-import {
-  buildComparison,
-  type ComparativeInsights,
-} from "../helpers/comparative-insights";
-import {
-  formatPeriodLabel,
-  getPreviousFinancialPeriods,
-} from "../helpers/financial-period";
-import { transactionRepository } from "../repositories/transaction.repository";
-import { userRepository } from "../repositories/user.repository";
-import { HttpError } from "../validations/errors";
-import { requireUser } from "../validations/user.validation";
+import { buildComparison, type ComparativeInsights } from '../helpers/comparative-insights';
+import { formatPeriodLabel, getPreviousFinancialPeriods } from '../helpers/financial-period';
+import { transactionRepository } from '../repositories/transaction.repository';
+import { userRepository } from '../repositories/user.repository';
+import { HttpError } from '../validations/errors';
+import { requireUser } from '../validations/user.validation';
 
 export const getComparativeInsightsService = async (
   userId: string,
@@ -18,7 +12,7 @@ export const getComparativeInsightsService = async (
   await requireUser(userId);
 
   const user = await userRepository.findById(userId);
-  if (!user) throw new HttpError(404, "Usuário não encontrado");
+  if (!user) throw new HttpError(404, 'Usuário não encontrado');
 
   // current + N anteriores
   const raw = getPreviousFinancialPeriods(

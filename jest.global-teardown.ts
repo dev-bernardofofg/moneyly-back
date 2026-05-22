@@ -3,7 +3,7 @@
  */
 
 export default async () => {
-  console.log("\n🧹 Limpando ambiente de testes...\n");
+  console.log('\n🧹 Limpando ambiente de testes...\n');
 
   // Aqui você pode:
   // - Limpar banco de dados de teste

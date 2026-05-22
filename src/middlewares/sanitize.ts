@@ -1,18 +1,18 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, Response } from 'express';
 
 // Função para sanitizar strings
 const sanitizeString = (str: string): string => {
   return str
     .trim()
-    .replace(/[<>]/g, "") // Remove caracteres que podem causar XSS
-    .replace(/javascript:/gi, "") // Remove javascript: URLs
-    .replace(/on\w+=/gi, "") // Remove event handlers
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ""); // Remove scripts
+    .replace(/[<>]/g, '') // Remove caracteres que podem causar XSS
+    .replace(/javascript:/gi, '') // Remove javascript: URLs
+    .replace(/on\w+=/gi, '') // Remove event handlers
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ''); // Remove scripts
 };
 
 // Função para sanitizar qualquer valor
 const sanitizeValue = (value: unknown): unknown => {
-  if (typeof value === "string") {
+  if (typeof value === 'string') {
     return sanitizeString(value);
   }
 
@@ -20,7 +20,7 @@ const sanitizeValue = (value: unknown): unknown => {
     return value.map((item) => sanitizeValue(item));
   }
 
-  if (typeof value === "object" && value !== null) {
+  if (typeof value === 'object' && value !== null) {
     return sanitizeObject(value as Record<string, unknown>);
   }
 
@@ -28,9 +28,7 @@ const sanitizeValue = (value: unknown): unknown => {
 };
 
 // Função para sanitizar objeto
-const sanitizeObject = (
-  obj: Record<string, unknown>
-): Record<string, unknown> => {
+const sanitizeObject = (obj: Record<string, unknown>): Record<string, unknown> => {
   const sanitized: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(obj)) {
@@ -41,46 +39,34 @@ const sanitizeObject = (
 };
 
 // Middleware de sanitização
-export const sanitizeData = (
-  req: Request,
-  _res: Response,
-  next: NextFunction
-) => {
+export const sanitizeData = (req: Request, _res: Response, next: NextFunction) => {
   // Sanitizar body
-  if (req.body && typeof req.body === "object") {
+  if (req.body && typeof req.body === 'object') {
     req.body = sanitizeObject(req.body as Record<string, unknown>);
   }
 
   // Sanitizar query parameters
-  if (req.query && typeof req.query === "object") {
-    req.query = sanitizeObject(
-      req.query as Record<string, unknown>
-    ) as typeof req.query;
+  if (req.query && typeof req.query === 'object') {
+    req.query = sanitizeObject(req.query as Record<string, unknown>) as typeof req.query;
   }
 
   // Sanitizar params
-  if (req.params && typeof req.params === "object") {
-    req.params = sanitizeObject(
-      req.params as Record<string, unknown>
-    ) as typeof req.params;
+  if (req.params && typeof req.params === 'object') {
+    req.params = sanitizeObject(req.params as Record<string, unknown>) as typeof req.params;
   }
 
   next();
 };
 
 // Middleware específico para campos sensíveis
-export const sanitizeSensitiveFields = (
-  req: Request,
-  _res: Response,
-  next: NextFunction
-) => {
+export const sanitizeSensitiveFields = (req: Request, _res: Response, next: NextFunction) => {
   // Remover campos sensíveis dos logs
-  const sensitiveFields = ["password", "token", "authorization"];
+  const sensitiveFields = ['password', 'token', 'authorization'];
 
   if (req.body) {
     sensitiveFields.forEach((field) => {
       if (req.body[field]) {
-        req.body[field] = "[REDACTED]";
+        req.body[field] = '[REDACTED]';
       }
     });
   }

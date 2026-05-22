@@ -7,23 +7,23 @@
  *  - datas = STRING (Date serializa p/ ISO no JSON; algumas já vêm formatadas dd/MM/yyyy)
  *  - valores derivados/calculados em runtime = number
  */
-import { registry, z } from "./registry";
+import { registry, z } from './registry';
 
-const money = z.string().openapi({ example: "1234.50", description: "Valor decimal como string" });
-const isoDate = z.string().openapi({ example: "2026-05-17T00:00:00.000Z" });
+const money = z.string().openapi({ example: '1234.50', description: 'Valor decimal como string' });
+const isoDate = z.string().openapi({ example: '2026-05-17T00:00:00.000Z' });
 
 /* ───────── entidades base ───────── */
 
 export const TransactionCategorySchema = registry.register(
-  "TransactionCategory",
+  'TransactionCategory',
   z.object({ id: z.string().uuid(), name: z.string() })
 );
 
 export const TransactionSchema = registry.register(
-  "Transaction",
+  'Transaction',
   z.object({
     id: z.string().uuid(),
-    type: z.enum(["income", "expense"]),
+    type: z.enum(['income', 'expense']),
     title: z.string(),
     amount: money,
     description: z.string().nullable(),
@@ -37,7 +37,7 @@ export const TransactionSchema = registry.register(
 );
 
 export const CategorySchema = registry.register(
-  "Category",
+  'Category',
   z.object({
     id: z.string().uuid(),
     userId: z.string().uuid().nullable(),
@@ -49,7 +49,7 @@ export const CategorySchema = registry.register(
 );
 
 export const UserSchema = registry.register(
-  "User",
+  'User',
   z.object({
     id: z.string().uuid(),
     name: z.string(),
@@ -67,7 +67,7 @@ export const UserSchema = registry.register(
 /* ───────── auth ───────── */
 
 export const AuthSessionSchema = registry.register(
-  "AuthSession",
+  'AuthSession',
   z.object({
     user: UserSchema,
     accessToken: z.string(),
@@ -76,7 +76,7 @@ export const AuthSessionSchema = registry.register(
 );
 
 export const AuthRefreshSchema = registry.register(
-  "AuthRefresh",
+  'AuthRefresh',
   z.object({
     user: UserSchema,
     accessToken: z.string(),
@@ -86,7 +86,7 @@ export const AuthRefreshSchema = registry.register(
 /* ───────── user settings ───────── */
 
 export const IncomeUpdateSchema = registry.register(
-  "IncomeUpdate",
+  'IncomeUpdate',
   z.object({
     monthlyIncome: z.union([z.string(), z.number()]),
     firstAccess: z.boolean(),
@@ -94,7 +94,7 @@ export const IncomeUpdateSchema = registry.register(
 );
 
 export const FinancialPeriodUpdateSchema = registry.register(
-  "FinancialPeriodUpdate",
+  'FinancialPeriodUpdate',
   z.object({
     financialDayStart: z.number().int(),
     financialDayEnd: z.number().int(),
@@ -103,7 +103,7 @@ export const FinancialPeriodUpdateSchema = registry.register(
 );
 
 export const IncomeAndPeriodUpdateSchema = registry.register(
-  "IncomeAndPeriodUpdate",
+  'IncomeAndPeriodUpdate',
   z.object({
     monthlyIncome: z.union([z.string(), z.number()]),
     financialDayStart: z.number().int(),
@@ -113,7 +113,7 @@ export const IncomeAndPeriodUpdateSchema = registry.register(
 );
 
 export const GoalSchema = registry.register(
-  "Goal",
+  'Goal',
   z.object({
     id: z.string().uuid(),
     userId: z.string().uuid(),
@@ -130,7 +130,7 @@ export const GoalSchema = registry.register(
 );
 
 export const BudgetSchema = registry.register(
-  "Budget",
+  'Budget',
   z.object({
     id: z.string().uuid(),
     userId: z.string().uuid(),
@@ -142,7 +142,7 @@ export const BudgetSchema = registry.register(
 );
 
 export const BudgetProgressSchema = registry.register(
-  "BudgetProgress",
+  'BudgetProgress',
   z.object({
     id: z.string().uuid(),
     monthlyLimit: money.nullable(),
@@ -150,20 +150,20 @@ export const BudgetProgressSchema = registry.register(
     spent: z.number(),
     remaining: z.number(),
     percentage: z.number(),
-    status: z.string().openapi({ description: "safe | attention | warning | exceeded" }),
+    status: z.string().openapi({ description: 'safe | attention | warning | exceeded' }),
   })
 );
 
 export const RecurringTransactionSchema = registry.register(
-  "RecurringTransaction",
+  'RecurringTransaction',
   z.object({
     id: z.string().uuid(),
     userId: z.string().uuid(),
-    type: z.enum(["income", "expense"]),
+    type: z.enum(['income', 'expense']),
     title: z.string(),
     amount: money,
     categoryId: z.string().uuid(),
-    frequency: z.enum(["daily", "weekly", "monthly", "yearly"]),
+    frequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']),
     dayOfMonth: z.number().int().nullable(),
     dayOfWeek: z.number().int().nullable(),
     startDate: isoDate.nullable(),
@@ -178,7 +178,7 @@ export const RecurringTransactionSchema = registry.register(
 );
 
 export const FinancialPeriodSchema = registry.register(
-  "FinancialPeriod",
+  'FinancialPeriod',
   z.object({
     id: z.string().uuid(),
     userId: z.string().uuid(),
@@ -191,7 +191,7 @@ export const FinancialPeriodSchema = registry.register(
 );
 
 export const FinancialPeriodSummarySchema = registry.register(
-  "FinancialPeriodSummary",
+  'FinancialPeriodSummary',
   z.object({
     id: z.string().uuid(),
     startDate: isoDate,
@@ -206,10 +206,10 @@ export const FinancialPeriodSummarySchema = registry.register(
 /* ───────── agregados / overview ───────── */
 
 export const MonthlySummaryItemSchema = registry.register(
-  "MonthlySummaryItem",
+  'MonthlySummaryItem',
   z.object({
-    month: z.string().openapi({ example: "2026-04" }),
-    label: z.string().openapi({ example: "Abril 2026" }),
+    month: z.string().openapi({ example: '2026-04' }),
+    label: z.string().openapi({ example: 'Abril 2026' }),
     income: z.number(),
     expense: z.number(),
     balance: z.number(),
@@ -217,19 +217,19 @@ export const MonthlySummaryItemSchema = registry.register(
 );
 
 export const RecentTransactionItemSchema = registry.register(
-  "RecentTransactionItem",
+  'RecentTransactionItem',
   z.object({
     id: z.string().uuid(),
-    type: z.enum(["income", "expense"]),
+    type: z.enum(['income', 'expense']),
     amount: z.number(),
-    date: z.string().openapi({ example: "17/05/2026", description: "dd/MM/yyyy" }),
+    date: z.string().openapi({ example: '17/05/2026', description: 'dd/MM/yyyy' }),
     category: z.string(),
     description: z.string(),
   })
 );
 
 export const DashboardStatsSchema = registry.register(
-  "DashboardStats",
+  'DashboardStats',
   z.object({
     totalIncome: z.number(),
     totalExpense: z.number(),
@@ -246,7 +246,7 @@ const ChartCategoryItem = z.object({
 });
 
 export const DashboardOverviewSchema = registry.register(
-  "DashboardOverview",
+  'DashboardOverview',
   z.object({
     stats: DashboardStatsSchema,
     selectedPeriod: z
@@ -273,7 +273,7 @@ export const DashboardOverviewSchema = registry.register(
         topTitle: z.string().nullable(),
       }),
       comparison: z.object({
-        signal: z.enum(["up", "down", "stable"]),
+        signal: z.enum(['up', 'down', 'stable']),
         deltaPct: z.number().nullable(),
         topHighlight: z.string().nullable(),
       }),
@@ -282,7 +282,7 @@ export const DashboardOverviewSchema = registry.register(
 );
 
 export const FinancialInsightsSchema = registry.register(
-  "FinancialInsights",
+  'FinancialInsights',
   z.object({
     currentPeriod: z.object({
       daysElapsed: z.number().int(),
@@ -318,9 +318,9 @@ export const FinancialInsightsSchema = registry.register(
 );
 
 const PlanningAlertSchema = z.object({
-  type: z.enum(["danger", "warning", "info"]),
+  type: z.enum(['danger', 'warning', 'info']),
   message: z.string(),
-  priority: z.enum(["high", "medium", "low"]),
+  priority: z.enum(['high', 'medium', 'low']),
   category: z.string().optional(),
   goal: z.string().optional(),
   percentage: z.number().optional(),
@@ -328,7 +328,7 @@ const PlanningAlertSchema = z.object({
 });
 
 export const PlannerOverviewSchema = registry.register(
-  "PlannerOverview",
+  'PlannerOverview',
   z.object({
     stats: z.object({
       totalBudgeted: z.number(),
@@ -349,10 +349,10 @@ export const PlannerOverviewSchema = registry.register(
   })
 );
 
-const compareSignal = z.enum(["up", "down", "stable"]);
+const compareSignal = z.enum(['up', 'down', 'stable']);
 
 export const ComparativeInsightsSchema = registry.register(
-  "ComparativeInsights",
+  'ComparativeInsights',
   z.object({
     basis: z.object({
       periodsCompared: z.number().int(),
@@ -384,14 +384,14 @@ export const ComparativeInsightsSchema = registry.register(
 );
 
 export const SubscriptionCandidateSchema = registry.register(
-  "SubscriptionCandidate",
+  'SubscriptionCandidate',
   z.object({
     title: z.string(),
     categoryId: z.string().uuid(),
     categoryName: z.string(),
     averageAmount: z.number(),
     occurrences: z.number().int(),
-    cadence: z.enum(["weekly", "monthly", "yearly"]),
+    cadence: z.enum(['weekly', 'monthly', 'yearly']),
     firstDate: isoDate,
     lastDate: isoDate,
     nextEstimatedDate: isoDate,
@@ -400,12 +400,12 @@ export const SubscriptionCandidateSchema = registry.register(
 );
 
 export const NotificationSchema = registry.register(
-  "Notification",
+  'Notification',
   z.object({
     id: z.string().uuid(),
     userId: z.string().uuid(),
-    type: z.enum(["budget_alert"]),
-    severity: z.enum(["info", "warning", "danger"]),
+    type: z.enum(['budget_alert']),
+    severity: z.enum(['info', 'warning', 'danger']),
     title: z.string(),
     message: z.string(),
     relatedId: z.string().uuid().nullable(),
@@ -417,7 +417,7 @@ export const NotificationSchema = registry.register(
 );
 
 export const TransactionSummarySchema = registry.register(
-  "TransactionSummary",
+  'TransactionSummary',
   z.object({
     totalIncome: z.number(),
     totalExpenses: z.number(),
@@ -430,7 +430,7 @@ export const TransactionSummarySchema = registry.register(
 );
 
 export const CurrentPeriodSummarySchema = registry.register(
-  "CurrentPeriodSummary",
+  'CurrentPeriodSummary',
   z.object({
     currentPeriod: z.object({
       startDate: isoDate,
@@ -449,7 +449,7 @@ export const CurrentPeriodSummarySchema = registry.register(
 );
 
 export const ForecastResponseSchema = registry.register(
-  "ForecastResponse",
+  'ForecastResponse',
   z.object({
     period: z.object({
       id: z.string().uuid(),
@@ -469,7 +469,7 @@ export const ForecastResponseSchema = registry.register(
         z.object({
           recurringTransactionId: z.string().uuid(),
           title: z.string(),
-          type: z.enum(["income", "expense"]),
+          type: z.enum(['income', 'expense']),
           amount: z.number(),
           date: isoDate,
         })
@@ -481,7 +481,7 @@ export const ForecastResponseSchema = registry.register(
 );
 
 export const TransactionListSummarySchema = registry.register(
-  "TransactionListSummary",
+  'TransactionListSummary',
   z.object({
     totalExpense: z.number(),
     totalIncome: z.number(),

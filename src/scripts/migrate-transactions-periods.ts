@@ -1,43 +1,38 @@
-import { and, eq, isNull } from "drizzle-orm";
-import { db } from "../db";
-import { financialPeriods, transactions, users } from "../db/schema";
-import type { Transaction } from "../db/schema";
-import { toSaoPauloTimezone } from "../helpers/dates";
-import { getCurrentFinancialPeriod } from "../helpers/financial-period";
+import { and, eq, isNull } from 'drizzle-orm';
+import { db } from '../db';
+import { financialPeriods, transactions, users } from '../db/schema';
+import type { Transaction } from '../db/schema';
+import { toSaoPauloTimezone } from '../helpers/dates';
+import { getCurrentFinancialPeriod } from '../helpers/financial-period';
 
 export async function migrateTransactionsPeriods() {
-  console.log(" Iniciando migração de períodos para transações...");
+  console.log(' Iniciando migração de períodos para transações...');
 
   try {
     const sampleTransaction = await db.select().from(transactions).limit(1);
 
     if (sampleTransaction.length === 0 || !sampleTransaction[0]) {
-      console.log("❌ Nenhuma transação encontrada na tabela!");
+      console.log('❌ Nenhuma transação encontrada na tabela!');
       return;
     }
 
-    const hasPeriodId = "periodId" in sampleTransaction[0];
+    const hasPeriodId = 'periodId' in sampleTransaction[0];
     console.log(`🔍 Campo periodId existe? ${hasPeriodId}`);
 
     if (!hasPeriodId) {
-      console.log(
-        "❌ Coluna periodId não existe! Execute a migração do banco primeiro."
-      );
+      console.log('❌ Coluna periodId não existe! Execute a migração do banco primeiro.');
       return;
     }
 
     let transactionsToMigrate: Transaction[] = [];
 
     try {
-      const nullPeriods = await db
-        .select()
-        .from(transactions)
-        .where(isNull(transactions.periodId));
+      const nullPeriods = await db.select().from(transactions).where(isNull(transactions.periodId));
 
       console.log(`📊 Transações com periodId = null: ${nullPeriods.length}`);
       transactionsToMigrate.push(...nullPeriods);
     } catch (error) {
-      console.log("⚠️ Erro ao buscar por periodId = null:", error);
+      console.log('⚠️ Erro ao buscar por periodId = null:', error);
     }
 
     try {
@@ -46,21 +41,18 @@ export async function migrateTransactionsPeriods() {
         .from(transactions)
         .where(isNull(transactions.periodId));
 
-      console.log(
-        `📊 Transações com periodId undefined: ${undefinedPeriods.length}`
-      );
+      console.log(`📊 Transações com periodId undefined: ${undefinedPeriods.length}`);
       transactionsToMigrate.push(...undefinedPeriods);
     } catch (error) {
-      console.log("⚠️ Erro ao buscar por periodId undefined:", error);
+      console.log('⚠️ Erro ao buscar por periodId undefined:', error);
     }
 
     if (transactionsToMigrate.length === 0) {
-      console.log("🔍 Buscando todas as transações...");
+      console.log('🔍 Buscando todas as transações...');
       const allTransactions = await db.select().from(transactions);
 
       transactionsToMigrate = allTransactions.filter(
-        (tx) =>
-          !tx.periodId || tx.periodId === null || tx.periodId === undefined
+        (tx) => !tx.periodId || tx.periodId === null || tx.periodId === undefined
       );
 
       console.log(`📊 Total de transações: ${allTransactions.length}`);
@@ -71,12 +63,10 @@ export async function migrateTransactionsPeriods() {
       (tx, index, self) => index === self.findIndex((t) => t.id === tx.id)
     );
 
-    console.log(
-      `📊 Transações únicas para migrar: ${uniqueTransactions.length}`
-    );
+    console.log(`📊 Transações únicas para migrar: ${uniqueTransactions.length}`);
 
     if (uniqueTransactions.length === 0) {
-      console.log("✅ Nenhuma transação para migrar!");
+      console.log('✅ Nenhuma transação para migrar!');
       return;
     }
 
@@ -117,11 +107,7 @@ export async function migrateTransactionsPeriods() {
       for (const tx of userTransactions) {
         try {
           const transactionDate = toSaoPauloTimezone(tx.date);
-          const period = getCurrentFinancialPeriod(
-            startDay,
-            endDay,
-            transactionDate
-          );
+          const period = getCurrentFinancialPeriod(startDay, endDay, transactionDate);
 
           const existingPeriod = await db
             .select()
@@ -151,28 +137,23 @@ export async function migrateTransactionsPeriods() {
               })
               .returning();
 
-            if (!newPeriod) throw new Error("Falha ao criar período");
+            if (!newPeriod) throw new Error('Falha ao criar período');
             periodId = newPeriod.id;
             console.log(`  🆕 Novo período criado: ${periodId}`);
           }
 
-          await db
-            .update(transactions)
-            .set({ periodId })
-            .where(eq(transactions.id, tx.id));
+          await db.update(transactions).set({ periodId }).where(eq(transactions.id, tx.id));
 
-          console.log(
-            `  ✅ Transação ${tx.id} atualizada com período ${periodId}`
-          );
+          console.log(`  ✅ Transação ${tx.id} atualizada com período ${periodId}`);
         } catch (error) {
           console.error(`  ❌ Erro ao processar transação ${tx.id}:`, error);
         }
       }
     }
 
-    console.log("\n Migração concluída com sucesso!");
+    console.log('\n Migração concluída com sucesso!');
   } catch (error) {
-    console.error("❌ Erro durante a migração:", error);
+    console.error('❌ Erro durante a migração:', error);
     throw error;
   }
 }
@@ -180,11 +161,11 @@ export async function migrateTransactionsPeriods() {
 if (require.main === module) {
   migrateTransactionsPeriods()
     .then(() => {
-      console.log("✅ Script executado com sucesso!");
+      console.log('✅ Script executado com sucesso!');
       process.exit(0);
     })
     .catch((error) => {
-      console.error("❌ Erro no script:", error);
+      console.error('❌ Erro no script:', error);
       process.exit(1);
     });
 }

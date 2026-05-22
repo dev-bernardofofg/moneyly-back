@@ -1,20 +1,25 @@
-import { calculateNextExecution } from "../helpers/dates";
-import { recurringTransactionRepository } from "../repositories/recurring-transaction.repository";
-import { transactionRepository } from "../repositories/transaction.repository";
-import { createTransactionService } from "../services/transaction.service";
-import type { RecurringFrequency } from "../types/recurring-transaction.types";
+import { calculateNextExecution } from '../helpers/dates';
+import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
+import { transactionRepository } from '../repositories/transaction.repository';
+import { createTransactionService } from '../services/transaction.service';
+import type { RecurringFrequency } from '../types/recurring-transaction.types';
 
 function generateExecutionDates(
   frequency: string,
   startDate: Date,
   totalInstallments: number,
   dayOfMonth?: number | null,
-  dayOfWeek?: number | null,
+  dayOfWeek?: number | null
 ): Date[] {
   const dates: Date[] = [startDate];
   let prev = startDate;
   for (let i = 1; i < totalInstallments; i++) {
-    const next = calculateNextExecution(frequency as RecurringFrequency, dayOfMonth, dayOfWeek, prev);
+    const next = calculateNextExecution(
+      frequency as RecurringFrequency,
+      dayOfMonth,
+      dayOfWeek,
+      prev
+    );
     dates.push(next);
     prev = next;
   }
@@ -48,7 +53,7 @@ async function run() {
         new Date(r.startDate ?? r.nextExecution),
         totalInstallments,
         r.dayOfMonth,
-        r.dayOfWeek,
+        r.dayOfWeek
       );
 
       const missingDates = allDates.filter(
@@ -63,11 +68,11 @@ async function run() {
         await Promise.all(
           missingDates.map((date) =>
             createTransactionService(r.userId, {
-              type: r.type as "income" | "expense",
+              type: r.type as 'income' | 'expense',
               title: r.title,
               amount: r.amount,
               category: r.categoryId,
-              description: r.description ?? "",
+              description: r.description ?? '',
               date,
               recurringTransactionId: r.id,
             })

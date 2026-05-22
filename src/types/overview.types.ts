@@ -1,6 +1,6 @@
-import type { Category } from "../db/schema";
-import type { TransactionWithCategory } from "../repositories/transaction.repository";
-import type { CategoryChartData, TransactionStats } from "./transaction.types";
+import type { Category } from '../db/schema';
+import type { TransactionWithCategory } from '../repositories/transaction.repository';
+import type { CategoryChartData, TransactionStats } from './transaction.types';
 
 export interface BudgetProgress {
   categoryId: string;
@@ -9,7 +9,7 @@ export interface BudgetProgress {
   spent: number;
   remaining: number;
   percentage: number;
-  status: "safe" | "warning" | "danger";
+  status: 'safe' | 'warning' | 'danger';
 }
 
 export interface GoalProgress {
@@ -19,12 +19,12 @@ export interface GoalProgress {
   currentAmount: number;
   percentage: number;
   daysRemaining: number;
-  status: "on_track" | "behind" | "completed";
+  status: 'on_track' | 'behind' | 'completed';
 }
 
 export interface SystemAlert {
-  type: "budget_warning" | "goal_deadline" | "high_expense" | "info";
-  severity: "low" | "medium" | "high";
+  type: 'budget_warning' | 'goal_deadline' | 'high_expense' | 'info';
+  severity: 'low' | 'medium' | 'high';
   title: string;
   message: string;
   actionable?: boolean;

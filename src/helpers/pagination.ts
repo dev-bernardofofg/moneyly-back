@@ -27,10 +27,7 @@ export class PaginationHelper {
 
   static validateAndParse(params: PaginationParams): PaginationQuery {
     const page = Math.max(1, Number(params.page) || this.DEFAULT_PAGE);
-    const limit = Math.min(
-      this.MAX_LIMIT,
-      Math.max(1, Number(params.limit) || this.DEFAULT_LIMIT)
-    );
+    const limit = Math.min(this.MAX_LIMIT, Math.max(1, Number(params.limit) || this.DEFAULT_LIMIT));
 
     return {
       offset: (page - 1) * limit,

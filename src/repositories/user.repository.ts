@@ -1,12 +1,12 @@
-import { eq } from "drizzle-orm";
-import { db } from "../db";
-import { users, type NewUser, type User } from "../db/schema";
-import type { IUserRepository } from "./interfaces/IUserRepository";
+import { eq } from 'drizzle-orm';
+import { db } from '../db';
+import { users, type NewUser, type User } from '../db/schema';
+import type { IUserRepository } from './interfaces/IUserRepository';
 
 export const userRepository = {
-  async create(userData: Omit<NewUser, "id" | "createdAt" | "updatedAt">): Promise<User> {
+  async create(userData: Omit<NewUser, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
     const [user] = await db.insert(users).values(userData).returning();
-    if (!user) throw new Error("Falha ao criar usuário");
+    if (!user) throw new Error('Falha ao criar usuário');
     return user;
   },
 
@@ -29,7 +29,7 @@ export const userRepository = {
     return user ?? null;
   },
 
-  async findByIdWithoutPassword(id: string): Promise<Omit<User, "password"> | null> {
+  async findByIdWithoutPassword(id: string): Promise<Omit<User, 'password'> | null> {
     const [user] = await db
       .select({
         id: users.id,
@@ -49,7 +49,10 @@ export const userRepository = {
     return user ?? null;
   },
 
-  async updateGoogleInfo(id: string, googleInfo: { googleId: string; avatar?: string }): Promise<User | null> {
+  async updateGoogleInfo(
+    id: string,
+    googleInfo: { googleId: string; avatar?: string }
+  ): Promise<User | null> {
     const [user] = await db
       .update(users)
       .set({ googleId: googleInfo.googleId, avatar: googleInfo.avatar, updatedAt: new Date() })
@@ -67,7 +70,11 @@ export const userRepository = {
     return user ?? null;
   },
 
-  async updateFinancialPeriod(id: string, financialDayStart: number, financialDayEnd: number): Promise<User | null> {
+  async updateFinancialPeriod(
+    id: string,
+    financialDayStart: number,
+    financialDayEnd: number
+  ): Promise<User | null> {
     const [user] = await db
       .update(users)
       .set({ financialDayStart, financialDayEnd, firstAccess: false, updatedAt: new Date() })
@@ -76,10 +83,21 @@ export const userRepository = {
     return user ?? null;
   },
 
-  async updateIncomeAndPeriod(id: string, monthlyIncome: number, financialDayStart: number, financialDayEnd: number): Promise<User | null> {
+  async updateIncomeAndPeriod(
+    id: string,
+    monthlyIncome: number,
+    financialDayStart: number,
+    financialDayEnd: number
+  ): Promise<User | null> {
     const [user] = await db
       .update(users)
-      .set({ monthlyIncome: monthlyIncome.toString(), financialDayStart, financialDayEnd, firstAccess: false, updatedAt: new Date() })
+      .set({
+        monthlyIncome: monthlyIncome.toString(),
+        financialDayStart,
+        financialDayEnd,
+        firstAccess: false,
+        updatedAt: new Date(),
+      })
       .where(eq(users.id, id))
       .returning();
     return user ?? null;

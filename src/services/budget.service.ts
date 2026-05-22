@@ -1,10 +1,10 @@
-import { budgetRepository } from "../repositories/budget.repository";
-import { transactionRepository } from "../repositories/transaction.repository";
-import { financialPeriodService } from "./financial-period.service";
-import { validateBudgetExists } from "../validations/budget.validation";
-import { requireUser } from "../validations/user.validation";
-import type { BudgetProgress } from "../types/budget.types";
-import { HttpError } from "../validations/errors";
+import { budgetRepository } from '../repositories/budget.repository';
+import { transactionRepository } from '../repositories/transaction.repository';
+import { financialPeriodService } from './financial-period.service';
+import { validateBudgetExists } from '../validations/budget.validation';
+import { requireUser } from '../validations/user.validation';
+import type { BudgetProgress } from '../types/budget.types';
+import { HttpError } from '../validations/errors';
 
 export const createBudgetService = async (
   userId: string,
@@ -16,7 +16,7 @@ export const createBudgetService = async (
   await requireUser(userId);
 
   const existing = await budgetRepository.findByUserIdAndCategoryId(userId, data.categoryId);
-  if (existing) throw new HttpError(409, "Já existe um orçamento para esta categoria");
+  if (existing) throw new HttpError(409, 'Já existe um orçamento para esta categoria');
 
   const budget = await budgetRepository.create({
     userId,
@@ -34,26 +34,20 @@ export const getUserBudgetsService = async (userId: string, periodId?: string) =
       : financialPeriodService.ensureCurrentPeriodExists(userId),
   ]);
 
-  if (!period) throw new HttpError(404, "Período não encontrado");
+  if (!period) throw new HttpError(404, 'Período não encontrado');
 
   const currentPeriod = period;
 
-  const transactions = await transactionRepository.findByPeriodId(
-    userId,
-    currentPeriod.id
-  );
+  const transactions = await transactionRepository.findByPeriodId(userId, currentPeriod.id);
 
   return budgets.map((budget) => {
     const spent = transactions
-      .filter(
-        (tx) => tx.type === "expense" && tx.category.id === budget.category.id
-      )
+      .filter((tx) => tx.type === 'expense' && tx.category.id === budget.category.id)
       .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
     const monthlyLimit = Number(budget.monthlyLimit);
     const remaining = monthlyLimit - spent;
-    const percentage =
-      monthlyLimit > 0 ? Math.round((spent / monthlyLimit) * 100) : 0;
+    const percentage = monthlyLimit > 0 ? Math.round((spent / monthlyLimit) * 100) : 0;
 
     return {
       ...budget,
@@ -88,9 +82,7 @@ export const deleteBudgetService = async (userId: string, budgetId: string) => {
   return budget;
 };
 
-export const getBudgetProgressService = async (
-  userId: string
-): Promise<BudgetProgress[]> => {
+export const getBudgetProgressService = async (userId: string): Promise<BudgetProgress[]> => {
   await requireUser(userId);
 
   const [budgets, currentPeriod] = await Promise.all([
@@ -98,26 +90,15 @@ export const getBudgetProgressService = async (
     financialPeriodService.ensureCurrentPeriodExists(userId),
   ]);
 
-  const transactions = await transactionRepository.findByPeriodId(
-    userId,
-    currentPeriod.id
-  );
+  const transactions = await transactionRepository.findByPeriodId(userId, currentPeriod.id);
 
   return budgets.map((budget) => {
     const categoryExpenses = transactions
-      .filter(
-        (tx) => tx.type === "expense" && tx.category.id === budget.category.id
-      )
+      .filter((tx) => tx.type === 'expense' && tx.category.id === budget.category.id)
       .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
-    const percentage = Math.min(
-      (categoryExpenses / Number(budget.monthlyLimit)) * 100,
-      100
-    );
-    const remaining = Math.max(
-      0,
-      Number(budget.monthlyLimit) - categoryExpenses
-    );
+    const percentage = Math.min((categoryExpenses / Number(budget.monthlyLimit)) * 100, 100);
+    const remaining = Math.max(0, Number(budget.monthlyLimit) - categoryExpenses);
 
     return {
       ...budget,
@@ -130,10 +111,10 @@ export const getBudgetProgressService = async (
 };
 
 export const getBudgetStatus = (percentage: number): string => {
-  if (percentage >= 100) return "exceeded";
-  if (percentage >= 90) return "warning";
-  if (percentage >= 75) return "attention";
-  return "safe";
+  if (percentage >= 100) return 'exceeded';
+  if (percentage >= 90) return 'warning';
+  if (percentage >= 75) return 'attention';
+  return 'safe';
 };
 
 export const getBudgetProgressByCategory = async (
@@ -148,22 +129,16 @@ export const getBudgetProgressByCategory = async (
   ]);
 
   if (!budget) {
-    return { percentage: 0, status: "safe" };
+    return { percentage: 0, status: 'safe' };
   }
 
-  const transactions = await transactionRepository.findByPeriodId(
-    userId,
-    currentPeriod.id
-  );
+  const transactions = await transactionRepository.findByPeriodId(userId, currentPeriod.id);
 
   const categoryExpenses = transactions
-    .filter((tx) => tx.type === "expense" && tx.category.id === categoryId)
+    .filter((tx) => tx.type === 'expense' && tx.category.id === categoryId)
     .reduce((sum: number, tx) => sum + Number(tx.amount), 0);
 
-  const percentage = Math.min(
-    (categoryExpenses / Number(budget.monthlyLimit)) * 100,
-    100
-  );
+  const percentage = Math.min((categoryExpenses / Number(budget.monthlyLimit)) * 100, 100);
 
   return {
     percentage,

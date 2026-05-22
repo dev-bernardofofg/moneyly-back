@@ -1,135 +1,123 @@
-import { relations } from "drizzle-orm";
-import {
-  boolean,
-  decimal,
-  integer,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { relations } from 'drizzle-orm';
+import { boolean, decimal, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 // Tabela de usuários
-export const users = pgTable("users", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  password: text("password"), // Tornando opcional para suportar OAuth
-  googleId: text("google_id").unique(), // ID único do Google
-  avatar: text("avatar"), // URL do avatar do Google
-  monthlyIncome: decimal("monthly_income", { precision: 10, scale: 2 }).default(
-    "0"
-  ),
-  financialDayStart: integer("financial_day_start").default(1), // Dia do mês que inicia o período financeiro
-  financialDayEnd: integer("financial_day_end").default(31), // Dia do mês que termina o período financeiro
-  firstAccess: boolean("first_access").default(true),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+export const users = pgTable('users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  email: text('email').notNull().unique(),
+  password: text('password'), // Tornando opcional para suportar OAuth
+  googleId: text('google_id').unique(), // ID único do Google
+  avatar: text('avatar'), // URL do avatar do Google
+  monthlyIncome: decimal('monthly_income', { precision: 10, scale: 2 }).default('0'),
+  financialDayStart: integer('financial_day_start').default(1), // Dia do mês que inicia o período financeiro
+  financialDayEnd: integer('financial_day_end').default(31), // Dia do mês que termina o período financeiro
+  firstAccess: boolean('first_access').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Tabela de transações
-export const transactions = pgTable("transactions", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
+export const transactions = pgTable('transactions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  type: text("type", { enum: ["income", "expense"] }).notNull(),
-  title: text("title").notNull(),
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  categoryId: uuid("category_id")
+    .references(() => users.id, { onDelete: 'cascade' }),
+  type: text('type', { enum: ['income', 'expense'] }).notNull(),
+  title: text('title').notNull(),
+  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+  categoryId: uuid('category_id')
     .notNull()
-    .references(() => categories.id, { onDelete: "cascade" }),
+    .references(() => categories.id, { onDelete: 'cascade' }),
   // ← NOVO CAMPO
-  periodId: uuid("period_id").references(() => financialPeriods.id, {
-    onDelete: "cascade",
+  periodId: uuid('period_id').references(() => financialPeriods.id, {
+    onDelete: 'cascade',
   }),
-  recurringTransactionId: uuid("recurring_transaction_id"),
-  description: text("description"),
-  date: timestamp("date").defaultNow().notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  recurringTransactionId: uuid('recurring_transaction_id'),
+  description: text('description'),
+  date: timestamp('date').defaultNow().notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-export const categories = pgTable("categories", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }), // Tornando opcional para categorias globais
-  name: text("name").notNull(),
-  isGlobal: boolean("is_global").default(false).notNull(), // Nova coluna para categorias globais
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+export const categories = pgTable('categories', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }), // Tornando opcional para categorias globais
+  name: text('name').notNull(),
+  isGlobal: boolean('is_global').default(false).notNull(), // Nova coluna para categorias globais
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Nova tabela para controlar preferências de categorias globais por usuário
-export const userCategoryPreferences = pgTable("user_category_preferences", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
+export const userCategoryPreferences = pgTable('user_category_preferences', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  categoryId: uuid("category_id")
+    .references(() => users.id, { onDelete: 'cascade' }),
+  categoryId: uuid('category_id')
     .notNull()
-    .references(() => categories.id, { onDelete: "cascade" }),
-  isVisible: boolean("is_visible").default(true).notNull(), // Se a categoria global deve ser visível para o usuário
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    .references(() => categories.id, { onDelete: 'cascade' }),
+  isVisible: boolean('is_visible').default(true).notNull(), // Se a categoria global deve ser visível para o usuário
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Tabela de orçamentos por categoria
-export const budgets = pgTable("budgets", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
+export const budgets = pgTable('budgets', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  categoryId: uuid("category_id")
+    .references(() => users.id, { onDelete: 'cascade' }),
+  categoryId: uuid('category_id')
     .notNull()
-    .references(() => categories.id, { onDelete: "cascade" }),
-  monthlyLimit: decimal("monthly_limit", { precision: 10, scale: 2 }).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    .references(() => categories.id, { onDelete: 'cascade' }),
+  monthlyLimit: decimal('monthly_limit', { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Tabela de objetivos de poupança
-export const goals = pgTable("goals", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
+export const goals = pgTable('goals', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  description: text("description"),
-  targetAmount: decimal("target_amount", { precision: 10, scale: 2 }).notNull(),
-  currentAmount: decimal("current_amount", { precision: 10, scale: 2 }).default(
-    "0"
-  ),
-  targetDate: timestamp("target_date").notNull(),
-  startDate: timestamp("start_date").defaultNow().notNull(),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    .references(() => users.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  description: text('description'),
+  targetAmount: decimal('target_amount', { precision: 10, scale: 2 }).notNull(),
+  currentAmount: decimal('current_amount', { precision: 10, scale: 2 }).default('0'),
+  targetDate: timestamp('target_date').notNull(),
+  startDate: timestamp('start_date').defaultNow().notNull(),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Tabela de marcos de progresso dos objetivos
-export const goalMilestones = pgTable("goal_milestones", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  goalId: uuid("goal_id")
+export const goalMilestones = pgTable('goal_milestones', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  goalId: uuid('goal_id')
     .notNull()
-    .references(() => goals.id, { onDelete: "cascade" }),
-  percentage: integer("percentage").notNull(), // 25, 50, 75, 100
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  isReached: boolean("is_reached").default(false),
-  reachedAt: timestamp("reached_at"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+    .references(() => goals.id, { onDelete: 'cascade' }),
+  percentage: integer('percentage').notNull(), // 25, 50, 75, 100
+  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+  isReached: boolean('is_reached').default(false),
+  reachedAt: timestamp('reached_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // Tabela de períodos financeiros
-export const financialPeriods = pgTable("financial_periods", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
+export const financialPeriods = pgTable('financial_periods', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  startDate: timestamp("start_date").notNull(),
-  endDate: timestamp("end_date").notNull(),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    .references(() => users.id, { onDelete: 'cascade' }),
+  startDate: timestamp('start_date').notNull(),
+  endDate: timestamp('end_date').notNull(),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Relacionamentos
@@ -199,67 +187,61 @@ export const goalMilestonesRelations = relations(goalMilestones, ({ one }) => ({
   }),
 }));
 
-export const userCategoryPreferencesRelations = relations(
-  userCategoryPreferences,
-  ({ one }) => ({
-    user: one(users, {
-      fields: [userCategoryPreferences.userId],
-      references: [users.id],
-    }),
-    category: one(categories, {
-      fields: [userCategoryPreferences.categoryId],
-      references: [categories.id],
-    }),
-  })
-);
+export const userCategoryPreferencesRelations = relations(userCategoryPreferences, ({ one }) => ({
+  user: one(users, {
+    fields: [userCategoryPreferences.userId],
+    references: [users.id],
+  }),
+  category: one(categories, {
+    fields: [userCategoryPreferences.categoryId],
+    references: [categories.id],
+  }),
+}));
 
-export const financialPeriodsRelations = relations(
-  financialPeriods,
-  ({ one, many }) => ({
-    user: one(users, {
-      fields: [financialPeriods.userId],
-      references: [users.id],
-    }),
-    transactions: many(transactions),
-  })
-);
+export const financialPeriodsRelations = relations(financialPeriods, ({ one, many }) => ({
+  user: one(users, {
+    fields: [financialPeriods.userId],
+    references: [users.id],
+  }),
+  transactions: many(transactions),
+}));
 
 // Tabela de refresh tokens
-export const refreshTokens = pgTable("refresh_tokens", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
+export const refreshTokens = pgTable('refresh_tokens', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  token: text("token").notNull().unique(), // Token hasheado
-  expiresAt: timestamp("expires_at").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+    .references(() => users.id, { onDelete: 'cascade' }),
+  token: text('token').notNull().unique(), // Token hasheado
+  expiresAt: timestamp('expires_at').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // Tabela de transações recorrentes
-export const recurringTransactions = pgTable("recurring_transactions", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
+export const recurringTransactions = pgTable('recurring_transactions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  type: text("type", { enum: ["income", "expense"] }).notNull(),
-  title: text("title").notNull(),
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  categoryId: uuid("category_id")
+    .references(() => users.id, { onDelete: 'cascade' }),
+  type: text('type', { enum: ['income', 'expense'] }).notNull(),
+  title: text('title').notNull(),
+  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+  categoryId: uuid('category_id')
     .notNull()
-    .references(() => categories.id, { onDelete: "cascade" }),
-  frequency: text("frequency", {
-    enum: ["daily", "weekly", "monthly", "yearly"],
+    .references(() => categories.id, { onDelete: 'cascade' }),
+  frequency: text('frequency', {
+    enum: ['daily', 'weekly', 'monthly', 'yearly'],
   }).notNull(),
-  dayOfMonth: integer("day_of_month"), // Para frequência monthly (1-31)
-  dayOfWeek: integer("day_of_week"), // Para frequência weekly (0-6, domingo = 0)
-  startDate: timestamp("start_date"),
-  totalInstallments: integer("total_installments"),
-  executedInstallments: integer("executed_installments").default(0).notNull(),
-  nextExecution: timestamp("next_execution").notNull(),
-  isActive: boolean("is_active").default(true).notNull(),
-  description: text("description"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  dayOfMonth: integer('day_of_month'), // Para frequência monthly (1-31)
+  dayOfWeek: integer('day_of_week'), // Para frequência weekly (0-6, domingo = 0)
+  startDate: timestamp('start_date'),
+  totalInstallments: integer('total_installments'),
+  executedInstallments: integer('executed_installments').default(0).notNull(),
+  nextExecution: timestamp('next_execution').notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  description: text('description'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Relacionamentos para refresh tokens
@@ -271,38 +253,35 @@ export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
 }));
 
 // Relacionamentos para transações recorrentes
-export const recurringTransactionsRelations = relations(
-  recurringTransactions,
-  ({ one, many }) => ({
-    user: one(users, {
-      fields: [recurringTransactions.userId],
-      references: [users.id],
-    }),
-    transactions: many(transactions),
-    category: one(categories, {
-      fields: [recurringTransactions.categoryId],
-      references: [categories.id],
-    }),
-  })
-);
+export const recurringTransactionsRelations = relations(recurringTransactions, ({ one, many }) => ({
+  user: one(users, {
+    fields: [recurringTransactions.userId],
+    references: [users.id],
+  }),
+  transactions: many(transactions),
+  category: one(categories, {
+    fields: [recurringTransactions.categoryId],
+    references: [categories.id],
+  }),
+}));
 
 // Tabela de notificações (F2 — alertas de orçamento, extensível)
-export const notifications = pgTable("notifications", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
+export const notifications = pgTable('notifications', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  type: text("type", { enum: ["budget_alert"] }).notNull(),
-  severity: text("severity", { enum: ["info", "warning", "danger"] }).notNull(),
-  title: text("title").notNull(),
-  message: text("message").notNull(),
-  relatedId: uuid("related_id"), // ex: budgetId (nullable p/ outros tipos futuros)
-  periodId: uuid("period_id").references(() => financialPeriods.id, {
-    onDelete: "cascade",
+    .references(() => users.id, { onDelete: 'cascade' }),
+  type: text('type', { enum: ['budget_alert'] }).notNull(),
+  severity: text('severity', { enum: ['info', 'warning', 'danger'] }).notNull(),
+  title: text('title').notNull(),
+  message: text('message').notNull(),
+  relatedId: uuid('related_id'), // ex: budgetId (nullable p/ outros tipos futuros)
+  periodId: uuid('period_id').references(() => financialPeriods.id, {
+    onDelete: 'cascade',
   }),
-  dedupeKey: text("dedupe_key").notNull().unique(), // idempotência
-  isRead: boolean("is_read").default(false).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  dedupeKey: text('dedupe_key').notNull().unique(), // idempotência
+  isRead: boolean('is_read').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
@@ -325,10 +304,8 @@ export type Goal = typeof goals.$inferSelect;
 export type NewGoal = typeof goals.$inferInsert;
 export type GoalMilestone = typeof goalMilestones.$inferSelect;
 export type NewGoalMilestone = typeof goalMilestones.$inferInsert;
-export type UserCategoryPreference =
-  typeof userCategoryPreferences.$inferSelect;
-export type NewUserCategoryPreference =
-  typeof userCategoryPreferences.$inferInsert;
+export type UserCategoryPreference = typeof userCategoryPreferences.$inferSelect;
+export type NewUserCategoryPreference = typeof userCategoryPreferences.$inferInsert;
 export type RefreshToken = typeof refreshTokens.$inferSelect;
 export type NewRefreshToken = typeof refreshTokens.$inferInsert;
 export type RecurringTransaction = typeof recurringTransactions.$inferSelect;

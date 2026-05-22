@@ -1,26 +1,17 @@
-import { and, count, desc, eq } from "drizzle-orm";
-import { db } from "../db";
-import {
-  notifications,
-  type NewNotification,
-  type Notification,
-} from "../db/schema";
+import { and, count, desc, eq } from 'drizzle-orm';
+import { db } from '../db';
+import { notifications, type NewNotification, type Notification } from '../db/schema';
 import {
   PaginationHelper,
   type PaginationQuery,
   type PaginationResult,
-} from "../helpers/pagination";
-import type { INotificationRepository } from "./interfaces";
+} from '../helpers/pagination';
+import type { INotificationRepository } from './interfaces';
 
 export const notificationRepository = {
-  async create(
-    data: Omit<NewNotification, "id" | "createdAt">
-  ): Promise<Notification> {
-    const [notification] = await db
-      .insert(notifications)
-      .values(data)
-      .returning();
-    if (!notification) throw new Error("Falha ao criar notificação");
+  async create(data: Omit<NewNotification, 'id' | 'createdAt'>): Promise<Notification> {
+    const [notification] = await db.insert(notifications).values(data).returning();
+    if (!notification) throw new Error('Falha ao criar notificação');
     return notification;
   },
 
@@ -56,12 +47,7 @@ export const notificationRepository = {
       .offset(pagination.offset);
 
     const page = Math.floor(pagination.offset / pagination.limit) + 1;
-    return PaginationHelper.createPaginationResult(
-      data,
-      total,
-      page,
-      pagination.limit
-    );
+    return PaginationHelper.createPaginationResult(data, total, page, pagination.limit);
   },
 
   async markRead(id: string, userId: string): Promise<Notification | null> {
@@ -77,9 +63,7 @@ export const notificationRepository = {
     const result = await db
       .update(notifications)
       .set({ isRead: true })
-      .where(
-        and(eq(notifications.userId, userId), eq(notifications.isRead, false))
-      )
+      .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)))
       .returning();
     return result.length;
   },

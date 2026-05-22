@@ -1,4 +1,4 @@
-import type { Goal } from "../db/schema";
+import type { Goal } from '../db/schema';
 
 export type GoalProgress = {
   percentage: number;
@@ -6,7 +6,9 @@ export type GoalProgress = {
   daysRemaining: number;
 };
 
-export function calculateGoalProgress(goal: Pick<Goal, "targetAmount" | "currentAmount" | "targetDate">): GoalProgress {
+export function calculateGoalProgress(
+  goal: Pick<Goal, 'targetAmount' | 'currentAmount' | 'targetDate'>
+): GoalProgress {
   const targetAmount = Number(goal.targetAmount);
   const currentAmount = Number(goal.currentAmount ?? 0);
   const percentage = targetAmount > 0 ? Math.round((currentAmount / targetAmount) * 100) : 0;

@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router } from 'express';
 import {
   createTransaction,
   deleteTransaction,
@@ -9,57 +9,39 @@ import {
   getTransactions,
   getTransactionSummary,
   updateTransaction,
-} from "../controllers/transaction.controller";
-import { authenticateUser } from "../middlewares/auth";
-import { ensurePeriodExists } from "../middlewares/auto-period-creation";
-import { validate } from "../middlewares/validate";
-import { idParamSchema } from "../schemas/auth.schema";
-import { transactionListQuerySchema } from "../schemas/pagination.schema";
-import {
-  transactionSchema,
-  transactionUpdateSchema,
-} from "../schemas/transaction.schema";
+} from '../controllers/transaction.controller';
+import { authenticateUser } from '../middlewares/auth';
+import { ensurePeriodExists } from '../middlewares/auto-period-creation';
+import { validate } from '../middlewares/validate';
+import { idParamSchema } from '../schemas/auth.schema';
+import { transactionListQuerySchema } from '../schemas/pagination.schema';
+import { transactionSchema, transactionUpdateSchema } from '../schemas/transaction.schema';
 
 const TransactionsRouter: Router = Router();
 
 TransactionsRouter.use(authenticateUser);
 TransactionsRouter.use(ensurePeriodExists);
 
-TransactionsRouter.post(
-  "/create",
-  validate({ body: transactionSchema }),
-  createTransaction
-);
+TransactionsRouter.post('/create', validate({ body: transactionSchema }), createTransaction);
 
-TransactionsRouter.get(
-  "/",
-  validate({ query: transactionListQuerySchema }),
-  getTransactions
-);
+TransactionsRouter.get('/', validate({ query: transactionListQuerySchema }), getTransactions);
 
 TransactionsRouter.put(
-  "/:id",
+  '/:id',
   validate({ body: transactionUpdateSchema, params: idParamSchema }),
   updateTransaction
 );
 
-TransactionsRouter.delete(
-  "/:id",
-  validate({ params: idParamSchema }),
-  deleteTransaction
-);
+TransactionsRouter.delete('/:id', validate({ params: idParamSchema }), deleteTransaction);
 
-TransactionsRouter.get("/summary", getTransactionSummary);
+TransactionsRouter.get('/summary', getTransactionSummary);
 
-TransactionsRouter.get("/summary-by-month", getMonthlySummary);
+TransactionsRouter.get('/summary-by-month', getMonthlySummary);
 
-TransactionsRouter.get(
-  "/summary-current-period",
-  getCurrentFinancialPeriodSummary
-);
+TransactionsRouter.get('/summary-current-period', getCurrentFinancialPeriodSummary);
 
-TransactionsRouter.get("/export", exportTransactionsCsv);
+TransactionsRouter.get('/export', exportTransactionsCsv);
 
-TransactionsRouter.get("/subscriptions", getSubscriptions);
+TransactionsRouter.get('/subscriptions', getSubscriptions);
 
 export default TransactionsRouter;
