@@ -1,5 +1,5 @@
 /**
- * Testes de integração para endpoints de budgets
+ * Integration tests for budget endpoints
  */
 
 import request from "supertest";
@@ -10,7 +10,6 @@ describe("Budget Endpoints", () => {
   let categoryId: string;
   let budgetId: string;
 
-  // Setup: Criar usuário e obter token
   beforeAll(async () => {
     const userData = {
       name: "Test User Budgets",
@@ -24,7 +23,6 @@ describe("Budget Endpoints", () => {
 
     authToken = signUpResponse.body.data.accessToken;
 
-    // Criar uma categoria para usar nos budgets
     const categoryResponse = await request(app)
       .post("/categories/create")
       .set("Authorization", `Bearer ${authToken}`)
@@ -34,7 +32,7 @@ describe("Budget Endpoints", () => {
   });
 
   describe("POST /budgets/", () => {
-    it("deve criar um orçamento com sucesso", async () => {
+    it("creates a budget successfully", async () => {
       const budgetData = {
         categoryId: categoryId,
         monthlyLimit: 1000,
@@ -46,7 +44,7 @@ describe("Budget Endpoints", () => {
         .send(budgetData)
         .expect(201);
 
-      expect(response.body).toHaveProperty("success", true);
+      expect(response.body).toHaveProperty("data");
       expect(response.body.data).toHaveProperty("id");
       expect(response.body.data.categoryId).toBe(categoryId);
       expect(response.body.data.monthlyLimit).toBe(
@@ -57,7 +55,7 @@ describe("Budget Endpoints", () => {
       budgetId = response.body.data.id;
     });
 
-    it("deve rejeitar criação sem autenticação", async () => {
+    it("rejects creation without authentication", async () => {
       const budgetData = {
         categoryId: categoryId,
         monthlyLimit: 1000,
@@ -66,7 +64,7 @@ describe("Budget Endpoints", () => {
       await request(app).post("/budgets/").send(budgetData).expect(401);
     });
 
-    it("deve validar campos obrigatórios", async () => {
+    it("validates required fields", async () => {
       const response = await request(app)
         .post("/budgets/")
         .set("Authorization", `Bearer ${authToken}`)
@@ -78,7 +76,7 @@ describe("Budget Endpoints", () => {
       expect(response.body).toHaveProperty("success", false);
     });
 
-    it("deve validar que monthlyLimit seja positivo", async () => {
+    it("validates that monthlyLimit is positive", async () => {
       const budgetData = {
         categoryId: categoryId,
         monthlyLimit: -100,
@@ -93,7 +91,7 @@ describe("Budget Endpoints", () => {
       expect(response.body).toHaveProperty("success", false);
     });
 
-    it("deve rejeitar categoryId inválida", async () => {
+    it("rejects invalid categoryId", async () => {
       const budgetData = {
         categoryId: "invalid-category-id",
         monthlyLimit: 1000,
@@ -108,7 +106,7 @@ describe("Budget Endpoints", () => {
       expect(response.body).toHaveProperty("success", false);
     });
 
-    it("deve aceitar valores decimais para monthlyLimit", async () => {
+    it("accepts decimal values for monthlyLimit", async () => {
       // Criar outra categoria para este teste
       const categoryResponse = await request(app)
         .post("/categories/create")
@@ -133,18 +131,18 @@ describe("Budget Endpoints", () => {
   });
 
   describe("GET /budgets/", () => {
-    it("deve retornar lista de orçamentos do usuário", async () => {
+    it("returns the user's budget list", async () => {
       const response = await request(app)
         .get("/budgets/")
         .set("Authorization", `Bearer ${authToken}`)
         .expect(200);
 
-      expect(response.body).toHaveProperty("success", true);
+      expect(response.body).toHaveProperty("data");
       expect(Array.isArray(response.body.data)).toBe(true);
       expect(response.body.data.length).toBeGreaterThan(0);
     });
 
-    it("deve retornar orçamentos com informações de progresso", async () => {
+    it("returns budgets with progress information", async () => {
       const response = await request(app)
         .get("/budgets/")
         .set("Authorization", `Bearer ${authToken}`)
@@ -158,7 +156,7 @@ describe("Budget Endpoints", () => {
       expect(budget).toHaveProperty("category");
     });
 
-    it("deve retornar array vazio para usuário sem orçamentos", async () => {
+    it("returns empty array for user with no budgets", async () => {
       // Criar novo usuário
       const newUserData = {
         name: "New User",
@@ -170,7 +168,7 @@ describe("Budget Endpoints", () => {
         .post("/auth/sign-up")
         .send(newUserData);
 
-      const newToken = newUserResponse.body.data.token;
+      const newToken = newUserResponse.body.data.accessToken;
 
       const response = await request(app)
         .get("/budgets/")
@@ -180,13 +178,13 @@ describe("Budget Endpoints", () => {
       expect(response.body.data).toEqual([]);
     });
 
-    it("deve rejeitar sem autenticação", async () => {
+    it("rejects without authentication", async () => {
       await request(app).get("/budgets/").expect(401);
     });
   });
 
   describe("PUT /budgets/:id", () => {
-    it("deve atualizar um orçamento com sucesso", async () => {
+    it("updates a budget successfully", async () => {
       const updateData = {
         monthlyLimit: 1500,
       };
@@ -197,13 +195,13 @@ describe("Budget Endpoints", () => {
         .send(updateData)
         .expect(200);
 
-      expect(response.body).toHaveProperty("success", true);
+      expect(response.body).toHaveProperty("data");
       expect(response.body.data.monthlyLimit).toBe(
         updateData.monthlyLimit.toString()
       );
     });
 
-    it("deve rejeitar atualização com valor negativo", async () => {
+    it("rejects update with negative value", async () => {
       const updateData = {
         monthlyLimit: -500,
       };
@@ -217,7 +215,7 @@ describe("Budget Endpoints", () => {
       expect(response.body).toHaveProperty("success", false);
     });
 
-    it("deve rejeitar atualização de orçamento inexistente", async () => {
+    it("rejects update of non-existent budget", async () => {
       const updateData = {
         monthlyLimit: 2000,
       };
@@ -229,7 +227,7 @@ describe("Budget Endpoints", () => {
         .expect(404);
     });
 
-    it("deve rejeitar atualização sem autenticação", async () => {
+    it("rejects update without authentication", async () => {
       const updateData = {
         monthlyLimit: 2000,
       };
@@ -240,7 +238,7 @@ describe("Budget Endpoints", () => {
         .expect(401);
     });
 
-    it("não deve permitir atualizar orçamento de outro usuário", async () => {
+    it("does not allow updating another user's budget", async () => {
       // Criar outro usuário
       const otherUserData = {
         name: "Other User",
@@ -252,7 +250,7 @@ describe("Budget Endpoints", () => {
         .post("/auth/sign-up")
         .send(otherUserData);
 
-      const otherToken = otherUserResponse.body.data.token;
+      const otherToken = otherUserResponse.body.data.accessToken;
 
       const updateData = {
         monthlyLimit: 3000,
@@ -267,7 +265,7 @@ describe("Budget Endpoints", () => {
       expect(response.body).toHaveProperty("success", false);
     });
 
-    it("deve aceitar valores decimais na atualização", async () => {
+    it("accepts decimal values on update", async () => {
       const updateData = {
         monthlyLimit: 2750.5,
       };
@@ -283,7 +281,7 @@ describe("Budget Endpoints", () => {
   });
 
   describe("DELETE /budgets/:id", () => {
-    it("deve deletar um orçamento com sucesso", async () => {
+    it("deletes a budget successfully", async () => {
       // Criar um orçamento para deletar
       const categoryResponse = await request(app)
         .post("/categories/create")
@@ -307,21 +305,21 @@ describe("Budget Endpoints", () => {
         .set("Authorization", `Bearer ${authToken}`)
         .expect(200);
 
-      expect(response.body).toHaveProperty("success", true);
+      expect(response.body).toHaveProperty("data");
     });
 
-    it("deve rejeitar deleção de orçamento inexistente", async () => {
+    it("rejects deletion of non-existent budget", async () => {
       await request(app)
         .delete("/budgets/invalid-id-999")
         .set("Authorization", `Bearer ${authToken}`)
         .expect(404);
     });
 
-    it("deve rejeitar deleção sem autenticação", async () => {
+    it("rejects deletion without authentication", async () => {
       await request(app).delete(`/budgets/${budgetId}`).expect(401);
     });
 
-    it("não deve permitir deletar orçamento de outro usuário", async () => {
+    it("does not allow deleting another user's budget", async () => {
       // Criar outro usuário
       const otherUserData = {
         name: "Other User Delete",
@@ -333,7 +331,7 @@ describe("Budget Endpoints", () => {
         .post("/auth/sign-up")
         .send(otherUserData);
 
-      const otherToken = otherUserResponse.body.data.token;
+      const otherToken = otherUserResponse.body.data.accessToken;
 
       const response = await request(app)
         .delete(`/budgets/${budgetId}`)
@@ -343,7 +341,7 @@ describe("Budget Endpoints", () => {
       expect(response.body).toHaveProperty("success", false);
     });
 
-    it("deve verificar se orçamento foi realmente deletado", async () => {
+    it("verifies that the budget was actually deleted", async () => {
       // Criar e deletar orçamento
       const categoryResponse = await request(app)
         .post("/categories/create")
@@ -405,7 +403,7 @@ describe("Budget Endpoints", () => {
       testBudgetId = budgetResponse.body.data.id;
     });
 
-    it("deve calcular progresso corretamente com transações", async () => {
+    it("calculates progress correctly with transactions", async () => {
       // Criar transação de despesa
       await request(app)
         .post("/transactions/create")
@@ -432,7 +430,7 @@ describe("Budget Endpoints", () => {
       expect(budget.remaining).toBeLessThan(1000);
     });
 
-    it("deve marcar status como 'safe' quando gasto é baixo", async () => {
+    it("marks status as 'safe' when spending is low", async () => {
       const response = await request(app)
         .get("/budgets/")
         .set("Authorization", `Bearer ${authToken}`)
