@@ -454,5 +454,8 @@ export function formatPeriodLabel(startDate: Date, endDate: Date): string {
     label = `${startMonth} ${startYear} - ${endMonth} ${endYear}`;
   }
 
-  return label.replace(/\b\w/g, (char) => char.toUpperCase());
+  return label
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }

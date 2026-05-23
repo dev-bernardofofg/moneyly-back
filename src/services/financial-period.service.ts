@@ -66,6 +66,7 @@ export const financialPeriodService = {
 
   async getUserPeriods(userId: string) {
     const stored = await financialPeriodRepository.findAllByUserWithTransactionCount(userId);
+    const now = getCurrentSaoPauloDate();
     return stored.map((p) => ({
       id: p.id,
       startDate: p.startDate,
@@ -73,7 +74,7 @@ export const financialPeriodService = {
       label: formatPeriodLabel(p.startDate, p.endDate),
       transactionCount: p.transactionCount,
       isStored: true,
-      isCurrent: p.isActive,
+      isCurrent: now >= p.startDate && now <= p.endDate,
     }));
   },
 
