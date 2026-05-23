@@ -1,7 +1,7 @@
-import { NextFunction, Response } from "express";
-import { logger } from "../lib/logger";
-import { financialPeriodService } from "../services/financial-period.service";
-import { AuthenticatedRequest } from "./auth";
+import { NextFunction, Response } from 'express';
+import { logger } from '../lib/logger';
+import { financialPeriodService } from '../services/financial-period.service';
+import { AuthenticatedRequest } from './auth';
 
 export const ensurePeriodExists = async (
   req: AuthenticatedRequest,
@@ -21,7 +21,7 @@ export const ensurePeriodExists = async (
 
     next();
   } catch (error) {
-    logger.warn("ensurePeriodExists failed silently", { error });
+    logger.warn('ensurePeriodExists failed silently', { error });
     next();
   }
 };

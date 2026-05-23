@@ -1,9 +1,9 @@
-import type { TransactionWithCategory } from "../repositories/transaction.repository";
+import type { TransactionWithCategory } from '../repositories/transaction.repository';
 
 export type TransactionWithCategoryName = TransactionWithCategory;
 
 export interface ITransaction {
-  type: "income" | "expense";
+  type: 'income' | 'expense';
   title: string;
   amount: string;
   category: string;
@@ -16,6 +16,8 @@ export interface TransactionFilters {
   category?: string;
   startDate?: Date;
   endDate?: Date;
+  periodId?: string;
+  type?: 'income' | 'expense';
 }
 
 export interface TransactionSummary {

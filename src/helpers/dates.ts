@@ -1,10 +1,10 @@
-import { formatInTimeZone, toZonedTime } from "date-fns-tz";
-import type { RecurringFrequency } from "../types/recurring-transaction.types";
+import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
+import type { RecurringFrequency } from '../types/recurring-transaction.types';
 
-const SAO_PAULO_TIMEZONE = "America/Sao_Paulo";
+const SAO_PAULO_TIMEZONE = 'America/Sao_Paulo';
 
 export function toSaoPauloTimezone(date: Date | string): Date {
-  const inputDate = typeof date === "string" ? new Date(date) : date;
+  const inputDate = typeof date === 'string' ? new Date(date) : date;
   return toZonedTime(inputDate, SAO_PAULO_TIMEZONE);
 }
 
@@ -24,21 +24,13 @@ export function createSaoPauloDate(
   return toZonedTime(new Date(year, month, day, hours, minutes, seconds), SAO_PAULO_TIMEZONE);
 }
 
-export function normalizeDayForMonthSaoPaulo(
-  year: number,
-  month: number,
-  day: number
-): number {
+export function normalizeDayForMonthSaoPaulo(year: number, month: number, day: number): number {
   const lastDayOfMonth = new Date(year, month + 1, 0);
   const lastDaySaoPaulo = toZonedTime(lastDayOfMonth, SAO_PAULO_TIMEZONE);
   return Math.min(day, lastDaySaoPaulo.getDate());
 }
 
-export function createNormalizedSaoPauloDate(
-  year: number,
-  month: number,
-  day: number
-): Date {
+export function createNormalizedSaoPauloDate(year: number, month: number, day: number): Date {
   const normalizedDay = normalizeDayForMonthSaoPaulo(year, month, day);
   return createSaoPauloDate(year, month, normalizedDay);
 }
@@ -48,17 +40,17 @@ export function getCurrentSaoPauloDate(): Date {
 }
 
 export function formatBrazilianDate(date: Date | string): string {
-  const inputDate = typeof date === "string" ? new Date(date) : date;
-  return formatInTimeZone(inputDate, SAO_PAULO_TIMEZONE, "dd/MM/yyyy");
+  const inputDate = typeof date === 'string' ? new Date(date) : date;
+  return formatInTimeZone(inputDate, SAO_PAULO_TIMEZONE, 'dd/MM/yyyy');
 }
 
 export function formatBrazilianDateTime(date: Date | string): string {
-  const inputDate = typeof date === "string" ? new Date(date) : date;
-  return formatInTimeZone(inputDate, SAO_PAULO_TIMEZONE, "dd/MM/yyyy HH:mm");
+  const inputDate = typeof date === 'string' ? new Date(date) : date;
+  return formatInTimeZone(inputDate, SAO_PAULO_TIMEZONE, 'dd/MM/yyyy HH:mm');
 }
 
 export function formatBrazilianDateLong(date: Date | string): string {
-  const inputDate = typeof date === "string" ? new Date(date) : date;
+  const inputDate = typeof date === 'string' ? new Date(date) : date;
   return formatInTimeZone(inputDate, SAO_PAULO_TIMEZONE, "dd 'de' MMMM 'de' yyyy");
 }
 
@@ -82,7 +74,7 @@ export function getSaoPauloTimezoneOffset(date: Date = new Date()): number {
 }
 
 export function formatSaoPauloISO(date: Date | string): string {
-  const inputDate = typeof date === "string" ? new Date(date) : date;
+  const inputDate = typeof date === 'string' ? new Date(date) : date;
   return formatInTimeZone(inputDate, SAO_PAULO_TIMEZONE, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx");
 }
 
@@ -95,11 +87,11 @@ export function calculateNextExecution(
   const next = new Date(from);
 
   switch (frequency) {
-    case "daily":
+    case 'daily':
       next.setDate(next.getDate() + 1);
       break;
 
-    case "weekly": {
+    case 'weekly': {
       const daysUntil =
         dayOfWeek !== null && dayOfWeek !== undefined
           ? (dayOfWeek - next.getDay() + 7) % 7 || 7
@@ -108,7 +100,7 @@ export function calculateNextExecution(
       break;
     }
 
-    case "monthly": {
+    case 'monthly': {
       next.setMonth(next.getMonth() + 1);
       if (dayOfMonth) {
         const lastDay = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate();
@@ -117,7 +109,7 @@ export function calculateNextExecution(
       break;
     }
 
-    case "yearly":
+    case 'yearly':
       next.setFullYear(next.getFullYear() + 1);
       break;
   }
@@ -133,20 +125,20 @@ export function calculateFirstExecution(
   const now = getCurrentSaoPauloDate();
 
   switch (frequency) {
-    case "daily":
-      return calculateNextExecution("daily", null, null, now);
+    case 'daily':
+      return calculateNextExecution('daily', null, null, now);
 
-    case "weekly": {
+    case 'weekly': {
       if (dayOfWeek !== null && dayOfWeek !== undefined) {
         const next = new Date(now);
         const daysUntil = (dayOfWeek - now.getDay() + 7) % 7 || 7;
         next.setDate(next.getDate() + daysUntil);
         return next;
       }
-      return calculateNextExecution("weekly", null, null, now);
+      return calculateNextExecution('weekly', null, null, now);
     }
 
-    case "monthly": {
+    case 'monthly': {
       if (dayOfMonth) {
         const next = new Date(now);
         next.setDate(1);
@@ -155,10 +147,10 @@ export function calculateFirstExecution(
         next.setDate(Math.min(dayOfMonth, lastDay));
         return next;
       }
-      return calculateNextExecution("monthly", null, null, now);
+      return calculateNextExecution('monthly', null, null, now);
     }
 
-    case "yearly": {
+    case 'yearly': {
       const next = new Date(now);
       next.setFullYear(next.getFullYear() + 1);
       return next;

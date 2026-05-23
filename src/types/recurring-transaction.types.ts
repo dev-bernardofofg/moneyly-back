@@ -1,7 +1,7 @@
-export type RecurringFrequency = "daily" | "weekly" | "monthly" | "yearly";
+export type RecurringFrequency = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 export interface CreateRecurringTransactionInput {
-  type: "income" | "expense";
+  type: 'income' | 'expense';
   title: string;
   amount: string;
   categoryId: string;

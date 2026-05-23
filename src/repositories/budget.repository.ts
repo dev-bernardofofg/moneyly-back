@@ -1,12 +1,12 @@
-import { and, eq } from "drizzle-orm";
-import { db } from "../db";
-import { budgets, categories, NewCategoryBudget, type CategoryBudget } from "../db/schema";
-import type { IBudgetRepository } from "./interfaces/IBudgetRepository";
+import { and, eq } from 'drizzle-orm';
+import { db } from '../db';
+import { budgets, categories, NewCategoryBudget, type CategoryBudget } from '../db/schema';
+import type { IBudgetRepository } from './interfaces/IBudgetRepository';
 
 export const budgetRepository = {
   async create(data: NewCategoryBudget): Promise<CategoryBudget> {
     const [budget] = await db.insert(budgets).values(data).returning();
-    if (!budget) throw new Error("Falha ao criar orçamento");
+    if (!budget) throw new Error('Falha ao criar orçamento');
     return budget;
   },
 
@@ -19,7 +19,10 @@ export const budgetRepository = {
     return budget ?? null;
   },
 
-  async findByUserIdAndCategoryId(userId: string, categoryId: string): Promise<CategoryBudget | null> {
+  async findByUserIdAndCategoryId(
+    userId: string,
+    categoryId: string
+  ): Promise<CategoryBudget | null> {
     const [budget] = await db
       .select()
       .from(budgets)

@@ -3,14 +3,14 @@
  * Fornece logging estruturado com níveis de log e respeita NODE_ENV
  */
 
-import { env } from "../env";
+import { env } from '../env';
 
 // Níveis de log disponíveis
 export enum LogLevel {
-  DEBUG = "DEBUG",
-  INFO = "INFO",
-  WARN = "WARN",
-  ERROR = "ERROR",
+  DEBUG = 'DEBUG',
+  INFO = 'INFO',
+  WARN = 'WARN',
+  ERROR = 'ERROR',
 }
 
 // Interface para metadata adicional do log
@@ -20,36 +20,32 @@ interface LogMetadata {
 
 // Cores ANSI para terminal
 const colors = {
-  reset: "\x1b[0m",
-  debug: "\x1b[36m", // Cyan
-  info: "\x1b[32m", // Green
-  warn: "\x1b[33m", // Yellow
-  error: "\x1b[31m", // Red
+  reset: '\x1b[0m',
+  debug: '\x1b[36m', // Cyan
+  info: '\x1b[32m', // Green
+  warn: '\x1b[33m', // Yellow
+  error: '\x1b[31m', // Red
 };
 
 // Emojis para cada nível
 const emojis = {
-  DEBUG: "🔍",
-  INFO: "ℹ️",
-  WARN: "⚠️",
-  ERROR: "❌",
+  DEBUG: '🔍',
+  INFO: 'ℹ️',
+  WARN: '⚠️',
+  ERROR: '❌',
 };
 
 class Logger {
   private isDevelopment: boolean;
 
   constructor() {
-    this.isDevelopment = env.NODE_ENV === "development";
+    this.isDevelopment = env.NODE_ENV === 'development';
   }
 
   /**
    * Formata a mensagem de log com timestamp e nível
    */
-  private formatMessage(
-    level: LogLevel,
-    message: string,
-    metadata?: LogMetadata
-  ): string {
+  private formatMessage(level: LogLevel, message: string, metadata?: LogMetadata): string {
     const timestamp = new Date().toISOString();
     const emoji = emojis[level];
     const color = colors[level.toLowerCase() as keyof typeof colors];
@@ -57,11 +53,7 @@ class Logger {
     let formattedMessage = `${color}[${timestamp}] ${emoji} ${level}${colors.reset}: ${message}`;
 
     if (metadata && Object.keys(metadata).length > 0) {
-      formattedMessage += `\n${color}Metadata:${colors.reset} ${JSON.stringify(
-        metadata,
-        null,
-        2
-      )}`;
+      formattedMessage += `\n${color}Metadata:${colors.reset} ${JSON.stringify(metadata, null, 2)}`;
     }
 
     return formattedMessage;
@@ -92,11 +84,7 @@ class Logger {
   /**
    * Log de erro
    */
-  error(
-    message: string,
-    error?: Error | unknown,
-    metadata?: LogMetadata
-  ): void {
+  error(message: string, error?: Error | unknown, metadata?: LogMetadata): void {
     const errorMetadata: LogMetadata = { ...metadata };
 
     if (error instanceof Error) {
@@ -115,12 +103,7 @@ class Logger {
   /**
    * Log de entrada de requisição HTTP
    */
-  http(
-    method: string,
-    url: string,
-    statusCode?: number,
-    duration?: number
-  ): void {
+  http(method: string, url: string, statusCode?: number, duration?: number): void {
     const metadata: LogMetadata = {
       method,
       url,
@@ -128,9 +111,7 @@ class Logger {
       ...(duration && { duration: `${duration}ms` }),
     };
 
-    const message = statusCode
-      ? `${method} ${url} - ${statusCode}`
-      : `${method} ${url}`;
+    const message = statusCode ? `${method} ${url} - ${statusCode}` : `${method} ${url}`;
 
     if (statusCode && statusCode >= 400) {
       this.warn(message, metadata);
@@ -145,7 +126,7 @@ class Logger {
   database(query: string, duration?: number, metadata?: LogMetadata): void {
     if (!this.isDevelopment) return;
 
-    this.debug("Database Query", {
+    this.debug('Database Query', {
       query,
       ...(duration && { duration: `${duration}ms` }),
       ...metadata,

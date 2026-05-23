@@ -1,30 +1,32 @@
-import type { GoalWithMilestones } from "../repositories/interfaces/IGoalRepository";
-import type { BudgetProgress } from "../types/budget.types";
-import { getCurrentSaoPauloDate } from "../helpers/dates";
+import type { GoalWithMilestones } from '../repositories/interfaces/IGoalRepository';
+import type { BudgetProgress } from '../types/budget.types';
+import { getCurrentSaoPauloDate } from '../helpers/dates';
 import {
   formatPeriodLabel,
   getCurrentFinancialPeriod,
-} from "../helpers/financial-period";
+  getPreviousFinancialPeriods,
+} from '../helpers/financial-period';
+import { groupSubscriptionCandidates } from '../helpers/subscription-detector';
+import { buildComparison } from '../helpers/comparative-insights';
 import {
   calculateMonthlyAggregates,
   calculatePeriodChartData,
   calculateStats,
   getRecentTransactions,
-} from "../helpers/handlers/overview-handlers";
-import { financialPeriodRepository } from "../repositories/financial-period.repository";
-import type { TransactionWithCategory } from "../repositories/transaction.repository";
-import { transactionRepository } from "../repositories/transaction.repository";
-import { userRepository } from "../repositories/user.repository";
-import { getBudgetProgressService } from "./budget.service";
-import { getGoalsProgressService } from "./goal.service";
+} from '../helpers/handlers/overview-handlers';
+import { financialPeriodRepository } from '../repositories/financial-period.repository';
+import type { TransactionWithCategory } from '../repositories/transaction.repository';
+import { transactionRepository } from '../repositories/transaction.repository';
+import { userRepository } from '../repositories/user.repository';
+import { getBudgetProgressService } from './budget.service';
+import { getGoalsProgressService } from './goal.service';
 
 export const getTransactionsByUserId = async (
   userId: string,
   financial?: { startDay: number; endDay: number },
   periodId?: string
 ) => {
-  const storedPeriods =
-    await financialPeriodRepository.findAllByUserWithTransactionCount(userId);
+  const storedPeriods = await financialPeriodRepository.findAllByUserWithTransactionCount(userId);
 
   const availablePeriods = storedPeriods.map((p) => ({
     id: p.id,
@@ -39,10 +41,7 @@ export const getTransactionsByUserId = async (
   if (periodId) {
     selectedPeriod = availablePeriods.find((p) => p.id === periodId);
   } else if (financial) {
-    const currentPeriod = getCurrentFinancialPeriod(
-      financial.startDay,
-      financial.endDay
-    );
+    const currentPeriod = getCurrentFinancialPeriod(financial.startDay, financial.endDay);
     selectedPeriod = availablePeriods.find(
       (p) =>
         p.startDate.getTime() === currentPeriod.startDate.getTime() &&
@@ -52,10 +51,7 @@ export const getTransactionsByUserId = async (
 
   let transactions: TransactionWithCategory[];
   if (selectedPeriod) {
-    transactions = await transactionRepository.findByPeriodId(
-      userId,
-      selectedPeriod.id
-    );
+    transactions = await transactionRepository.findByPeriodId(userId, selectedPeriod.id);
   } else if (periodId) {
     transactions = [];
   } else {
@@ -79,9 +75,7 @@ export const getStatsOverview = async (
   return calculateStats(transactions, monthlyIncome);
 };
 
-export const getRecentTransactionsService = (
-  transactions: TransactionWithCategory[]
-) => {
+export const getRecentTransactionsService = (transactions: TransactionWithCategory[]) => {
   return getRecentTransactions(transactions);
 };
 
@@ -96,9 +90,56 @@ export const getDashboardOverviewService = async (
   return { stats, chart, recentTransactions };
 };
 
+export interface DashboardPreviews {
+  subscriptions: {
+    count: number;
+    topMonthlyCost: number | null;
+    topTitle: string | null;
+  };
+  comparison: {
+    signal: 'up' | 'down' | 'stable';
+    deltaPct: number | null;
+    topHighlight: string | null;
+  };
+}
+
+/**
+ * Prévia compacta de F3/F4 p/ o dashboard (F5). 1 só findAllByUserId,
+ * reaproveitado pelas duas heurísticas. Sem listas completas.
+ */
+export const getDashboardPreviewsService = async (
+  userId: string,
+  financialDayStart: number,
+  financialDayEnd: number
+): Promise<DashboardPreviews> => {
+  const transactions = await transactionRepository.findAllByUserId(userId);
+
+  const subs = groupSubscriptionCandidates(transactions);
+  const topSub = subs[0] ?? null;
+
+  const periods = getPreviousFinancialPeriods(financialDayStart, financialDayEnd, 4).map((p) => ({
+    startDate: p.startDate,
+    endDate: p.endDate,
+    label: formatPeriodLabel(p.startDate, p.endDate),
+  }));
+  const cmp = buildComparison(transactions, periods);
+
+  return {
+    subscriptions: {
+      count: subs.length,
+      topMonthlyCost: topSub ? topSub.monthlyCost : null,
+      topTitle: topSub ? topSub.title : null,
+    },
+    comparison: {
+      signal: cmp.totals.signal,
+      deltaPct: cmp.totals.deltaPct,
+      topHighlight: cmp.highlights[0] ?? null,
+    },
+  };
+};
+
 export const getAvailablePeriodsService = async (userId: string) => {
-  const storedPeriods =
-    await financialPeriodRepository.findAllByUserWithTransactionCount(userId);
+  const storedPeriods = await financialPeriodRepository.findAllByUserWithTransactionCount(userId);
 
   return storedPeriods.map((p) => ({
     id: p.id,
@@ -109,8 +150,8 @@ export const getAvailablePeriodsService = async (userId: string) => {
   }));
 };
 
-type AlertSeverity = "danger" | "warning" | "info";
-type AlertPriority = "high" | "medium" | "low";
+type AlertSeverity = 'danger' | 'warning' | 'info';
+type AlertPriority = 'high' | 'medium' | 'low';
 
 export type Alert = {
   type: AlertSeverity;
@@ -137,25 +178,16 @@ export const calculatePlanningStats = (
     0
   );
 
-  const totalSaved = goalsProgress.reduce(
-    (sum, goal) => sum + Number(goal?.currentAmount ?? 0),
-    0
-  );
+  const totalSaved = goalsProgress.reduce((sum, goal) => sum + Number(goal?.currentAmount ?? 0), 0);
 
   const savingsProgress =
-    totalSavingsGoal > 0
-      ? Number(((totalSaved / totalSavingsGoal) * 100).toFixed(2))
-      : 0;
+    totalSavingsGoal > 0 ? Number(((totalSaved / totalSavingsGoal) * 100).toFixed(2)) : 0;
 
   const budgetPercentage =
-    monthlyIncome > 0
-      ? Number(((totalBudgeted / monthlyIncome) * 100).toFixed(2))
-      : 0;
+    monthlyIncome > 0 ? Number(((totalBudgeted / monthlyIncome) * 100).toFixed(2)) : 0;
 
   const savingsPercentage =
-    monthlyIncome > 0
-      ? Number(((totalSavingsGoal / monthlyIncome) * 100).toFixed(2))
-      : 0;
+    monthlyIncome > 0 ? Number(((totalSavingsGoal / monthlyIncome) * 100).toFixed(2)) : 0;
 
   return {
     totalBudgeted,
@@ -182,23 +214,23 @@ export const calculateAlerts = (
 
     if (percentage >= 100) {
       alerts.push({
-        type: "danger",
+        type: 'danger',
         message: `🚨 Orçamento de ${budget.category.name} foi excedido!`,
-        priority: "high",
+        priority: 'high',
         category: budget.category.name,
       });
     } else if (percentage >= 90) {
       alerts.push({
-        type: "warning",
+        type: 'warning',
         message: `⚠️ Orçamento de ${budget.category.name} está em 90%!`,
-        priority: "medium",
+        priority: 'medium',
         category: budget.category.name,
       });
     } else if (percentage >= 80) {
       alerts.push({
-        type: "info",
+        type: 'info',
         message: `⚠️ Orçamento de ${budget.category.name} está em 80%!`,
-        priority: "low",
+        priority: 'low',
         category: budget.category.name,
       });
     }
@@ -211,11 +243,11 @@ export const calculateAlerts = (
 
     if (daysRemaining > 0 && daysRemaining <= 7) {
       alerts.push({
-        type: "warning",
+        type: 'warning',
         message: `⏰ Objetivo "${goal.title}" termina em ${daysRemaining} dia${
-          daysRemaining > 1 ? "s" : ""
+          daysRemaining > 1 ? 's' : ''
         }!`,
-        priority: "high",
+        priority: 'high',
         goal: goal.title,
         daysRemaining,
       });
@@ -223,9 +255,9 @@ export const calculateAlerts = (
 
     if (daysRemaining > 7 && daysRemaining <= 30) {
       alerts.push({
-        type: "info",
+        type: 'info',
         message: `⏰ Objetivo "${goal.title}" termina em ${daysRemaining} dias!`,
-        priority: "medium",
+        priority: 'medium',
         goal: goal.title,
         daysRemaining,
       });
@@ -233,11 +265,11 @@ export const calculateAlerts = (
 
     if (daysRemaining < 0) {
       alerts.push({
-        type: "danger",
+        type: 'danger',
         message: `🚨 Objetivo "${goal.title}" está atrasado há ${Math.abs(
           daysRemaining
-        )} dia${Math.abs(daysRemaining) > 1 ? "s" : ""}!`,
-        priority: "high",
+        )} dia${Math.abs(daysRemaining) > 1 ? 's' : ''}!`,
+        priority: 'high',
         goal: goal.title,
         daysRemaining,
       });
@@ -245,9 +277,9 @@ export const calculateAlerts = (
 
     if (daysRemaining > 0 && daysRemaining <= 30 && percentage < 50) {
       alerts.push({
-        type: "warning",
+        type: 'warning',
         message: `⚠️ Objetivo "${goal.title}" tem apenas ${percentage}% de progresso e termina em ${daysRemaining} dias!`,
-        priority: "medium",
+        priority: 'medium',
         goal: goal.title,
         percentage,
         daysRemaining,
@@ -257,41 +289,35 @@ export const calculateAlerts = (
 
   if (stats.budgetPercentage > 100) {
     alerts.push({
-      type: "danger",
-      message: "🚨 Seu orçamento total excede seu rendimento mensal!",
-      priority: "high",
+      type: 'danger',
+      message: '🚨 Seu orçamento total excede seu rendimento mensal!',
+      priority: 'high',
     });
   } else if (stats.budgetPercentage > 80) {
     alerts.push({
-      type: "warning",
-      message: "⚠️ Seu orçamento está usando mais de 80% do seu rendimento!",
-      priority: "medium",
+      type: 'warning',
+      message: '⚠️ Seu orçamento está usando mais de 80% do seu rendimento!',
+      priority: 'medium',
     });
   }
 
   if (stats.savingsPercentage > 50) {
     alerts.push({
-      type: "info",
-      message: "💰 Você está planejando poupar mais de 50% do seu rendimento!",
-      priority: "low",
+      type: 'info',
+      message: '💰 Você está planejando poupar mais de 50% do seu rendimento!',
+      priority: 'low',
     });
   }
 
   const priorityOrder: Record<string, number> = { high: 3, medium: 2, low: 1 };
-  alerts.sort(
-    (a, b) =>
-      (priorityOrder[b.priority] ?? 0) - (priorityOrder[a.priority] ?? 0)
-  );
+  alerts.sort((a, b) => (priorityOrder[b.priority] ?? 0) - (priorityOrder[a.priority] ?? 0));
 
   return alerts;
 };
 
-export const getFinancialInsightsService = async (
-  userId: string,
-  monthlyIncome: number
-) => {
+export const getFinancialInsightsService = async (userId: string, monthlyIncome: number) => {
   const user = await userRepository.findById(userId);
-  if (!user) throw new Error("Usuário não encontrado");
+  if (!user) throw new Error('Usuário não encontrado');
 
   const allTransactions = await transactionRepository.findAllByUserId(userId);
   const monthlyData = calculateMonthlyAggregates(allTransactions);
@@ -304,16 +330,11 @@ export const getFinancialInsightsService = async (
   const now = getCurrentSaoPauloDate();
   const totalDays = Math.max(
     1,
-    Math.ceil(
-      (currentPeriod.endDate.getTime() - currentPeriod.startDate.getTime()) /
-        86400000
-    )
+    Math.ceil((currentPeriod.endDate.getTime() - currentPeriod.startDate.getTime()) / 86400000)
   );
   const daysElapsed = Math.max(
     1,
-    Math.ceil(
-      (now.getTime() - currentPeriod.startDate.getTime()) / 86400000
-    )
+    Math.ceil((now.getTime() - currentPeriod.startDate.getTime()) / 86400000)
   );
 
   const currentPeriodTx = allTransactions.filter((tx) => {
@@ -322,12 +343,10 @@ export const getFinancialInsightsService = async (
   });
 
   const currentExpense = currentPeriodTx
-    .filter((tx) => tx.type === "expense")
+    .filter((tx) => tx.type === 'expense')
     .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
-  const projectedExpense = Number(
-    ((currentExpense / daysElapsed) * totalDays).toFixed(2)
-  );
+  const projectedExpense = Number(((currentExpense / daysElapsed) * totalDays).toFixed(2));
 
   const lastTwo = monthlyData.slice(-2);
   const prevMonth = lastTwo[0] ?? null;
@@ -335,40 +354,21 @@ export const getFinancialInsightsService = async (
 
   const expenseChange =
     prevMonth && prevMonth.expense > 0
-      ? Number(
-          (
-            ((currMonth!.expense - prevMonth.expense) / prevMonth.expense) *
-            100
-          ).toFixed(1)
-        )
+      ? Number((((currMonth!.expense - prevMonth.expense) / prevMonth.expense) * 100).toFixed(1))
       : null;
 
   const incomeChange =
     prevMonth && prevMonth.income > 0
-      ? Number(
-          (
-            ((currMonth!.income - prevMonth.income) / prevMonth.income) *
-            100
-          ).toFixed(1)
-        )
+      ? Number((((currMonth!.income - prevMonth.income) / prevMonth.income) * 100).toFixed(1))
       : null;
 
-  const totalExpenseAllTime = monthlyData.reduce(
-    (s, m) => s + m.expense,
-    0
-  );
+  const totalExpenseAllTime = monthlyData.reduce((s, m) => s + m.expense, 0);
   const avgMonthlyExpense =
-    monthlyData.length > 0
-      ? Number((totalExpenseAllTime / monthlyData.length).toFixed(2))
-      : 0;
+    monthlyData.length > 0 ? Number((totalExpenseAllTime / monthlyData.length).toFixed(2)) : 0;
 
   const avgMonthlyIncome =
     monthlyData.length > 0
-      ? Number(
-          (
-            monthlyData.reduce((s, m) => s + m.income, 0) / monthlyData.length
-          ).toFixed(2)
-        )
+      ? Number((monthlyData.reduce((s, m) => s + m.income, 0) / monthlyData.length).toFixed(2))
       : 0;
 
   const bestMonth = monthlyData.length
@@ -378,10 +378,10 @@ export const getFinancialInsightsService = async (
   const worstMonth = monthlyData.length
     ? monthlyData.reduce((max, m) => (m.expense > max.expense ? m : max))
     : null;
-        
+
   const categoryMap: Record<string, { name: string; amount: number }> = {};
   allTransactions
-    .filter((tx) => tx.type === "expense")
+    .filter((tx) => tx.type === 'expense')
     .forEach((tx) => {
       if (!categoryMap[tx.category.id]) {
         categoryMap[tx.category.id] = { name: tx.category.name, amount: 0 };
@@ -396,19 +396,14 @@ export const getFinancialInsightsService = async (
       name: c.name,
       amount: Number(c.amount.toFixed(2)),
       percentage:
-        totalExpenseAllTime > 0
-          ? Number(((c.amount / totalExpenseAllTime) * 100).toFixed(1))
-          : 0,
+        totalExpenseAllTime > 0 ? Number(((c.amount / totalExpenseAllTime) * 100).toFixed(1)) : 0,
     }));
 
   return {
     currentPeriod: {
       daysElapsed,
       totalDays,
-      completionPercentage: Math.min(
-        100,
-        Math.round((daysElapsed / totalDays) * 100)
-      ),
+      completionPercentage: Math.min(100, Math.round((daysElapsed / totalDays) * 100)),
       currentExpense: Number(currentExpense.toFixed(2)),
       projectedExpense,
       isOnTrack: projectedExpense <= monthlyIncome,
@@ -432,23 +427,11 @@ export const getFinancialInsightsService = async (
   };
 };
 
-export const getPlannerOverviewService = async (
-  userId: string,
-  monthlyIncome: number
-) => {
+export const getPlannerOverviewService = async (userId: string, monthlyIncome: number) => {
   const budgetProgress = await getBudgetProgressService(userId);
   const goalsProgress = await getGoalsProgressService(userId);
-  const stats = calculatePlanningStats(
-    budgetProgress,
-    goalsProgress,
-    monthlyIncome
-  );
-  const alerts = calculateAlerts(
-    stats,
-    monthlyIncome,
-    budgetProgress,
-    goalsProgress
-  );
+  const stats = calculatePlanningStats(budgetProgress, goalsProgress, monthlyIncome);
+  const alerts = calculateAlerts(stats, monthlyIncome, budgetProgress, goalsProgress);
 
   return {
     stats,

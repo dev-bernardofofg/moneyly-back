@@ -1,28 +1,22 @@
-import { format } from "date-fns";
-import { getCurrentFinancialPeriod } from "../helpers/financial-period";
-import type { PaginationQuery } from "../helpers/pagination";
-import { toSaoPauloTimezone } from "../helpers/dates";
-import { transactionRepository } from "../repositories/transaction.repository";
-import { userRepository } from "../repositories/user.repository";
-import type { ITransaction, TransactionFilters } from "../types/transaction.types";
-import { financialPeriodService } from "./financial-period.service";
-import { validateCategoryExistsForUser } from "../validations/transaction.validation";
-import { HttpError } from "../validations/errors";
+import { format } from 'date-fns';
+import { getCurrentFinancialPeriod } from '../helpers/financial-period';
+import type { PaginationQuery } from '../helpers/pagination';
+import { toSaoPauloTimezone } from '../helpers/dates';
+import { transactionRepository } from '../repositories/transaction.repository';
+import { userRepository } from '../repositories/user.repository';
+import type { ITransaction, TransactionFilters } from '../types/transaction.types';
+import { financialPeriodService } from './financial-period.service';
+import { validateCategoryExistsForUser } from '../validations/transaction.validation';
+import { HttpError } from '../validations/errors';
 
-export const createTransactionService = async (
-  userId: string,
-  transaction: ITransaction
-) => {
+export const createTransactionService = async (userId: string, transaction: ITransaction) => {
   await validateCategoryExistsForUser(transaction.category, userId);
 
   const transactionDate = transaction.date
     ? toSaoPauloTimezone(transaction.date)
     : toSaoPauloTimezone(new Date());
 
-  const periodId = await financialPeriodService.findOrCreatePeriodForDate(
-    userId,
-    transactionDate
-  );
+  const periodId = await financialPeriodService.findOrCreatePeriodForDate(userId, transactionDate);
 
   const newTransaction = await transactionRepository.create({
     userId,
@@ -43,7 +37,7 @@ export const updateTransactionService = async (
   id: string,
   userId: string,
   updateData: Partial<{
-    type: "income" | "expense";
+    type: 'income' | 'expense';
     title: string;
     amount: string;
     categoryId: string;
@@ -55,23 +49,18 @@ export const updateTransactionService = async (
   if (updateData.categoryId) {
     await validateCategoryExistsForUser(updateData.categoryId, userId);
   }
-  
+
   if (updateData.date) {
     updateData.date = toSaoPauloTimezone(updateData.date);
-    updateData.periodId =
-      await financialPeriodService.findOrCreatePeriodForDate(
-        userId,
-        updateData.date
-      );
+    updateData.periodId = await financialPeriodService.findOrCreatePeriodForDate(
+      userId,
+      updateData.date
+    );
   }
 
-  const transaction = await transactionRepository.update(
-    id,
-    userId,
-    updateData
-  );
+  const transaction = await transactionRepository.update(id, userId, updateData);
 
-  if (!transaction) throw new HttpError(404, "Transação não encontrada");
+  if (!transaction) throw new HttpError(404, 'Transação não encontrada');
 
   return transaction;
 };
@@ -86,28 +75,18 @@ export const getTransactionsPaginatedService = async (
 
 export const deleteTransactionService = async (id: string, userId: string) => {
   const deleted = await transactionRepository.delete(id, userId);
-  if (!deleted) throw new HttpError(404, "Transação não encontrada");
+  if (!deleted) throw new HttpError(404, 'Transação não encontrada');
   return deleted;
 };
 
-const computeSpendingStats = (
-  totalExpense: number,
-  monthlyIncome: number,
-  alertMsg: string
-) => {
+const computeSpendingStats = (totalExpense: number, monthlyIncome: number, alertMsg: string) => {
   const percentUsed =
-    monthlyIncome > 0
-      ? Number(((totalExpense / monthlyIncome) * 100).toFixed(2))
-      : null;
-  const alert =
-    percentUsed !== null && percentUsed >= 80 ? alertMsg : null;
+    monthlyIncome > 0 ? Number(((totalExpense / monthlyIncome) * 100).toFixed(2)) : null;
+  const alert = percentUsed !== null && percentUsed >= 80 ? alertMsg : null;
   return { percentUsed, alert };
 };
 
-export const getTransactionListService = async (
-  userId: string,
-  filters: TransactionFilters
-) => {
+export const getTransactionListService = async (userId: string, filters: TransactionFilters) => {
   const [txns, user] = await Promise.all([
     transactionRepository.findByUserId(userId, filters),
     userRepository.findById(userId),
@@ -115,15 +94,15 @@ export const getTransactionListService = async (
 
   const monthlyIncome = Number(user?.monthlyIncome) || 0;
   const totalExpense = txns
-    .filter((tx) => tx.type === "expense")
+    .filter((tx) => tx.type === 'expense')
     .reduce((sum, tx) => sum + Number(tx.amount), 0);
   const totalIncome = txns
-    .filter((tx) => tx.type === "income")
+    .filter((tx) => tx.type === 'income')
     .reduce((sum, tx) => sum + Number(tx.amount), 0);
   const { percentUsed, alert } = computeSpendingStats(
     totalExpense,
     monthlyIncome,
-    "Você já usou mais de 80% do seu rendimento mensal neste filtro!"
+    'Você já usou mais de 80% do seu rendimento mensal neste filtro!'
   );
 
   return { transactions: txns, totalExpense, totalIncome, monthlyIncome, percentUsed, alert };
@@ -140,8 +119,8 @@ export const getTransactionSummaryService = async (userId: string) => {
   const byCategory: Record<string, number> = {};
 
   for (const tx of allTxns) {
-    if (tx.type === "income") realIncome += Number(tx.amount);
-    if (tx.type === "expense") totalExpense += Number(tx.amount);
+    if (tx.type === 'income') realIncome += Number(tx.amount);
+    if (tx.type === 'expense') totalExpense += Number(tx.amount);
     byCategory[tx.category.id] = (byCategory[tx.category.id] || 0) + Number(tx.amount);
   }
 
@@ -150,10 +129,18 @@ export const getTransactionSummaryService = async (userId: string) => {
   const { percentUsed, alert } = computeSpendingStats(
     totalExpense,
     monthlyIncome,
-    "Você já usou mais de 80% do seu rendimento mensal!"
+    'Você já usou mais de 80% do seu rendimento mensal!'
   );
 
-  return { totalIncome: realIncome, totalExpenses: totalExpense, monthlyIncome, balance, percentUsed, byCategory, alert };
+  return {
+    totalIncome: realIncome,
+    totalExpenses: totalExpense,
+    monthlyIncome,
+    balance,
+    percentUsed,
+    byCategory,
+    alert,
+  };
 };
 
 export const getMonthlySummaryService = async (
@@ -172,11 +159,11 @@ export const getMonthlySummaryService = async (
   > = {};
 
   for (const tx of txns) {
-    const monthKey = format(new Date(tx.date), "yyyy-MM");
+    const monthKey = format(new Date(tx.date), 'yyyy-MM');
     if (!summary[monthKey]) {
       summary[monthKey] = { income: 0, expense: 0, percentUsed: null, alert: null };
     }
-    if (tx.type === "income") summary[monthKey]!.income += Number(tx.amount);
+    if (tx.type === 'income') summary[monthKey]!.income += Number(tx.amount);
     else summary[monthKey]!.expense += Number(tx.amount);
   }
 
@@ -184,7 +171,7 @@ export const getMonthlySummaryService = async (
     const stats = computeSpendingStats(
       monthData.expense,
       monthlyIncome,
-      "Você já usou mais de 80% do seu rendimento mensal!"
+      'Você já usou mais de 80% do seu rendimento mensal!'
     );
     monthData.percentUsed = stats.percentUsed;
     monthData.alert = stats.alert;
@@ -195,7 +182,7 @@ export const getMonthlySummaryService = async (
 
 export const getCurrentPeriodSummaryService = async (userId: string) => {
   const user = await userRepository.findById(userId);
-  if (!user) throw new Error("Usuário não encontrado");
+  if (!user) throw new Error('Usuário não encontrado');
 
   const financialDayStart = user.financialDayStart ?? 1;
   const financialDayEnd = user.financialDayEnd ?? 31;
@@ -212,8 +199,8 @@ export const getCurrentPeriodSummaryService = async (userId: string) => {
   const byCategory: Record<string, number> = {};
 
   for (const tx of txns) {
-    if (tx.type === "income") realIncome += Number(tx.amount);
-    if (tx.type === "expense") totalExpense += Number(tx.amount);
+    if (tx.type === 'income') realIncome += Number(tx.amount);
+    if (tx.type === 'expense') totalExpense += Number(tx.amount);
     byCategory[tx.category.id] = (byCategory[tx.category.id] || 0) + Number(tx.amount);
   }
 
@@ -221,14 +208,14 @@ export const getCurrentPeriodSummaryService = async (userId: string) => {
   const { percentUsed, alert } = computeSpendingStats(
     totalExpense,
     monthlyIncome,
-    "Você já usou mais de 80% do seu rendimento mensal no período atual!"
+    'Você já usou mais de 80% do seu rendimento mensal no período atual!'
   );
 
   return {
     currentPeriod: {
       startDate: currentPeriod.startDate,
       endDate: currentPeriod.endDate,
-      description: `Período financeiro: ${format(currentPeriod.startDate, "dd/MM/yyyy")} a ${format(currentPeriod.endDate, "dd/MM/yyyy")}`,
+      description: `Período financeiro: ${format(currentPeriod.startDate, 'dd/MM/yyyy')} a ${format(currentPeriod.endDate, 'dd/MM/yyyy')}`,
     },
     totalIncome: realIncome,
     totalExpenses: totalExpense,

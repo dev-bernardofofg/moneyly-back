@@ -1,11 +1,11 @@
-import { db } from "../db";
-import { transactions, financialPeriods, users } from "../db/schema";
-import { eq, and, isNull } from "drizzle-orm";
-import { getCurrentFinancialPeriod } from "../helpers/financial-period";
-import { toSaoPauloTimezone } from "../helpers/dates";
+import { db } from '../db';
+import { transactions, financialPeriods, users } from '../db/schema';
+import { eq, and, isNull } from 'drizzle-orm';
+import { getCurrentFinancialPeriod } from '../helpers/financial-period';
+import { toSaoPauloTimezone } from '../helpers/dates';
 
 export async function migrateTransactionsPeriods() {
-  console.log(" Iniciando migração de períodos para transações...");
+  console.log(' Iniciando migração de períodos para transações...');
 
   try {
     const transactionsWithoutPeriod = await db
@@ -16,12 +16,12 @@ export async function migrateTransactionsPeriods() {
     console.log(`📊 Encontradas ${transactionsWithoutPeriod.length} transações para migrar`);
 
     if (transactionsWithoutPeriod.length === 0) {
-      console.log("✅ Nenhuma transação para migrar!");
+      console.log('✅ Nenhuma transação para migrar!');
       return;
     }
 
     const transactionsByUser = new Map<string, typeof transactionsWithoutPeriod>();
-    
+
     for (const tx of transactionsWithoutPeriod) {
       if (!transactionsByUser.has(tx.userId)) {
         transactionsByUser.set(tx.userId, []);
@@ -57,11 +57,7 @@ export async function migrateTransactionsPeriods() {
       for (const tx of userTransactions) {
         try {
           const transactionDate = toSaoPauloTimezone(tx.date);
-          const period = getCurrentFinancialPeriod(
-            startDay,
-            endDay,
-            transactionDate
-          );
+          const period = getCurrentFinancialPeriod(startDay, endDay, transactionDate);
 
           const existingPeriod = await db
             .select()
@@ -95,23 +91,18 @@ export async function migrateTransactionsPeriods() {
             console.log(`  🆕 Novo período criado: ${periodId}`);
           }
 
-          await db
-            .update(transactions)
-            .set({ periodId })
-            .where(eq(transactions.id, tx.id));
+          await db.update(transactions).set({ periodId }).where(eq(transactions.id, tx.id));
 
           console.log(`  ✅ Transação ${tx.id} atualizada com período ${periodId}`);
-
         } catch (error) {
           console.error(`  ❌ Erro ao processar transação ${tx.id}:`, error);
         }
       }
     }
 
-    console.log("\n Migração concluída com sucesso!");
-
+    console.log('\n Migração concluída com sucesso!');
   } catch (error) {
-    console.error("❌ Erro durante a migração:", error);
+    console.error('❌ Erro durante a migração:', error);
     throw error;
   }
 }
@@ -119,11 +110,11 @@ export async function migrateTransactionsPeriods() {
 if (require.main === module) {
   migrateTransactionsPeriods()
     .then(() => {
-      console.log("✅ Script executado com sucesso!");
+      console.log('✅ Script executado com sucesso!');
       process.exit(0);
     })
     .catch((error) => {
-      console.error("❌ Erro no script:", error);
+      console.error('❌ Erro no script:', error);
       process.exit(1);
     });
 }

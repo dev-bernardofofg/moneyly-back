@@ -1,27 +1,23 @@
-import { hash } from "../helpers/bcrypt";
-import { createDefaultPreferencesForUser } from "../db/seed";
-import { logger } from "../lib/logger";
+import { hash } from '../helpers/bcrypt';
+import { createDefaultPreferencesForUser } from '../db/seed';
+import { logger } from '../lib/logger';
 import {
   generateAccessToken,
   generateRefreshToken,
   hashRefreshToken,
   verifyRefreshToken,
-} from "../helpers/token";
-import { financialPeriodRepository } from "../repositories/financial-period.repository";
-import { refreshTokenRepository } from "../repositories/refresh-token.repository";
-import { userRepository } from "../repositories/user.repository";
+} from '../helpers/token';
+import { financialPeriodRepository } from '../repositories/financial-period.repository';
+import { refreshTokenRepository } from '../repositories/refresh-token.repository';
+import { userRepository } from '../repositories/user.repository';
 import {
   ensureEmailNotExists,
   validateCreateSession,
   validateGoogleSession,
-} from "../validations/user.validation";
-import type { CreateSessionInput, CreateUserInput } from "../schemas/auth.schema";
+} from '../validations/user.validation';
+import type { CreateSessionInput, CreateUserInput } from '../schemas/auth.schema';
 
-export const createUserService = async ({
-  name,
-  email,
-  password,
-}: CreateUserInput) => {
+export const createUserService = async ({ name, email, password }: CreateUserInput) => {
   await ensureEmailNotExists(email);
 
   const hashedPassword = await hash(password);
@@ -35,7 +31,7 @@ export const createUserService = async ({
   try {
     await createDefaultPreferencesForUser(user.id);
   } catch (error) {
-    logger.error("Erro ao criar categorias padrão para o usuário", error as Error);
+    logger.error('Erro ao criar categorias padrão para o usuário', error as Error);
   }
 
   const accessToken = generateAccessToken(user.id);
@@ -58,10 +54,7 @@ export const createUserService = async ({
   };
 };
 
-export const createSessionService = async ({
-  email,
-  password,
-}: CreateSessionInput) => {
+export const createSessionService = async ({ email, password }: CreateSessionInput) => {
   const user = await validateCreateSession(email, password);
 
   const accessToken = generateAccessToken(user.id);
@@ -70,7 +63,7 @@ export const createSessionService = async ({
 
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7);
-  
+
   await refreshTokenRepository.create({
     userId: user.id,
     token: hashedRefreshToken,
@@ -120,13 +113,13 @@ export const refreshTokenService = async (refreshToken: string) => {
   }
 
   if (!matchingToken) {
-    throw new Error("Refresh token inválido ou expirado");
+    throw new Error('Refresh token inválido ou expirado');
   }
 
   const user = await userRepository.findById(matchingToken.userId);
 
   if (!user) {
-    throw new Error("Usuário não encontrado");
+    throw new Error('Usuário não encontrado');
   }
 
   const newAccessToken = generateAccessToken(user.id);
@@ -137,10 +130,7 @@ export const refreshTokenService = async (refreshToken: string) => {
   };
 };
 
-export const revokeRefreshTokenService = async (
-  userId: string,
-  refreshToken: string
-) => {
+export const revokeRefreshTokenService = async (userId: string, refreshToken: string) => {
   const userTokens = await refreshTokenRepository.findByUserId(userId);
 
   let matchingToken = null;
@@ -153,7 +143,7 @@ export const revokeRefreshTokenService = async (
   }
 
   if (!matchingToken) {
-    throw new Error("Refresh token não encontrado");
+    throw new Error('Refresh token não encontrado');
   }
 
   await refreshTokenRepository.delete(matchingToken.id);
@@ -171,7 +161,7 @@ export const updatefinancialPeriodService = async (
     financialDayStart,
     financialDayEnd
   );
-  if (!user) throw new Error("Usuário não encontrado");
+  if (!user) throw new Error('Usuário não encontrado');
   await financialPeriodRepository.deactivatePeriods(userId);
   return user;
 };
@@ -188,7 +178,7 @@ export const updateIncomeAndPeriodService = async (
     financialDayStart,
     financialDayEnd
   );
-  if (!user) throw new Error("Usuário não encontrado");
+  if (!user) throw new Error('Usuário não encontrado');
   await financialPeriodRepository.deactivatePeriods(userId);
   return user;
 };
@@ -212,17 +202,11 @@ export const updateUserProfileService = async (
   let updatedUser = user;
 
   if (data.monthlyIncome !== undefined) {
-    const updated = await userRepository.updateMonthlyIncome(
-      user.id,
-      data.monthlyIncome
-    );
+    const updated = await userRepository.updateMonthlyIncome(user.id, data.monthlyIncome);
     if (updated) updatedUser = updated;
   }
 
-  if (
-    data.financialDayStart !== undefined &&
-    data.financialDayEnd !== undefined
-  ) {
+  if (data.financialDayStart !== undefined && data.financialDayEnd !== undefined) {
     const updated = await userRepository.updateFinancialPeriod(
       user.id,
       data.financialDayStart,

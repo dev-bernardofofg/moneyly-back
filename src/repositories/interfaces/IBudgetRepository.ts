@@ -1,4 +1,4 @@
-import type { CategoryBudget, NewCategoryBudget } from "../../db/schema";
+import type { CategoryBudget, NewCategoryBudget } from '../../db/schema';
 
 export type BudgetWithCategory = {
   id: string;

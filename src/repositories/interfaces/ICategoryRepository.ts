@@ -1,10 +1,13 @@
-import type { Category, NewCategory } from "../../db/schema";
-import type { PaginationQuery, PaginationResult } from "../../helpers/pagination";
+import type { Category, NewCategory } from '../../db/schema';
+import type { PaginationQuery, PaginationResult } from '../../helpers/pagination';
 
 export interface ICategoryRepository {
   create(data: NewCategory): Promise<Category | undefined>;
   findByUserId(userId: string): Promise<Category[]>;
-  findByUserIdPaginated(userId: string, pagination: PaginationQuery): Promise<PaginationResult<Category>>;
+  findByUserIdPaginated(
+    userId: string,
+    pagination: PaginationQuery
+  ): Promise<PaginationResult<Category>>;
   findByName(name: string): Promise<Category | null>;
   findByNameAndUserId(name: string, userId: string): Promise<Category | null>;
   findByIdAndUserId(id: string, userId: string): Promise<Category | null>;

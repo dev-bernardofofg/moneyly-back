@@ -1,23 +1,28 @@
-import type { NextFunction, Response } from "express";
-import { isHttpError } from "../helpers/errors";
-import { ResponseHandler } from "../helpers/response-handler";
-import type { AuthenticatedRequest } from "../middlewares/auth";
-import { financialPeriodService } from "../services/financial-period.service";
+import type { NextFunction, Response } from 'express';
+import { isHttpError } from '../helpers/errors';
+import { ResponseHandler } from '../helpers/response-handler';
+import type { AuthenticatedRequest } from '../middlewares/auth';
+import { financialPeriodService } from '../services/financial-period.service';
 import {
   updatefinancialPeriodService,
   updateIncomeAndPeriodService,
   updateUserProfileService,
-} from "../services/user.service";
+} from '../services/user.service';
 
-export const getMe = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-) => {
-  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+export const getMe = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  if (!req.user) return ResponseHandler.unauthorized(res, 'Usuário não autenticado');
 
   try {
-    const { id, name, email, monthlyIncome, financialDayStart, financialDayEnd, firstAccess, createdAt } = req.user;
+    const {
+      id,
+      name,
+      email,
+      monthlyIncome,
+      financialDayStart,
+      financialDayEnd,
+      firstAccess,
+      createdAt,
+    } = req.user;
     return ResponseHandler.success(
       res,
       {
@@ -30,7 +35,7 @@ export const getMe = async (
         firstAccess,
         createdAt,
       },
-      "Dados do usuário recuperados com sucesso"
+      'Dados do usuário recuperados com sucesso'
     );
   } catch (error) {
     if (isHttpError(error)) return next(error);
@@ -43,7 +48,7 @@ export const updateMonthlyIncome = async (
   res: Response,
   next: NextFunction
 ) => {
-  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  if (!req.user) return ResponseHandler.unauthorized(res, 'Usuário não autenticado');
 
   try {
     const { monthlyIncome } = req.body;
@@ -51,7 +56,7 @@ export const updateMonthlyIncome = async (
     return ResponseHandler.success(
       res,
       { monthlyIncome: updatedUser.monthlyIncome, firstAccess: false },
-      "Rendimento atualizado com sucesso"
+      'Rendimento atualizado com sucesso'
     );
   } catch (error) {
     if (isHttpError(error)) return next(error);
@@ -64,7 +69,7 @@ export const updateFinancialPeriod = async (
   res: Response,
   next: NextFunction
 ) => {
-  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  if (!req.user) return ResponseHandler.unauthorized(res, 'Usuário não autenticado');
 
   try {
     const { financialDayStart, financialDayEnd } = req.body;
@@ -72,7 +77,7 @@ export const updateFinancialPeriod = async (
     return ResponseHandler.success(
       res,
       { financialDayStart, financialDayEnd, firstAccess: false },
-      "Período financeiro atualizado com sucesso"
+      'Período financeiro atualizado com sucesso'
     );
   } catch (error) {
     if (isHttpError(error)) return next(error);
@@ -85,15 +90,20 @@ export const updateIncomeAndPeriod = async (
   res: Response,
   next: NextFunction
 ) => {
-  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  if (!req.user) return ResponseHandler.unauthorized(res, 'Usuário não autenticado');
 
   try {
     const { monthlyIncome, financialDayStart, financialDayEnd } = req.body;
-    await updateIncomeAndPeriodService(req.user.id, monthlyIncome, financialDayStart, financialDayEnd);
+    await updateIncomeAndPeriodService(
+      req.user.id,
+      monthlyIncome,
+      financialDayStart,
+      financialDayEnd
+    );
     return ResponseHandler.success(
       res,
       { monthlyIncome, financialDayStart, financialDayEnd, firstAccess: false },
-      "Rendimento e período financeiro atualizados com sucesso"
+      'Rendimento e período financeiro atualizados com sucesso'
     );
   } catch (error) {
     if (isHttpError(error)) return next(error);
@@ -106,14 +116,14 @@ export const getFinancialPeriods = async (
   res: Response,
   next: NextFunction
 ) => {
-  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  if (!req.user) return ResponseHandler.unauthorized(res, 'Usuário não autenticado');
 
   try {
     const periods = await financialPeriodService.getUserPeriods(req.user.id);
-    return ResponseHandler.success(res, periods, "Períodos financeiros recuperados com sucesso");
+    return ResponseHandler.success(res, periods, 'Períodos financeiros recuperados com sucesso');
   } catch (error) {
     if (isHttpError(error)) return next(error);
-    return ResponseHandler.error(res, "Erro ao buscar períodos financeiros", error);
+    return ResponseHandler.error(res, 'Erro ao buscar períodos financeiros', error);
   }
 };
 
@@ -122,17 +132,17 @@ export const getFinancialPeriodById = async (
   res: Response,
   next: NextFunction
 ) => {
-  if (!req.user) return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+  if (!req.user) return ResponseHandler.unauthorized(res, 'Usuário não autenticado');
 
   const { periodId } = req.params;
-  if (!periodId) return ResponseHandler.badRequest(res, "ID do período não informado");
+  if (!periodId) return ResponseHandler.badRequest(res, 'ID do período não informado');
 
   try {
     const period = await financialPeriodService.getPeriodById(periodId, req.user.id);
-    if (!period) return ResponseHandler.notFound(res, "Período financeiro não encontrado");
-    return ResponseHandler.success(res, period, "Período financeiro recuperado com sucesso");
+    if (!period) return ResponseHandler.notFound(res, 'Período financeiro não encontrado');
+    return ResponseHandler.success(res, period, 'Período financeiro recuperado com sucesso');
   } catch (error) {
     if (isHttpError(error)) return next(error);
-    return ResponseHandler.error(res, "Erro ao buscar período financeiro", error);
+    return ResponseHandler.error(res, 'Erro ao buscar período financeiro', error);
   }
 };

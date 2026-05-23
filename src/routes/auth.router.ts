@@ -1,57 +1,32 @@
-import { Router } from "express";
+import { Router } from 'express';
 import {
   createGoogleSession,
   createSession,
   createUser,
   logout,
   refreshToken,
-} from "../controllers/auth.controller";
-import { authenticateUser } from "../middlewares/auth";
-import { authRateLimit } from "../middlewares/security";
-import { validateBody } from "../middlewares/validate";
+} from '../controllers/auth.controller';
+import { authenticateUser } from '../middlewares/auth';
+import { authRateLimit } from '../middlewares/security';
+import { validateBody } from '../middlewares/validate';
 import {
   createUserSchema,
   googleAuthSchema,
   loginSchema,
   refreshTokenSchema,
-} from "../schemas/auth.schema";
+} from '../schemas/auth.schema';
 
 const AuthRouters: Router = Router();
 
 // Rotas de autenticação com rate limiting
-AuthRouters.post(
-  "/sign-up",
-  authRateLimit,
-  validateBody(createUserSchema),
-  createUser
-);
-AuthRouters.post(
-  "/sign-in",
-  authRateLimit,
-  validateBody(loginSchema),
-  createSession
-);
-AuthRouters.post(
-  "/google",
-  authRateLimit,
-  validateBody(googleAuthSchema),
-  createGoogleSession
-);
+AuthRouters.post('/sign-up', authRateLimit, validateBody(createUserSchema), createUser);
+AuthRouters.post('/sign-in', authRateLimit, validateBody(loginSchema), createSession);
+AuthRouters.post('/google', authRateLimit, validateBody(googleAuthSchema), createGoogleSession);
 
 // Rota para renovar access token
-AuthRouters.post(
-  "/refresh",
-  authRateLimit,
-  validateBody(refreshTokenSchema),
-  refreshToken
-);
+AuthRouters.post('/refresh', authRateLimit, validateBody(refreshTokenSchema), refreshToken);
 
 // Rota para fazer logout (revogar refresh token)
-AuthRouters.post(
-  "/logout",
-  authenticateUser,
-  validateBody(refreshTokenSchema),
-  logout
-);
+AuthRouters.post('/logout', authenticateUser, validateBody(refreshTokenSchema), logout);
 
 export { AuthRouters };

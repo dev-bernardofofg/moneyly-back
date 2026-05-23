@@ -1,60 +1,57 @@
-import { Response, Router } from "express";
+import { Response, Router } from 'express';
 import {
   getFinancialPeriods,
   getMe,
   updateFinancialPeriod,
   updateIncomeAndPeriod,
   updateMonthlyIncome,
-} from "../controllers/user.controller";
-import { ResponseHandler } from "../helpers/response-handler";
-import { AuthenticatedRequest, authenticateUser } from "../middlewares/auth";
-import { validateBody } from "../middlewares/validate";
-import { financialPeriodRepository } from "../repositories/financial-period.repository";
+} from '../controllers/user.controller';
+import { ResponseHandler } from '../helpers/response-handler';
+import { AuthenticatedRequest, authenticateUser } from '../middlewares/auth';
+import { validateBody } from '../middlewares/validate';
+import { financialPeriodRepository } from '../repositories/financial-period.repository';
 import {
   updateFinancialPeriodSchema,
   updateIncomeAndPeriodSchema,
   updateMonthlyIncomeSchema,
-} from "../schemas/user.schema";
+} from '../schemas/user.schema';
 
 const UserRouters: Router = Router();
 
 // Rotas de perfil do usuário
-UserRouters.get("/me", authenticateUser, getMe);
+UserRouters.get('/me', authenticateUser, getMe);
 
 // Rotas de configuração financeira
 UserRouters.put(
-  "/income",
+  '/income',
   authenticateUser,
   validateBody(updateMonthlyIncomeSchema),
   updateMonthlyIncome
 );
 
 UserRouters.put(
-  "/financial-period",
+  '/financial-period',
   authenticateUser,
   validateBody(updateFinancialPeriodSchema),
   updateFinancialPeriod
 );
 
 UserRouters.put(
-  "/income-and-period",
+  '/income-and-period',
   authenticateUser,
   validateBody(updateIncomeAndPeriodSchema),
   updateIncomeAndPeriod
 );
 
 // ← NOVA ROTA: Listar períodos financeiros
-UserRouters.get("/financial-periods", authenticateUser, getFinancialPeriods);
+UserRouters.get('/financial-periods', authenticateUser, getFinancialPeriods);
 
-export const getFinancialPeriodById = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
+export const getFinancialPeriodById = async (req: AuthenticatedRequest, res: Response) => {
   const { user } = req;
   const { periodId } = req.params;
 
   if (!user) {
-    return ResponseHandler.unauthorized(res, "Usuário não autenticado");
+    return ResponseHandler.unauthorized(res, 'Usuário não autenticado');
   }
 
   const { id: userId } = user;
@@ -68,33 +65,16 @@ export const getFinancialPeriodById = async (
     const period = periods.find((p) => p.id === periodId);
 
     if (!period) {
-      return ResponseHandler.error(
-        res,
-        "Período financeiro não encontrado",
-        null,
-        404
-      );
+      return ResponseHandler.error(res, 'Período financeiro não encontrado', null, 404);
     }
 
-    return ResponseHandler.success(
-      res,
-      period,
-      "Período financeiro recuperado com sucesso"
-    );
+    return ResponseHandler.success(res, period, 'Período financeiro recuperado com sucesso');
   } catch (error) {
-    return ResponseHandler.error(
-      res,
-      "Erro ao buscar período financeiro",
-      error
-    );
+    return ResponseHandler.error(res, 'Erro ao buscar período financeiro', error);
   }
 };
 
 // Buscar período específico por ID
-UserRouters.get(
-  "/financial-periods/:periodId",
-  authenticateUser,
-  getFinancialPeriodById
-);
+UserRouters.get('/financial-periods/:periodId', authenticateUser, getFinancialPeriodById);
 
 export { UserRouters };

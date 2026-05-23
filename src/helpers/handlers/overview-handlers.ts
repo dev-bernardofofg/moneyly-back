@@ -1,24 +1,19 @@
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import type { TransactionWithCategory } from "../../repositories/transaction.repository";
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import type { TransactionWithCategory } from '../../repositories/transaction.repository';
 
-export const calculateStats = (
-  transactions: TransactionWithCategory[],
-  monthlyIncome: number
-) => {
+export const calculateStats = (transactions: TransactionWithCategory[], monthlyIncome: number) => {
   const totalIncome = transactions
-    .filter((tx) => tx.type === "income")
+    .filter((tx) => tx.type === 'income')
     .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
   const totalExpense = transactions
-    .filter((tx) => tx.type === "expense")
+    .filter((tx) => tx.type === 'expense')
     .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
-  const balance = (monthlyIncome + totalIncome) - totalExpense;
+  const balance = monthlyIncome + totalIncome - totalExpense;
   const percentUsed =
-    monthlyIncome > 0
-      ? Number(((totalExpense / monthlyIncome) * 100).toFixed(2))
-      : null;
+    monthlyIncome > 0 ? Number(((totalExpense / monthlyIncome) * 100).toFixed(2)) : null;
 
   return {
     totalIncome,
@@ -31,7 +26,7 @@ export const calculateStats = (
 
 export type RecentTransactionItem = {
   id: string;
-  type: "income" | "expense";
+  type: 'income' | 'expense';
   amount: number;
   date: string;
   category: string;
@@ -49,9 +44,9 @@ export const getRecentTransactions = (
       id: tx.id,
       type: tx.type,
       amount: Number(tx.amount),
-      date: format(new Date(tx.date), "dd/MM/yyyy"),
+      date: format(new Date(tx.date), 'dd/MM/yyyy'),
       category: tx.category.name,
-      description: tx.description || "",
+      description: tx.description || '',
     }));
 };
 
@@ -74,7 +69,7 @@ export const calculatePeriodChartData = (
   transactions.forEach((tx) => {
     const { id, name } = tx.category;
     if (!categoryMap[id]) categoryMap[id] = { name, income: 0, expense: 0 };
-    if (tx.type === "income") {
+    if (tx.type === 'income') {
       categoryMap[id]!.income += Number(tx.amount);
     } else {
       categoryMap[id]!.expense += Number(tx.amount);
@@ -107,16 +102,16 @@ export const calculateMonthlyAggregates = (
   const monthMap: Record<string, { income: number; expense: number }> = {};
 
   allTransactions.forEach((tx) => {
-    const key = format(new Date(tx.date), "yyyy-MM");
+    const key = format(new Date(tx.date), 'yyyy-MM');
     if (!monthMap[key]) monthMap[key] = { income: 0, expense: 0 };
-    if (tx.type === "income") monthMap[key]!.income += Number(tx.amount);
+    if (tx.type === 'income') monthMap[key]!.income += Number(tx.amount);
     else monthMap[key]!.expense += Number(tx.amount);
   });
 
   return Object.entries(monthMap)
     .map(([month, data]) => ({
       month,
-      label: format(new Date(month + "-01"), "MMMM yyyy", { locale: ptBR }),
+      label: format(new Date(month + '-01'), 'MMMM yyyy', { locale: ptBR }),
       income: Number(data.income.toFixed(2)),
       expense: Number(data.expense.toFixed(2)),
       balance: Number((data.income - data.expense).toFixed(2)),

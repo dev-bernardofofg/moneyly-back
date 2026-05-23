@@ -1,16 +1,16 @@
-import cors from "cors";
-import express from "express";
-import rateLimit from "express-rate-limit";
-import slowDown from "express-slow-down";
-import helmet from "helmet";
-import { env } from "../env";
+import cors from 'cors';
+import express from 'express';
+import rateLimit from 'express-rate-limit';
+import slowDown from 'express-slow-down';
+import helmet from 'helmet';
+import { env } from '../env';
 
 // Rate limiting para endpoints de autenticação
 export const authRateLimit = rateLimit({
   windowMs: env.RATE_LIMIT_WINDOW_MS,
   max: 2000, // máximo 2000 tentativas por IP
   message: {
-    error: "Muitas tentativas de login. Tente novamente em 15 minutos.",
+    error: 'Muitas tentativas de login. Tente novamente em 15 minutos.',
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -21,7 +21,7 @@ export const apiRateLimit = rateLimit({
   windowMs: env.RATE_LIMIT_WINDOW_MS,
   max: env.RATE_LIMIT_MAX,
   message: {
-    error: "Muitas requisições. Tente novamente em 15 minutos.",
+    error: 'Muitas requisições. Tente novamente em 15 minutos.',
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -49,13 +49,13 @@ export const corsOptions = {
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      callback(new Error("Não permitido pelo CORS"));
+      callback(new Error('Não permitido pelo CORS'));
     }
   },
   credentials: true,
   optionsSuccessStatus: 200,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 };
 
 // Middleware de segurança principal
@@ -68,7 +68,7 @@ export const securityMiddleware = (app: express.Application) => {
           defaultSrc: ["'self'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
           scriptSrc: ["'self'"],
-          imgSrc: ["'self'", "data:", "https:"],
+          imgSrc: ["'self'", 'data:', 'https:'],
         },
       },
       crossOriginEmbedderPolicy: false, // Desabilitar se necessário para CORS
@@ -85,7 +85,7 @@ export const securityMiddleware = (app: express.Application) => {
   app.use(speedLimiter);
 
   // Remover headers que podem expor informações
-  app.disable("x-powered-by");
+  app.disable('x-powered-by');
 
   // Configurar timeout para requisições
   app.use((req, res, next) => {

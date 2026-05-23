@@ -1,8 +1,8 @@
-import type { NextFunction, Request, Response } from "express";
-import { verifyAccessToken } from "../helpers/token";
-import { ResponseHandler } from "../helpers/response-handler";
-import type { AuthenticatedUser } from "../types/auth.types";
-import { requireUser } from "../validations/user.validation";
+import type { NextFunction, Request, Response } from 'express';
+import { verifyAccessToken } from '../helpers/token';
+import { ResponseHandler } from '../helpers/response-handler';
+import type { AuthenticatedUser } from '../types/auth.types';
+import { requireUser } from '../validations/user.validation';
 
 export interface AuthenticatedRequest extends Request {
   user?: AuthenticatedUser;
@@ -13,9 +13,9 @@ export const authenticateUser = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const token = req.headers.authorization?.split(" ")[1];
+  const token = req.headers.authorization?.split(' ')[1];
   if (!token) {
-    ResponseHandler.unauthorized(res, "Token não fornecido");
+    ResponseHandler.unauthorized(res, 'Token não fornecido');
     return;
   }
 
@@ -29,13 +29,13 @@ export const authenticateUser = async (
   } catch (error: unknown) {
     // Handle JWT specific errors
     if (error instanceof Error) {
-      if (error.name === "JsonWebTokenError") {
-        ResponseHandler.unauthorized(res, "Token inválido");
+      if (error.name === 'JsonWebTokenError') {
+        ResponseHandler.unauthorized(res, 'Token inválido');
         return;
       }
 
-      if (error.name === "TokenExpiredError") {
-        ResponseHandler.unauthorized(res, "Token expirado. Use o refresh token para renovar.");
+      if (error.name === 'TokenExpiredError') {
+        ResponseHandler.unauthorized(res, 'Token expirado. Use o refresh token para renovar.');
         return;
       }
     }

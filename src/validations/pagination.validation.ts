@@ -1,4 +1,4 @@
-import { PaginationHelper } from "../helpers/pagination";
+import { PaginationHelper } from '../helpers/pagination';
 
 export const validatePagination = async (page?: number, limit?: number) => {
   if (page !== undefined || limit !== undefined) {

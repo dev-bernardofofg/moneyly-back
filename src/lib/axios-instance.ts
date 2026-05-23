@@ -1,7 +1,7 @@
-import Axios, { AxiosRequestConfig } from "axios";
+import Axios, { AxiosRequestConfig } from 'axios';
 
 export const AXIOS_INSTANCE = Axios.create({
-  baseURL: "http://localhost:5000",
+  baseURL: 'http://localhost:5000',
 });
 
 export const customInstance = <T>(config: AxiosRequestConfig): Promise<T> => {
@@ -13,10 +13,8 @@ export const customInstance = <T>(config: AxiosRequestConfig): Promise<T> => {
 
   // @ts-ignore
   promise.cancel = () => {
-    source.cancel("Query was cancelled");
+    source.cancel('Query was cancelled');
   };
 
   return promise;
 };
-
-

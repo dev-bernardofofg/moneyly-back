@@ -1,12 +1,12 @@
-import { categoryRepository } from "../repositories/categories.repository";
+import { categoryRepository } from '../repositories/categories.repository';
 import {
   validateCategoryExists,
   validateCategoryExistsByUserId,
   validateCategoryIsNotGlobal,
   validateCategoryNameIsNotInUse,
   validateHideGlobalCategory,
-} from "../validations/category.validation";
-import { validatePagination } from "../validations/pagination.validation";
+} from '../validations/category.validation';
+import { validatePagination } from '../validations/pagination.validation';
 
 export const createCategoryService = async (name: string, userId: string) => {
   await validateCategoryExists(name);
@@ -18,16 +18,10 @@ export const getCategoriesService = async (
   userId: string,
   pagination: { page?: number; limit?: number }
 ) => {
-  const paginationExists = await validatePagination(
-    pagination.page,
-    pagination.limit
-  );
+  const paginationExists = await validatePagination(pagination.page, pagination.limit);
 
   if (paginationExists) {
-    const result = await categoryRepository.findByUserIdPaginated(
-      userId,
-      paginationExists
-    );
+    const result = await categoryRepository.findByUserIdPaginated(userId, paginationExists);
     return result;
   } else {
     const categories = await categoryRepository.findByUserId(userId);
@@ -45,11 +39,7 @@ export const getCategoriesService = async (
   }
 };
 
-export const updateCategoryService = async (
-  id: string,
-  name: string,
-  userId: string
-) => {
+export const updateCategoryService = async (id: string, name: string, userId: string) => {
   await validateCategoryExistsByUserId(id, userId);
   await validateCategoryExists(name);
   await validateCategoryIsNotGlobal(id, userId);

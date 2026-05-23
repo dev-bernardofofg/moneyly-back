@@ -1,4 +1,4 @@
-import type { AuthenticatedUser } from "../types/auth.types";
+import type { AuthenticatedUser } from '../types/auth.types';
 
 export const mapUserResponse = (user: AuthenticatedUser, includeGoogle = false) => ({
   id: user.id,

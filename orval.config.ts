@@ -1,26 +1,26 @@
-import { defineConfig } from "orval";
+import { defineConfig } from 'orval';
 
 export default defineConfig({
   moneyly: {
     input: {
-      target: "./openapi.json",
+      target: './openapi.json',
     },
     output: {
-      mode: "tags-split",
-      target: "./src/generated/hooks",
-      client: "react-query",
+      mode: 'tags-split',
+      target: './src/generated/hooks',
+      client: 'react-query',
       mock: false,
       prettier: true,
       override: {
         mutator: {
-          path: "./src/lib/axios-instance.ts",
-          name: "customInstance",
+          path: './src/lib/axios-instance.ts',
+          name: 'customInstance',
         },
         // Customizar os imports gerados para usar o caminho do frontend
         query: {
           useQuery: true,
           useInfinite: false,
-          useInfiniteQueryParam: "limit",
+          useInfiniteQueryParam: 'limit',
           options: {
             staleTime: 10000,
           },
@@ -28,7 +28,7 @@ export default defineConfig({
       },
     },
     hooks: {
-      afterAllFilesWrite: "prettier --write",
+      afterAllFilesWrite: 'prettier --write',
     },
   },
 });

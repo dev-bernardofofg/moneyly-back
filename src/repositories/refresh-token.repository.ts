@@ -1,12 +1,12 @@
-import { and, eq, gte } from "drizzle-orm";
-import { db } from "../db";
-import { refreshTokens, type NewRefreshToken, type RefreshToken } from "../db/schema";
-import type { IRefreshTokenRepository } from "./interfaces/IRefreshTokenRepository";
+import { and, eq, gte } from 'drizzle-orm';
+import { db } from '../db';
+import { refreshTokens, type NewRefreshToken, type RefreshToken } from '../db/schema';
+import type { IRefreshTokenRepository } from './interfaces/IRefreshTokenRepository';
 
 export const refreshTokenRepository = {
-  async create(tokenData: Omit<NewRefreshToken, "id" | "createdAt">): Promise<RefreshToken> {
+  async create(tokenData: Omit<NewRefreshToken, 'id' | 'createdAt'>): Promise<RefreshToken> {
     const [token] = await db.insert(refreshTokens).values(tokenData).returning();
-    if (!token) throw new Error("Falha ao criar refresh token");
+    if (!token) throw new Error('Falha ao criar refresh token');
     return token;
   },
 
@@ -39,18 +39,27 @@ export const refreshTokenRepository = {
   },
 
   async deleteByUserId(userId: string): Promise<number> {
-    const result = await db.delete(refreshTokens).where(eq(refreshTokens.userId, userId)).returning();
+    const result = await db
+      .delete(refreshTokens)
+      .where(eq(refreshTokens.userId, userId))
+      .returning();
     return result.length;
   },
 
   async deleteExpired(): Promise<number> {
     const now = new Date();
-    const result = await db.delete(refreshTokens).where(gte(refreshTokens.expiresAt, now)).returning();
+    const result = await db
+      .delete(refreshTokens)
+      .where(gte(refreshTokens.expiresAt, now))
+      .returning();
     return result.length;
   },
 
   async deleteByToken(hashedToken: string): Promise<boolean> {
-    const result = await db.delete(refreshTokens).where(eq(refreshTokens.token, hashedToken)).returning();
+    const result = await db
+      .delete(refreshTokens)
+      .where(eq(refreshTokens.token, hashedToken))
+      .returning();
     return result.length > 0;
   },
 
