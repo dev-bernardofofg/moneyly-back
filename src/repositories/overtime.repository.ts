@@ -1,4 +1,4 @@
-import { and, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { db } from '../db';
 import {
   companies,
@@ -61,7 +61,8 @@ export const overtimeRepository = {
       .select(BASE_SELECT)
       .from(overtimeRecords)
       .innerJoin(companies, eq(overtimeRecords.companyId, companies.id))
-      .where(and(...conditions));
+      .where(and(...conditions))
+      .orderBy(desc(overtimeRecords.startTime));
   },
 
   async update(
