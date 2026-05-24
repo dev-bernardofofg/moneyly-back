@@ -353,13 +353,13 @@ export const getFinancialInsightsService = async (userId: string, monthlyIncome:
   const currMonth = lastTwo[1] ?? null;
 
   const expenseChange =
-    prevMonth && prevMonth.expense > 0
-      ? Number((((currMonth!.expense - prevMonth.expense) / prevMonth.expense) * 100).toFixed(1))
+    prevMonth && currMonth && prevMonth.expense > 0
+      ? Number((((currMonth.expense - prevMonth.expense) / prevMonth.expense) * 100).toFixed(1))
       : null;
 
   const incomeChange =
-    prevMonth && prevMonth.income > 0
-      ? Number((((currMonth!.income - prevMonth.income) / prevMonth.income) * 100).toFixed(1))
+    prevMonth && currMonth && prevMonth.income > 0
+      ? Number((((currMonth.income - prevMonth.income) / prevMonth.income) * 100).toFixed(1))
       : null;
 
   const totalExpenseAllTime = monthlyData.reduce((s, m) => s + m.expense, 0);
