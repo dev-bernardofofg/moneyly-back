@@ -18,6 +18,25 @@ import {
 } from '../validations/user.validation';
 import type { CreateSessionInput, CreateUserInput } from '../schemas/auth.schema';
 
+const REFRESH_TOKEN_TTL_DAYS = 7;
+
+const issueTokenPair = async (userId: string) => {
+  const accessToken = generateAccessToken(userId);
+  const refreshTokenValue = generateRefreshToken();
+  const hashedRefreshToken = await hashRefreshToken(refreshTokenValue);
+
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_TTL_DAYS);
+
+  await refreshTokenRepository.create({
+    userId,
+    token: hashedRefreshToken,
+    expiresAt,
+  });
+
+  return { accessToken, refreshToken: refreshTokenValue };
+};
+
 export const createUserService = async ({ name, email, password }: CreateUserInput) => {
   await ensureEmailNotExists(email);
 
@@ -35,70 +54,20 @@ export const createUserService = async ({ name, email, password }: CreateUserInp
     logger.error('Erro ao criar categorias padrão para o usuário', error as Error);
   }
 
-  const accessToken = generateAccessToken(user.id);
-  const refreshTokenValue = generateRefreshToken();
-  const hashedRefreshToken = await hashRefreshToken(refreshTokenValue);
-
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + 7);
-
-  await refreshTokenRepository.create({
-    userId: user.id,
-    token: hashedRefreshToken,
-    expiresAt,
-  });
-
-  return {
-    user,
-    accessToken,
-    refreshToken: refreshTokenValue,
-  };
+  const tokens = await issueTokenPair(user.id);
+  return { user, ...tokens };
 };
 
 export const createSessionService = async ({ email, password }: CreateSessionInput) => {
   const user = await validateCreateSession(email, password);
-
-  const accessToken = generateAccessToken(user.id);
-  const refreshTokenValue = generateRefreshToken();
-  const hashedRefreshToken = await hashRefreshToken(refreshTokenValue);
-
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + 7);
-
-  await refreshTokenRepository.create({
-    userId: user.id,
-    token: hashedRefreshToken,
-    expiresAt,
-  });
-
-  return {
-    user,
-    accessToken,
-    refreshToken: refreshTokenValue,
-  };
+  const tokens = await issueTokenPair(user.id);
+  return { user, ...tokens };
 };
 
 export const createGoogleSessionService = async (idToken: string) => {
   const user = await validateGoogleSession(idToken);
-
-  const accessToken = generateAccessToken(user.id);
-  const refreshTokenValue = generateRefreshToken();
-  const hashedRefreshToken = await hashRefreshToken(refreshTokenValue);
-
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + 7);
-
-  await refreshTokenRepository.create({
-    userId: user.id,
-    token: hashedRefreshToken,
-    expiresAt,
-  });
-
-  return {
-    user,
-    accessToken,
-    refreshToken: refreshTokenValue,
-  };
+  const tokens = await issueTokenPair(user.id);
+  return { user, ...tokens };
 };
 
 export const refreshTokenService = async (refreshToken: string) => {
