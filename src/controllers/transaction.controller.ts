@@ -92,13 +92,13 @@ export const getTransactions = async (
     };
 
     if (pagination && paginatedResult) {
-      return res.status(200).json({
-        success: true,
-        data: paginatedResult.data,
-        pagination: paginatedResult.pagination,
-        summary: transactionSummary,
-        message: 'Transações recuperadas com sucesso',
-      });
+      return ResponseHandler.paginated(
+        res,
+        paginatedResult.data,
+        paginatedResult.pagination,
+        'Transações recuperadas com sucesso',
+        { summary: transactionSummary }
+      );
     }
 
     return ResponseHandler.success(

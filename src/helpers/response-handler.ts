@@ -140,12 +140,15 @@ export class ResponseHandler {
       hasNext?: boolean;
       hasPrev?: boolean;
     },
-    message?: string
+    message?: string,
+    extra?: Record<string, unknown>
   ): Response<PaginatedResponse<T>> {
-    // Normalizar decimais nos dados antes de retornar
     const normalizedData = normalizeDecimals(data) as T[];
+    const normalizedExtra = extra
+      ? (normalizeDecimals(extra) as Record<string, unknown>)
+      : undefined;
 
-    const response: PaginatedResponse<T> = {
+    const response: PaginatedResponse<T> & Record<string, unknown> = {
       success: true,
       data: normalizedData,
       pagination: {
@@ -156,6 +159,7 @@ export class ResponseHandler {
         hasNext: pagination.hasNext ?? pagination.page < pagination.totalPages,
         hasPrev: pagination.hasPrev ?? pagination.page > 1,
       },
+      ...(normalizedExtra ?? {}),
       ...(message ? { message } : {}),
     };
 
