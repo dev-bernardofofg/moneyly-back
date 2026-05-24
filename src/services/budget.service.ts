@@ -97,8 +97,10 @@ export const getBudgetProgressService = async (userId: string): Promise<BudgetPr
       .filter((tx) => tx.type === 'expense' && tx.category.id === budget.category.id)
       .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
-    const percentage = Math.min((categoryExpenses / Number(budget.monthlyLimit)) * 100, 100);
-    const remaining = Math.max(0, Number(budget.monthlyLimit) - categoryExpenses);
+    const monthlyLimit = Number(budget.monthlyLimit);
+    const percentage =
+      monthlyLimit > 0 ? Math.min((categoryExpenses / monthlyLimit) * 100, 100) : 0;
+    const remaining = Math.max(0, monthlyLimit - categoryExpenses);
 
     return {
       ...budget,
