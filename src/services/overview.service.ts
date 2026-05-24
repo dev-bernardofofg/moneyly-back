@@ -8,6 +8,7 @@ import {
 } from '../helpers/financial-period';
 import { groupSubscriptionCandidates } from '../helpers/subscription-detector';
 import { buildComparison } from '../helpers/comparative-insights';
+import { NotFoundError } from './errors';
 import {
   calculateMonthlyAggregates,
   calculatePeriodChartData,
@@ -317,7 +318,7 @@ export const calculateAlerts = (
 
 export const getFinancialInsightsService = async (userId: string, monthlyIncome: number) => {
   const user = await userRepository.findById(userId);
-  if (!user) throw new Error('Usuário não encontrado');
+  if (!user) throw new NotFoundError('Usuário não encontrado');
 
   const allTransactions = await transactionRepository.findAllByUserId(userId);
   const monthlyData = calculateMonthlyAggregates(allTransactions);

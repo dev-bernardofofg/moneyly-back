@@ -8,6 +8,7 @@ import type { ITransaction, TransactionFilters } from '../types/transaction.type
 import { financialPeriodService } from './financial-period.service';
 import { validateCategoryExistsForUser } from '../validations/transaction.validation';
 import { HttpError } from '../validations/errors';
+import { NotFoundError } from './errors';
 
 export const createTransactionService = async (userId: string, transaction: ITransaction) => {
   await validateCategoryExistsForUser(transaction.category, userId);
@@ -182,7 +183,7 @@ export const getMonthlySummaryService = async (
 
 export const getCurrentPeriodSummaryService = async (userId: string) => {
   const user = await userRepository.findById(userId);
-  if (!user) throw new Error('Usuário não encontrado');
+  if (!user) throw new NotFoundError('Usuário não encontrado');
 
   const financialDayStart = user.financialDayStart ?? 1;
   const financialDayEnd = user.financialDayEnd ?? 31;

@@ -1,6 +1,7 @@
 import { hash } from '../helpers/bcrypt';
 import { createDefaultPreferencesForUser } from '../db/seed';
 import { logger } from '../lib/logger';
+import { NotFoundError, UnauthorizedError } from './errors';
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -113,13 +114,13 @@ export const refreshTokenService = async (refreshToken: string) => {
   }
 
   if (!matchingToken) {
-    throw new Error('Refresh token inválido ou expirado');
+    throw new UnauthorizedError('Refresh token inválido ou expirado');
   }
 
   const user = await userRepository.findById(matchingToken.userId);
 
   if (!user) {
-    throw new Error('Usuário não encontrado');
+    throw new NotFoundError('Usuário não encontrado');
   }
 
   const newAccessToken = generateAccessToken(user.id);
@@ -143,7 +144,7 @@ export const revokeRefreshTokenService = async (userId: string, refreshToken: st
   }
 
   if (!matchingToken) {
-    throw new Error('Refresh token não encontrado');
+    throw new NotFoundError('Refresh token não encontrado');
   }
 
   await refreshTokenRepository.delete(matchingToken.id);
@@ -161,7 +162,7 @@ export const updatefinancialPeriodService = async (
     financialDayStart,
     financialDayEnd
   );
-  if (!user) throw new Error('Usuário não encontrado');
+  if (!user) throw new NotFoundError('Usuário não encontrado');
   await financialPeriodRepository.deactivatePeriods(userId);
   return user;
 };
@@ -178,7 +179,7 @@ export const updateIncomeAndPeriodService = async (
     financialDayStart,
     financialDayEnd
   );
-  if (!user) throw new Error('Usuário não encontrado');
+  if (!user) throw new NotFoundError('Usuário não encontrado');
   await financialPeriodRepository.deactivatePeriods(userId);
   return user;
 };
