@@ -1,4 +1,4 @@
-import { and, eq, gte } from 'drizzle-orm';
+import { and, eq, gte, lt } from 'drizzle-orm';
 import { db } from '../db';
 import { refreshTokens, type NewRefreshToken, type RefreshToken } from '../db/schema';
 import type { IRefreshTokenRepository } from './interfaces/IRefreshTokenRepository';
@@ -50,7 +50,7 @@ export const refreshTokenRepository = {
     const now = new Date();
     const result = await db
       .delete(refreshTokens)
-      .where(gte(refreshTokens.expiresAt, now))
+      .where(lt(refreshTokens.expiresAt, now))
       .returning();
     return result.length;
   },
