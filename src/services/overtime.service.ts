@@ -25,8 +25,8 @@ function calcHours(startTime: Date, endTime: Date): number {
 }
 
 export const createOvertimeService = async (userId: string, data: CreateOvertimeInput) => {
-  const startTime = toSaoPauloTimezone(new Date(data.startTime));
-  const endTime = toSaoPauloTimezone(new Date(data.endTime));
+  const startTime = new Date(data.startTime);
+  const endTime = new Date(data.endTime);
 
   validateTimeRange(startTime, endTime);
 
@@ -35,8 +35,9 @@ export const createOvertimeService = async (userId: string, data: CreateOvertime
   const hoursWorked = calcHours(startTime, endTime);
   const hourlyRateSnapshot = Number(company.hourlyRate);
   const amount = hoursWorked * hourlyRateSnapshot;
-  const month = startTime.getMonth() + 1;
-  const year = startTime.getFullYear();
+  const startTimeSP = toSaoPauloTimezone(startTime);
+  const month = startTimeSP.getMonth() + 1;
+  const year = startTimeSP.getFullYear();
   const categoryId = await resolveCategory(data.categoryId, userId);
 
   const periodId = await financialPeriodService.findOrCreatePeriodForDate(userId, startTime);
@@ -102,8 +103,8 @@ export const updateOvertimeService = async (
     const newCompany = await validateActiveCompany(data.companyId, userId);
     company = { id: newCompany.id, name: newCompany.name };
   }
-  if (data.startTime) startTime = toSaoPauloTimezone(new Date(data.startTime));
-  if (data.endTime) endTime = toSaoPauloTimezone(new Date(data.endTime));
+  if (data.startTime) startTime = new Date(data.startTime);
+  if (data.endTime) endTime = new Date(data.endTime);
 
   if (needsRecalc) validateTimeRange(startTime, endTime);
 
@@ -119,8 +120,9 @@ export const updateOvertimeService = async (
     const companyFull = await validateActiveCompany(company.id, userId);
     const hourlyRateSnapshot = Number(companyFull.hourlyRate);
     const amount = hoursWorked * hourlyRateSnapshot;
-    const month = startTime.getMonth() + 1;
-    const year = startTime.getFullYear();
+    const startTimeSP = toSaoPauloTimezone(startTime);
+    const month = startTimeSP.getMonth() + 1;
+    const year = startTimeSP.getFullYear();
     const periodId = await financialPeriodService.findOrCreatePeriodForDate(userId, startTime);
 
     Object.assign(updatePayload, {
