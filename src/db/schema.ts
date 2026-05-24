@@ -300,7 +300,8 @@ export const overtimeRecords = pgTable('overtime_records', {
   hoursWorked: decimal('hours_worked', { precision: 10, scale: 2 }).notNull(),
   hourlyRateSnapshot: decimal('hourly_rate_snapshot', { precision: 10, scale: 2 }).notNull(),
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
-  periodId: uuid('period_id').references(() => financialPeriods.id, { onDelete: 'cascade' }),
+  month: integer('month').notNull(),
+  year: integer('year').notNull(),
   transactionId: uuid('transaction_id'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -348,10 +349,6 @@ export const overtimeRecordsRelations = relations(overtimeRecords, ({ one }) => 
   company: one(companies, {
     fields: [overtimeRecords.companyId],
     references: [companies.id],
-  }),
-  period: one(financialPeriods, {
-    fields: [overtimeRecords.periodId],
-    references: [financialPeriods.id],
   }),
 }));
 

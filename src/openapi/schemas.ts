@@ -516,7 +516,8 @@ export const OvertimeRecordSchema = registry.register(
     hoursWorked: money,
     hourlyRateSnapshot: money,
     amount: money,
-    periodId: z.string().uuid().nullable(),
+    month: z.number().int(),
+    year: z.number().int(),
     transactionId: z.string().uuid().nullable(),
     createdAt: isoDate,
     updatedAt: isoDate,
@@ -527,7 +528,8 @@ export const OvertimeRecordSchema = registry.register(
 export const OvertimeSummarySchema = registry.register(
   'OvertimeSummary',
   z.object({
-    periodId: z.string().uuid(),
+    month: z.number().int(),
+    year: z.number().int(),
     totalHours: z.number(),
     totalAmount: z.number(),
     byCompany: z.array(

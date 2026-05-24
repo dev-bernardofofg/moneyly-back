@@ -28,8 +28,16 @@ export const createOvertime = async (
 export const getOvertime = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   if (!req.user) return ResponseHandler.unauthorized(res, 'Usuário não autenticado');
   try {
-    const { periodId, companyId } = req.query as { periodId?: string; companyId?: string };
-    const records = await getOvertimeService(req.user.id, { periodId, companyId });
+    const { month, year, companyId } = req.query as {
+      month?: string;
+      year?: string;
+      companyId?: string;
+    };
+    const records = await getOvertimeService(req.user.id, {
+      month: month ? Number(month) : undefined,
+      year: year ? Number(year) : undefined,
+      companyId,
+    });
     return ResponseHandler.success(res, records, 'Registros recuperados com sucesso');
   } catch (error) {
     if (isHttpError(error)) return next(error);
@@ -44,8 +52,8 @@ export const getOvertimeSummary = async (
 ) => {
   if (!req.user) return ResponseHandler.unauthorized(res, 'Usuário não autenticado');
   try {
-    const { periodId } = req.query as { periodId: string };
-    const summary = await getOvertimeSummaryService(req.user.id, periodId);
+    const { month, year } = req.query as { month: string; year: string };
+    const summary = await getOvertimeSummaryService(req.user.id, Number(month), Number(year));
     return ResponseHandler.success(res, summary, 'Resumo recuperado com sucesso');
   } catch (error) {
     if (isHttpError(error)) return next(error);

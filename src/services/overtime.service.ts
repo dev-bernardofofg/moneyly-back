@@ -35,8 +35,11 @@ export const createOvertimeService = async (userId: string, data: CreateOvertime
   const hoursWorked = calcHours(startTime, endTime);
   const hourlyRateSnapshot = Number(company.hourlyRate);
   const amount = hoursWorked * hourlyRateSnapshot;
-  const periodId = await financialPeriodService.findOrCreatePeriodForDate(userId, startTime);
+  const month = startTime.getMonth() + 1;
+  const year = startTime.getFullYear();
   const categoryId = await resolveCategory(data.categoryId, userId);
+
+  const periodId = await financialPeriodService.findOrCreatePeriodForDate(userId, startTime);
 
   const record = await overtimeRepository.create({
     userId,
@@ -47,7 +50,8 @@ export const createOvertimeService = async (userId: string, data: CreateOvertime
     hoursWorked: hoursWorked.toString(),
     hourlyRateSnapshot: hourlyRateSnapshot.toString(),
     amount: amount.toString(),
-    periodId,
+    month,
+    year,
     transactionId: null,
   });
 
@@ -71,13 +75,13 @@ export const createOvertimeService = async (userId: string, data: CreateOvertime
 
 export const getOvertimeService = async (
   userId: string,
-  filters?: { periodId?: string; companyId?: string }
+  filters?: { month?: number; year?: number; companyId?: string }
 ) => {
   return overtimeRepository.findByUserId(userId, filters);
 };
 
-export const getOvertimeSummaryService = async (userId: string, periodId: string) => {
-  return overtimeRepository.getSummary(userId, periodId);
+export const getOvertimeSummaryService = async (userId: string, month: number, year: number) => {
+  return overtimeRepository.getSummary(userId, month, year);
 };
 
 export const updateOvertimeService = async (
@@ -115,6 +119,8 @@ export const updateOvertimeService = async (
     const companyFull = await validateActiveCompany(company.id, userId);
     const hourlyRateSnapshot = Number(companyFull.hourlyRate);
     const amount = hoursWorked * hourlyRateSnapshot;
+    const month = startTime.getMonth() + 1;
+    const year = startTime.getFullYear();
     const periodId = await financialPeriodService.findOrCreatePeriodForDate(userId, startTime);
 
     Object.assign(updatePayload, {
@@ -123,7 +129,8 @@ export const updateOvertimeService = async (
       hoursWorked: hoursWorked.toString(),
       hourlyRateSnapshot: hourlyRateSnapshot.toString(),
       amount: amount.toString(),
-      periodId,
+      month,
+      year,
     });
 
     transactionUpdate = {

@@ -22,7 +22,8 @@ const BASE_SELECT = {
   hoursWorked: overtimeRecords.hoursWorked,
   hourlyRateSnapshot: overtimeRecords.hourlyRateSnapshot,
   amount: overtimeRecords.amount,
-  periodId: overtimeRecords.periodId,
+  month: overtimeRecords.month,
+  year: overtimeRecords.year,
   transactionId: overtimeRecords.transactionId,
   createdAt: overtimeRecords.createdAt,
   updatedAt: overtimeRecords.updatedAt,
@@ -49,10 +50,11 @@ export const overtimeRepository = {
 
   async findByUserId(
     userId: string,
-    filters?: { periodId?: string; companyId?: string }
+    filters?: { month?: number; year?: number; companyId?: string }
   ): Promise<OvertimeWithCompany[]> {
     const conditions = [eq(overtimeRecords.userId, userId)];
-    if (filters?.periodId) conditions.push(eq(overtimeRecords.periodId, filters.periodId));
+    if (filters?.month !== undefined) conditions.push(eq(overtimeRecords.month, filters.month));
+    if (filters?.year !== undefined) conditions.push(eq(overtimeRecords.year, filters.year));
     if (filters?.companyId) conditions.push(eq(overtimeRecords.companyId, filters.companyId));
 
     return db
@@ -83,7 +85,7 @@ export const overtimeRepository = {
     return record ?? null;
   },
 
-  async getSummary(userId: string, periodId: string): Promise<OvertimeSummary> {
+  async getSummary(userId: string, month: number, year: number): Promise<OvertimeSummary> {
     const rows = await db
       .select({
         companyId: companies.id,
@@ -93,7 +95,13 @@ export const overtimeRepository = {
       })
       .from(overtimeRecords)
       .innerJoin(companies, eq(overtimeRecords.companyId, companies.id))
-      .where(and(eq(overtimeRecords.userId, userId), eq(overtimeRecords.periodId, periodId)))
+      .where(
+        and(
+          eq(overtimeRecords.userId, userId),
+          eq(overtimeRecords.month, month),
+          eq(overtimeRecords.year, year)
+        )
+      )
       .groupBy(companies.id, companies.name);
 
     const byCompany = rows.map((r) => ({
@@ -106,7 +114,7 @@ export const overtimeRepository = {
     const totalHours = byCompany.reduce((acc, r) => acc + r.hours, 0);
     const totalAmount = byCompany.reduce((acc, r) => acc + r.amount, 0);
 
-    return { periodId, totalHours, totalAmount, byCompany };
+    return { month, year, totalHours, totalAmount, byCompany };
   },
 
   async setTransactionId(id: string, transactionId: string): Promise<void> {

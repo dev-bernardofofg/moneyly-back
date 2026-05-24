@@ -17,12 +17,14 @@ export const updateOvertimeSchema = z.object({
 });
 
 export const overtimeListQuerySchema = z.object({
-  periodId: z.string().uuid().optional(),
+  month: z.coerce.number().int().min(1).max(12).optional(),
+  year: z.coerce.number().int().min(2000).optional(),
   companyId: z.string().uuid().optional(),
 });
 
 export const overtimeSummaryQuerySchema = z.object({
-  periodId: z.string().uuid('periodId deve ser um UUID válido'),
+  month: z.coerce.number().int().min(1).max(12),
+  year: z.coerce.number().int().min(2000),
 });
 
 export type CreateOvertimeInput = z.infer<typeof createOvertimeSchema>;
