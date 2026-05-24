@@ -2,7 +2,7 @@
 
 Fonte de verdade: `src/db/schema.ts` (Drizzle). Atualizar este doc quando o schema mudar.
 
-> **Âncora:** sincronizado em commit `cdb820e` (Merge feat/cash-flow-forecast). Se HEAD divergiu e mexeu em `src/db/schema.ts`, releia o schema antes de confiar.
+> **Âncora:** sincronizado em commit `687b470` (refactor overtime month/year). Se HEAD divergiu e mexeu em `src/db/schema.ts`, releia o schema antes de confiar.
 
 ## Tabelas
 
@@ -63,9 +63,9 @@ Fonte de verdade: `src/db/schema.ts` (Drizzle). Atualizar este doc quando o sche
 
 ### `overtime_records` (F7 — horas extras)
 
-`id` · `userId`→users (cascade) · `companyId`→companies (cascade) · `description` varchar(500) nullable · `startTime` timestamp · `endTime` timestamp · `hoursWorked` decimal(10,2) (calculado e armazenado) · `hourlyRateSnapshot` decimal(10,2) (congelado no cadastro) · `amount` decimal(10,2) (`hoursWorked × hourlyRateSnapshot`, armazenado) · `periodId`→financial_periods (auto-detectado pela `startTime`) · `transactionId` uuid nullable→transactions · timestamps.
+`id` · `userId`→users (cascade) · `companyId`→companies (cascade) · `description` varchar(500) nullable · `startTime` timestamp · `endTime` timestamp · `hoursWorked` decimal(10,2) (calculado e armazenado) · `hourlyRateSnapshot` decimal(10,2) (congelado no cadastro) · `amount` decimal(10,2) (`hoursWorked x hourlyRateSnapshot`, armazenado) · `month` int (1-12) · `year` int — mês civil derivado de `startTime` · `transactionId` uuid nullable→transactions · timestamps.
 
-> Criação: gera income transaction vinculada (`type: income`, `title: "Hora extra — {company.name}"`). Edição: recalcula e sincroniza transaction. Deleção: deleta transaction vinculada primeiro.
+> Usa **mês civil** (não período financeiro) para agrupar/filtrar. Transaction vinculada recebe `periodId` financeiro normal. Criação: gera income transaction. Edição: recalcula e sincroniza transaction. Deleção: deleta transaction vinculada primeiro.
 
 ### `refresh_tokens`
 
@@ -95,3 +95,4 @@ Fonte de verdade: `src/db/schema.ts` (Drizzle). Atualizar este doc quando o sche
 - Período financeiro ≠ mês civil — sempre calcular via helpers de `financial-period.ts` no timezone São Paulo.
 - `getUserBudgetsService` aceita `periodId?` opcional (query) — sem ele usa período atual (`ensureCurrentPeriodExists`).
 - Categoria global tem `userId = null` + `isGlobal = true`; não deletável por usuário comum.
+- Overtime usa mês civil (`month`/`year`) para agrupamento — independente do período financeiro do usuário.

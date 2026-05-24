@@ -37,13 +37,16 @@ existentes** — taxa é congelada no `overtime_records.hourlyRateSnapshot`.
 | hoursWorked        | decimal(10,2) | calculado: (endTime - startTime) / 3600; armazenado |
 | hourlyRateSnapshot | decimal(10,2) | congelado no momento do cadastro                    |
 | amount             | decimal(10,2) | hoursWorked × hourlyRateSnapshot; armazenado        |
-| periodId           | uuid FK       | período financeiro (auto-detectado pela startTime)  |
+| month              | integer       | mês civil (1–12) derivado de startTime              |
+| year               | integer       | ano derivado de startTime                           |
 | transactionId      | uuid FK       | nullable → transactions.id; criado junto            |
 | createdAt          | timestamp     | defaultNow                                          |
 | updatedAt          | timestamp     | defaultNow                                          |
 
-Também adicionar `overtimeRecordId uuid FK nullable` em `transactions`
-(mesmo padrão de `recurringTransactionId`).
+> **Decisão:** overtime usa mês civil (1 ao último dia do mês), **não** o período financeiro
+> do usuário. A transaction vinculada ainda recebe o `periodId` financeiro normalmente.
+
+`overtimeRecordId uuid FK nullable` em `transactions` (mesmo padrão de `recurringTransactionId`).
 
 ---
 
@@ -52,9 +55,11 @@ Também adicionar `overtimeRecordId uuid FK nullable` em `transactions`
 ```
 hoursWorked = (endTime - startTime) / 3600          // horas decimais, ex: 1.5h
 amount      = hoursWorked × hourlyRateSnapshot       // R$
+month       = startTime.getMonth() + 1              // 1-12
+year        = startTime.getFullYear()
 ```
 
-Armazenar ambos no DB — não calcular on-the-fly para evitar divergência se taxa mudar.
+Armazenar todos no DB — não calcular on-the-fly.
 
 ---
 
@@ -71,40 +76,41 @@ Armazenar ambos no DB — não calcular on-the-fly para evitar divergência se t
 
 ### Overtime
 
-| Método | Path              | Descrição                                 |
-| ------ | ----------------- | ----------------------------------------- |
-| POST   | /overtime/        | Criar registro → cria income transaction  |
-| GET    | /overtime/        | Listar (filtros: periodId, companyId)     |
-| GET    | /overtime/summary | Resumo do período: total horas + valor    |
-| PUT    | /overtime/:id     | Editar → recalcula → atualiza transaction |
-| DELETE | /overtime/:id     | Deletar → deleta transaction vinculada    |
+| Método | Path              | Descrição                                      |
+| ------ | ----------------- | ---------------------------------------------- |
+| POST   | /overtime/        | Criar registro → cria income transaction       |
+| GET    | /overtime/        | Listar (filtros: `month`, `year`, `companyId`) |
+| GET    | /overtime/summary | Resumo do mês: total horas + valor             |
+| PUT    | /overtime/:id     | Editar → recalcula → atualiza transaction      |
+| DELETE | /overtime/:id     | Deletar → deleta transaction vinculada         |
 
 ---
 
 ## Fluxo de criação
 
-1. Recebe `companyId`, `description`, `startTime`, `endTime`
-2. Valida: `endTime > startTime`, empresa pertence ao usuário e está ativa
-3. Calcula `hoursWorked`, snapshot de `hourlyRate`, `amount`
-4. Detecta `periodId` pela `startTime` (via `financialPeriodService.findOrCreatePeriodForDate`)
-5. Cria `overtime_record`
-6. Cria `transaction` income:
+1. Recebe `companyId`, `categoryId?`, `description?`, `startTime`, `endTime`
+2. Valida: `endTime > startTime`, `startTime` não no futuro, empresa pertence ao usuário e está ativa
+3. Calcula `hoursWorked`, `hourlyRateSnapshot`, `amount`, `month`, `year`
+4. Detecta `periodId` financeiro pela `startTime` (apenas para a transaction)
+5. Resolve categoria: usa `categoryId` fornecido ou fallback global "Salário"
+6. Cria `overtime_record`
+7. Cria `transaction` income:
    - `type: income`
    - `title: "Hora extra — {company.name}"`
    - `amount: overtime.amount`
-   - `date: startTime` (data do início)
-   - `periodId: overtime.periodId`
+   - `date: startTime`
+   - `periodId`: período financeiro detectado
    - `overtimeRecordId: overtime.id`
-7. Atualiza `overtime_record.transactionId` com o id criado
+8. Atualiza `overtime_record.transactionId`
 
 ## Fluxo de edição
 
-1. Recebe campos parciais (`companyId?`, `description?`, `startTime?`, `endTime?`)
+1. Recebe campos parciais (`companyId?`, `categoryId?`, `description?`, `startTime?`, `endTime?`)
 2. Se mudou `companyId`, `startTime` ou `endTime`:
-   - Recalcula `hoursWorked`, `hourlyRateSnapshot`, `amount`, `periodId`
+   - Recalcula `hoursWorked`, `hourlyRateSnapshot`, `amount`, `month`, `year`
+   - Detecta novo `periodId` financeiro (para a transaction)
 3. Atualiza `overtime_record`
-4. Atualiza `transaction` vinculada:
-   - `amount`, `date`, `periodId`, `title` (se empresa mudou)
+4. Atualiza `transaction` vinculada: `amount`, `date`, `periodId`, `title` (se empresa mudou)
 
 ## Fluxo de deleção
 
@@ -113,11 +119,12 @@ Armazenar ambos no DB — não calcular on-the-fly para evitar divergência se t
 
 ---
 
-## Summary endpoint — `GET /overtime/summary?periodId=`
+## Summary endpoint — `GET /overtime/summary?month=&year=`
 
 ```json
 {
-  "periodId": "...",
+  "month": 5,
+  "year": 2026,
   "totalHours": 12.5,
   "totalAmount": 1875.0,
   "byCompany": [
@@ -132,24 +139,22 @@ Armazenar ambos no DB — não calcular on-the-fly para evitar divergência se t
 ## Validações de domínio
 
 - `endTime > startTime` — erro 400
+- `startTime` não pode ser no futuro — erro 400
 - `companyId` deve pertencer ao usuário e estar ativa — erro 404
 - Registro de outro usuário — erro 404
-- `startTime` não pode ser no futuro — erro 400
 
 ---
 
-## Camadas
-
-Seguir playbook (`04-feature-playbook.md`):
+## Camadas implementadas
 
 ```
-src/db/schema.ts                            ← companies + overtime_records + FK em transactions
+src/db/schema.ts
 src/repositories/company.repository.ts
 src/repositories/overtime.repository.ts
 src/repositories/interfaces/ICompanyRepository.ts
 src/repositories/interfaces/IOvertimeRepository.ts
 src/services/company.service.ts
-src/services/overtime.service.ts            ← orquestra criação/edição/deleção + sync transaction
+src/services/overtime.service.ts
 src/validations/company.validation.ts
 src/validations/overtime.validation.ts
 src/schemas/company.schema.ts
@@ -158,15 +163,17 @@ src/controllers/company.controller.ts
 src/controllers/overtime.controller.ts
 src/routes/company.router.ts
 src/routes/overtime.router.ts
-src/openapi/paths.ts                        ← registrar novos endpoints
+src/openapi/paths.ts
 ```
 
 ---
 
 ## Decisões registradas
 
-- Taxa congelada no registro → `hourlyRateSnapshot` garante imutabilidade retroativa
-- Transaction é **derivada** — não editável diretamente pelo usuário (marcada por `overtimeRecordId`)
-- `hoursWorked` e `amount` armazenados no DB (não calculados on-the-fly) → consistência mesmo se fórmula mudar
-- Soft-delete em `companies` (isActive) para não perder histórico de overtime vinculado
-- `periodId` auto-detectado pela `startTime`, mesmo padrão de `createTransactionService`
+- Overtime usa **mês civil** (`month`/`year`), não período financeiro — horas extras são pagas por mês de competência
+- Transaction derivada usa `periodId` financeiro normal (para aparecer nos relatórios do período correto)
+- Taxa congelada no registro (`hourlyRateSnapshot`) → imutabilidade retroativa
+- Transaction é **derivada** — não editável diretamente (marcada por `overtimeRecordId`)
+- `hoursWorked` e `amount` armazenados no DB — consistência mesmo se fórmula mudar
+- Soft-delete em `companies` — preserva histórico de overtime vinculado
+- `categoryId` opcional no create/update: usa fornecido ou fallback global "Salário"
