@@ -54,6 +54,12 @@ export const financialPeriodRepository = {
     startDate: Date,
     endDate: Date
   ): Promise<FinancialPeriod> {
+    console.log(
+      '[findOrCreatePeriod] looking for:',
+      startDate.toISOString(),
+      '->',
+      endDate.toISOString()
+    );
     const [existing] = await db
       .select()
       .from(financialPeriods)
@@ -65,7 +71,11 @@ export const financialPeriodRepository = {
         )
       )
       .limit(1);
-    if (existing) return existing;
+    if (existing) {
+      console.log('[findOrCreatePeriod] found existing:', existing.id);
+      return existing;
+    }
+    console.log('[findOrCreatePeriod] NOT found → creating new');
     return createPeriod({ userId, startDate, endDate, isActive: true });
   },
 
