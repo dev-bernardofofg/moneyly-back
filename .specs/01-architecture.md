@@ -47,6 +47,6 @@ Erro de domínio: lança `HttpError(status, msg, details)` no Service → contro
 
 ## Convenções de path
 
-- Routers montados em `src/routes.ts`: `/auth`, `/user`, `/transactions`, `/categories`, `/budgets`, `/goals`, `/overview`, `/recurring-transactions`.
+- Routers montados em `src/routes.ts`: `/auth`, `/user`, `/transactions`, `/categories`, `/budgets`, `/goals`, `/overview`, `/recurring-transactions`, `/notifications`, `/companies`, `/overtime`.
 - Migrations: `src/db/migrations/` (geradas por `drizzle-kit generate`).
 - Tipos de domínio compartilhados: `src/types/*.types.ts`. Tipos de tabela: inferidos em `src/db/schema.ts` (`User`/`NewUser`, etc).

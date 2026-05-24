@@ -36,6 +36,9 @@ import {
   TransactionSummarySchema,
   TransactionSchema,
   UserSchema,
+  CompanySchema,
+  OvertimeRecordSchema,
+  OvertimeSummarySchema,
 } from './schemas';
 
 import {
@@ -71,6 +74,13 @@ import {
   recurringTransactionSchema,
   recurringTransactionUpdateSchema,
 } from '../schemas/recurring-transaction.schema';
+import { createCompanySchema, updateCompanySchema } from '../schemas/company.schema';
+import {
+  createOvertimeSchema,
+  updateOvertimeSchema,
+  overtimeListQuerySchema,
+  overtimeSummaryQuerySchema,
+} from '../schemas/overtime.schema';
 
 const json = (schema: z.ZodTypeAny) => ({
   content: { 'application/json': { schema } },
@@ -597,4 +607,81 @@ route({
   summary: 'Marcar notificação como lida',
   params: idParamSchema,
   ok: ok(wrapSuccess(NotificationSchema)),
+});
+
+/* ───────────────────────── companies ───────────────────────── */
+route({
+  method: 'post',
+  path: '/companies/',
+  tag: 'Companies',
+  summary: 'Criar empresa',
+  body: createCompanySchema,
+  ok: ok(wrapSuccess(CompanySchema)),
+});
+route({
+  method: 'get',
+  path: '/companies/',
+  tag: 'Companies',
+  summary: 'Listar empresas ativas',
+  ok: ok(wrapSuccess(z.array(CompanySchema))),
+});
+route({
+  method: 'put',
+  path: '/companies/{id}',
+  tag: 'Companies',
+  summary: 'Atualizar empresa',
+  params: idParamSchema,
+  body: updateCompanySchema,
+  ok: ok(wrapSuccess(CompanySchema)),
+});
+route({
+  method: 'delete',
+  path: '/companies/{id}',
+  tag: 'Companies',
+  summary: 'Desativar empresa (soft-delete)',
+  params: idParamSchema,
+  ok: ok(nullData),
+});
+
+/* ───────────────────────── overtime ───────────────────────── */
+route({
+  method: 'post',
+  path: '/overtime/',
+  tag: 'Overtime',
+  summary: 'Criar registro de hora extra',
+  body: createOvertimeSchema,
+  ok: ok(wrapSuccess(OvertimeRecordSchema)),
+});
+route({
+  method: 'get',
+  path: '/overtime/',
+  tag: 'Overtime',
+  summary: 'Listar registros de hora extra',
+  query: overtimeListQuerySchema,
+  ok: ok(wrapSuccess(z.array(OvertimeRecordSchema))),
+});
+route({
+  method: 'get',
+  path: '/overtime/summary',
+  tag: 'Overtime',
+  summary: 'Resumo de horas extras por período',
+  query: overtimeSummaryQuerySchema,
+  ok: ok(wrapSuccess(OvertimeSummarySchema)),
+});
+route({
+  method: 'put',
+  path: '/overtime/{id}',
+  tag: 'Overtime',
+  summary: 'Editar registro de hora extra',
+  params: idParamSchema,
+  body: updateOvertimeSchema,
+  ok: ok(wrapSuccess(OvertimeRecordSchema)),
+});
+route({
+  method: 'delete',
+  path: '/overtime/{id}',
+  tag: 'Overtime',
+  summary: 'Deletar registro e transaction vinculada',
+  params: idParamSchema,
+  ok: ok(nullData),
 });

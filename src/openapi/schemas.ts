@@ -490,3 +490,53 @@ export const TransactionListSummarySchema = registry.register(
     alert: z.string().nullable(),
   })
 );
+
+export const CompanySchema = registry.register(
+  'Company',
+  z.object({
+    id: z.string().uuid(),
+    userId: z.string().uuid(),
+    name: z.string(),
+    hourlyRate: money,
+    isActive: z.boolean(),
+    createdAt: isoDate,
+    updatedAt: isoDate,
+  })
+);
+
+export const OvertimeRecordSchema = registry.register(
+  'OvertimeRecord',
+  z.object({
+    id: z.string().uuid(),
+    userId: z.string().uuid(),
+    companyId: z.string().uuid(),
+    description: z.string().nullable(),
+    startTime: isoDate,
+    endTime: isoDate,
+    hoursWorked: money,
+    hourlyRateSnapshot: money,
+    amount: money,
+    periodId: z.string().uuid().nullable(),
+    transactionId: z.string().uuid().nullable(),
+    createdAt: isoDate,
+    updatedAt: isoDate,
+    company: z.object({ id: z.string().uuid(), name: z.string() }),
+  })
+);
+
+export const OvertimeSummarySchema = registry.register(
+  'OvertimeSummary',
+  z.object({
+    periodId: z.string().uuid(),
+    totalHours: z.number(),
+    totalAmount: z.number(),
+    byCompany: z.array(
+      z.object({
+        companyId: z.string().uuid(),
+        companyName: z.string(),
+        hours: z.number(),
+        amount: z.number(),
+      })
+    ),
+  })
+);

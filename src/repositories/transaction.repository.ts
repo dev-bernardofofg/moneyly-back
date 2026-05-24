@@ -16,6 +16,7 @@ const BASE_SELECT = {
   id: transactions.id,
   periodId: transactions.periodId,
   recurringTransactionId: transactions.recurringTransactionId,
+  overtimeRecordId: transactions.overtimeRecordId,
   type: transactions.type,
   title: transactions.title,
   amount: transactions.amount,

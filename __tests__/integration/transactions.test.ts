@@ -157,15 +157,13 @@ describe('Transaction Endpoints', () => {
       const response = await request(app)
         .get('/transactions/')
         .set('Authorization', `Bearer ${authToken}`)
-        .send({
-          page: 1,
-          limit: 5,
-        })
+        .query({ page: 1, limit: 5 })
         .expect(200);
 
-      expect(response.body.data.pagination).toHaveProperty('page', 1);
-      expect(response.body.data.pagination).toHaveProperty('limit', 5);
-      expect(response.body.data.data.length).toBeLessThanOrEqual(5);
+      expect(response.body.pagination).toHaveProperty('page', 1);
+      expect(response.body.pagination).toHaveProperty('limit', 5);
+      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(response.body.data.length).toBeLessThanOrEqual(5);
     });
 
     it('filters by period when provided', async () => {

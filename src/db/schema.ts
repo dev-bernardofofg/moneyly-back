@@ -34,6 +34,7 @@ export const transactions = pgTable('transactions', {
     onDelete: 'cascade',
   }),
   recurringTransactionId: uuid('recurring_transaction_id'),
+  overtimeRecordId: uuid('overtime_record_id'),
   description: text('description'),
   date: timestamp('date').defaultNow().notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -130,6 +131,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   financialPeriods: many(financialPeriods),
   refreshTokens: many(refreshTokens),
   recurringTransactions: many(recurringTransactions),
+  companies: many(companies),
+  overtimeRecords: many(overtimeRecords),
 }));
 
 export const transactionsRelations = relations(transactions, ({ one }) => ({
@@ -148,6 +151,10 @@ export const transactionsRelations = relations(transactions, ({ one }) => ({
   recurringTransaction: one(recurringTransactions, {
     fields: [transactions.recurringTransactionId],
     references: [recurringTransactions.id],
+  }),
+  overtimeRecord: one(overtimeRecords, {
+    fields: [transactions.overtimeRecordId],
+    references: [overtimeRecords.id],
   }),
 }));
 
@@ -265,6 +272,40 @@ export const recurringTransactionsRelations = relations(recurringTransactions, (
   }),
 }));
 
+// Tabela de empresas (F7 — horas extras)
+export const companies = pgTable('companies', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Tabela de registros de horas extras (F7)
+export const overtimeRecords = pgTable('overtime_records', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  companyId: uuid('company_id')
+    .notNull()
+    .references(() => companies.id, { onDelete: 'cascade' }),
+  description: text('description'),
+  startTime: timestamp('start_time').notNull(),
+  endTime: timestamp('end_time').notNull(),
+  hoursWorked: decimal('hours_worked', { precision: 10, scale: 2 }).notNull(),
+  hourlyRateSnapshot: decimal('hourly_rate_snapshot', { precision: 10, scale: 2 }).notNull(),
+  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+  periodId: uuid('period_id').references(() => financialPeriods.id, { onDelete: 'cascade' }),
+  transactionId: uuid('transaction_id'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // Tabela de notificações (F2 — alertas de orçamento, extensível)
 export const notifications = pgTable('notifications', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -291,6 +332,29 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   }),
 }));
 
+export const companiesRelations = relations(companies, ({ one, many }) => ({
+  user: one(users, {
+    fields: [companies.userId],
+    references: [users.id],
+  }),
+  overtimeRecords: many(overtimeRecords),
+}));
+
+export const overtimeRecordsRelations = relations(overtimeRecords, ({ one }) => ({
+  user: one(users, {
+    fields: [overtimeRecords.userId],
+    references: [users.id],
+  }),
+  company: one(companies, {
+    fields: [overtimeRecords.companyId],
+    references: [companies.id],
+  }),
+  period: one(financialPeriods, {
+    fields: [overtimeRecords.periodId],
+    references: [financialPeriods.id],
+  }),
+}));
+
 // Tipos TypeScript
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -314,3 +378,7 @@ export type FinancialPeriod = typeof financialPeriods.$inferSelect;
 export type NewFinancialPeriod = typeof financialPeriods.$inferInsert;
 export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
+export type Company = typeof companies.$inferSelect;
+export type NewCompany = typeof companies.$inferInsert;
+export type OvertimeRecord = typeof overtimeRecords.$inferSelect;
+export type NewOvertimeRecord = typeof overtimeRecords.$inferInsert;
