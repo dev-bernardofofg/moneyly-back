@@ -1,4 +1,4 @@
-import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
+import { formatInTimeZone, fromZonedTime, toZonedTime } from 'date-fns-tz';
 import type { RecurringFrequency } from '../types/recurring-transaction.types';
 
 const SAO_PAULO_TIMEZONE = 'America/Sao_Paulo';
@@ -20,14 +20,19 @@ export function createSaoPauloDate(
   minutes = 0,
   seconds = 0
 ): Date {
-  // Use numeric constructor so month overflow (-1 → Dec, 12 → Jan) is handled correctly
-  return toZonedTime(new Date(year, month, day, hours, minutes, seconds), SAO_PAULO_TIMEZONE);
+  // Use Date.UTC to resolve month/day overflow (e.g. month=-1 → Dec, day=32 → next month)
+  // without depending on server local timezone. Then build an ISO string treated as SP local
+  // time by fromZonedTime, which returns the correct UTC instant regardless of server TZ.
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const d = new Date(Date.UTC(year, month, day, hours, minutes, seconds));
+  const isoLocal = `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
+  return fromZonedTime(isoLocal, SAO_PAULO_TIMEZONE);
 }
 
 export function normalizeDayForMonthSaoPaulo(year: number, month: number, day: number): number {
-  const lastDayOfMonth = new Date(year, month + 1, 0);
-  const lastDaySaoPaulo = toZonedTime(lastDayOfMonth, SAO_PAULO_TIMEZONE);
-  return Math.min(day, lastDaySaoPaulo.getDate());
+  // Date.UTC with day=0 gives last day of previous month — no server timezone dependency.
+  const lastDayOfMonth = new Date(Date.UTC(year, month + 1, 0));
+  return Math.min(day, lastDayOfMonth.getUTCDate());
 }
 
 export function createNormalizedSaoPauloDate(year: number, month: number, day: number): Date {
