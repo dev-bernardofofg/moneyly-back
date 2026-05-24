@@ -1,74 +1,37 @@
-import type { NextFunction, Response } from 'express';
-import { isHttpError } from '../helpers/errors';
 import { ResponseHandler } from '../helpers/response-handler';
-import type { AuthenticatedRequest } from '../middlewares/auth';
+import { asyncHandler } from '../middlewares/async-handler';
+import type { AuthRequest } from '../middlewares/auth';
+import { BadRequestError } from '../services/errors';
 import {
   listNotificationsService,
   markAllNotificationsReadService,
   markNotificationReadService,
 } from '../services/notification.service';
 
-export const getNotifications = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-) => {
-  if (!req.user) return ResponseHandler.unauthorized(res, 'Usuário não autenticado');
+export const getNotifications = asyncHandler<AuthRequest>(async (req, res) => {
+  const { unreadOnly, page, limit } = req.query as {
+    unreadOnly?: boolean;
+    page?: number;
+    limit?: number;
+  };
+  const result = await listNotificationsService(req.user.id, { page, limit }, Boolean(unreadOnly));
+  return ResponseHandler.paginated(
+    res,
+    result.data,
+    result.pagination,
+    'Notificações recuperadas com sucesso'
+  );
+});
 
-  try {
-    const { unreadOnly, page, limit } = req.query as {
-      unreadOnly?: boolean;
-      page?: number;
-      limit?: number;
-    };
-    const result = await listNotificationsService(
-      req.user.id,
-      { page, limit },
-      Boolean(unreadOnly)
-    );
-    return ResponseHandler.paginated(
-      res,
-      result.data,
-      result.pagination,
-      'Notificações recuperadas com sucesso'
-    );
-  } catch (error) {
-    if (isHttpError(error)) return next(error);
-    return ResponseHandler.error(res, 'Erro ao buscar notificações', error);
-  }
-};
-
-export const markNotificationRead = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-) => {
-  if (!req.user) return ResponseHandler.unauthorized(res, 'Usuário não autenticado');
-
+export const markNotificationRead = asyncHandler<AuthRequest>(async (req, res) => {
   const { id } = req.params;
-  if (!id) return ResponseHandler.badRequest(res, 'ID da notificação é obrigatório');
+  if (!id) throw new BadRequestError('ID da notificação é obrigatório');
 
-  try {
-    const notification = await markNotificationReadService(id, req.user.id);
-    return ResponseHandler.success(res, notification, 'Notificação marcada como lida');
-  } catch (error) {
-    if (isHttpError(error)) return next(error);
-    return ResponseHandler.error(res, 'Erro ao marcar notificação como lida', error);
-  }
-};
+  const notification = await markNotificationReadService(id, req.user.id);
+  return ResponseHandler.success(res, notification, 'Notificação marcada como lida');
+});
 
-export const markAllNotificationsRead = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-) => {
-  if (!req.user) return ResponseHandler.unauthorized(res, 'Usuário não autenticado');
-
-  try {
-    const result = await markAllNotificationsReadService(req.user.id);
-    return ResponseHandler.success(res, result, 'Notificações marcadas como lidas');
-  } catch (error) {
-    if (isHttpError(error)) return next(error);
-    return ResponseHandler.error(res, 'Erro ao marcar notificações como lidas', error);
-  }
-};
+export const markAllNotificationsRead = asyncHandler<AuthRequest>(async (req, res) => {
+  const result = await markAllNotificationsReadService(req.user.id);
+  return ResponseHandler.success(res, result, 'Notificações marcadas como lidas');
+});
