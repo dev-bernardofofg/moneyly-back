@@ -8,6 +8,10 @@ export interface AuthenticatedRequest extends Request {
   user?: AuthenticatedUser;
 }
 
+export interface AuthRequest extends Request {
+  user: AuthenticatedUser;
+}
+
 export const authenticateUser = async (
   req: AuthenticatedRequest,
   res: Response,
