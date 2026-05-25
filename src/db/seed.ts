@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm';
+import { logger } from '../lib/logger';
 import { userCategoryPreferencesRepository } from '../repositories/user-category-preferences.repository';
 import { db } from './index';
 import { categories } from './schema';
@@ -25,64 +26,55 @@ export const globalCategories = [
   { name: 'Emergências' },
 ];
 
-// Função para criar categorias globais (executar apenas uma vez)
 export async function createGlobalCategories() {
   try {
-    // Verificar se já existem categorias globais
     const existingCategories = await db
       .select()
       .from(categories)
       .where(eq(categories.isGlobal, true));
 
     if (existingCategories.length > 0) {
-      console.log(
-        `ℹ️ Já existem ${existingCategories.length} categorias globais. Pulando criação.`
-      );
+      logger.info('Categorias globais já existem, pulando criação', {
+        count: existingCategories.length,
+      });
       return existingCategories;
     }
 
     const categoriesToInsert = globalCategories.map((category) => ({
       ...category,
       isGlobal: true,
-      userId: null, // Categorias globais não têm userId
+      userId: null,
     }));
 
     const insertedCategories = await db.insert(categories).values(categoriesToInsert).returning();
 
-    console.log(`✅ Criadas ${insertedCategories.length} categorias globais`);
+    logger.info('Categorias globais criadas', { count: insertedCategories.length });
     return insertedCategories;
   } catch (error) {
-    console.error('❌ Erro ao criar categorias globais:', error);
+    logger.error('Erro ao criar categorias globais', error as Error);
     throw error;
   }
 }
 
-// Função para criar preferências padrão para um usuário
 export async function createDefaultPreferencesForUser(userId: string) {
   try {
-    // Buscar todas as categorias globais
     let globalCategoriesData = await db
       .select()
       .from(categories)
       .where(eq(categories.isGlobal, true));
 
-    // Se não existirem categorias globais, criar elas primeiro
     if (globalCategoriesData.length === 0) {
-      console.log('⚠️ Nenhuma categoria global encontrada. Criando categorias globais...');
+      logger.warn('Nenhuma categoria global encontrada, criando agora');
       try {
         await createGlobalCategories();
-        // Buscar novamente após criar
         globalCategoriesData = await db
           .select()
           .from(categories)
           .where(eq(categories.isGlobal, true));
       } catch (error) {
-        console.error('❌ Erro ao criar categorias globais automaticamente:', error);
-        // Se ainda não tiver categorias, retornar vazio
+        logger.error('Falha ao criar categorias globais automaticamente', error as Error);
         if (globalCategoriesData.length === 0) {
-          console.log(
-            '⚠️ Não foi possível criar categorias globais. Usuário criado sem categorias padrão.'
-          );
+          logger.warn('Usuário criado sem categorias padrão', { userId });
           return [];
         }
       }
@@ -94,15 +86,14 @@ export async function createDefaultPreferencesForUser(userId: string) {
       categoryIds
     );
 
-    console.log(`✅ Criadas ${preferences.length} preferências padrão para o usuário ${userId}`);
+    logger.info('Preferências padrão criadas', { userId, count: preferences.length });
     return preferences;
   } catch (error) {
-    console.error('❌ Erro ao criar preferências padrão:', error);
+    logger.error('Erro ao criar preferências padrão', error as Error, { userId });
     throw error;
   }
 }
 
-// Função para obter categorias globais (sem userId para referência)
 export function getGlobalCategories() {
   return globalCategories;
 }

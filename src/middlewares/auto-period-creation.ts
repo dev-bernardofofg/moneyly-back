@@ -15,13 +15,6 @@ export const ensurePeriodExists = async (
       return next();
     }
 
-    // Criar apenas período atual + 1 período futuro (para planejamento)
-    console.log(
-      '[auto-period] TZ offset:',
-      new Date().getTimezoneOffset(),
-      '| new Date(2026,4,5):',
-      new Date(2026, 4, 5, 0, 0, 0).toISOString()
-    );
     await financialPeriodService.ensureCurrentPeriodExists(userId);
     await financialPeriodService.createNextPeriods(userId, 1); // Só 1 período futuro
 
