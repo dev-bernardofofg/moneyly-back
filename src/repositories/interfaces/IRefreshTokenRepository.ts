@@ -9,5 +9,4 @@ export interface IRefreshTokenRepository {
   deleteByUserId(userId: string): Promise<number>;
   deleteExpired(): Promise<number>;
   deleteByToken(hashedToken: string): Promise<boolean>;
-  findAllValid(): Promise<RefreshToken[]>;
 }

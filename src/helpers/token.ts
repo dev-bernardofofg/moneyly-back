@@ -1,7 +1,6 @@
+import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
 import jwt from 'jsonwebtoken';
-import { randomBytes } from 'crypto';
 import { env } from '../env';
-import { hash, compare } from './bcrypt';
 
 export const generateAccessToken = (userId: string): string => {
   return jwt.sign({ userId }, env.JWT_SECRET, { expiresIn: '15m' });
@@ -11,12 +10,19 @@ export const generateRefreshToken = (): string => {
   return randomBytes(64).toString('hex');
 };
 
-export const hashRefreshToken = async (token: string): Promise<string> => {
-  return await hash(token);
+// HMAC-SHA256 com JWT_SECRET como pepper. Determinístico → permite
+// lookup direto por índice. Refresh tokens já são 512 bits de entropia
+// (randomBytes), não precisam de slow-hash tipo bcrypt.
+export const hashRefreshToken = (token: string): string => {
+  return createHmac('sha256', env.JWT_SECRET).update(token).digest('hex');
 };
 
-export const verifyRefreshToken = async (token: string, hashedToken: string): Promise<boolean> => {
-  return await compare(token, hashedToken);
+export const verifyRefreshToken = (token: string, hashedToken: string): boolean => {
+  const expected = hashRefreshToken(token);
+  const a = Buffer.from(expected, 'hex');
+  const b = Buffer.from(hashedToken, 'hex');
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
 };
 
 export const verifyAccessToken = (token: string): { userId: string } => {

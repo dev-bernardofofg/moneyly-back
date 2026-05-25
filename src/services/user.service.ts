@@ -2,12 +2,7 @@ import { hash } from '../helpers/bcrypt';
 import { createDefaultPreferencesForUser } from '../db/seed';
 import { logger } from '../lib/logger';
 import { NotFoundError, UnauthorizedError } from './errors';
-import {
-  generateAccessToken,
-  generateRefreshToken,
-  hashRefreshToken,
-  verifyRefreshToken,
-} from '../helpers/token';
+import { generateAccessToken, generateRefreshToken, hashRefreshToken } from '../helpers/token';
 import { financialPeriodRepository } from '../repositories/financial-period.repository';
 import { refreshTokenRepository } from '../repositories/refresh-token.repository';
 import { userRepository } from '../repositories/user.repository';
@@ -23,7 +18,7 @@ const REFRESH_TOKEN_TTL_DAYS = 7;
 const issueTokenPair = async (userId: string) => {
   const accessToken = generateAccessToken(userId);
   const refreshTokenValue = generateRefreshToken();
-  const hashedRefreshToken = await hashRefreshToken(refreshTokenValue);
+  const hashedRefreshToken = hashRefreshToken(refreshTokenValue);
 
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_TTL_DAYS);
@@ -71,16 +66,8 @@ export const createGoogleSessionService = async (idToken: string) => {
 };
 
 export const refreshTokenService = async (refreshToken: string) => {
-  const allTokens = await refreshTokenRepository.findAllValid();
-
-  let matchingToken = null;
-  for (const tokenRecord of allTokens) {
-    const isValid = await verifyRefreshToken(refreshToken, tokenRecord.token);
-    if (isValid) {
-      matchingToken = tokenRecord;
-      break;
-    }
-  }
+  const hashedToken = hashRefreshToken(refreshToken);
+  const matchingToken = await refreshTokenRepository.findValidToken(hashedToken);
 
   if (!matchingToken) {
     throw new UnauthorizedError('Refresh token inválido ou expirado');
@@ -101,18 +88,10 @@ export const refreshTokenService = async (refreshToken: string) => {
 };
 
 export const revokeRefreshTokenService = async (userId: string, refreshToken: string) => {
-  const userTokens = await refreshTokenRepository.findByUserId(userId);
+  const hashedToken = hashRefreshToken(refreshToken);
+  const matchingToken = await refreshTokenRepository.findByToken(hashedToken);
 
-  let matchingToken = null;
-  for (const tokenRecord of userTokens) {
-    const isValid = await verifyRefreshToken(refreshToken, tokenRecord.token);
-    if (isValid) {
-      matchingToken = tokenRecord;
-      break;
-    }
-  }
-
-  if (!matchingToken) {
+  if (!matchingToken || matchingToken.userId !== userId) {
     throw new NotFoundError('Refresh token não encontrado');
   }
 

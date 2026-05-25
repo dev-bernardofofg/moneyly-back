@@ -62,11 +62,6 @@ export const refreshTokenRepository = {
       .returning();
     return result.length > 0;
   },
-
-  async findAllValid(): Promise<RefreshToken[]> {
-    const now = new Date();
-    return db.select().from(refreshTokens).where(gte(refreshTokens.expiresAt, now));
-  },
 } satisfies IRefreshTokenRepository;
 
 export type { IRefreshTokenRepository };
