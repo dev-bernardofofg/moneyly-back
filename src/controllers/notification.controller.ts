@@ -9,12 +9,12 @@ import {
 } from '../services/notification.service';
 
 export const getNotifications = asyncHandler<AuthRequest>(async (req, res) => {
-  const { unreadOnly, page, limit } = req.query as {
-    unreadOnly?: boolean;
+  const { page, limit } = req.query as {
     page?: number;
     limit?: number;
   };
-  const result = await listNotificationsService(req.user.id, { page, limit }, Boolean(unreadOnly));
+  const unreadOnly = req.query.unreadOnly === 'true';
+  const result = await listNotificationsService(req.user.id, { page, limit }, unreadOnly);
   return ResponseHandler.paginated(
     res,
     result.data,

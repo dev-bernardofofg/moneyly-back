@@ -41,7 +41,7 @@ export const createRecurringTransaction = asyncHandler<AuthRequest>(async (req, 
 });
 
 export const getRecurringTransactions = asyncHandler<AuthRequest>(async (req, res) => {
-  const includeInactive = Boolean(req.query.includeInactive);
+  const includeInactive = req.query.includeInactive === 'true';
   const { page, limit } = req.query as { page?: number; limit?: number };
   const result = await getRecurringTransactionsService(
     req.user.id,
