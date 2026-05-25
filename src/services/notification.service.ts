@@ -49,8 +49,14 @@ export const processUserBudgetAlerts = async (userId: string): Promise<void> => 
         isRead: false,
       });
     } catch (error) {
-      // Corrida do scheduler: unique(dedupeKey) violado → já existe, ignora.
-      logger.warn('[notifications] dedupe race skipped', { dedupeKey });
+      // Apenas corrida do scheduler: unique(dedupeKey) violado (pg 23505).
+      // Demais erros precisam propagar.
+      const code = (error as { code?: string } | null)?.code;
+      if (code === '23505') {
+        logger.warn('[notifications] dedupe race skipped', { dedupeKey });
+        continue;
+      }
+      throw error;
     }
   }
 };
