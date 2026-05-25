@@ -8,7 +8,7 @@ import { env } from '../env';
 // Rate limiting para endpoints de autenticação
 export const authRateLimit = rateLimit({
   windowMs: env.RATE_LIMIT_WINDOW_MS,
-  max: 2000, // máximo 2000 tentativas por IP
+  max: 10,
   message: {
     error: 'Muitas tentativas de login. Tente novamente em 15 minutos.',
   },
@@ -34,19 +34,18 @@ export const speedLimiter = slowDown({
   delayMs: () => 500, // adicionar 500ms de delay por requisição após o limite
 });
 
+type CorsCallback = (err: Error | null, allow?: boolean) => void;
+
 // Configuração CORS segura
 export const corsOptions = {
-  origin: function (origin: string | undefined, callback: Function) {
-    // Permitir requisições sem origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
+  origin: function (origin: string | undefined, callback: CorsCallback) {
+    // Sem origin: aceitar apenas fora de produção (Postman, curl em dev)
+    if (!origin) {
+      if (env.NODE_ENV !== 'production') return callback(null, true);
+      return callback(new Error('Origin obrigatório'));
+    }
 
-    const allowedOrigins = [
-      ...env.ALLOWED_ORIGINS,
-      // Adicione aqui os domínios de produção
-      // 'https://seu-dominio.com'
-    ];
-
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    if (env.ALLOWED_ORIGINS.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Não permitido pelo CORS'));
