@@ -1,3 +1,4 @@
+import { sumAmounts } from '../helpers/amount';
 import { budgetRepository } from '../repositories/budget.repository';
 import { transactionRepository } from '../repositories/transaction.repository';
 import { financialPeriodService } from './financial-period.service';
@@ -41,9 +42,9 @@ export const getUserBudgetsService = async (userId: string, periodId?: string) =
   const transactions = await transactionRepository.findByPeriodId(userId, currentPeriod.id);
 
   return budgets.map((budget) => {
-    const spent = transactions
-      .filter((tx) => tx.type === 'expense' && tx.category.id === budget.category.id)
-      .reduce((sum, tx) => sum + Number(tx.amount), 0);
+    const spent = sumAmounts(
+      transactions.filter((tx) => tx.type === 'expense' && tx.category.id === budget.category.id)
+    );
 
     const monthlyLimit = Number(budget.monthlyLimit);
     const remaining = monthlyLimit - spent;
@@ -93,9 +94,9 @@ export const getBudgetProgressService = async (userId: string): Promise<BudgetPr
   const transactions = await transactionRepository.findByPeriodId(userId, currentPeriod.id);
 
   return budgets.map((budget) => {
-    const categoryExpenses = transactions
-      .filter((tx) => tx.type === 'expense' && tx.category.id === budget.category.id)
-      .reduce((sum, tx) => sum + Number(tx.amount), 0);
+    const categoryExpenses = sumAmounts(
+      transactions.filter((tx) => tx.type === 'expense' && tx.category.id === budget.category.id)
+    );
 
     const monthlyLimit = Number(budget.monthlyLimit);
     const percentage =
@@ -136,9 +137,9 @@ export const getBudgetProgressByCategory = async (
 
   const transactions = await transactionRepository.findByPeriodId(userId, currentPeriod.id);
 
-  const categoryExpenses = transactions
-    .filter((tx) => tx.type === 'expense' && tx.category.id === categoryId)
-    .reduce((sum: number, tx) => sum + Number(tx.amount), 0);
+  const categoryExpenses = sumAmounts(
+    transactions.filter((tx) => tx.type === 'expense' && tx.category.id === categoryId)
+  );
 
   const percentage = Math.min((categoryExpenses / Number(budget.monthlyLimit)) * 100, 100);
 

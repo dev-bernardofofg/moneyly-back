@@ -7,6 +7,7 @@ import {
   getPreviousFinancialPeriods,
 } from '../helpers/financial-period';
 import { groupSubscriptionCandidates } from '../helpers/subscription-detector';
+import { sumAmounts } from '../helpers/amount';
 import { buildComparison } from '../helpers/comparative-insights';
 import { NotFoundError } from './errors';
 import {
@@ -343,9 +344,7 @@ export const getFinancialInsightsService = async (userId: string, monthlyIncome:
     return d >= currentPeriod.startDate && d <= currentPeriod.endDate;
   });
 
-  const currentExpense = currentPeriodTx
-    .filter((tx) => tx.type === 'expense')
-    .reduce((sum, tx) => sum + Number(tx.amount), 0);
+  const currentExpense = sumAmounts(currentPeriodTx.filter((tx) => tx.type === 'expense'));
 
   const projectedExpense = Number(((currentExpense / daysElapsed) * totalDays).toFixed(2));
 

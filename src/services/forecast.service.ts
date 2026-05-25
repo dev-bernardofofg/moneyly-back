@@ -1,3 +1,4 @@
+import { sumAmounts } from '../helpers/amount';
 import { calculateNextExecution, getCurrentSaoPauloDate } from '../helpers/dates';
 import { formatPeriodLabel } from '../helpers/financial-period';
 import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
@@ -31,12 +32,8 @@ export const getForecastService = async (userId: string, periodId?: string) => {
 
   const transactions = await transactionRepository.findByPeriodId(userId, period.id);
 
-  const realizedIncome = transactions
-    .filter((tx) => tx.type === 'income')
-    .reduce((sum, tx) => sum + Number(tx.amount), 0);
-  const realizedExpense = transactions
-    .filter((tx) => tx.type === 'expense')
-    .reduce((sum, tx) => sum + Number(tx.amount), 0);
+  const realizedIncome = sumAmounts(transactions.filter((tx) => tx.type === 'income'));
+  const realizedExpense = sumAmounts(transactions.filter((tx) => tx.type === 'expense'));
   const realizedBalance = realizedIncome - realizedExpense;
 
   const now = getCurrentSaoPauloDate();
@@ -85,12 +82,8 @@ export const getForecastService = async (userId: string, periodId?: string) => {
     }
   }
 
-  const recurringIncome = occurrences
-    .filter((o) => o.type === 'income')
-    .reduce((sum, o) => sum + o.amount, 0);
-  const recurringExpense = occurrences
-    .filter((o) => o.type === 'expense')
-    .reduce((sum, o) => sum + o.amount, 0);
+  const recurringIncome = sumAmounts(occurrences.filter((o) => o.type === 'income'));
+  const recurringExpense = sumAmounts(occurrences.filter((o) => o.type === 'expense'));
 
   return {
     period: {

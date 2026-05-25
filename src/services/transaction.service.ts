@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { sumAmounts } from '../helpers/amount';
 import { getCurrentFinancialPeriod } from '../helpers/financial-period';
 import type { PaginationQuery } from '../helpers/pagination';
 import { toSaoPauloTimezone } from '../helpers/dates';
@@ -94,12 +95,8 @@ export const getTransactionListService = async (userId: string, filters: Transac
   ]);
 
   const monthlyIncome = Number(user?.monthlyIncome) || 0;
-  const totalExpense = txns
-    .filter((tx) => tx.type === 'expense')
-    .reduce((sum, tx) => sum + Number(tx.amount), 0);
-  const totalIncome = txns
-    .filter((tx) => tx.type === 'income')
-    .reduce((sum, tx) => sum + Number(tx.amount), 0);
+  const totalExpense = sumAmounts(txns.filter((tx) => tx.type === 'expense'));
+  const totalIncome = sumAmounts(txns.filter((tx) => tx.type === 'income'));
   const { percentUsed, alert } = computeSpendingStats(
     totalExpense,
     monthlyIncome,
