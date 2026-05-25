@@ -55,10 +55,6 @@ export const financialPeriodRepository = {
     startDate: Date,
     endDate: Date
   ): Promise<FinancialPeriod> {
-    logger.debug('[findOrCreatePeriod] looking for', {
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-    });
     const [existing] = await db
       .select()
       .from(financialPeriods)
