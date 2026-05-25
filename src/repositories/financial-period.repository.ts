@@ -1,6 +1,7 @@
 import { and, count, desc, eq, gte, lte } from 'drizzle-orm';
 import { db } from '../db';
 import { financialPeriods, transactions, type FinancialPeriod } from '../db/schema';
+import { logger } from '../lib/logger';
 import type { IFinancialPeriodRepository } from './interfaces/IFinancialPeriodRepository';
 
 async function createPeriod(data: {
@@ -54,12 +55,10 @@ export const financialPeriodRepository = {
     startDate: Date,
     endDate: Date
   ): Promise<FinancialPeriod> {
-    console.log(
-      '[findOrCreatePeriod] looking for:',
-      startDate.toISOString(),
-      '->',
-      endDate.toISOString()
-    );
+    logger.debug('[findOrCreatePeriod] looking for', {
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+    });
     const [existing] = await db
       .select()
       .from(financialPeriods)
@@ -72,10 +71,10 @@ export const financialPeriodRepository = {
       )
       .limit(1);
     if (existing) {
-      console.log('[findOrCreatePeriod] found existing:', existing.id);
+      logger.debug('[findOrCreatePeriod] found existing', { id: existing.id });
       return existing;
     }
-    console.log('[findOrCreatePeriod] NOT found → creating new');
+    logger.debug('[findOrCreatePeriod] NOT found, creating new');
     return createPeriod({ userId, startDate, endDate, isActive: true });
   },
 
