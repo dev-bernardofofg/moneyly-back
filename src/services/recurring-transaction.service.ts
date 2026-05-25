@@ -90,19 +90,18 @@ export const createRecurringTransactionService = async (
       data.dayOfWeek
     );
 
-    await Promise.all(
-      dates.map((date) =>
-        createTransactionService(userId, {
-          type: data.type,
-          title: data.title,
-          amount: data.amount,
-          category: data.categoryId,
-          description: data.description ?? '',
-          date,
-          recurringTransactionId: recurring.id,
-        })
-      )
-    );
+    // Sequencial para não saturar o pool de conexões em parcelas longas.
+    for (const date of dates) {
+      await createTransactionService(userId, {
+        type: data.type,
+        title: data.title,
+        amount: data.amount,
+        category: data.categoryId,
+        description: data.description ?? '',
+        date,
+        recurringTransactionId: recurring.id,
+      });
+    }
 
     await recurringTransactionRepository.update(recurring.id, userId, {
       executedInstallments: data.totalInstallments,
