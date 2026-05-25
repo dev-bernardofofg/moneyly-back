@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import { ResponseHandler } from '../helpers/response-handler';
+import { buildTransactionFilters } from '../helpers/transaction-filters';
 import { asyncHandler } from '../middlewares/async-handler';
 import type { AuthRequest } from '../middlewares/auth';
 import { BadRequestError } from '../services/errors';
@@ -31,28 +32,8 @@ export const createTransaction = asyncHandler<AuthRequest>(async (req, res) => {
 });
 
 export const getTransactions = asyncHandler<AuthRequest>(async (req, res) => {
-  const { category, startDate, endDate, periodId, type, page, limit } = req.query as {
-    category?: string;
-    startDate?: string;
-    endDate?: string;
-    periodId?: string;
-    type?: 'income' | 'expense';
-    page?: number;
-    limit?: number;
-  };
-
-  const filters: {
-    category?: string;
-    startDate?: Date;
-    endDate?: Date;
-    periodId?: string;
-    type?: 'income' | 'expense';
-  } = {};
-  if (category) filters.category = category;
-  if (periodId) filters.periodId = periodId;
-  if (type) filters.type = type;
-  if (startDate) filters.startDate = new Date(startDate);
-  if (endDate) filters.endDate = new Date(endDate);
+  const { page, limit } = req.query as { page?: number; limit?: number };
+  const filters = buildTransactionFilters(req.query);
 
   const pagination = await validatePagination(page, limit);
 
@@ -147,17 +128,7 @@ export const getMonthlySummary = asyncHandler<AuthRequest>(async (req, res) => {
 });
 
 export const exportTransactionsCsv = asyncHandler<AuthRequest>(async (req, res) => {
-  const { startDate, endDate, periodId, type } = req.query;
-  const filters: {
-    startDate?: Date;
-    endDate?: Date;
-    periodId?: string;
-    type?: 'income' | 'expense';
-  } = {};
-  if (periodId) filters.periodId = periodId as string;
-  if (type) filters.type = type as 'income' | 'expense';
-  if (startDate) filters.startDate = new Date(startDate as string);
-  if (endDate) filters.endDate = new Date(endDate as string);
+  const filters = buildTransactionFilters(req.query);
 
   const { transactions } = await getTransactionListService(req.user.id, filters);
 
