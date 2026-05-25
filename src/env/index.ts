@@ -3,17 +3,30 @@ import dotenv from 'dotenv';
 // Carregar variáveis de ambiente
 dotenv.config();
 
+const NODE_ENV = process.env.NODE_ENV || 'development';
+
+// Validação das variáveis obrigatórias (sempre, sem fallback inseguro)
+const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET'] as const;
+const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+  console.error('❌ Variáveis de ambiente obrigatórias não encontradas:', missingEnvVars);
+  if (NODE_ENV === 'production') {
+    process.exit(1);
+  }
+}
+
 // Configuração das variáveis de ambiente
 export const env = {
   // Configurações do servidor
   PORT: process.env.PORT || 3000,
-  NODE_ENV: process.env.NODE_ENV || 'development',
+  NODE_ENV,
 
   // Configurações do banco de dados
   DATABASE_URL: process.env.DATABASE_URL || '',
 
   // Configurações JWT
-  JWT_SECRET: process.env.JWT_SECRET || 'your-secret-key',
+  JWT_SECRET: process.env.JWT_SECRET || '',
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
 
   // Configurações do Google OAuth
@@ -32,16 +45,6 @@ export const env = {
   // Configurações de timeout
   REQUEST_TIMEOUT: parseInt(process.env.REQUEST_TIMEOUT || '30000'), // 30 segundos
 };
-
-// Validação das variáveis obrigatórias
-const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET'];
-
-const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
-
-if (missingEnvVars.length > 0 && env.NODE_ENV === 'production') {
-  console.error('❌ Variáveis de ambiente obrigatórias não encontradas:', missingEnvVars);
-  process.exit(1);
-}
 
 // Log das configurações (sem dados sensíveis)
 console.log('🔧 Configurações carregadas:', {
