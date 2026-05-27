@@ -1,7 +1,6 @@
 import { and, count, desc, eq, gte, lte } from 'drizzle-orm';
 import { db } from '../db';
 import { financialPeriods, transactions, type FinancialPeriod } from '../db/schema';
-import { logger } from '../lib/logger';
 import type { IFinancialPeriodRepository } from './interfaces/IFinancialPeriodRepository';
 
 async function createPeriod(data: {
@@ -55,6 +54,15 @@ export const financialPeriodRepository = {
     startDate: Date,
     endDate: Date
   ): Promise<FinancialPeriod> {
+    const [inserted] = await db
+      .insert(financialPeriods)
+      .values({ userId, startDate, endDate, isActive: true })
+      .onConflictDoNothing({
+        target: [financialPeriods.userId, financialPeriods.startDate, financialPeriods.endDate],
+      })
+      .returning();
+    if (inserted) return inserted;
+
     const [existing] = await db
       .select()
       .from(financialPeriods)
@@ -66,12 +74,8 @@ export const financialPeriodRepository = {
         )
       )
       .limit(1);
-    if (existing) {
-      logger.debug('[findOrCreatePeriod] found existing', { id: existing.id });
-      return existing;
-    }
-    logger.debug('[findOrCreatePeriod] NOT found, creating new');
-    return createPeriod({ userId, startDate, endDate, isActive: true });
+    if (!existing) throw new Error('Falha ao localizar período após upsert');
+    return existing;
   },
 
   async findAllByUserWithTransactionCount(

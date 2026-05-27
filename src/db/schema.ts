@@ -1,5 +1,14 @@
 import { relations } from 'drizzle-orm';
-import { boolean, decimal, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  decimal,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 // Tabela de usuários
 export const users = pgTable('users', {
@@ -109,17 +118,27 @@ export const goalMilestones = pgTable('goal_milestones', {
 });
 
 // Tabela de períodos financeiros
-export const financialPeriods = pgTable('financial_periods', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  startDate: timestamp('start_date').notNull(),
-  endDate: timestamp('end_date').notNull(),
-  isActive: boolean('is_active').default(true),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+export const financialPeriods = pgTable(
+  'financial_periods',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    startDate: timestamp('start_date').notNull(),
+    endDate: timestamp('end_date').notNull(),
+    isActive: boolean('is_active').default(true),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userStartEndUnique: unique('financial_periods_user_start_end_unique').on(
+      table.userId,
+      table.startDate,
+      table.endDate
+    ),
+  })
+);
 
 // Relacionamentos
 export const usersRelations = relations(users, ({ many }) => ({

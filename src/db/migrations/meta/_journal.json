@@ -50,6 +50,13 @@
       "when": 1748102400000,
       "tag": "0006_overtime_month_year",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1748534400000,
+      "tag": "0007_dedup_financial_periods",
+      "breakpoints": true
     }
   ]
 }
