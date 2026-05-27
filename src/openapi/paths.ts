@@ -369,9 +369,9 @@ route({
   method: 'get',
   path: '/categories/',
   tag: 'Categories',
-  summary: 'Listar categorias',
+  summary: 'Listar categorias paginadas (params: page, limit)',
   query: categoriesQuery,
-  ok: ok(wrapSuccess(z.array(CategorySchema))),
+  ok: ok(wrapPaginated(CategorySchema)),
 });
 route({
   method: 'put',
