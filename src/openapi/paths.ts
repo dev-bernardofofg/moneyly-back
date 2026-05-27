@@ -78,6 +78,7 @@ import { createCompanySchema, updateCompanySchema } from '../schemas/company.sch
 import {
   createOvertimeSchema,
   updateOvertimeSchema,
+  overtimeExportQuerySchema,
   overtimeListQuerySchema,
   overtimeSummaryQuerySchema,
 } from '../schemas/overtime.schema';
@@ -667,6 +668,14 @@ route({
   summary: 'Resumo de horas extras por mês civil',
   query: overtimeSummaryQuerySchema,
   ok: ok(wrapSuccess(OvertimeSummarySchema)),
+});
+route({
+  method: 'get',
+  path: '/overtime/export',
+  tag: 'Overtime',
+  summary: 'Exportar horas extras em CSV',
+  query: overtimeExportQuerySchema,
+  csv: true,
 });
 route({
   method: 'put',

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   createOvertime,
   deleteOvertime,
+  exportOvertimeCsv,
   getOvertime,
   getOvertimeSummary,
   updateOvertime,
@@ -12,6 +13,7 @@ import { validateBody, validateParams, validateQuery } from '../middlewares/vali
 import { idParamSchema } from '../schemas/auth.schema';
 import {
   createOvertimeSchema,
+  overtimeExportQuerySchema,
   overtimeListQuerySchema,
   overtimeSummaryQuerySchema,
   updateOvertimeSchema,
@@ -25,6 +27,7 @@ OvertimeRouter.use(ensurePeriodExists);
 OvertimeRouter.post('/', validateBody(createOvertimeSchema), createOvertime);
 OvertimeRouter.get('/', validateQuery(overtimeListQuerySchema), getOvertime);
 OvertimeRouter.get('/summary', validateQuery(overtimeSummaryQuerySchema), getOvertimeSummary);
+OvertimeRouter.get('/export', validateQuery(overtimeExportQuerySchema), exportOvertimeCsv);
 OvertimeRouter.put(
   '/:id',
   validateParams(idParamSchema),

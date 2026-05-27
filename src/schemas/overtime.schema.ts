@@ -29,5 +29,11 @@ export const overtimeSummaryQuerySchema = z.object({
   year: z.coerce.number().int().min(2000),
 });
 
+export const overtimeExportQuerySchema = z.object({
+  month: z.coerce.number().int().min(1).max(12).optional(),
+  year: z.coerce.number().int().min(2000).optional(),
+  companyId: z.string().uuid().optional(),
+});
+
 export type CreateOvertimeInput = z.infer<typeof createOvertimeSchema>;
 export type UpdateOvertimeInput = z.infer<typeof updateOvertimeSchema>;
