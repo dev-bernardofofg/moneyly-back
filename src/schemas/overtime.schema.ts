@@ -20,6 +20,8 @@ export const overtimeListQuerySchema = z.object({
   month: z.coerce.number().int().min(1).max(12).optional(),
   year: z.coerce.number().int().min(2000).optional(),
   companyId: z.string().uuid().optional(),
+  page: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().positive().max(100, 'Limite deve ser entre 1 e 100').optional(),
 });
 
 export const overtimeSummaryQuerySchema = z.object({

@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, count, desc, eq, sql } from 'drizzle-orm';
 import { db } from '../db';
 import {
   companies,
@@ -6,6 +6,11 @@ import {
   type NewOvertimeRecord,
   type OvertimeRecord,
 } from '../db/schema';
+import {
+  PaginationHelper,
+  type PaginationQuery,
+  type PaginationResult,
+} from '../helpers/pagination';
 import type {
   IOvertimeRepository,
   OvertimeSummary,
@@ -63,6 +68,36 @@ export const overtimeRepository = {
       .innerJoin(companies, eq(overtimeRecords.companyId, companies.id))
       .where(and(...conditions))
       .orderBy(desc(overtimeRecords.startTime));
+  },
+
+  async findByUserIdPaginated(
+    userId: string,
+    filters: { month?: number; year?: number; companyId?: string },
+    pagination: PaginationQuery
+  ): Promise<PaginationResult<OvertimeWithCompany>> {
+    const conditions = [eq(overtimeRecords.userId, userId)];
+    if (filters.month !== undefined) conditions.push(eq(overtimeRecords.month, filters.month));
+    if (filters.year !== undefined) conditions.push(eq(overtimeRecords.year, filters.year));
+    if (filters.companyId) conditions.push(eq(overtimeRecords.companyId, filters.companyId));
+
+    const [totalResult, rows] = await Promise.all([
+      db
+        .select({ value: count() })
+        .from(overtimeRecords)
+        .where(and(...conditions)),
+      db
+        .select(BASE_SELECT)
+        .from(overtimeRecords)
+        .innerJoin(companies, eq(overtimeRecords.companyId, companies.id))
+        .where(and(...conditions))
+        .orderBy(desc(overtimeRecords.startTime))
+        .limit(pagination.limit)
+        .offset(pagination.offset),
+    ]);
+
+    const total = totalResult[0]?.value ?? 0;
+    const page = Math.floor(pagination.offset / pagination.limit) + 1;
+    return PaginationHelper.createPaginationResult(rows, total, page, pagination.limit);
   },
 
   async update(

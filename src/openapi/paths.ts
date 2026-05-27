@@ -656,9 +656,9 @@ route({
   method: 'get',
   path: '/overtime/',
   tag: 'Overtime',
-  summary: 'Listar registros de hora extra (filtros: month, year, companyId)',
+  summary: 'Listar paginado (filtros: month, year, companyId; params page, limit)',
   query: overtimeListQuerySchema,
-  ok: ok(wrapSuccess(z.array(OvertimeRecordSchema))),
+  ok: ok(wrapPaginated(OvertimeRecordSchema)),
 });
 route({
   method: 'get',

@@ -16,17 +16,26 @@ export const createOvertime = asyncHandler<AuthRequest>(async (req, res) => {
 });
 
 export const getOvertime = asyncHandler<AuthRequest>(async (req, res) => {
-  const { month, year, companyId } = req.query as {
-    month?: string;
-    year?: string;
+  const { month, year, companyId, page, limit } = req.query as {
+    month?: number;
+    year?: number;
     companyId?: string;
+    page?: number;
+    limit?: number;
   };
-  const records = await getOvertimeService(req.user.id, {
-    month: month ? Number(month) : undefined,
-    year: year ? Number(year) : undefined,
+  const result = await getOvertimeService(req.user.id, {
+    month,
+    year,
     companyId,
+    page,
+    limit,
   });
-  return ResponseHandler.success(res, records, 'Registros recuperados com sucesso');
+  return ResponseHandler.paginated(
+    res,
+    result.data,
+    result.pagination,
+    'Registros recuperados com sucesso'
+  );
 });
 
 export const getOvertimeSummary = asyncHandler<AuthRequest>(async (req, res) => {

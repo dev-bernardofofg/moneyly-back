@@ -76,13 +76,33 @@ Armazenar todos no DB — não calcular on-the-fly.
 
 ### Overtime
 
-| Método | Path              | Descrição                                      |
-| ------ | ----------------- | ---------------------------------------------- |
-| POST   | /overtime/        | Criar registro → cria income transaction       |
-| GET    | /overtime/        | Listar (filtros: `month`, `year`, `companyId`) |
-| GET    | /overtime/summary | Resumo do mês: total horas + valor             |
-| PUT    | /overtime/:id     | Editar → recalcula → atualiza transaction      |
-| DELETE | /overtime/:id     | Deletar → deleta transaction vinculada         |
+| Método | Path              | Descrição                                                                       |
+| ------ | ----------------- | ------------------------------------------------------------------------------- |
+| POST   | /overtime/        | Criar registro → cria income transaction                                        |
+| GET    | /overtime/        | Listar paginado (filtros: `month`, `year`, `companyId`; params `page`, `limit`) |
+| GET    | /overtime/summary | Resumo do mês: total horas + valor                                              |
+| PUT    | /overtime/:id     | Editar → recalcula → atualiza transaction                                       |
+| DELETE | /overtime/:id     | Deletar → deleta transaction vinculada                                          |
+
+### Listagem paginada — `GET /overtime`
+
+Defaults: `page=1`, `limit=10`, `maxLimit=100` (mesmo padrão de transactions). Ordenação default: `startTime desc`.
+
+```json
+{
+  "data": [
+    /* OvertimeRecord[] */
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 42,
+    "totalPages": 5,
+    "hasNext": true,
+    "hasPrev": false
+  }
+}
+```
 
 ---
 

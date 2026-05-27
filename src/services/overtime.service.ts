@@ -6,6 +6,7 @@ import { validateActiveCompany } from '../validations/company.validation';
 import { validateOvertimeOwnership, validateTimeRange } from '../validations/overtime.validation';
 import { financialPeriodService } from './financial-period.service';
 import { toSaoPauloTimezone } from '../helpers/dates';
+import { PaginationHelper, type PaginationParams } from '../helpers/pagination';
 import type { CreateOvertimeInput, UpdateOvertimeInput } from '../schemas/overtime.schema';
 
 async function resolveCategory(categoryId: string | undefined, userId: string): Promise<string> {
@@ -76,9 +77,11 @@ export const createOvertimeService = async (userId: string, data: CreateOvertime
 
 export const getOvertimeService = async (
   userId: string,
-  filters?: { month?: number; year?: number; companyId?: string }
+  filters: { month?: number; year?: number; companyId?: string } & PaginationParams
 ) => {
-  return overtimeRepository.findByUserId(userId, filters);
+  const { page, limit, ...rest } = filters;
+  const pagination = PaginationHelper.validateAndParse({ page, limit });
+  return overtimeRepository.findByUserIdPaginated(userId, rest, pagination);
 };
 
 export const getOvertimeSummaryService = async (userId: string, month: number, year: number) => {

@@ -1,4 +1,5 @@
 import type { NewOvertimeRecord, OvertimeRecord } from '../../db/schema';
+import type { PaginationQuery, PaginationResult } from '../../helpers/pagination';
 
 export interface OvertimeWithCompany extends OvertimeRecord {
   company: { id: string; name: string };
@@ -26,6 +27,11 @@ export interface IOvertimeRepository {
     userId: string,
     filters?: { month?: number; year?: number; companyId?: string }
   ): Promise<OvertimeWithCompany[]>;
+  findByUserIdPaginated(
+    userId: string,
+    filters: { month?: number; year?: number; companyId?: string },
+    pagination: PaginationQuery
+  ): Promise<PaginationResult<OvertimeWithCompany>>;
   update(
     id: string,
     userId: string,
