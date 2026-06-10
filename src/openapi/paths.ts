@@ -71,6 +71,7 @@ import {
   getDashboardOverviewQuerySchema,
 } from '../schemas/overview.schema';
 import {
+  fromSubscriptionSchema,
   recurringTransactionSchema,
   recurringTransactionUpdateSchema,
 } from '../schemas/recurring-transaction.schema';
@@ -533,6 +534,14 @@ route({
   tag: 'RecurringTransactions',
   summary: 'Criar transação recorrente',
   body: recurringTransactionSchema,
+  ok: created(wrapSuccess(RecurringTransactionSchema)),
+});
+route({
+  method: 'post',
+  path: '/recurring-transactions/from-subscription',
+  tag: 'RecurringTransactions',
+  summary: 'Converter assinatura detectada em recorrente (F10)',
+  body: fromSubscriptionSchema,
   ok: created(wrapSuccess(RecurringTransactionSchema)),
 });
 route({

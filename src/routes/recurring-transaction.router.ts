@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import {
+  createRecurringFromSubscription,
   createRecurringTransaction,
   deactivateRecurringTransaction,
   deleteRecurringTransaction,
@@ -12,6 +13,7 @@ import { authenticateUser } from '../middlewares/auth';
 import { validate } from '../middlewares/validate';
 import { idParamSchema } from '../schemas/auth.schema';
 import {
+  fromSubscriptionSchema,
   recurringTransactionQuerySchema,
   recurringTransactionSchema,
   recurringTransactionUpdateSchema,
@@ -25,6 +27,11 @@ RecurringTransactionRouter.post(
   '/',
   validate({ body: recurringTransactionSchema }),
   createRecurringTransaction
+);
+RecurringTransactionRouter.post(
+  '/from-subscription',
+  validate({ body: fromSubscriptionSchema }),
+  createRecurringFromSubscription
 );
 RecurringTransactionRouter.get(
   '/',

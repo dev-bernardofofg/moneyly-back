@@ -79,5 +79,25 @@ export const recurringTransactionQuerySchema = z.object({
     .refine((val) => !val || (val > 0 && val <= 100), 'Limite deve ser entre 1 e 100'),
 });
 
+export const fromSubscriptionSchema = z.object({
+  title: z
+    .string({ required_error: 'O título é obrigatório.' })
+    .min(1, 'O título deve ter pelo menos 1 caractere.')
+    .max(100, 'O título pode ter no máximo 100 caracteres.'),
+  amount: amountField,
+  categoryId: z
+    .string({ required_error: 'A categoria é obrigatória.' })
+    .uuid('O ID da categoria deve ser um UUID válido.'),
+  cadence: z.enum(['weekly', 'monthly', 'yearly'], {
+    required_error: "A cadência é obrigatória. Use 'weekly', 'monthly' ou 'yearly'.",
+  }),
+  nextEstimatedDate: z
+    .string({ required_error: 'A data estimada da próxima cobrança é obrigatória.' })
+    .datetime({ message: 'A data estimada deve ser uma data válida no formato ISO 8601.' })
+    .transform((val) => new Date(val)),
+  description: z.string().max(500, 'A descrição pode ter no máximo 500 caracteres.').optional(),
+});
+
 export type CreateRecurringTransactionBody = z.infer<typeof recurringTransactionSchema>;
 export type UpdateRecurringTransactionBody = z.infer<typeof recurringTransactionUpdateSchema>;
+export type FromSubscriptionBody = z.infer<typeof fromSubscriptionSchema>;

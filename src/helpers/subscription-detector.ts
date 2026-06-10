@@ -41,7 +41,7 @@ function monthlyFactor(cadence: SubscriptionCadence): number {
   return 1;
 }
 
-function addCadence(date: Date, cadence: SubscriptionCadence): Date {
+export function addCadence(date: Date, cadence: SubscriptionCadence): Date {
   const d = new Date(date);
   if (cadence === 'weekly') d.setDate(d.getDate() + 7);
   else if (cadence === 'monthly') d.setMonth(d.getMonth() + 1);
