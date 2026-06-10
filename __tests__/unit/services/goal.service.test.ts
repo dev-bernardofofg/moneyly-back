@@ -20,9 +20,12 @@ import {
   validateUpdateGoal,
 } from '../../../src/validations/goal.validation';
 
+import { notifyGoalMilestones } from '../../../src/services/notification.service';
+
 // Mock dos módulos
 jest.mock('../../../src/repositories/goal.repository');
 jest.mock('../../../src/validations/goal.validation');
+jest.mock('../../../src/services/notification.service');
 jest.mock('../../../src/services/financial-period.service', () => ({
   financialPeriodService: {
     createNextPeriods: jest.fn().mockResolvedValue([]),
@@ -391,6 +394,7 @@ describe('GoalService', () => {
     it('adds amount to the goal successfully', async () => {
       (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(mockGoal);
       (validateGoal as jest.Mock).mockReturnValue(undefined);
+      (goalRepository.findMilestonesByGoalId as jest.Mock).mockResolvedValue([]);
       (goalRepository.addAmount as jest.Mock).mockResolvedValue({
         ...mockGoal,
         currentAmount: '1500',
@@ -417,6 +421,77 @@ describe('GoalService', () => {
       );
 
       expect(goalRepository.addAmount).not.toHaveBeenCalled();
+    });
+
+    it('notifies newly reached milestones (F9)', async () => {
+      const milestonesBefore = [
+        { id: 'm25', percentage: 25, isReached: true },
+        { id: 'm50', percentage: 50, isReached: false },
+        { id: 'm75', percentage: 75, isReached: false },
+      ];
+      const milestonesAfter = [
+        { id: 'm25', percentage: 25, isReached: true },
+        { id: 'm50', percentage: 50, isReached: true },
+        { id: 'm75', percentage: 75, isReached: true },
+      ];
+      const updatedGoal = { ...mockGoal, currentAmount: '4000' };
+
+      (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(mockGoal);
+      (validateGoal as jest.Mock).mockReturnValue(undefined);
+      (goalRepository.findMilestonesByGoalId as jest.Mock).mockResolvedValue(milestonesBefore);
+      (goalRepository.addAmount as jest.Mock).mockResolvedValue(updatedGoal);
+      (validateUpdateGoal as jest.Mock).mockReturnValue(undefined);
+      (goalRepository.getGoalWithMilestones as jest.Mock).mockResolvedValue({
+        ...mockUpdatedGoalWithMilestones,
+        milestones: milestonesAfter,
+      });
+
+      await addAmountToGoalService(mockUserId, mockGoalId, 3000);
+
+      expect(notifyGoalMilestones).toHaveBeenCalledTimes(1);
+      expect(notifyGoalMilestones).toHaveBeenCalledWith(mockUserId, updatedGoal, [
+        milestonesAfter[1],
+        milestonesAfter[2],
+      ]);
+    });
+
+    it('does not notify when no new milestone is reached (F9)', async () => {
+      const milestones = [{ id: 'm25', percentage: 25, isReached: true }];
+
+      (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(mockGoal);
+      (validateGoal as jest.Mock).mockReturnValue(undefined);
+      (goalRepository.findMilestonesByGoalId as jest.Mock).mockResolvedValue(milestones);
+      (goalRepository.addAmount as jest.Mock).mockResolvedValue(mockGoal);
+      (validateUpdateGoal as jest.Mock).mockReturnValue(undefined);
+      (goalRepository.getGoalWithMilestones as jest.Mock).mockResolvedValue({
+        ...mockUpdatedGoalWithMilestones,
+        milestones,
+      });
+
+      await addAmountToGoalService(mockUserId, mockGoalId, 10);
+
+      expect(notifyGoalMilestones).not.toHaveBeenCalled();
+    });
+
+    it('notification failure does not break add-amount (F9)', async () => {
+      const milestonesAfter = [{ id: 'm25', percentage: 25, isReached: true }];
+
+      (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(mockGoal);
+      (validateGoal as jest.Mock).mockReturnValue(undefined);
+      (goalRepository.findMilestonesByGoalId as jest.Mock).mockResolvedValue([
+        { id: 'm25', percentage: 25, isReached: false },
+      ]);
+      (goalRepository.addAmount as jest.Mock).mockResolvedValue(mockGoal);
+      (validateUpdateGoal as jest.Mock).mockReturnValue(undefined);
+      (goalRepository.getGoalWithMilestones as jest.Mock).mockResolvedValue({
+        ...mockUpdatedGoalWithMilestones,
+        milestones: milestonesAfter,
+      });
+      (notifyGoalMilestones as jest.Mock).mockRejectedValue(new Error('notification down'));
+
+      const result = await addAmountToGoalService(mockUserId, mockGoalId, 500);
+
+      expect(result).toMatchObject({ id: mockGoalId });
     });
   });
 
