@@ -25,4 +25,5 @@ export interface IRecurringTransactionRepository {
   deactivate(id: string, userId: string): Promise<boolean>;
   delete(id: string, userId: string): Promise<boolean>;
   findAllActive(): Promise<RecurringTransaction[]>;
+  findUpcomingExpenses(from: Date, to: Date): Promise<RecurringTransaction[]>;
 }

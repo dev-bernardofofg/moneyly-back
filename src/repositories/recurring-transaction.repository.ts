@@ -1,4 +1,4 @@
-import { and, count, eq, lte } from 'drizzle-orm';
+import { and, count, eq, gt, lte } from 'drizzle-orm';
 import { db } from '../db';
 import {
   recurringTransactions,
@@ -154,6 +154,21 @@ export const recurringTransactionRepository = {
 
   async findAllActive(): Promise<RecurringTransaction[]> {
     return db.select().from(recurringTransactions).where(eq(recurringTransactions.isActive, true));
+  },
+
+  async findUpcomingExpenses(from: Date, to: Date): Promise<RecurringTransaction[]> {
+    return db
+      .select()
+      .from(recurringTransactions)
+      .where(
+        and(
+          eq(recurringTransactions.isActive, true),
+          eq(recurringTransactions.type, 'expense'),
+          gt(recurringTransactions.nextExecution, from),
+          lte(recurringTransactions.nextExecution, to)
+        )
+      )
+      .orderBy(recurringTransactions.nextExecution);
   },
 } satisfies IRecurringTransactionRepository;
 

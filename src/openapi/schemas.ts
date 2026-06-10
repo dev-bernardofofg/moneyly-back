@@ -404,7 +404,7 @@ export const NotificationSchema = registry.register(
   z.object({
     id: z.string().uuid(),
     userId: z.string().uuid(),
-    type: z.enum(['budget_alert']),
+    type: z.enum(['budget_alert', 'bill_reminder', 'goal_milestone']),
     severity: z.enum(['info', 'warning', 'danger']),
     title: z.string(),
     message: z.string(),

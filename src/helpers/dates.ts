@@ -49,6 +49,11 @@ export function formatBrazilianDate(date: Date | string): string {
   return formatInTimeZone(inputDate, SAO_PAULO_TIMEZONE, 'dd/MM/yyyy');
 }
 
+export function formatIsoDateSaoPaulo(date: Date | string): string {
+  const inputDate = typeof date === 'string' ? new Date(date) : date;
+  return formatInTimeZone(inputDate, SAO_PAULO_TIMEZONE, 'yyyy-MM-dd');
+}
+
 export function formatBrazilianDateTime(date: Date | string): string {
   const inputDate = typeof date === 'string' ? new Date(date) : date;
   return formatInTimeZone(inputDate, SAO_PAULO_TIMEZONE, 'dd/MM/yyyy HH:mm');
