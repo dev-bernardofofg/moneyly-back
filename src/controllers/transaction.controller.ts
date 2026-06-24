@@ -1,9 +1,11 @@
 import { format } from 'date-fns';
+import { formatBrazilianDate } from '../helpers/dates';
 import { ResponseHandler } from '../helpers/response-handler';
 import { buildTransactionFilters } from '../helpers/transaction-filters';
 import { asyncHandler } from '../middlewares/async-handler';
 import type { AuthRequest } from '../middlewares/auth';
 import { BadRequestError } from '../services/errors';
+import { detectSubscriptionsService } from '../services/subscription.service';
 import {
   createTransactionService,
   deleteTransactionService,
@@ -15,7 +17,6 @@ import {
   updateTransactionService,
 } from '../services/transaction.service';
 import { validatePagination } from '../validations/pagination.validation';
-import { detectSubscriptionsService } from '../services/subscription.service';
 
 export const createTransaction = asyncHandler<AuthRequest>(async (req, res) => {
   const { type, title, amount, category, description, date } = req.body;
@@ -140,7 +141,7 @@ export const exportTransactionsCsv = asyncHandler<AuthRequest>(async (req, res) 
     Number(tx.amount).toFixed(2).replace('.', ','),
     tx.category.name,
     tx.description ?? '',
-    format(new Date(tx.date), 'dd/MM/yyyy'),
+    formatBrazilianDate(tx.date),
   ]);
 
   const csv = [headers, ...rows]
