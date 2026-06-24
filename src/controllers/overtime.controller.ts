@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { formatBrazilianDate, formatBrazilianTime } from '../helpers/dates';
 import { ResponseHandler } from '../helpers/response-handler';
 import { asyncHandler } from '../middlewares/async-handler';
 import type { AuthRequest } from '../middlewares/auth';
@@ -63,14 +64,14 @@ export const exportOvertimeCsv = asyncHandler<AuthRequest>(async (req, res) => {
 
   const records = await overtimeRepository.findByUserId(req.user.id, { month, year, companyId });
 
-  const headers = ['Empresa', 'Data', 'Início', 'Fim', 'Horas', 'Valor (R$)'];
+  const headers = ['Empresa', 'Data', 'Início', 'Fim', 'Horas', 'Descrição'];
   const rows = records.map((r) => [
     r.company.name,
-    format(new Date(r.startTime), 'dd/MM/yyyy'),
-    format(new Date(r.startTime), 'HH:mm'),
-    format(new Date(r.endTime), 'HH:mm'),
+    formatBrazilianDate(r.startTime),
+    formatBrazilianTime(r.startTime),
+    formatBrazilianTime(r.endTime),
     Number(r.hoursWorked).toFixed(2).replace('.', ','),
-    Number(r.amount).toFixed(2).replace('.', ','),
+    r.description ?? '',
   ]);
 
   const csv = [headers, ...rows]
