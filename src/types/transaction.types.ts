@@ -1,6 +1,4 @@
-import type { TransactionWithCategory } from '../repositories/transaction.repository';
-
-export type TransactionWithCategoryName = TransactionWithCategory;
+export type { TransactionQueryFilters as TransactionFilters } from '../repositories/interfaces/ITransactionRepository';
 
 export interface ITransaction {
   type: 'income' | 'expense';
@@ -12,20 +10,15 @@ export interface ITransaction {
   recurringTransactionId?: string;
 }
 
-export interface TransactionFilters {
-  category?: string;
-  startDate?: Date;
-  endDate?: Date;
-  periodId?: string;
-  type?: 'income' | 'expense';
-}
-
-export interface TransactionSummary {
-  totalIncome: number;
-  totalExpense: number;
-  balance: number;
-  transactionCount: number;
-}
+export type UpdateTransactionData = Partial<{
+  type: 'income' | 'expense';
+  title: string;
+  amount: string;
+  categoryId: string;
+  description: string;
+  date: Date;
+  periodId: string;
+}>;
 
 export interface TransactionStats {
   totalIncome: number;

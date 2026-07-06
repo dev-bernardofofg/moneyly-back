@@ -6,22 +6,14 @@ import { asyncHandler } from '../middlewares/async-handler';
 import type { AuthRequest } from '../middlewares/auth';
 import { BadRequestError } from '../services/errors';
 import { detectSubscriptionsService } from '../services/subscription.service';
-import {
-  createTransactionService,
-  deleteTransactionService,
-  getCurrentPeriodSummaryService,
-  getMonthlySummaryService,
-  getTransactionListService,
-  getTransactionsPaginatedService,
-  getTransactionSummaryService,
-  updateTransactionService,
-} from '../services/transaction.service';
+import { transactionService } from '../services/transaction.service';
+import type { UpdateTransactionData } from '../types/transaction.types';
 import { validatePagination } from '../validations/pagination.validation';
 
 export const createTransaction = asyncHandler<AuthRequest>(async (req, res) => {
   const { type, title, amount, category, description, date } = req.body;
 
-  const newTransaction = await createTransactionService(req.user.id, {
+  const newTransaction = await transactionService.create(req.user.id, {
     type,
     title,
     amount,
@@ -39,8 +31,8 @@ export const getTransactions = asyncHandler<AuthRequest>(async (req, res) => {
   const pagination = await validatePagination(page, limit);
 
   const [paginatedResult, summary] = await Promise.all([
-    pagination ? getTransactionsPaginatedService(req.user.id, pagination, filters) : null,
-    getTransactionListService(req.user.id, filters),
+    pagination ? transactionService.getPaginated(req.user.id, pagination, filters) : null,
+    transactionService.getList(req.user.id, filters),
   ]);
 
   const transactionSummary = {
@@ -85,14 +77,7 @@ export const updateTransaction = asyncHandler<AuthRequest>(async (req, res) => {
 
   const { type, title, amount, category, description, date } = req.body;
 
-  const updateData: Partial<{
-    type: 'income' | 'expense';
-    title: string;
-    amount: string;
-    categoryId: string;
-    description: string;
-    date: Date;
-  }> = {};
+  const updateData: UpdateTransactionData = {};
   if (date) updateData.date = new Date(date);
   if (type) updateData.type = type;
   if (title) updateData.title = title;
@@ -100,7 +85,7 @@ export const updateTransaction = asyncHandler<AuthRequest>(async (req, res) => {
   if (category) updateData.categoryId = category;
   if (description) updateData.description = description;
 
-  const transaction = await updateTransactionService(id, req.user.id, updateData);
+  const transaction = await transactionService.update(id, req.user.id, updateData);
   return ResponseHandler.success(res, transaction, 'Transação atualizada com sucesso');
 });
 
@@ -108,30 +93,26 @@ export const deleteTransaction = asyncHandler<AuthRequest>(async (req, res) => {
   const { id } = req.params;
   if (!id) throw new BadRequestError('ID da transação não fornecido');
 
-  await deleteTransactionService(id, req.user.id);
+  await transactionService.delete(id, req.user.id);
   return ResponseHandler.success(res, null, 'Transação deletada com sucesso');
 });
 
 export const getTransactionSummary = asyncHandler<AuthRequest>(async (req, res) => {
-  const summary = await getTransactionSummaryService(req.user.id);
+  const summary = await transactionService.getSummary(req.user.id);
   return ResponseHandler.success(res, summary, 'Resumo das transações gerado com sucesso');
 });
 
 export const getMonthlySummary = asyncHandler<AuthRequest>(async (req, res) => {
-  const { startDate, endDate } = req.query;
+  const filters = buildTransactionFilters(req.query);
 
-  const filters: { startDate?: Date; endDate?: Date } = {};
-  if (startDate) filters.startDate = new Date(startDate as string);
-  if (endDate) filters.endDate = new Date(endDate as string);
-
-  const summaryArray = await getMonthlySummaryService(req.user.id, filters);
+  const summaryArray = await transactionService.getMonthly(req.user.id, filters);
   return ResponseHandler.success(res, summaryArray, 'Resumo mensal gerado com sucesso');
 });
 
 export const exportTransactionsCsv = asyncHandler<AuthRequest>(async (req, res) => {
   const filters = buildTransactionFilters(req.query);
 
-  const { transactions } = await getTransactionListService(req.user.id, filters);
+  const { transactions } = await transactionService.getList(req.user.id, filters);
 
   const headers = ['ID', 'Tipo', 'Título', 'Valor', 'Categoria', 'Descrição', 'Data'];
   const rows = transactions.map((tx) => [
@@ -160,7 +141,7 @@ export const getSubscriptions = asyncHandler<AuthRequest>(async (req, res) => {
 });
 
 export const getCurrentFinancialPeriodSummary = asyncHandler<AuthRequest>(async (req, res) => {
-  const summary = await getCurrentPeriodSummaryService(req.user.id);
+  const summary = await transactionService.getCurrentPeriod(req.user.id);
   return ResponseHandler.success(
     res,
     summary,
