@@ -1,32 +1,37 @@
 /**
- * Testes unitários para TransactionService
+ * Unit tests for the transaction service (factory with injected dependencies).
  */
 
-import { transactionRepository } from '../../../src/repositories/transaction.repository';
 import {
-  createTransactionService,
-  updateTransactionService,
+  makeTransactionService,
+  type TransactionServiceDeps,
 } from '../../../src/services/transaction.service';
-import { validateCategoryExistsForUser } from '../../../src/validations/transaction.validation';
 
-// Mock dos módulos
-jest.mock('../../../src/repositories/transaction.repository');
-jest.mock('../../../src/validations/transaction.validation');
-jest.mock('../../../src/services/financial-period.service', () => ({
-  financialPeriodService: {
-    findOrCreatePeriodForDate: jest.fn().mockResolvedValue('p1'),
-    ensureCurrentPeriodExists: jest.fn().mockResolvedValue({ id: 'p1' }),
-  },
-}));
+const buildDeps = () => {
+  const deps = {
+    transactionRepository: {
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      findByUserId: jest.fn(),
+      findByUserIdPaginated: jest.fn(),
+      findAllByUserId: jest.fn(),
+    },
+    userRepository: {
+      findById: jest.fn(),
+    },
+    financialPeriodService: {
+      findOrCreatePeriodForDate: jest.fn().mockResolvedValue('p1'),
+    },
+    validateCategory: jest.fn(),
+  };
+  return deps as unknown as TransactionServiceDeps & typeof deps;
+};
 
-describe('TransactionService', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  describe('createTransactionService', () => {
-    const mockUserId = 'user-123';
-    const mockTransactionData = {
+describe('transaction service', () => {
+  describe('create', () => {
+    const userId = 'user-123';
+    const transactionData = {
       type: 'expense' as const,
       title: 'Almoço',
       amount: '45.50',
@@ -35,181 +40,164 @@ describe('TransactionService', () => {
       date: new Date('2024-01-15'),
     };
 
-    const mockCreatedTransaction = {
+    const created = {
       id: 'trans-123',
-      userId: mockUserId,
+      userId,
       type: 'expense',
       title: 'Almoço',
       amount: '45.50',
       categoryId: 'cat-123',
       description: 'Restaurante X',
       date: new Date('2024-01-15'),
-      periodId: 'period-123',
+      periodId: 'p1',
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
     it('creates a transaction successfully', async () => {
-      (validateCategoryExistsForUser as jest.Mock).mockResolvedValue(undefined);
-      (transactionRepository.create as jest.Mock).mockResolvedValue(mockCreatedTransaction);
+      const deps = buildDeps();
+      deps.validateCategory.mockResolvedValue(undefined);
+      deps.transactionRepository.create.mockResolvedValue(created);
 
-      const result = await createTransactionService(mockUserId, mockTransactionData);
+      const service = makeTransactionService(deps);
+      const result = await service.create(userId, transactionData);
 
-      expect(validateCategoryExistsForUser).toHaveBeenCalledWith(
-        mockTransactionData.category,
-        mockUserId
-      );
-      expect(transactionRepository.create).toHaveBeenCalledWith(
+      expect(deps.validateCategory).toHaveBeenCalledWith(transactionData.category, userId);
+      expect(deps.transactionRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          userId: mockUserId,
-          type: mockTransactionData.type,
-          title: mockTransactionData.title,
-          amount: mockTransactionData.amount,
-          categoryId: mockTransactionData.category,
-          description: mockTransactionData.description,
+          userId,
+          type: transactionData.type,
+          title: transactionData.title,
+          amount: transactionData.amount,
+          categoryId: transactionData.category,
+          description: transactionData.description,
+          periodId: 'p1',
         })
       );
-      expect(result).toEqual(mockCreatedTransaction);
+      expect(result).toEqual(created);
     });
 
     it('creates a transaction with the current date when no date is provided', async () => {
-      const dataWithoutDate = { ...mockTransactionData };
-      delete (dataWithoutDate as Partial<typeof mockTransactionData>).date;
+      const deps = buildDeps();
+      deps.validateCategory.mockResolvedValue(undefined);
+      deps.transactionRepository.create.mockResolvedValue(created);
 
-      (validateCategoryExistsForUser as jest.Mock).mockResolvedValue(undefined);
-      (transactionRepository.create as jest.Mock).mockResolvedValue(mockCreatedTransaction);
+      const dataWithoutDate = { ...transactionData };
+      delete (dataWithoutDate as Partial<typeof transactionData>).date;
 
-      await createTransactionService(mockUserId, dataWithoutDate as any);
+      const service = makeTransactionService(deps);
+      await service.create(userId, dataWithoutDate as typeof transactionData);
 
-      expect(transactionRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          userId: mockUserId,
-          date: expect.any(Date),
-        })
+      expect(deps.transactionRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ userId, date: expect.any(Date) })
       );
     });
 
-    it('throws an error when the category does not exist', async () => {
-      (validateCategoryExistsForUser as jest.Mock).mockRejectedValue(
-        new Error('Categoria não encontrada')
-      );
+    it('throws when the category does not exist and does not create', async () => {
+      const deps = buildDeps();
+      deps.validateCategory.mockRejectedValue(new Error('Categoria não encontrada'));
 
-      await expect(createTransactionService(mockUserId, mockTransactionData)).rejects.toThrow(
+      const service = makeTransactionService(deps);
+
+      await expect(service.create(userId, transactionData)).rejects.toThrow(
         'Categoria não encontrada'
       );
-
-      expect(transactionRepository.create).not.toHaveBeenCalled();
-    });
-
-    it('throws an error when the category does not belong to the user', async () => {
-      (validateCategoryExistsForUser as jest.Mock).mockRejectedValue(
-        new Error('Categoria não pertence ao usuário')
-      );
-
-      await expect(createTransactionService(mockUserId, mockTransactionData)).rejects.toThrow(
-        'Categoria não pertence ao usuário'
-      );
-
-      expect(transactionRepository.create).not.toHaveBeenCalled();
+      expect(deps.transactionRepository.create).not.toHaveBeenCalled();
     });
   });
 
-  describe('updateTransactionService', () => {
-    const mockTransactionId = 'trans-123';
-    const mockUserId = 'user-123';
+  describe('update', () => {
+    const id = 'trans-123';
+    const userId = 'user-123';
 
-    const mockUpdatedTransaction = {
-      id: mockTransactionId,
-      userId: mockUserId,
+    const updated = {
+      id,
+      userId,
       type: 'expense' as const,
       title: 'Jantar Atualizado',
       amount: '80.00',
       categoryId: 'cat-456',
       description: 'Restaurante Y',
       date: new Date('2024-01-20'),
-      periodId: 'period-123',
+      periodId: 'p1',
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
     it('updates a transaction successfully', async () => {
-      const updateData = {
-        title: 'Jantar Atualizado',
-        amount: '80.00',
-        categoryId: 'cat-456',
-      };
+      const deps = buildDeps();
+      const updateData = { title: 'Jantar Atualizado', amount: '80.00', categoryId: 'cat-456' };
+      deps.validateCategory.mockResolvedValue(undefined);
+      deps.transactionRepository.update.mockResolvedValue(updated);
 
-      (validateCategoryExistsForUser as jest.Mock).mockResolvedValue(undefined);
-      (transactionRepository.update as jest.Mock).mockResolvedValue(mockUpdatedTransaction);
+      const service = makeTransactionService(deps);
+      const result = await service.update(id, userId, updateData);
 
-      const result = await updateTransactionService(mockTransactionId, mockUserId, updateData);
-
-      expect(validateCategoryExistsForUser).toHaveBeenCalledWith(updateData.categoryId, mockUserId);
-      expect(transactionRepository.update).toHaveBeenCalledWith(
-        mockTransactionId,
-        mockUserId,
-        updateData
-      );
-      expect(result).toEqual(mockUpdatedTransaction);
+      expect(deps.validateCategory).toHaveBeenCalledWith(updateData.categoryId, userId);
+      expect(deps.transactionRepository.update).toHaveBeenCalledWith(id, userId, updateData);
+      expect(result).toEqual(updated);
     });
 
-    it('updates a transaction without validating the category when it is unchanged', async () => {
-      const updateData = {
-        title: 'Título Atualizado',
-        amount: '100.00',
-      };
+    it('does not validate the category when it is unchanged', async () => {
+      const deps = buildDeps();
+      const updateData = { title: 'Título Atualizado', amount: '100.00' };
+      deps.transactionRepository.update.mockResolvedValue(updated);
 
-      (transactionRepository.update as jest.Mock).mockResolvedValue(mockUpdatedTransaction);
+      const service = makeTransactionService(deps);
+      await service.update(id, userId, updateData);
 
-      await updateTransactionService(mockTransactionId, mockUserId, updateData);
+      expect(deps.validateCategory).not.toHaveBeenCalled();
+      expect(deps.transactionRepository.update).toHaveBeenCalledWith(id, userId, updateData);
+    });
 
-      expect(validateCategoryExistsForUser).not.toHaveBeenCalled();
-      expect(transactionRepository.update).toHaveBeenCalledWith(
-        mockTransactionId,
-        mockUserId,
-        updateData
+    it('throws when the transaction is not found', async () => {
+      const deps = buildDeps();
+      deps.transactionRepository.update.mockResolvedValue(null);
+
+      const service = makeTransactionService(deps);
+
+      await expect(service.update(id, userId, { title: 'Novo Título' })).rejects.toThrow(
+        'Transação não encontrada'
       );
     });
 
-    it('throws an error when the transaction is not found', async () => {
-      (transactionRepository.update as jest.Mock).mockResolvedValue(null);
+    it('throws when the new category does not exist and does not update', async () => {
+      const deps = buildDeps();
+      deps.validateCategory.mockRejectedValue(new Error('Categoria não encontrada'));
 
-      await expect(
-        updateTransactionService(mockTransactionId, mockUserId, {
-          title: 'Novo Título',
-        })
-      ).rejects.toThrow('Transação não encontrada');
-    });
+      const service = makeTransactionService(deps);
 
-    it('throws an error when the new category does not exist', async () => {
-      (validateCategoryExistsForUser as jest.Mock).mockRejectedValue(
-        new Error('Categoria não encontrada')
+      await expect(service.update(id, userId, { categoryId: 'cat-invalid' })).rejects.toThrow(
+        'Categoria não encontrada'
       );
-
-      await expect(
-        updateTransactionService(mockTransactionId, mockUserId, {
-          categoryId: 'cat-invalid',
-        })
-      ).rejects.toThrow('Categoria não encontrada');
-
-      expect(transactionRepository.update).not.toHaveBeenCalled();
+      expect(deps.transactionRepository.update).not.toHaveBeenCalled();
     });
 
-    it('applies timezone when the date is updated', async () => {
-      const updateData = {
-        date: new Date('2024-02-01T10:00:00Z'),
-      };
+    it('applies timezone and resolves the period when the date is updated', async () => {
+      const deps = buildDeps();
+      deps.transactionRepository.update.mockResolvedValue(updated);
 
-      (transactionRepository.update as jest.Mock).mockResolvedValue(mockUpdatedTransaction);
+      const service = makeTransactionService(deps);
+      await service.update(id, userId, { date: new Date('2024-02-01T10:00:00Z') });
 
-      await updateTransactionService(mockTransactionId, mockUserId, updateData);
+      expect(deps.financialPeriodService.findOrCreatePeriodForDate).toHaveBeenCalled();
+      expect(deps.transactionRepository.update).toHaveBeenCalledWith(
+        id,
+        userId,
+        expect.objectContaining({ date: expect.any(Date), periodId: 'p1' })
+      );
+    });
+  });
 
-      expect(transactionRepository.update).toHaveBeenCalledWith(
-        mockTransactionId,
-        mockUserId,
-        expect.objectContaining({
-          date: expect.any(Date),
-        })
+  describe('delete', () => {
+    it('throws when the transaction to delete is not found', async () => {
+      const deps = buildDeps();
+      deps.transactionRepository.delete.mockResolvedValue(null);
+
+      const service = makeTransactionService(deps);
+
+      await expect(service.delete('trans-x', 'user-123')).rejects.toThrow(
+        'Transação não encontrada'
       );
     });
   });
