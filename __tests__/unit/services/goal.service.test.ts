@@ -1,52 +1,46 @@
 /**
- * Unit tests for GoalService
+ * Unit tests for the goal service (factory with injected dependencies).
  */
 
-import { goalRepository } from '../../../src/repositories/goal.repository';
-import {
-  addAmountToGoalService,
-  createGoalService,
-  deleteGoalService,
-  getGoalByIdService,
-  getGoalsProgressService,
-  getGoalsService,
-  getGoalStatusService,
-  updateGoalService,
-} from '../../../src/services/goal.service';
-import {
-  validateDeleteGoal,
-  validateGoal,
-  validateGoalExists,
-  validateUpdateGoal,
-} from '../../../src/validations/goal.validation';
+import { makeGoalService, type GoalServiceDeps } from '../../../src/services/goal.service';
 
-// Mock dos módulos
-jest.mock('../../../src/repositories/goal.repository');
-jest.mock('../../../src/validations/goal.validation');
-jest.mock('../../../src/services/financial-period.service', () => ({
-  financialPeriodService: {
-    createNextPeriods: jest.fn().mockResolvedValue([]),
-    ensureCurrentPeriodExists: jest.fn().mockResolvedValue({ id: 'p1' }),
-  },
-}));
+const buildDeps = () => {
+  const deps = {
+    goalRepository: {
+      create: jest.fn(),
+      findByUserIdActive: jest.fn(),
+      findByIdAndUserId: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      addAmount: jest.fn(),
+      getGoalWithMilestones: jest.fn(),
+    },
+    financialPeriodService: {
+      createNextPeriods: jest.fn().mockResolvedValue([]),
+    },
+    validations: {
+      validateGoal: jest.fn(),
+      validateGoalExists: jest.fn(),
+      validateUpdateGoal: jest.fn(),
+      validateDeleteGoal: jest.fn(),
+    },
+  };
+  return deps as unknown as GoalServiceDeps & typeof deps;
+};
 
-describe('GoalService', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  describe('createGoalService', () => {
-    const mockUserId = 'user-123';
-    const mockGoalData = {
+describe('goal service', () => {
+  describe('create', () => {
+    const userId = 'user-123';
+    const goalData = {
       title: 'Viagem para Europa',
       description: 'Férias de verão',
       targetAmount: 10000,
       targetDate: '2024-12-31',
     };
 
-    const mockCreatedGoal = {
+    const created = {
       id: 'goal-123',
-      userId: mockUserId,
+      userId,
       title: 'Viagem para Europa',
       description: 'Férias de verão',
       targetAmount: '10000',
@@ -58,94 +52,70 @@ describe('GoalService', () => {
     };
 
     it('creates a goal successfully', async () => {
-      (goalRepository.create as jest.Mock).mockResolvedValue(mockCreatedGoal);
+      const deps = buildDeps();
+      deps.goalRepository.create.mockResolvedValue(created);
 
-      const result = await createGoalService(mockUserId, mockGoalData);
+      const service = makeGoalService(deps);
+      const result = await service.create(userId, goalData);
 
-      expect(goalRepository.create).toHaveBeenCalledWith({
-        userId: mockUserId,
-        title: mockGoalData.title,
-        description: mockGoalData.description,
-        targetAmount: mockGoalData.targetAmount.toString(),
-        targetDate: new Date(mockGoalData.targetDate),
+      expect(deps.goalRepository.create).toHaveBeenCalledWith({
+        userId,
+        title: goalData.title,
+        description: goalData.description,
+        targetAmount: goalData.targetAmount.toString(),
+        targetDate: new Date(goalData.targetDate),
       });
-      expect(result).toEqual(mockCreatedGoal);
+      expect(deps.financialPeriodService.createNextPeriods).toHaveBeenCalledWith(
+        userId,
+        expect.any(Number)
+      );
+      expect(result).toEqual(created);
     });
 
     it('creates a goal without description', async () => {
-      const dataWithoutDescription = {
+      const deps = buildDeps();
+      deps.goalRepository.create.mockResolvedValue({ ...created, description: undefined });
+
+      const service = makeGoalService(deps);
+      await service.create(userId, {
         title: 'Nova Meta',
         targetAmount: 5000,
         targetDate: '2024-06-30',
-      };
-
-      (goalRepository.create as jest.Mock).mockResolvedValue({
-        ...mockCreatedGoal,
-        description: undefined,
       });
 
-      await createGoalService(mockUserId, dataWithoutDescription);
-
-      expect(goalRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          description: undefined,
-        })
+      expect(deps.goalRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ description: undefined })
       );
     });
 
-    it('converts targetAmount to string', async () => {
-      (goalRepository.create as jest.Mock).mockResolvedValue(mockCreatedGoal);
+    it('converts targetAmount to string and targetDate to Date', async () => {
+      const deps = buildDeps();
+      deps.goalRepository.create.mockResolvedValue(created);
 
-      await createGoalService(mockUserId, {
-        ...mockGoalData,
-        targetAmount: 15000.5,
-      });
+      const service = makeGoalService(deps);
+      await service.create(userId, { ...goalData, targetAmount: 15000.5 });
 
-      expect(goalRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          targetAmount: '15000.5',
-        })
-      );
-    });
-
-    it('converts targetDate to Date', async () => {
-      (goalRepository.create as jest.Mock).mockResolvedValue(mockCreatedGoal);
-
-      await createGoalService(mockUserId, mockGoalData);
-
-      expect(goalRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          targetDate: expect.any(Date),
-        })
+      expect(deps.goalRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ targetAmount: '15000.5', targetDate: expect.any(Date) })
       );
     });
   });
 
-  describe('getGoalsService', () => {
-    const mockUserId = 'user-123';
-    const mockGoals = [
-      {
-        id: 'goal-1',
-        userId: mockUserId,
-        title: 'Meta 1',
-        targetAmount: '5000',
-        isActive: true,
-      },
-      {
-        id: 'goal-2',
-        userId: mockUserId,
-        title: 'Meta 2',
-        targetAmount: '10000',
-        isActive: true,
-      },
+  describe('getGoals', () => {
+    const userId = 'user-123';
+    const goals = [
+      { id: 'goal-1', userId, title: 'Meta 1', targetAmount: '5000', isActive: true },
+      { id: 'goal-2', userId, title: 'Meta 2', targetAmount: '10000', isActive: true },
     ];
 
-    it('returns all active goals for the user', async () => {
-      (goalRepository.findByUserIdActive as jest.Mock).mockResolvedValue(mockGoals);
+    it('returns all active goals with computed progress', async () => {
+      const deps = buildDeps();
+      deps.goalRepository.findByUserIdActive.mockResolvedValue(goals);
 
-      const result = await getGoalsService(mockUserId);
+      const service = makeGoalService(deps);
+      const result = await service.getGoals(userId);
 
-      expect(goalRepository.findByUserIdActive).toHaveBeenCalledWith(mockUserId);
+      expect(deps.goalRepository.findByUserIdActive).toHaveBeenCalledWith(userId);
       expect(result).toHaveLength(2);
       expect(result[0]).toHaveProperty('progress');
       expect(result[0]!.progress).toHaveProperty('percentage');
@@ -153,101 +123,93 @@ describe('GoalService', () => {
     });
 
     it('returns an empty array when the user has no goals', async () => {
-      (goalRepository.findByUserIdActive as jest.Mock).mockResolvedValue([]);
+      const deps = buildDeps();
+      deps.goalRepository.findByUserIdActive.mockResolvedValue([]);
 
-      const result = await getGoalsService(mockUserId);
+      const service = makeGoalService(deps);
+      const result = await service.getGoals(userId);
 
       expect(result).toEqual([]);
-      expect(result).toHaveLength(0);
     });
   });
 
-  describe('getGoalsProgressService', () => {
-    const mockUserId = 'user-123';
-    const mockGoals = [{ id: 'goal-1' }, { id: 'goal-2' }];
+  describe('getProgress', () => {
+    const userId = 'user-123';
 
-    const mockGoalsWithProgress = [
-      {
-        id: 'goal-1',
-        title: 'Meta 1',
-        progress: { percentage: 50, daysRemaining: 30 },
-        milestones: [],
-      },
-      {
-        id: 'goal-2',
-        title: 'Meta 2',
-        progress: { percentage: 75, daysRemaining: 60 },
-        milestones: [],
-      },
-    ];
+    it('returns goals with milestones for each active goal', async () => {
+      const deps = buildDeps();
+      const withProgress = [
+        {
+          id: 'goal-1',
+          title: 'Meta 1',
+          progress: { percentage: 50, daysRemaining: 30 },
+          milestones: [],
+        },
+        {
+          id: 'goal-2',
+          title: 'Meta 2',
+          progress: { percentage: 75, daysRemaining: 60 },
+          milestones: [],
+        },
+      ];
+      deps.goalRepository.findByUserIdActive.mockResolvedValue([
+        { id: 'goal-1' },
+        { id: 'goal-2' },
+      ]);
+      deps.goalRepository.getGoalWithMilestones
+        .mockResolvedValueOnce(withProgress[0])
+        .mockResolvedValueOnce(withProgress[1]);
 
-    it('returns goals with computed progress', async () => {
-      (goalRepository.findByUserIdActive as jest.Mock).mockResolvedValue(mockGoals);
-      (goalRepository.getGoalWithMilestones as jest.Mock)
-        .mockResolvedValueOnce(mockGoalsWithProgress[0])
-        .mockResolvedValueOnce(mockGoalsWithProgress[1]);
+      const service = makeGoalService(deps);
+      const result = await service.getProgress(userId);
 
-      const result = await getGoalsProgressService(mockUserId);
-
-      expect(goalRepository.getGoalWithMilestones).toHaveBeenCalledTimes(2);
-      expect(goalRepository.getGoalWithMilestones).toHaveBeenCalledWith('goal-1');
-      expect(goalRepository.getGoalWithMilestones).toHaveBeenCalledWith('goal-2');
-      expect(result).toEqual(mockGoalsWithProgress);
+      expect(deps.goalRepository.getGoalWithMilestones).toHaveBeenCalledTimes(2);
+      expect(deps.goalRepository.getGoalWithMilestones).toHaveBeenCalledWith('goal-1');
+      expect(deps.goalRepository.getGoalWithMilestones).toHaveBeenCalledWith('goal-2');
+      expect(result).toEqual(withProgress);
     });
   });
 
-  describe('getGoalByIdService', () => {
-    const mockUserId = 'user-123';
-    const mockGoalId = 'goal-123';
-    const mockGoal = {
-      id: mockGoalId,
-      userId: mockUserId,
-      title: 'Meta Específica',
-      targetAmount: '5000',
-    };
+  describe('getById', () => {
+    const userId = 'user-123';
+    const goalId = 'goal-123';
+    const goal = { id: goalId, userId, title: 'Meta Específica', targetAmount: '5000' };
 
-    it("returns the user's specific goal", async () => {
-      const mockGoalWithMilestones = {
-        ...mockGoal,
-        milestones: [],
-      };
+    it("returns the user's specific goal with milestones", async () => {
+      const deps = buildDeps();
+      const withMilestones = { ...goal, milestones: [] };
+      deps.goalRepository.findByIdAndUserId.mockResolvedValue(goal);
+      deps.goalRepository.getGoalWithMilestones.mockResolvedValue(withMilestones);
 
-      (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(mockGoal);
-      (goalRepository.getGoalWithMilestones as jest.Mock).mockResolvedValue(mockGoalWithMilestones);
-      (validateGoalExists as jest.Mock).mockReturnValue(undefined);
+      const service = makeGoalService(deps);
+      const result = await service.getById(userId, goalId);
 
-      const result = await getGoalByIdService(mockUserId, mockGoalId);
-
-      expect(goalRepository.findByIdAndUserId).toHaveBeenCalledWith(mockGoalId, mockUserId);
-      expect(validateGoalExists).toHaveBeenCalledWith(mockGoal);
-      expect(goalRepository.getGoalWithMilestones).toHaveBeenCalledWith(mockGoalId);
-      expect(result).toEqual(mockGoalWithMilestones);
+      expect(deps.goalRepository.findByIdAndUserId).toHaveBeenCalledWith(goalId, userId);
+      expect(deps.validations.validateGoalExists).toHaveBeenCalledWith(goal);
+      expect(deps.goalRepository.getGoalWithMilestones).toHaveBeenCalledWith(goalId);
+      expect(result).toEqual(withMilestones);
     });
 
     it('validates whether the goal exists', async () => {
-      (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(null);
-      (validateGoalExists as jest.Mock).mockImplementation((goal) => {
-        if (!goal) throw new Error('Meta não encontrada');
+      const deps = buildDeps();
+      deps.goalRepository.findByIdAndUserId.mockResolvedValue(null);
+      deps.validations.validateGoalExists.mockImplementation((g: unknown) => {
+        if (!g) throw new Error('Meta não encontrada');
       });
 
-      await expect(getGoalByIdService(mockUserId, mockGoalId)).rejects.toThrow(
-        'Meta não encontrada'
-      );
+      const service = makeGoalService(deps);
+
+      await expect(service.getById(userId, goalId)).rejects.toThrow('Meta não encontrada');
     });
   });
 
-  describe('updateGoalService', () => {
-    const mockUserId = 'user-123';
-    const mockGoalId = 'goal-123';
-    const mockGoal = {
-      id: mockGoalId,
-      userId: mockUserId,
-      title: 'Meta Original',
-      targetAmount: '5000',
-    };
+  describe('update', () => {
+    const userId = 'user-123';
+    const goalId = 'goal-123';
+    const goal = { id: goalId, userId, title: 'Meta Original', targetAmount: '5000' };
 
-    const mockUpdatedGoalWithMilestones = {
-      id: mockGoalId,
+    const updatedWithMilestones = {
+      id: goalId,
       title: 'Meta Atualizada',
       targetAmount: '7500',
       progress: { percentage: 60, daysRemaining: 45 },
@@ -255,176 +217,147 @@ describe('GoalService', () => {
     };
 
     it('updates a goal successfully', async () => {
-      (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(mockGoal);
-      (validateGoal as jest.Mock).mockReturnValue(undefined);
-      (goalRepository.update as jest.Mock).mockResolvedValue({
-        ...mockGoal,
-        title: 'Meta Atualizada',
-      });
-      (validateUpdateGoal as jest.Mock).mockReturnValue(undefined);
-      (goalRepository.getGoalWithMilestones as jest.Mock).mockResolvedValue(
-        mockUpdatedGoalWithMilestones
-      );
+      const deps = buildDeps();
+      deps.goalRepository.findByIdAndUserId.mockResolvedValue(goal);
+      deps.goalRepository.update.mockResolvedValue({ ...goal, title: 'Meta Atualizada' });
+      deps.goalRepository.getGoalWithMilestones.mockResolvedValue(updatedWithMilestones);
 
-      const result = await updateGoalService(mockUserId, mockGoalId, {
+      const service = makeGoalService(deps);
+      const result = await service.update(userId, goalId, {
         title: 'Meta Atualizada',
         targetAmount: 7500,
       });
 
-      expect(goalRepository.update).toHaveBeenCalledWith(
-        mockGoalId,
-        expect.objectContaining({
-          title: 'Meta Atualizada',
-          targetAmount: '7500',
-        })
+      expect(deps.goalRepository.update).toHaveBeenCalledWith(
+        goalId,
+        expect.objectContaining({ title: 'Meta Atualizada', targetAmount: '7500' })
       );
-      expect(result).toEqual(mockUpdatedGoalWithMilestones);
+      expect(result).toEqual(updatedWithMilestones);
     });
 
     it('updates only the provided fields', async () => {
-      (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(mockGoal);
-      (validateGoal as jest.Mock).mockReturnValue(undefined);
-      (goalRepository.update as jest.Mock).mockResolvedValue(mockGoal);
-      (validateUpdateGoal as jest.Mock).mockReturnValue(undefined);
-      (goalRepository.getGoalWithMilestones as jest.Mock).mockResolvedValue(
-        mockUpdatedGoalWithMilestones
-      );
+      const deps = buildDeps();
+      deps.goalRepository.findByIdAndUserId.mockResolvedValue(goal);
+      deps.goalRepository.update.mockResolvedValue(goal);
+      deps.goalRepository.getGoalWithMilestones.mockResolvedValue(updatedWithMilestones);
 
-      await updateGoalService(mockUserId, mockGoalId, {
-        title: 'Novo Título',
-      });
+      const service = makeGoalService(deps);
+      await service.update(userId, goalId, { title: 'Novo Título' });
 
-      expect(goalRepository.update).toHaveBeenCalledWith(mockGoalId, {
-        title: 'Novo Título',
-      });
+      expect(deps.goalRepository.update).toHaveBeenCalledWith(goalId, { title: 'Novo Título' });
     });
 
-    it('converts targetDate to Date when provided', async () => {
-      (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(mockGoal);
-      (validateGoal as jest.Mock).mockReturnValue(undefined);
-      (goalRepository.update as jest.Mock).mockResolvedValue(mockGoal);
-      (validateUpdateGoal as jest.Mock).mockReturnValue(undefined);
-      (goalRepository.getGoalWithMilestones as jest.Mock).mockResolvedValue(
-        mockUpdatedGoalWithMilestones
-      );
+    it('converts targetDate to Date and extends periods when provided', async () => {
+      const deps = buildDeps();
+      deps.goalRepository.findByIdAndUserId.mockResolvedValue(goal);
+      deps.goalRepository.update.mockResolvedValue(goal);
+      deps.goalRepository.getGoalWithMilestones.mockResolvedValue(updatedWithMilestones);
 
-      await updateGoalService(mockUserId, mockGoalId, {
-        targetDate: '2025-12-31',
-      });
+      const service = makeGoalService(deps);
+      await service.update(userId, goalId, { targetDate: '2025-12-31' });
 
-      expect(goalRepository.update).toHaveBeenCalledWith(
-        mockGoalId,
-        expect.objectContaining({
-          targetDate: expect.any(Date),
-        })
+      expect(deps.goalRepository.update).toHaveBeenCalledWith(
+        goalId,
+        expect.objectContaining({ targetDate: expect.any(Date) })
       );
+      expect(deps.financialPeriodService.createNextPeriods).toHaveBeenCalled();
     });
 
     it('validates that the goal belongs to the user', async () => {
-      (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(mockGoal);
-      (validateGoal as jest.Mock).mockImplementation(() => {
+      const deps = buildDeps();
+      deps.goalRepository.findByIdAndUserId.mockResolvedValue(goal);
+      deps.validations.validateGoal.mockImplementation(() => {
         throw new Error('Meta não pertence ao usuário');
       });
 
-      await expect(updateGoalService(mockUserId, mockGoalId, { title: 'Novo' })).rejects.toThrow(
+      const service = makeGoalService(deps);
+
+      await expect(service.update(userId, goalId, { title: 'Novo' })).rejects.toThrow(
         'Meta não pertence ao usuário'
       );
-
-      expect(goalRepository.update).not.toHaveBeenCalled();
+      expect(deps.goalRepository.update).not.toHaveBeenCalled();
     });
   });
 
-  describe('deleteGoalService', () => {
-    const mockUserId = 'user-123';
-    const mockGoalId = 'goal-123';
-    const mockGoal = {
-      id: mockGoalId,
-      userId: mockUserId,
-      title: 'Meta a Deletar',
-    };
+  describe('delete', () => {
+    const userId = 'user-123';
+    const goalId = 'goal-123';
+    const goal = { id: goalId, userId, title: 'Meta a Deletar' };
 
     it('deletes a goal successfully', async () => {
-      (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(mockGoal);
-      (validateGoal as jest.Mock).mockReturnValue(undefined);
-      (goalRepository.delete as jest.Mock).mockResolvedValue(true);
-      (validateDeleteGoal as jest.Mock).mockReturnValue(undefined);
+      const deps = buildDeps();
+      deps.goalRepository.findByIdAndUserId.mockResolvedValue(goal);
+      deps.goalRepository.delete.mockResolvedValue(true);
 
-      const result = await deleteGoalService(mockUserId, mockGoalId);
+      const service = makeGoalService(deps);
+      const result = await service.delete(userId, goalId);
 
-      expect(goalRepository.findByIdAndUserId).toHaveBeenCalledWith(mockGoalId, mockUserId);
-      expect(validateGoal).toHaveBeenCalledWith(mockGoal, mockUserId);
-      expect(goalRepository.delete).toHaveBeenCalledWith(mockGoalId);
-      expect(validateDeleteGoal).toHaveBeenCalledWith(true);
+      expect(deps.goalRepository.findByIdAndUserId).toHaveBeenCalledWith(goalId, userId);
+      expect(deps.validations.validateGoal).toHaveBeenCalledWith(goal, userId);
+      expect(deps.goalRepository.delete).toHaveBeenCalledWith(goalId);
+      expect(deps.validations.validateDeleteGoal).toHaveBeenCalledWith(true);
       expect(result).toBe(true);
     });
 
     it('validates goal ownership before deleting', async () => {
-      (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(mockGoal);
-      (validateGoal as jest.Mock).mockImplementation(() => {
+      const deps = buildDeps();
+      deps.goalRepository.findByIdAndUserId.mockResolvedValue(goal);
+      deps.validations.validateGoal.mockImplementation(() => {
         throw new Error('Meta não pertence ao usuário');
       });
 
-      await expect(deleteGoalService(mockUserId, mockGoalId)).rejects.toThrow(
-        'Meta não pertence ao usuário'
-      );
+      const service = makeGoalService(deps);
 
-      expect(goalRepository.delete).not.toHaveBeenCalled();
+      await expect(service.delete(userId, goalId)).rejects.toThrow('Meta não pertence ao usuário');
+      expect(deps.goalRepository.delete).not.toHaveBeenCalled();
     });
   });
 
-  describe('addAmountToGoalService', () => {
-    const mockUserId = 'user-123';
-    const mockGoalId = 'goal-123';
-    const mockGoal = {
-      id: mockGoalId,
-      userId: mockUserId,
-      currentAmount: '1000',
-    };
+  describe('addAmount', () => {
+    const userId = 'user-123';
+    const goalId = 'goal-123';
+    const goal = { id: goalId, userId, currentAmount: '1000' };
 
-    const mockUpdatedGoalWithMilestones = {
-      id: mockGoalId,
+    const updatedWithMilestones = {
+      id: goalId,
       currentAmount: '1500',
       progress: { percentage: 30, daysRemaining: 60 },
       milestones: [],
     };
 
     it('adds amount to the goal successfully', async () => {
-      (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(mockGoal);
-      (validateGoal as jest.Mock).mockReturnValue(undefined);
-      (goalRepository.addAmount as jest.Mock).mockResolvedValue({
-        ...mockGoal,
-        currentAmount: '1500',
-      });
-      (validateUpdateGoal as jest.Mock).mockReturnValue(undefined);
-      (goalRepository.getGoalWithMilestones as jest.Mock).mockResolvedValue(
-        mockUpdatedGoalWithMilestones
-      );
+      const deps = buildDeps();
+      deps.goalRepository.findByIdAndUserId.mockResolvedValue(goal);
+      deps.goalRepository.addAmount.mockResolvedValue({ ...goal, currentAmount: '1500' });
+      deps.goalRepository.getGoalWithMilestones.mockResolvedValue(updatedWithMilestones);
 
-      const result = await addAmountToGoalService(mockUserId, mockGoalId, 500);
+      const service = makeGoalService(deps);
+      const result = await service.addAmount(userId, goalId, 500);
 
-      expect(goalRepository.addAmount).toHaveBeenCalledWith(mockGoalId, 500);
-      expect(result).toEqual(mockUpdatedGoalWithMilestones);
+      expect(deps.goalRepository.addAmount).toHaveBeenCalledWith(goalId, 500);
+      expect(result).toEqual(updatedWithMilestones);
     });
 
     it('validates goal ownership before adding amount', async () => {
-      (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(mockGoal);
-      (validateGoal as jest.Mock).mockImplementation(() => {
+      const deps = buildDeps();
+      deps.goalRepository.findByIdAndUserId.mockResolvedValue(goal);
+      deps.validations.validateGoal.mockImplementation(() => {
         throw new Error('Meta não pertence ao usuário');
       });
 
-      await expect(addAmountToGoalService(mockUserId, mockGoalId, 500)).rejects.toThrow(
+      const service = makeGoalService(deps);
+
+      await expect(service.addAmount(userId, goalId, 500)).rejects.toThrow(
         'Meta não pertence ao usuário'
       );
-
-      expect(goalRepository.addAmount).not.toHaveBeenCalled();
+      expect(deps.goalRepository.addAmount).not.toHaveBeenCalled();
     });
   });
 
-  describe('getGoalStatusService', () => {
-    const mockUserId = 'user-123';
-    const mockGoals = [{ id: 'goal-1' }, { id: 'goal-2' }];
+  describe('getStatus', () => {
+    const userId = 'user-123';
 
-    const mockGoalsWithProgress = [
+    const withProgress = [
       {
         id: 'goal-1',
         title: 'Meta 1',
@@ -444,54 +377,57 @@ describe('GoalService', () => {
       },
     ];
 
-    it('returns goals with computed status', async () => {
-      (goalRepository.findByUserIdActive as jest.Mock).mockResolvedValue(mockGoals);
-      (goalRepository.getGoalWithMilestones as jest.Mock)
-        .mockResolvedValueOnce(mockGoalsWithProgress[0])
-        .mockResolvedValueOnce(mockGoalsWithProgress[1]);
+    it('returns goals with computed status and next milestone', async () => {
+      const deps = buildDeps();
+      deps.goalRepository.findByUserIdActive.mockResolvedValue([
+        { id: 'goal-1' },
+        { id: 'goal-2' },
+      ]);
+      deps.goalRepository.getGoalWithMilestones
+        .mockResolvedValueOnce(withProgress[0])
+        .mockResolvedValueOnce(withProgress[1]);
 
-      const result = await getGoalStatusService(mockUserId);
+      const service = makeGoalService(deps);
+      const result = await service.getStatus(userId);
 
       expect(result).toHaveLength(2);
       expect(result[0]).toMatchObject({
         id: 'goal-1',
         status: 'on-track', // 80% de progresso
-        nextMilestone: expect.objectContaining({
-          id: 'm2',
-          percentage: 100,
-        }),
+        nextMilestone: expect.objectContaining({ id: 'm2', percentage: 100 }),
       });
-      expect(result[1]).toMatchObject({
-        id: 'goal-2',
-        status: 'completed', // 100% de progresso
-      });
+      expect(result[1]).toMatchObject({ id: 'goal-2', status: 'completed' });
     });
 
     it('filters out null goals', async () => {
-      (goalRepository.findByUserIdActive as jest.Mock).mockResolvedValue([
+      const deps = buildDeps();
+      deps.goalRepository.findByUserIdActive.mockResolvedValue([
         { id: 'goal-1' },
         { id: 'goal-2' },
       ]);
-      (goalRepository.getGoalWithMilestones as jest.Mock)
-        .mockResolvedValueOnce(mockGoalsWithProgress[0])
+      deps.goalRepository.getGoalWithMilestones
+        .mockResolvedValueOnce(withProgress[0])
         .mockResolvedValueOnce(null);
 
-      const result = await getGoalStatusService(mockUserId);
+      const service = makeGoalService(deps);
+      const result = await service.getStatus(userId);
 
       expect(result).toHaveLength(1);
       expect(result[0]!.id).toBe('goal-1');
     });
 
     it("computes 'overdue' status for late goals", async () => {
-      (goalRepository.findByUserIdActive as jest.Mock).mockResolvedValue([{ id: 'goal-1' }]);
-      (goalRepository.getGoalWithMilestones as jest.Mock).mockResolvedValue({
+      const deps = buildDeps();
+      deps.goalRepository.findByUserIdActive.mockResolvedValue([{ id: 'goal-1' }]);
+      deps.goalRepository.getGoalWithMilestones.mockResolvedValue({
         id: 'goal-1',
         progress: { percentage: 50, daysRemaining: -10 },
         milestones: [],
         currentAmount: 5000,
       });
 
-      const result = await getGoalStatusService(mockUserId);
+      const service = makeGoalService(deps);
+      const result = await service.getStatus(userId);
 
       expect(result[0]!.status).toBe('overdue');
     });
@@ -506,18 +442,17 @@ describe('GoalService', () => {
       ];
 
       for (const testCase of testCases) {
-        (goalRepository.findByUserIdActive as jest.Mock).mockResolvedValue([{ id: 'goal-1' }]);
-        (goalRepository.getGoalWithMilestones as jest.Mock).mockResolvedValue({
+        const deps = buildDeps();
+        deps.goalRepository.findByUserIdActive.mockResolvedValue([{ id: 'goal-1' }]);
+        deps.goalRepository.getGoalWithMilestones.mockResolvedValue({
           id: 'goal-1',
-          progress: {
-            percentage: testCase.percentage,
-            daysRemaining: 30,
-          },
+          progress: { percentage: testCase.percentage, daysRemaining: 30 },
           milestones: [],
           currentAmount: 0,
         });
 
-        const result = await getGoalStatusService(mockUserId);
+        const service = makeGoalService(deps);
+        const result = await service.getStatus(userId);
         expect(result[0]!.status).toBe(testCase.expected);
       }
     });
