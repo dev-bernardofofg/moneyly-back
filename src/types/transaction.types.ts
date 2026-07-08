@@ -6,7 +6,8 @@ export interface ITransaction {
   amount: string;
   category: string;
   description: string;
-  date: Date;
+  /** Dia-semântica: string 'yyyy-MM-dd', ISO ou Date — o service canoniza (meia-noite SP). */
+  date?: Date | string;
   recurringTransactionId?: string;
 }
 
@@ -16,7 +17,8 @@ export type UpdateTransactionData = Partial<{
   amount: string;
   categoryId: string;
   description: string;
-  date: Date;
+  /** Dia-semântica: canonizada pelo service antes de persistir. */
+  date: Date | string;
   periodId: string;
 }>;
 

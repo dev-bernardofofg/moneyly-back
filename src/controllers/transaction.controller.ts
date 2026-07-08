@@ -78,7 +78,7 @@ export const updateTransaction = asyncHandler<AuthRequest>(async (req, res) => {
   const { type, title, amount, category, description, date } = req.body;
 
   const updateData: UpdateTransactionData = {};
-  if (date) updateData.date = new Date(date);
+  if (date) updateData.date = date; // contrato: service canoniza (dia SP)
   if (type) updateData.type = type;
   if (title) updateData.title = title;
   if (amount) updateData.amount = amount;

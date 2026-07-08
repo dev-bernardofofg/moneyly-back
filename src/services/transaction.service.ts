@@ -1,8 +1,7 @@
 import { format } from 'date-fns';
 import { sumAmounts } from '../helpers/amount';
-import { getCurrentFinancialPeriod } from '../helpers/financial-period';
 import type { PaginationQuery } from '../helpers/pagination';
-import { toSaoPauloTimezone } from '../helpers/dates';
+import { parseTransactionDate, spDayString } from '../helpers/dates';
 import { transactionRepository } from '../repositories/transaction.repository';
 import type { TransactionWithCategory } from '../repositories/transaction.repository';
 import { userRepository } from '../repositories/user.repository';
@@ -20,7 +19,10 @@ import { NotFoundError } from './errors';
 export interface TransactionServiceDeps {
   transactionRepository: ITransactionRepository;
   userRepository: Pick<IUserRepository, 'findById'>;
-  financialPeriodService: Pick<typeof financialPeriodService, 'findOrCreatePeriodForDate'>;
+  financialPeriodService: Pick<
+    typeof financialPeriodService,
+    'findOrCreatePeriodForDate' | 'ensureCurrentPeriodExists'
+  >;
   validateCategory: typeof validateCategoryExistsForUser;
 }
 
@@ -51,9 +53,8 @@ export const makeTransactionService = (deps: TransactionServiceDeps) => {
   const create = async (userId: string, transaction: ITransaction) => {
     await validateCategory(transaction.category, userId);
 
-    const transactionDate = transaction.date
-      ? toSaoPauloTimezone(transaction.date)
-      : toSaoPauloTimezone(new Date());
+    // Contrato: dia-semântica → instante canônico (meia-noite SP).
+    const transactionDate = parseTransactionDate(transaction.date);
 
     const periodId = await financialPeriodService.findOrCreatePeriodForDate(
       userId,
@@ -78,15 +79,18 @@ export const makeTransactionService = (deps: TransactionServiceDeps) => {
       await validateCategory(updateData.categoryId, userId);
     }
 
-    if (updateData.date) {
-      updateData.date = toSaoPauloTimezone(updateData.date);
-      updateData.periodId = await financialPeriodService.findOrCreatePeriodForDate(
+    const { date: rawDate, ...rest } = updateData;
+    const payload: Parameters<ITransactionRepository['update']>[2] = { ...rest };
+
+    if (rawDate) {
+      payload.date = parseTransactionDate(rawDate);
+      payload.periodId = await financialPeriodService.findOrCreatePeriodForDate(
         userId,
-        updateData.date
+        payload.date
       );
     }
 
-    const transaction = await transactionRepository.update(id, userId, updateData);
+    const transaction = await transactionRepository.update(id, userId, payload);
 
     if (!transaction) throw new NotFoundError('Transação não encontrada');
 
@@ -165,7 +169,8 @@ export const makeTransactionService = (deps: TransactionServiceDeps) => {
     > = {};
 
     for (const tx of txns) {
-      const monthKey = format(new Date(tx.date), 'yyyy-MM');
+      // Mês no calendário SP (não no timezone do servidor).
+      const monthKey = spDayString(tx.date).slice(0, 7);
       if (!summary[monthKey]) {
         summary[monthKey] = { income: 0, expense: 0, percentUsed: null, alert: null };
       }
@@ -190,15 +195,12 @@ export const makeTransactionService = (deps: TransactionServiceDeps) => {
     const user = await userRepository.findById(userId);
     if (!user) throw new NotFoundError('Usuário não encontrado');
 
-    const financialDayStart = user.financialDayStart ?? 1;
-    const financialDayEnd = user.financialDayEnd ?? 31;
     const monthlyIncome = Number(user.monthlyIncome) || 0;
-    const currentPeriod = getCurrentFinancialPeriod(financialDayStart, financialDayEnd);
 
-    const txns = await transactionRepository.findByUserId(userId, {
-      startDate: currentPeriod.startDate,
-      endDate: currentPeriod.endDate,
-    });
+    // Fonte única: período persistido + FK periodId (mesma base de budget/forecast).
+    const currentPeriod = await financialPeriodService.ensureCurrentPeriodExists(userId);
+
+    const txns = await transactionRepository.findByPeriodId(userId, currentPeriod.id);
 
     const { realIncome, totalExpense, byCategory } = aggregateByType(txns);
 

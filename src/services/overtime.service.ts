@@ -8,7 +8,7 @@ import { InternalServerError, NotFoundError } from './errors';
 import { validateActiveCompany } from '../validations/company.validation';
 import { validateOvertimeOwnership, validateTimeRange } from '../validations/overtime.validation';
 import { financialPeriodService } from './financial-period.service';
-import { toSaoPauloTimezone } from '../helpers/dates';
+import { spParts } from '../helpers/dates';
 import { PaginationHelper, type PaginationParams } from '../helpers/pagination';
 import type { CreateOvertimeInput, UpdateOvertimeInput } from '../schemas/overtime.schema';
 
@@ -63,9 +63,9 @@ export const makeOvertimeService = (deps: OvertimeServiceDeps) => {
     const hoursWorked = calcHours(startTime, endTime);
     const hourlyRateSnapshot = Number(company.hourlyRate);
     const amount = hoursWorked * hourlyRateSnapshot;
-    const startTimeSP = toSaoPauloTimezone(startTime);
-    const month = startTimeSP.getMonth() + 1;
-    const year = startTimeSP.getFullYear();
+    const startParts = spParts(startTime);
+    const month = startParts.month + 1;
+    const year = startParts.year;
     const categoryId = await resolveCategory(data.categoryId, userId);
 
     const periodId = await financialPeriodService.findOrCreatePeriodForDate(userId, startTime);
@@ -153,9 +153,9 @@ export const makeOvertimeService = (deps: OvertimeServiceDeps) => {
       const companyFull = await validations.validateActiveCompany(company.id, userId);
       const hourlyRateSnapshot = Number(companyFull.hourlyRate);
       const amount = hoursWorked * hourlyRateSnapshot;
-      const startTimeSP = toSaoPauloTimezone(startTime);
-      const month = startTimeSP.getMonth() + 1;
-      const year = startTimeSP.getFullYear();
+      const startParts = spParts(startTime);
+      const month = startParts.month + 1;
+      const year = startParts.year;
       const periodId = await financialPeriodService.findOrCreatePeriodForDate(userId, startTime);
 
       Object.assign(updatePayload, {

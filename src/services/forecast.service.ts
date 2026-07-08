@@ -1,5 +1,5 @@
 import { sumAmounts } from '../helpers/amount';
-import { calculateNextExecution, getCurrentSaoPauloDate } from '../helpers/dates';
+import { calculateNextExecution } from '../helpers/dates';
 import { formatPeriodLabel } from '../helpers/financial-period';
 import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
 import { transactionRepository } from '../repositories/transaction.repository';
@@ -56,7 +56,7 @@ export const makeForecastService = (deps: ForecastServiceDeps) => {
     const realizedExpense = sumAmounts(transactions.filter((tx) => tx.type === 'expense'));
     const realizedBalance = realizedIncome - realizedExpense;
 
-    const now = getCurrentSaoPauloDate();
+    const now = new Date();
 
     // Recorrentes ativas (findByUserId já filtra isActive=true por padrão)
     const recurrences = await recurringTransactionRepository.findByUserId(userId);

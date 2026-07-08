@@ -1,6 +1,6 @@
 import type { GoalWithMilestones } from '../repositories/interfaces/IGoalRepository';
 import type { BudgetProgress } from '../types/budget.types';
-import { getCurrentSaoPauloDate } from '../helpers/dates';
+import { spMidnightOf, spParts } from '../helpers/dates';
 import {
   formatPeriodLabel,
   getCurrentFinancialPeriod,
@@ -284,10 +284,11 @@ export const makeOverviewService = (deps: OverviewServiceDeps) => {
     } else if (periodId) {
       transactions = [];
     } else {
-      const today = getCurrentSaoPauloDate();
+      const now = new Date();
+      const { year, month } = spParts(now);
       const currentPeriod = financial
         ? getCurrentFinancialPeriod(financial.startDay, financial.endDay)
-        : { startDate: new Date(today.getFullYear(), today.getMonth(), 1), endDate: today };
+        : { startDate: spMidnightOf(year, month, 1), endDate: now };
       transactions = await transactionRepository.findByUserId(userId, {
         startDate: currentPeriod.startDate,
         endDate: currentPeriod.endDate,
@@ -356,7 +357,7 @@ export const makeOverviewService = (deps: OverviewServiceDeps) => {
       user.financialDayEnd ?? 31
     );
 
-    const now = getCurrentSaoPauloDate();
+    const now = new Date();
     const totalDays = Math.max(
       1,
       Math.ceil((currentPeriod.endDate.getTime() - currentPeriod.startDate.getTime()) / 86400000)

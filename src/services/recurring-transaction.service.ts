@@ -1,9 +1,11 @@
 import type { RecurringTransaction } from '../db/schema';
 import { logger } from '../lib/logger';
+import { ConflictError } from './errors';
 import {
   calculateFirstExecution,
   calculateNextExecution,
-  getCurrentSaoPauloDate,
+  spMidnight,
+  spParts,
 } from '../helpers/dates';
 import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
 import type { IRecurringTransactionRepository } from '../repositories/interfaces/IRecurringTransactionRepository';
@@ -85,8 +87,14 @@ export const makeRecurringTransactionService = (deps: RecurringTransactionServic
     userId: string,
     data: CreateRecurringTransactionInput
   ): Promise<RecurringTransaction> => {
-    const now = getCurrentSaoPauloDate();
-    const startDate = data.startDate ?? now;
+    // Contrato: dia-semântica → meia-noite SP.
+    const startDate = data.startDate ? spMidnight(data.startDate) : spMidnight(new Date());
+    const startParts = spParts(startDate);
+
+    // Âncora persistida: sem ela, recorrência mensal criada dia 29-31 derraparia
+    // após passar por um mês curto (28/fev viraria a nova âncora).
+    const dayOfMonth = data.dayOfMonth ?? (data.frequency === 'monthly' ? startParts.day : null);
+    const dayOfWeek = data.dayOfWeek ?? (data.frequency === 'weekly' ? startParts.weekday : null);
 
     const months = calcMonthsNeeded(data.frequency, data.totalInstallments);
     const [recurring] = await Promise.all([
@@ -97,8 +105,8 @@ export const makeRecurringTransactionService = (deps: RecurringTransactionServic
         amount: data.amount,
         categoryId: data.categoryId,
         frequency: data.frequency,
-        dayOfMonth: data.dayOfMonth ?? null,
-        dayOfWeek: data.dayOfWeek ?? null,
+        dayOfMonth,
+        dayOfWeek,
         startDate,
         nextExecution: startDate,
         isActive: true,
@@ -115,8 +123,8 @@ export const makeRecurringTransactionService = (deps: RecurringTransactionServic
         data.frequency,
         startDate,
         data.totalInstallments,
-        data.dayOfMonth,
-        data.dayOfWeek
+        dayOfMonth,
+        dayOfWeek
       );
 
       // Sequencial para não saturar o pool de conexões em parcelas longas.
@@ -140,12 +148,8 @@ export const makeRecurringTransactionService = (deps: RecurringTransactionServic
       return { ...recurring, executedInstallments: data.totalInstallments, isActive: false };
     }
 
-    // Infinite recurring: create first transaction if startDate is today or past
-    const startDay = new Date(startDate);
-    startDay.setHours(0, 0, 0, 0);
-    const todayStart = new Date(now);
-    todayStart.setHours(0, 0, 0, 0);
-    const isImmediate = startDay <= todayStart;
+    // Infinite recurring: create first transaction if startDate is today or past (SP days)
+    const isImmediate = startDate.getTime() <= spMidnight(new Date()).getTime();
 
     if (isImmediate) {
       await createTransaction(userId, {
@@ -160,8 +164,8 @@ export const makeRecurringTransactionService = (deps: RecurringTransactionServic
 
       const nextExecution = calculateNextExecution(
         data.frequency,
-        data.dayOfMonth,
-        data.dayOfWeek,
+        dayOfMonth,
+        dayOfWeek,
         startDate
       );
       await recurringTransactionRepository.update(recurring.id, userId, {
@@ -188,6 +192,9 @@ export const makeRecurringTransactionService = (deps: RecurringTransactionServic
     );
   };
 
+  const isExhaustedInstallment = (rec: RecurringTransaction) =>
+    rec.totalInstallments !== null && rec.executedInstallments >= rec.totalInstallments;
+
   const update = async (
     id: string,
     userId: string,
@@ -195,6 +202,14 @@ export const makeRecurringTransactionService = (deps: RecurringTransactionServic
   ): Promise<RecurringTransaction | null> => {
     const existing = await recurringTransactionRepository.findById(id, userId);
     if (!existing) return null;
+
+    // Parcelada já materializada: as transações foram pré-criadas; editar a
+    // recorrência não realinharia as parcelas → bloquear para não enganar.
+    if (isExhaustedInstallment(existing)) {
+      throw new ConflictError(
+        'Recorrência parcelada já concluída não pode ser editada. Edite as transações geradas ou crie uma nova recorrência.'
+      );
+    }
 
     const frequencyChanged = data.frequency && data.frequency !== existing.frequency;
     const dayChanged = data.dayOfMonth !== undefined || data.dayOfWeek !== undefined;
@@ -226,6 +241,14 @@ export const makeRecurringTransactionService = (deps: RecurringTransactionServic
     const existing = await recurringTransactionRepository.findById(id, userId);
     if (!existing) return null;
 
+    // Reativar parcelada exaurida faria o scheduler gerar cobrança extra
+    // (executed >= total já no próximo incremento).
+    if (isExhaustedInstallment(existing)) {
+      throw new ConflictError(
+        'Recorrência parcelada já concluída não pode ser reativada. Crie uma nova recorrência.'
+      );
+    }
+
     const nextExecution = calculateFirstExecution(
       existing.frequency as RecurringFrequency,
       existing.dayOfMonth,
@@ -240,7 +263,7 @@ export const makeRecurringTransactionService = (deps: RecurringTransactionServic
   };
 
   const processDue = async (): Promise<void> => {
-    const now = getCurrentSaoPauloDate();
+    const now = new Date();
     const due = await recurringTransactionRepository.findDueTransactions(now);
 
     for (const recurring of due) {

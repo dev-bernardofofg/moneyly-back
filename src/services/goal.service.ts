@@ -1,4 +1,4 @@
-import { getCurrentSaoPauloDate } from '../helpers/dates';
+import { spMidnight, spParts } from '../helpers/dates';
 import { calculateGoalProgress } from '../helpers/goal-progress';
 import { goalRepository } from '../repositories/goal.repository';
 import type { IGoalRepository } from '../repositories/interfaces/IGoalRepository';
@@ -33,9 +33,9 @@ export interface GoalServiceDeps {
 }
 
 function monthsUntilDate(target: Date): number {
-  const now = getCurrentSaoPauloDate();
-  const months =
-    (target.getFullYear() - now.getFullYear()) * 12 + (target.getMonth() - now.getMonth()) + 1;
+  const nowParts = spParts(new Date());
+  const targetParts = spParts(target);
+  const months = (targetParts.year - nowParts.year) * 12 + (targetParts.month - nowParts.month) + 1;
   return Math.max(months, 0);
 }
 
@@ -79,7 +79,8 @@ export const makeGoalService = (deps: GoalServiceDeps) => {
       targetDate: string;
     }
   ) => {
-    const targetDate = new Date(data.targetDate);
+    // Contrato: dia-semântica → meia-noite SP.
+    const targetDate = spMidnight(data.targetDate);
 
     const [goal] = await Promise.all([
       goalRepository.create({
@@ -149,7 +150,7 @@ export const makeGoalService = (deps: GoalServiceDeps) => {
     if (data.description !== undefined) updateData.description = data.description;
     if (data.targetAmount !== undefined) updateData.targetAmount = data.targetAmount.toString();
     if (data.targetDate !== undefined) {
-      const newTargetDate = new Date(data.targetDate);
+      const newTargetDate = spMidnight(data.targetDate);
       updateData.targetDate = newTargetDate;
       await financialPeriodService.createNextPeriods(userId, monthsUntilDate(newTargetDate));
     }

@@ -1,3 +1,5 @@
+import { spEndOfDay, spMidnight } from './dates';
+
 export interface TransactionFiltersQuery {
   category?: string;
   startDate?: string;
@@ -21,7 +23,8 @@ export const buildTransactionFilters = (
   if (query.category) filters.category = query.category;
   if (query.periodId) filters.periodId = query.periodId;
   if (query.type) filters.type = query.type;
-  if (query.startDate) filters.startDate = new Date(query.startDate);
-  if (query.endDate) filters.endDate = new Date(query.endDate);
+  // Contrato: filtros de dia SP → [meia-noite SP, fim do dia SP] inclusivo.
+  if (query.startDate) filters.startDate = spMidnight(query.startDate);
+  if (query.endDate) filters.endDate = spEndOfDay(query.endDate);
   return filters;
 };

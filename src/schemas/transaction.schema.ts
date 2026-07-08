@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { spDayString } from '../helpers/dates';
 
 export const transactionSchema = z.object({
   type: z.enum(['income', 'expense'], {
@@ -40,8 +41,12 @@ export const transactionSchema = z.object({
     .refine(
       (value) => {
         if (!value) return true;
-        const parsed = new Date(value);
-        return parsed <= new Date();
+        try {
+          // Compara dias no calendário SP (contrato: data é dia-semântica).
+          return spDayString(value) <= spDayString(new Date());
+        } catch {
+          return false;
+        }
       },
       {
         message: 'A data não pode ser no futuro. Use uma data de hoje ou anterior.',

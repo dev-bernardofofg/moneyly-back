@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { spMidnight } from '../helpers/dates';
 
 const amountField = z
   .union([z.string(), z.number()])
@@ -48,9 +49,12 @@ const recurringTransactionBaseSchema = z.object({
     .optional(),
   startDate: z
     .string()
-    .datetime({ message: 'A data de início deve ser uma data válida no formato ISO 8601.' })
     .optional()
-    .transform((val) => (val ? new Date(val) : undefined)),
+    .refine((val) => !val || !isNaN(new Date(val).getTime()) || /^\d{4}-\d{2}-\d{2}$/.test(val), {
+      message: 'A data de início deve ser uma data válida (ISO 8601 ou yyyy-MM-dd).',
+    })
+    // Contrato: dia-semântica → canoniza na meia-noite SP.
+    .transform((val) => (val ? spMidnight(val) : undefined)),
 });
 
 export const recurringTransactionSchema = recurringTransactionBaseSchema;
