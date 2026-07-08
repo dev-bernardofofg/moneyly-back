@@ -3,18 +3,11 @@ import { formatBrazilianDate, formatBrazilianTime } from '../helpers/dates';
 import { ResponseHandler } from '../helpers/response-handler';
 import { asyncHandler } from '../middlewares/async-handler';
 import type { AuthRequest } from '../middlewares/auth';
-import { overtimeRepository } from '../repositories/overtime.repository';
 import { BadRequestError } from '../services/errors';
-import {
-  createOvertimeService,
-  deleteOvertimeService,
-  getOvertimeService,
-  getOvertimeSummaryService,
-  updateOvertimeService,
-} from '../services/overtime.service';
+import { overtimeService } from '../services/overtime.service';
 
 export const createOvertime = asyncHandler<AuthRequest>(async (req, res) => {
-  const record = await createOvertimeService(req.user.id, req.body);
+  const record = await overtimeService.create(req.user.id, req.body);
   return ResponseHandler.created(res, record, 'Registro de hora extra criado com sucesso');
 });
 
@@ -26,7 +19,7 @@ export const getOvertime = asyncHandler<AuthRequest>(async (req, res) => {
     page?: number;
     limit?: number;
   };
-  const result = await getOvertimeService(req.user.id, {
+  const result = await overtimeService.getPaginated(req.user.id, {
     month,
     year,
     companyId,
@@ -43,7 +36,7 @@ export const getOvertime = asyncHandler<AuthRequest>(async (req, res) => {
 
 export const getOvertimeSummary = asyncHandler<AuthRequest>(async (req, res) => {
   const { month, year } = req.query as { month: string; year: string };
-  const summary = await getOvertimeSummaryService(req.user.id, Number(month), Number(year));
+  const summary = await overtimeService.getSummary(req.user.id, Number(month), Number(year));
   return ResponseHandler.success(res, summary, 'Resumo recuperado com sucesso');
 });
 
@@ -51,7 +44,7 @@ export const updateOvertime = asyncHandler<AuthRequest>(async (req, res) => {
   const { id } = req.params;
   if (!id) throw new BadRequestError('ID do registro não fornecido');
 
-  const record = await updateOvertimeService(id, req.user.id, req.body);
+  const record = await overtimeService.update(id, req.user.id, req.body);
   return ResponseHandler.success(res, record, 'Registro atualizado com sucesso');
 });
 
@@ -62,7 +55,7 @@ export const exportOvertimeCsv = asyncHandler<AuthRequest>(async (req, res) => {
     companyId?: string;
   };
 
-  const records = await overtimeRepository.findByUserId(req.user.id, { month, year, companyId });
+  const records = await overtimeService.listForExport(req.user.id, { month, year, companyId });
 
   const headers = ['Empresa', 'Data', 'Início', 'Fim', 'Horas', 'Descrição'];
   const rows = records.map((r) => [
@@ -88,6 +81,6 @@ export const deleteOvertime = asyncHandler<AuthRequest>(async (req, res) => {
   const { id } = req.params;
   if (!id) throw new BadRequestError('ID do registro não fornecido');
 
-  await deleteOvertimeService(id, req.user.id);
+  await overtimeService.delete(id, req.user.id);
   return ResponseHandler.success(res, null, 'Registro deletado com sucesso');
 });
