@@ -63,12 +63,21 @@ describe('processUserBudgetAlerts', () => {
     expect(mockedRepo.create).not.toHaveBeenCalled();
   });
 
-  it('scheduler race: create throws → does not propagate', async () => {
+  it('scheduler race: dedupe unique violation (pg 23505) → does not propagate', async () => {
     mockedBudget.mockResolvedValue([budget('warning')]);
     mockedRepo.findByDedupeKey.mockResolvedValue(null);
-    mockedRepo.create.mockRejectedValue(new Error('unique violation'));
+    const raceError = Object.assign(new Error('unique violation'), { code: '23505' });
+    mockedRepo.create.mockRejectedValue(raceError);
 
     await expect(processUserBudgetAlerts(USER)).resolves.toBeUndefined();
+  });
+
+  it('non-dedupe create errors propagate', async () => {
+    mockedBudget.mockResolvedValue([budget('warning')]);
+    mockedRepo.findByDedupeKey.mockResolvedValue(null);
+    mockedRepo.create.mockRejectedValue(new Error('db down'));
+
+    await expect(processUserBudgetAlerts(USER)).rejects.toThrow('db down');
   });
 });
 
