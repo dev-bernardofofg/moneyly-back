@@ -1,10 +1,14 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
-module.exports = {
+
+const base = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  roots: ['<rootDir>/src', '<rootDir>/__tests__'],
-  testMatch: ['**/__tests__/**/*.test.ts'],
-  testPathIgnorePatterns: ['/__tests__/e2e/'],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
+};
+
+module.exports = {
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
@@ -13,10 +17,20 @@ module.exports = {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-  },
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
-  globalSetup: '<rootDir>/jest.global-setup.ts',
-  globalTeardown: '<rootDir>/jest.global-teardown.ts',
+  projects: [
+    {
+      ...base,
+      displayName: 'unit',
+      testMatch: ['<rootDir>/__tests__/unit/**/*.test.ts'],
+      setupFilesAfterEnv: ['<rootDir>/jest.unit-setup.ts'],
+    },
+    {
+      ...base,
+      displayName: 'integration',
+      testMatch: ['<rootDir>/__tests__/integration/**/*.test.ts'],
+      setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+      globalSetup: '<rootDir>/jest.global-setup.ts',
+      globalTeardown: '<rootDir>/jest.global-teardown.ts',
+    },
+  ],
 };
