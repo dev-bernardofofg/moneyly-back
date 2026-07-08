@@ -1,15 +1,32 @@
 /**
- * Testes unitários para getDashboardPreviewsService (F5).
- * findAllByUserId mockado; heurísticas F3/F4 reais.
+ * Unit tests for getDashboardPreviews (F5).
+ * findAllByUserId injected as fake; F3/F4 heuristics run for real.
  */
-import { getDashboardPreviewsService } from '../../../src/services/overview.service';
-import { transactionRepository } from '../../../src/repositories/transaction.repository';
-
-jest.mock('../../../src/repositories/transaction.repository');
-
-const txRepo = transactionRepository as jest.Mocked<typeof transactionRepository>;
+import {
+  makeOverviewService,
+  type OverviewServiceDeps,
+} from '../../../src/services/overview.service';
 
 const USER = 'user-123';
+
+const buildDeps = () => {
+  const deps = {
+    financialPeriodRepository: {
+      findAllByUserWithTransactionCount: jest.fn(),
+    },
+    transactionRepository: {
+      findByPeriodId: jest.fn(),
+      findByUserId: jest.fn(),
+      findAllByUserId: jest.fn(),
+    },
+    userRepository: {
+      findById: jest.fn(),
+    },
+    getBudgetProgress: jest.fn(),
+    getGoalsProgress: jest.fn(),
+  };
+  return deps as unknown as OverviewServiceDeps & typeof deps;
+};
 
 const expense = (amount: string, date: Date, title = 'Spotify') => ({
   id: 't' + Math.random(),
@@ -25,13 +42,13 @@ const expense = (amount: string, date: Date, title = 'Spotify') => ({
   category: { id: 'c1', name: 'Streaming' },
 });
 
-beforeEach(() => jest.clearAllMocks());
-
-describe('getDashboardPreviewsService', () => {
+describe('getDashboardPreviews', () => {
   it('no transactions → nulls and stable signal', async () => {
-    txRepo.findAllByUserId.mockResolvedValue([] as never);
+    const deps = buildDeps();
+    deps.transactionRepository.findAllByUserId.mockResolvedValue([]);
 
-    const r = await getDashboardPreviewsService(USER, 1, 31);
+    const service = makeOverviewService(deps);
+    const r = await service.getDashboardPreviews(USER, 1, 31);
 
     expect(r.subscriptions).toEqual({
       count: 0,
@@ -44,13 +61,15 @@ describe('getDashboardPreviewsService', () => {
   });
 
   it('detects recurring subscription (top summary)', async () => {
-    txRepo.findAllByUserId.mockResolvedValue([
+    const deps = buildDeps();
+    deps.transactionRepository.findAllByUserId.mockResolvedValue([
       expense('19.90', new Date('2026-01-10')),
       expense('19.90', new Date('2026-02-10')),
       expense('19.90', new Date('2026-03-10')),
-    ] as never);
+    ]);
 
-    const r = await getDashboardPreviewsService(USER, 1, 31);
+    const service = makeOverviewService(deps);
+    const r = await service.getDashboardPreviews(USER, 1, 31);
 
     expect(r.subscriptions.count).toBeGreaterThanOrEqual(1);
     expect(r.subscriptions.topTitle).toBe('Spotify');

@@ -1,31 +1,36 @@
 /**
- * Testes unitários para overview.service (reescrito contra a API atual).
- * Funções puras testadas direto; serviços que tocam DB com mocks.
+ * Unit tests for the overview service.
+ * Pure functions are tested directly; dependency-backed services get injected fakes.
  */
 import {
   calculateAlerts,
   calculatePlanningStats,
   getDashboardOverviewService,
-  getPlannerOverviewService,
   getStatsOverview,
-  getTransactionsByUserId,
+  makeOverviewService,
+  type OverviewServiceDeps,
 } from '../../../src/services/overview.service';
-import { financialPeriodRepository } from '../../../src/repositories/financial-period.repository';
-import { transactionRepository } from '../../../src/repositories/transaction.repository';
-import { getBudgetProgressService } from '../../../src/services/budget.service';
-import { getGoalsProgressService } from '../../../src/services/goal.service';
-
-jest.mock('../../../src/repositories/financial-period.repository');
-jest.mock('../../../src/repositories/transaction.repository');
-jest.mock('../../../src/services/budget.service');
-jest.mock('../../../src/services/goal.service');
-
-const fpRepo = financialPeriodRepository as jest.Mocked<typeof financialPeriodRepository>;
-const txRepo = transactionRepository as jest.Mocked<typeof transactionRepository>;
-const mockedBudgetProgress = getBudgetProgressService as jest.Mock;
-const mockedGoalsProgress = getGoalsProgressService as jest.Mock;
 
 const USER = 'user-123';
+
+const buildDeps = () => {
+  const deps = {
+    financialPeriodRepository: {
+      findAllByUserWithTransactionCount: jest.fn(),
+    },
+    transactionRepository: {
+      findByPeriodId: jest.fn(),
+      findByUserId: jest.fn(),
+      findAllByUserId: jest.fn(),
+    },
+    userRepository: {
+      findById: jest.fn(),
+    },
+    getBudgetProgress: jest.fn(),
+    getGoalsProgress: jest.fn(),
+  };
+  return deps as unknown as OverviewServiceDeps & typeof deps;
+};
 
 const tx = (type: 'income' | 'expense', amount: string, catId = 'c1') => ({
   id: 't' + Math.random(),
@@ -40,8 +45,6 @@ const tx = (type: 'income' | 'expense', amount: string, catId = 'c1') => ({
   updatedAt: new Date(),
   category: { id: catId, name: 'Cat' },
 });
-
-beforeEach(() => jest.clearAllMocks());
 
 describe('getStatsOverview (pure via handlers)', () => {
   it('sums income/expense and computes balance/percentUsed', async () => {
@@ -122,15 +125,17 @@ describe('calculateAlerts (pure)', () => {
   });
 });
 
-describe('getPlannerOverviewService', () => {
-  it('combines stats + alerts from budget/goal services', async () => {
-    mockedBudgetProgress.mockResolvedValue([{ monthlyLimit: '1000' }]);
-    mockedGoalsProgress.mockResolvedValue([{ targetAmount: '2000', currentAmount: '0' }]);
+describe('getPlannerOverview', () => {
+  it('combines stats + alerts from budget/goal progress deps', async () => {
+    const deps = buildDeps();
+    deps.getBudgetProgress.mockResolvedValue([{ monthlyLimit: '1000' }]);
+    deps.getGoalsProgress.mockResolvedValue([{ targetAmount: '2000', currentAmount: '0' }]);
 
-    const r = await getPlannerOverviewService(USER, 5000);
+    const service = makeOverviewService(deps);
+    const r = await service.getPlannerOverview(USER, 5000);
 
-    expect(mockedBudgetProgress).toHaveBeenCalledWith(USER);
-    expect(mockedGoalsProgress).toHaveBeenCalledWith(USER);
+    expect(deps.getBudgetProgress).toHaveBeenCalledWith(USER);
+    expect(deps.getGoalsProgress).toHaveBeenCalledWith(USER);
     expect(r).toHaveProperty('stats');
     expect(r).toHaveProperty('alerts');
     expect(r.stats.totalBudgeted).toBe(1000);
@@ -139,7 +144,8 @@ describe('getPlannerOverviewService', () => {
 
 describe('getTransactionsByUserId', () => {
   it('existing periodId → fetch by period', async () => {
-    fpRepo.findAllByUserWithTransactionCount.mockResolvedValue([
+    const deps = buildDeps();
+    deps.financialPeriodRepository.findAllByUserWithTransactionCount.mockResolvedValue([
       {
         id: 'sel',
         startDate: new Date('2026-01-01'),
@@ -147,21 +153,24 @@ describe('getTransactionsByUserId', () => {
         transactionCount: 2,
         isActive: true,
       },
-    ] as never);
+    ]);
     const txs = [tx('expense', '100')];
-    txRepo.findByPeriodId.mockResolvedValue(txs as never);
+    deps.transactionRepository.findByPeriodId.mockResolvedValue(txs);
 
-    const r = await getTransactionsByUserId(USER, undefined, 'sel');
+    const service = makeOverviewService(deps);
+    const r = await service.getTransactionsByUserId(USER, undefined, 'sel');
 
-    expect(txRepo.findByPeriodId).toHaveBeenCalledWith(USER, 'sel');
+    expect(deps.transactionRepository.findByPeriodId).toHaveBeenCalledWith(USER, 'sel');
     expect(r.transactions).toEqual(txs);
     expect(r.selectedPeriod?.id).toBe('sel');
   });
 
   it('nonexistent periodId → empty transactions', async () => {
-    fpRepo.findAllByUserWithTransactionCount.mockResolvedValue([] as never);
+    const deps = buildDeps();
+    deps.financialPeriodRepository.findAllByUserWithTransactionCount.mockResolvedValue([]);
 
-    const r = await getTransactionsByUserId(USER, undefined, 'nope');
+    const service = makeOverviewService(deps);
+    const r = await service.getTransactionsByUserId(USER, undefined, 'nope');
 
     expect(r.transactions).toEqual([]);
     expect(r.selectedPeriod).toBeUndefined();
