@@ -203,7 +203,11 @@ export const makeUserService = (deps: UserServiceDeps) => {
         data.financialDayStart,
         data.financialDayEnd
       );
-      if (updated) updatedUser = updated;
+      if (updated) {
+        updatedUser = updated;
+        // Limites mudaram: períodos armazenados com janelas antigas não valem mais.
+        await financialPeriodRepository.deactivatePeriods(user.id);
+      }
     }
 
     return {
