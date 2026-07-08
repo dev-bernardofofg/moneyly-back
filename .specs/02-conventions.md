@@ -14,7 +14,9 @@ Base: `.cursor/rules/pern-back.mdc`. SOLID + Clean Code + WCAG.
 - `jest.mock` de módulo em teste unit de service → injetar fakes na factory.
 - Controller sem `if (!req.user)` em rota protegida.
 - Validar `req.body` manualmente no controller → schema Zod + middleware `validate`.
-- `new Date()` cru para período/data de negócio → helpers São Paulo.
+- Persistir/comparar retorno de `toZonedTime`/`toSaoPauloTimezone` → só `spMidnight`/`spMidnightOf`/instantes reais (ver §Datas).
+- `new Date(body.date)` em controller/service para dia-semântica → `parseTransactionDate`/`spMidnight`.
+- `format(date, ...)` do date-fns puro para dia/mês de negócio → usa TZ do servidor; usar `spDayString`/`formatInTimeZone`.
 - Repository sem `satisfies IXRepository`.
 - Persistir decimal como number → `.toString()`; comparar string de decimal → `Number()`.
 - Editar `openapi.json` à mão → é gerado por `pnpm openapi:gen` (zod-to-openapi). Ver `.specs/features/00-openapi-generator.md`.
@@ -95,11 +97,21 @@ Nunca `res.status().json()` direto. Métodos: `success`, `created`, `paginated`,
 - Só Drizzle (`db`, `eq`, `and`...). Métodos retornam entidade tipada ou `null` (`return row ?? null`). `update` seta `updatedAt: new Date()`. `delete` retorna `boolean` (`result.length > 0`).
 - `insert(...).returning()` e checar — lançar `Error` genérico se falhar inserção.
 
-## Datas / timezone
+## Datas / timezone — CONTRATO (obrigatório)
 
-- Tudo em **America/Sao_Paulo**. Helpers em `src/helpers/dates.ts` e `src/helpers/financial-period.ts`.
-- Criar data: `createNormalizedSaoPauloDate(year, month0-11, day)` — normaliza dia inválido para último dia do mês.
-- Período financeiro do usuário: `financialDayStart`/`financialDayEnd` (colunas em `users`). Lógica em `getCurrentFinancialPeriod`.
+Princípio: **UTC no core, São Paulo nas bordas.** Helpers em `src/helpers/dates.ts`.
+
+1. `Date` em código e banco = **instante UTC real**. Colunas são `timestamp` naive interpretadas como UTC pelo stack (drizzle) — nunca mudar essa convenção.
+2. **PROIBIDO** persistir ou comparar o retorno de `toZonedTime`/`toSaoPauloTimezone`/`getCurrentSaoPauloDate` (wall-clock deslocado; existe só como legado de exibição).
+3. Datas **dia-semânticas** (`transactions.date`, `recurring.startDate`/`nextExecution`, `goals.targetDate`): canonizadas na **meia-noite SP** via `spMidnight`/`parseTransactionDate`. Exceção com hora real: `overtime.startTime/endTime` (e o `transactions.date` espelhado dele).
+4. Entrada da API: `'yyyy-MM-dd'` = dia SP; ISO com offset = instante. Service canoniza — controller nunca faz `new Date(body.date)`.
+5. Decisão de calendário (que período contém a data, monthKey, dia de recorrência): extrair campos SP com `spDayString`/`spParts`, calcular, voltar a instante com `spMidnightOf`. "Agora" para lógica = `new Date()`.
+6. Filtros de intervalo por dia: `[spMidnight(start), spEndOfDay(end)]` (fim inclusivo).
+7. Recorrência: `calculateNextExecution`/`calculateFirstExecution` operam no calendário SP e retornam meia-noite SP; monthly persiste `dayOfMonth` como âncora no create (sem ela, mês curto derruba a âncora — clamp sem pulo).
+8. Saída/formatação: só `formatBrazilian*`/`formatInTimeZone`.
+9. **Scripts com SQL cru**: params de data sempre `toISOString()` (com `Z`) — string naive num param tipado timestamp é parseada como LOCAL pelo postgres.js (+3h silencioso). Migração de referência: `src/scripts/migrate-dates-sp-midnight.ts`.
+
+- Período financeiro do usuário: `financialDayStart`/`financialDayEnd` (colunas em `users`); `getCurrentFinancialPeriod(start, end, instante)` aceita instante real. Fonte de verdade de agregação por período = `periodId` (FK), não date-range.
 
 ## Migrations (Drizzle)
 
