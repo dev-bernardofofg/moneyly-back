@@ -2,6 +2,7 @@
  * Unit tests for the goal service (factory with injected dependencies).
  */
 
+import { spMidnight } from '../../../src/helpers/dates';
 import { makeGoalService, type GoalServiceDeps } from '../../../src/services/goal.service';
 
 const buildDeps = () => {
@@ -63,7 +64,8 @@ describe('goal service', () => {
         title: goalData.title,
         description: goalData.description,
         targetAmount: goalData.targetAmount.toString(),
-        targetDate: new Date(goalData.targetDate),
+        // Contrato: dia-semântica canonizada na meia-noite SP.
+        targetDate: spMidnight(goalData.targetDate),
       });
       expect(deps.financialPeriodService.createNextPeriods).toHaveBeenCalledWith(
         userId,
