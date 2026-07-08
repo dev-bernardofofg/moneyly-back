@@ -5,7 +5,7 @@ import { asyncHandler } from '../middlewares/async-handler';
 import type { AuthRequest } from '../middlewares/auth';
 import type { GetDashboardOverviewQuery } from '../schemas/overview.schema';
 import { getDashboardOverviewService, overviewService } from '../services/overview.service';
-import { getForecastService } from '../services/forecast.service';
+import { forecastService } from '../services/forecast.service';
 import { getComparativeInsightsService } from '../services/comparative-insights.service';
 
 export const getDashboardOverview = asyncHandler<
@@ -78,7 +78,7 @@ export const getFinancialInsights = asyncHandler<AuthRequest>(async (req, res) =
 
 export const getForecast = asyncHandler<AuthRequest>(async (req, res) => {
   const { periodId } = req.query as { periodId?: string };
-  const forecast = await getForecastService(req.user.id, periodId);
+  const forecast = await forecastService.getForecast(req.user.id, periodId);
   return ResponseHandler.success(res, forecast, 'Projeção de saldo gerada com sucesso');
 });
 

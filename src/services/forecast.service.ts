@@ -3,9 +3,11 @@ import { calculateNextExecution, getCurrentSaoPauloDate } from '../helpers/dates
 import { formatPeriodLabel } from '../helpers/financial-period';
 import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
 import { transactionRepository } from '../repositories/transaction.repository';
+import type { IRecurringTransactionRepository } from '../repositories/interfaces/IRecurringTransactionRepository';
+import type { ITransactionRepository } from '../repositories/interfaces/ITransactionRepository';
 import type { RecurringFrequency } from '../types/recurring-transaction.types';
 import { requireUser } from '../validations/user.validation';
-import { HttpError } from '../validations/errors';
+import { NotFoundError } from './errors';
 import { financialPeriodService } from './financial-period.service';
 
 const MAX_OCCURRENCE_ITERATIONS = 400; // teto p/ frequência daily em janelas longas
@@ -18,91 +20,120 @@ export interface ForecastOccurrence {
   date: string;
 }
 
-export const getForecastService = async (userId: string, periodId?: string) => {
-  await requireUser(userId);
+export interface ForecastServiceDeps {
+  transactionRepository: Pick<ITransactionRepository, 'findByPeriodId'>;
+  recurringTransactionRepository: Pick<IRecurringTransactionRepository, 'findByUserId'>;
+  financialPeriodService: Pick<
+    typeof financialPeriodService,
+    'getPeriodById' | 'ensureCurrentPeriodExists'
+  >;
+  requireUser: typeof requireUser;
+}
 
-  const period = periodId
-    ? await financialPeriodService.getPeriodById(periodId, userId)
-    : await financialPeriodService.ensureCurrentPeriodExists(userId);
+export const makeForecastService = (deps: ForecastServiceDeps) => {
+  const {
+    transactionRepository,
+    recurringTransactionRepository,
+    financialPeriodService,
+    requireUser,
+  } = deps;
 
-  if (!period) throw new HttpError(404, 'Período não encontrado');
+  const getForecast = async (userId: string, periodId?: string) => {
+    await requireUser(userId);
 
-  const startDate = new Date(period.startDate);
-  const endDate = new Date(period.endDate);
+    const period = periodId
+      ? await financialPeriodService.getPeriodById(periodId, userId)
+      : await financialPeriodService.ensureCurrentPeriodExists(userId);
 
-  const transactions = await transactionRepository.findByPeriodId(userId, period.id);
+    if (!period) throw new NotFoundError('Período não encontrado');
 
-  const realizedIncome = sumAmounts(transactions.filter((tx) => tx.type === 'income'));
-  const realizedExpense = sumAmounts(transactions.filter((tx) => tx.type === 'expense'));
-  const realizedBalance = realizedIncome - realizedExpense;
+    const startDate = new Date(period.startDate);
+    const endDate = new Date(period.endDate);
 
-  const now = getCurrentSaoPauloDate();
+    const transactions = await transactionRepository.findByPeriodId(userId, period.id);
 
-  // Recorrentes ativas (findByUserId já filtra isActive=true por padrão)
-  const recurrences = await recurringTransactionRepository.findByUserId(userId);
+    const realizedIncome = sumAmounts(transactions.filter((tx) => tx.type === 'income'));
+    const realizedExpense = sumAmounts(transactions.filter((tx) => tx.type === 'expense'));
+    const realizedBalance = realizedIncome - realizedExpense;
 
-  const occurrences: ForecastOccurrence[] = [];
+    const now = getCurrentSaoPauloDate();
 
-  for (const rec of recurrences) {
-    const hasLimit = rec.totalInstallments !== null;
-    let remaining = hasLimit
-      ? rec.totalInstallments! - rec.executedInstallments
-      : Number.POSITIVE_INFINITY;
-    if (remaining <= 0) continue;
+    // Recorrentes ativas (findByUserId já filtra isActive=true por padrão)
+    const recurrences = await recurringTransactionRepository.findByUserId(userId);
 
-    let cursor = new Date(rec.nextExecution);
-    let iterations = 0;
+    const occurrences: ForecastOccurrence[] = [];
 
-    while (
-      cursor.getTime() <= endDate.getTime() &&
-      remaining > 0 &&
-      iterations < MAX_OCCURRENCE_ITERATIONS
-    ) {
-      iterations++;
+    for (const rec of recurrences) {
+      const hasLimit = rec.totalInstallments !== null;
+      let remaining = hasLimit
+        ? rec.totalInstallments! - rec.executedInstallments
+        : Number.POSITIVE_INFINITY;
+      if (remaining <= 0) continue;
 
-      // Conta só ocorrências que caem dentro do período (ignora vencidas
-      // anteriores ao início; futuras dentro da janela contam).
-      if (cursor.getTime() >= startDate.getTime()) {
-        occurrences.push({
-          recurringTransactionId: rec.id,
-          title: rec.title,
-          type: rec.type as 'income' | 'expense',
-          amount: Number(rec.amount),
-          date: cursor.toISOString(),
-        });
-        remaining--;
+      let cursor = new Date(rec.nextExecution);
+      let iterations = 0;
+
+      while (
+        cursor.getTime() <= endDate.getTime() &&
+        remaining > 0 &&
+        iterations < MAX_OCCURRENCE_ITERATIONS
+      ) {
+        iterations++;
+
+        // Conta só ocorrências que caem dentro do período (ignora vencidas
+        // anteriores ao início; futuras dentro da janela contam).
+        if (cursor.getTime() >= startDate.getTime()) {
+          occurrences.push({
+            recurringTransactionId: rec.id,
+            title: rec.title,
+            type: rec.type as 'income' | 'expense',
+            amount: Number(rec.amount),
+            date: cursor.toISOString(),
+          });
+          remaining--;
+        }
+
+        cursor = calculateNextExecution(
+          rec.frequency as RecurringFrequency,
+          rec.dayOfMonth,
+          rec.dayOfWeek,
+          cursor
+        );
       }
-
-      cursor = calculateNextExecution(
-        rec.frequency as RecurringFrequency,
-        rec.dayOfMonth,
-        rec.dayOfWeek,
-        cursor
-      );
     }
-  }
 
-  const recurringIncome = sumAmounts(occurrences.filter((o) => o.type === 'income'));
-  const recurringExpense = sumAmounts(occurrences.filter((o) => o.type === 'expense'));
+    const recurringIncome = sumAmounts(occurrences.filter((o) => o.type === 'income'));
+    const recurringExpense = sumAmounts(occurrences.filter((o) => o.type === 'expense'));
 
-  return {
-    period: {
-      id: period.id,
-      startDate: period.startDate,
-      endDate: period.endDate,
-      label: formatPeriodLabel(startDate, endDate),
-    },
-    realized: {
-      income: realizedIncome,
-      expense: realizedExpense,
-      balance: realizedBalance,
-    },
-    projected: {
-      recurringIncome,
-      recurringExpense,
-      occurrences,
-    },
-    projectedEndBalance: realizedBalance + recurringIncome - recurringExpense,
-    asOf: now.toISOString(),
+    return {
+      period: {
+        id: period.id,
+        startDate: period.startDate,
+        endDate: period.endDate,
+        label: formatPeriodLabel(startDate, endDate),
+      },
+      realized: {
+        income: realizedIncome,
+        expense: realizedExpense,
+        balance: realizedBalance,
+      },
+      projected: {
+        recurringIncome,
+        recurringExpense,
+        occurrences,
+      },
+      projectedEndBalance: realizedBalance + recurringIncome - recurringExpense,
+      asOf: now.toISOString(),
+    };
   };
+
+  return { getForecast };
 };
+
+// Composition root: instância default com os singletons reais.
+export const forecastService = makeForecastService({
+  transactionRepository,
+  recurringTransactionRepository,
+  financialPeriodService,
+  requireUser,
+});
