@@ -1,23 +1,31 @@
-import { getForecastService } from '../../../src/services/forecast.service';
-import { financialPeriodService } from '../../../src/services/financial-period.service';
-import { transactionRepository } from '../../../src/repositories/transaction.repository';
-import { recurringTransactionRepository } from '../../../src/repositories/recurring-transaction.repository';
-import { requireUser } from '../../../src/validations/user.validation';
+/**
+ * Unit tests for the forecast service (factory with injected dependencies).
+ */
+import {
+  makeForecastService,
+  type ForecastServiceDeps,
+} from '../../../src/services/forecast.service';
 import { HttpError } from '../../../src/validations/errors';
-
-jest.mock('../../../src/services/financial-period.service');
-jest.mock('../../../src/repositories/transaction.repository');
-jest.mock('../../../src/repositories/recurring-transaction.repository');
-jest.mock('../../../src/validations/user.validation');
-
-const mockedPeriodSvc = financialPeriodService as jest.Mocked<typeof financialPeriodService>;
-const mockedTxRepo = transactionRepository as jest.Mocked<typeof transactionRepository>;
-const mockedRecRepo = recurringTransactionRepository as jest.Mocked<
-  typeof recurringTransactionRepository
->;
 
 const USER = '11111111-1111-1111-1111-111111111111';
 const day = 86400000;
+
+const buildDeps = () => {
+  const deps = {
+    transactionRepository: {
+      findByPeriodId: jest.fn(),
+    },
+    recurringTransactionRepository: {
+      findByUserId: jest.fn(),
+    },
+    financialPeriodService: {
+      getPeriodById: jest.fn(),
+      ensureCurrentPeriodExists: jest.fn(),
+    },
+    requireUser: jest.fn().mockResolvedValue({ id: USER }),
+  };
+  return deps as unknown as ForecastServiceDeps & typeof deps;
+};
 
 function periodAround(now: Date) {
   return {
@@ -31,22 +39,19 @@ function periodAround(now: Date) {
   };
 }
 
-beforeEach(() => {
-  jest.clearAllMocks();
-  (requireUser as jest.Mock).mockResolvedValue({ id: USER });
-});
-
-describe('getForecastService', () => {
+describe('getForecast', () => {
   it('realized only, no recurrences → zeroed projection', async () => {
+    const deps = buildDeps();
     const now = new Date();
-    mockedPeriodSvc.ensureCurrentPeriodExists.mockResolvedValue(periodAround(now) as never);
-    mockedTxRepo.findByPeriodId.mockResolvedValue([
+    deps.financialPeriodService.ensureCurrentPeriodExists.mockResolvedValue(periodAround(now));
+    deps.transactionRepository.findByPeriodId.mockResolvedValue([
       { type: 'income', amount: '1000' },
       { type: 'expense', amount: '300' },
-    ] as never);
-    mockedRecRepo.findByUserId.mockResolvedValue([]);
+    ]);
+    deps.recurringTransactionRepository.findByUserId.mockResolvedValue([]);
 
-    const r = await getForecastService(USER);
+    const service = makeForecastService(deps);
+    const r = await service.getForecast(USER);
 
     expect(r.realized).toEqual({ income: 1000, expense: 300, balance: 700 });
     expect(r.projected.recurringIncome).toBe(0);
@@ -56,10 +61,13 @@ describe('getForecastService', () => {
   });
 
   it('counts a future recurrence within the period window', async () => {
+    const deps = buildDeps();
     const now = new Date();
-    mockedPeriodSvc.ensureCurrentPeriodExists.mockResolvedValue(periodAround(now) as never);
-    mockedTxRepo.findByPeriodId.mockResolvedValue([{ type: 'income', amount: '1000' }] as never);
-    mockedRecRepo.findByUserId.mockResolvedValue([
+    deps.financialPeriodService.ensureCurrentPeriodExists.mockResolvedValue(periodAround(now));
+    deps.transactionRepository.findByPeriodId.mockResolvedValue([
+      { type: 'income', amount: '1000' },
+    ]);
+    deps.recurringTransactionRepository.findByUserId.mockResolvedValue([
       {
         id: '33333333-3333-3333-3333-333333333333',
         title: 'Aluguel',
@@ -72,9 +80,10 @@ describe('getForecastService', () => {
         totalInstallments: null,
         executedInstallments: 0,
       },
-    ] as never);
+    ]);
 
-    const r = await getForecastService(USER);
+    const service = makeForecastService(deps);
+    const r = await service.getForecast(USER);
 
     expect(r.projected.occurrences).toHaveLength(1);
     expect(r.projected.recurringExpense).toBe(200);
@@ -82,10 +91,11 @@ describe('getForecastService', () => {
   });
 
   it('ignores a recurrence with exhausted installments', async () => {
+    const deps = buildDeps();
     const now = new Date();
-    mockedPeriodSvc.ensureCurrentPeriodExists.mockResolvedValue(periodAround(now) as never);
-    mockedTxRepo.findByPeriodId.mockResolvedValue([] as never);
-    mockedRecRepo.findByUserId.mockResolvedValue([
+    deps.financialPeriodService.ensureCurrentPeriodExists.mockResolvedValue(periodAround(now));
+    deps.transactionRepository.findByPeriodId.mockResolvedValue([]);
+    deps.recurringTransactionRepository.findByUserId.mockResolvedValue([
       {
         id: '44444444-4444-4444-4444-444444444444',
         title: 'Parcelado',
@@ -98,16 +108,22 @@ describe('getForecastService', () => {
         totalInstallments: 3,
         executedInstallments: 3,
       },
-    ] as never);
+    ]);
 
-    const r = await getForecastService(USER);
+    const service = makeForecastService(deps);
+    const r = await service.getForecast(USER);
+
     expect(r.projected.occurrences).toHaveLength(0);
     expect(r.projectedEndBalance).toBe(0);
   });
 
   it('invalid periodId → HttpError 404', async () => {
-    mockedPeriodSvc.getPeriodById.mockResolvedValue(null as never);
-    await expect(getForecastService(USER, '99999999-9999-9999-9999-999999999999')).rejects.toThrow(
+    const deps = buildDeps();
+    deps.financialPeriodService.getPeriodById.mockResolvedValue(null);
+
+    const service = makeForecastService(deps);
+
+    await expect(service.getForecast(USER, '99999999-9999-9999-9999-999999999999')).rejects.toThrow(
       HttpError
     );
   });
