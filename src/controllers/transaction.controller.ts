@@ -5,7 +5,7 @@ import { buildTransactionFilters } from '../helpers/transaction-filters';
 import { asyncHandler } from '../middlewares/async-handler';
 import type { AuthRequest } from '../middlewares/auth';
 import { BadRequestError } from '../services/errors';
-import { detectSubscriptionsService } from '../services/subscription.service';
+import { subscriptionService } from '../services/subscription.service';
 import { transactionService } from '../services/transaction.service';
 import type { UpdateTransactionData } from '../types/transaction.types';
 import { validatePagination } from '../validations/pagination.validation';
@@ -136,7 +136,7 @@ export const exportTransactionsCsv = asyncHandler<AuthRequest>(async (req, res) 
 });
 
 export const getSubscriptions = asyncHandler<AuthRequest>(async (req, res) => {
-  const candidates = await detectSubscriptionsService(req.user.id);
+  const candidates = await subscriptionService.detect(req.user.id);
   return ResponseHandler.success(res, candidates, 'Possíveis assinaturas detectadas');
 });
 
