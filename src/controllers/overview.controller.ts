@@ -4,14 +4,7 @@ import { ResponseHandler } from '../helpers/response-handler';
 import { asyncHandler } from '../middlewares/async-handler';
 import type { AuthRequest } from '../middlewares/auth';
 import type { GetDashboardOverviewQuery } from '../schemas/overview.schema';
-import {
-  getAvailablePeriodsService,
-  getDashboardOverviewService,
-  getDashboardPreviewsService,
-  getFinancialInsightsService,
-  getPlannerOverviewService,
-  getTransactionsByUserId,
-} from '../services/overview.service';
+import { getDashboardOverviewService, overviewService } from '../services/overview.service';
 import { getForecastService } from '../services/forecast.service';
 import { getComparativeInsightsService } from '../services/comparative-insights.service';
 
@@ -22,18 +15,19 @@ export const getDashboardOverview = asyncHandler<
   const { periodId } = req.query;
   const { id: userId, financialDayStart, financialDayEnd, monthlyIncome } = user;
 
-  const { transactions, availablePeriods, selectedPeriod } = await getTransactionsByUserId(
-    userId,
-    { startDay: financialDayStart ?? 1, endDay: financialDayEnd ?? 31 },
-    periodId
-  );
+  const { transactions, availablePeriods, selectedPeriod } =
+    await overviewService.getTransactionsByUserId(
+      userId,
+      { startDay: financialDayStart ?? 1, endDay: financialDayEnd ?? 31 },
+      periodId
+    );
 
   const { stats, chart, recentTransactions } = await getDashboardOverviewService(
     Number(monthlyIncome) || 0,
     transactions
   );
 
-  const previews = await getDashboardPreviewsService(
+  const previews = await overviewService.getDashboardPreviews(
     userId,
     financialDayStart ?? 1,
     financialDayEnd ?? 31
@@ -66,7 +60,7 @@ export const getDashboardOverview = asyncHandler<
 });
 
 export const getAvailablePeriods = asyncHandler<AuthRequest>(async (req, res) => {
-  const availablePeriods = await getAvailablePeriodsService(req.user.id);
+  const availablePeriods = await overviewService.getAvailablePeriods(req.user.id);
   return ResponseHandler.success(
     res,
     availablePeriods,
@@ -75,7 +69,7 @@ export const getAvailablePeriods = asyncHandler<AuthRequest>(async (req, res) =>
 });
 
 export const getFinancialInsights = asyncHandler<AuthRequest>(async (req, res) => {
-  const insights = await getFinancialInsightsService(
+  const insights = await overviewService.getFinancialInsights(
     req.user.id,
     Number(req.user.monthlyIncome) || 0
   );
@@ -99,7 +93,10 @@ export const getPlannerOverview = asyncHandler<AuthRequest>(async (req, res) => 
 
   const currentPeriod = getCurrentFinancialPeriod(financialDayStart ?? 1, financialDayEnd ?? 31);
 
-  const { stats, alerts } = await getPlannerOverviewService(userId, Number(monthlyIncome) || 0);
+  const { stats, alerts } = await overviewService.getPlannerOverview(
+    userId,
+    Number(monthlyIncome) || 0
+  );
 
   return ResponseHandler.success(
     res,
