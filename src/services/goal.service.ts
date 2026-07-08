@@ -220,6 +220,3 @@ export const goalService = makeGoalService({
     validateDeleteGoal,
   },
 });
-
-// Alias retrocompatível (overview consome até migrar).
-export const getGoalsProgressService = goalService.getProgress;

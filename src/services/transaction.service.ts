@@ -245,6 +245,3 @@ export const transactionService = makeTransactionService({
   financialPeriodService,
   validateCategory: validateCategoryExistsForUser,
 });
-
-// Alias retrocompatível usado por scripts (backfill).
-export const createTransactionService = transactionService.create;

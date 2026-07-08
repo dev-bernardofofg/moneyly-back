@@ -23,8 +23,8 @@ import type { IUserRepository } from '../repositories/interfaces/IUserRepository
 import type { TransactionWithCategory } from '../repositories/transaction.repository';
 import { transactionRepository } from '../repositories/transaction.repository';
 import { userRepository } from '../repositories/user.repository';
-import { getBudgetProgressService } from './budget.service';
-import { getGoalsProgressService } from './goal.service';
+import { budgetService } from './budget.service';
+import { goalService } from './goal.service';
 
 export interface OverviewServiceDeps {
   financialPeriodRepository: Pick<IFinancialPeriodRepository, 'findAllByUserWithTransactionCount'>;
@@ -33,8 +33,8 @@ export interface OverviewServiceDeps {
     'findByPeriodId' | 'findByUserId' | 'findAllByUserId'
   >;
   userRepository: Pick<IUserRepository, 'findById'>;
-  getBudgetProgress: typeof getBudgetProgressService;
-  getGoalsProgress: typeof getGoalsProgressService;
+  getBudgetProgress: typeof budgetService.getProgress;
+  getGoalsProgress: typeof goalService.getProgress;
 }
 
 // ——— Funções puras (sem dependências): exports diretos ———
@@ -480,6 +480,6 @@ export const overviewService = makeOverviewService({
   financialPeriodRepository,
   transactionRepository,
   userRepository,
-  getBudgetProgress: getBudgetProgressService,
-  getGoalsProgress: getGoalsProgressService,
+  getBudgetProgress: budgetService.getProgress,
+  getGoalsProgress: goalService.getProgress,
 });

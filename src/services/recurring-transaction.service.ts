@@ -314,6 +314,3 @@ export const recurringTransactionService = makeRecurringTransactionService({
   financialPeriodService,
   createTransaction: transactionService.create,
 });
-
-// Alias retrocompatível usado pelo scheduler (src/server.ts).
-export const processRecurringTransactions = recurringTransactionService.processDue;

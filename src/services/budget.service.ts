@@ -183,6 +183,3 @@ export const budgetService = makeBudgetService({
   requireUser,
   validateBudgetExists,
 });
-
-// Alias retrocompatível (overview/notification consomem até migrarem).
-export const getBudgetProgressService = budgetService.getProgress;

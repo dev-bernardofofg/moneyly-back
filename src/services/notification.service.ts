@@ -6,7 +6,7 @@ import type { IUserRepository } from '../repositories/interfaces/IUserRepository
 import { PaginationHelper } from '../helpers/pagination';
 import { NotFoundError } from './errors';
 import { requireUser } from '../validations/user.validation';
-import { getBudgetProgressService } from './budget.service';
+import { budgetService } from './budget.service';
 import { financialPeriodService } from './financial-period.service';
 
 type BudgetStatus = 'safe' | 'attention' | 'warning' | 'exceeded';
@@ -24,7 +24,7 @@ export interface NotificationServiceDeps {
   notificationRepository: INotificationRepository;
   userRepository: Pick<IUserRepository, 'findAll'>;
   financialPeriodService: Pick<typeof financialPeriodService, 'ensureCurrentPeriodExists'>;
-  getBudgetProgress: typeof getBudgetProgressService;
+  getBudgetProgress: typeof budgetService.getProgress;
   requireUser: typeof requireUser;
 }
 
@@ -122,10 +122,6 @@ export const notificationService = makeNotificationService({
   notificationRepository,
   userRepository,
   financialPeriodService,
-  getBudgetProgress: getBudgetProgressService,
+  getBudgetProgress: budgetService.getProgress,
   requireUser,
 });
-
-// Aliases retrocompatíveis (scheduler em src/server.ts).
-export const processBudgetAlerts = notificationService.processBudgetAlerts;
-export const processUserBudgetAlerts = notificationService.processUserBudgetAlerts;

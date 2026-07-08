@@ -7,8 +7,8 @@ import { errorHandler } from './middlewares/error-handler';
 import { sanitizeData } from './middlewares/sanitize';
 import { securityMiddleware } from './middlewares/security';
 import router from './routes';
-import { processRecurringTransactions } from './services/recurring-transaction.service';
-import { processBudgetAlerts } from './services/notification.service';
+import { recurringTransactionService } from './services/recurring-transaction.service';
+import { notificationService } from './services/notification.service';
 
 export const app: Application = express();
 
@@ -38,12 +38,12 @@ if (process.env.NODE_ENV !== 'test') {
   setInterval(
     async () => {
       try {
-        await processRecurringTransactions();
+        await recurringTransactionService.processDue();
       } catch (error) {
         logger.error('[scheduler] recurring transactions error', error as Error);
       }
       try {
-        await processBudgetAlerts();
+        await notificationService.processBudgetAlerts();
       } catch (error) {
         logger.error('[scheduler] budget alerts error', error as Error);
       }
@@ -52,10 +52,10 @@ if (process.env.NODE_ENV !== 'test') {
   );
 
   // Also run once at startup to catch any missed executions
-  processRecurringTransactions().catch((error) =>
-    logger.error('[scheduler] startup run error', error as Error)
-  );
-  processBudgetAlerts().catch((error) =>
-    logger.error('[scheduler] budget alerts startup error', error as Error)
-  );
+  recurringTransactionService
+    .processDue()
+    .catch((error) => logger.error('[scheduler] startup run error', error as Error));
+  notificationService
+    .processBudgetAlerts()
+    .catch((error) => logger.error('[scheduler] budget alerts startup error', error as Error));
 }
