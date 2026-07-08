@@ -9,7 +9,9 @@ Base: `.cursor/rules/pern-back.mdc`. SOLID + Clean Code + WCAG.
 - Regra de negócio / cálculo / query em controller → vai pro service.
 - Acesso a `db` fora de repository.
 - Service retornando `res` ou recebendo `req`/`res` → service só dados puros.
-- `throw new Error("msg")` para erro de domínio → usar `HttpError(status,...)`.
+- `throw new Error("msg")` ou `new HttpError(status,...)` cru para erro de domínio → usar as classes semânticas de `services/errors` (`NotFoundError`, `ConflictError`, ...).
+- Service importando repositório/serviço concreto dentro da factory → deps só via parâmetro (`makeXService(deps)`); singletons apenas no composition root.
+- `jest.mock` de módulo em teste unit de service → injetar fakes na factory.
 - Controller sem `if (!req.user)` em rota protegida.
 - Validar `req.body` manualmente no controller → schema Zod + middleware `validate`.
 - `new Date()` cru para período/data de negócio → helpers São Paulo.
@@ -22,8 +24,42 @@ Base: `.cursor/rules/pern-back.mdc`. SOLID + Clean Code + WCAG.
 
 - **SRP:** controller delega tudo ao service. Zero regra de negócio em controller.
 - **OCP:** feature nova = service novo, não modificar existente.
-- **LSP/DIP:** service depende de interface de repositório (`src/repositories/interfaces/I*`), não da implementação concreta.
-- **ISP:** interfaces granulares por entidade (`IUserRepository`, `ITransactionRepository`...).
+- **LSP/DIP:** service depende de interface de repositório (`src/repositories/interfaces/I*`), não da implementação concreta — via injeção na factory (ver §Service).
+- **ISP:** interfaces granulares por entidade (`IUserRepository`, `ITransactionRepository`...). Nas deps do service, usar `Pick<IXRepository, '...'>` para declarar só os métodos consumidos.
+
+## Service — DI por factory (padrão obrigatório)
+
+Todo service segue o template (referência: `transaction.service.ts`):
+
+```ts
+export interface XServiceDeps {
+  xRepository: Pick<IXRepository, 'create' | 'update' /* só o que usa */>;
+  // serviços vizinhos: Pick<typeof yService, 'metodo'> ou typeof yService.metodo
+  validations: { validateXExists: typeof validateXExists /* ... */ };
+}
+
+export const makeXService = (deps: XServiceDeps) => {
+  const { xRepository, validations } = deps;
+  const create = async (userId: string, data: CreateXInput) => {
+    /* usa deps.* */
+  };
+  // ...demais métodos
+  return { create, update, delete: remove /* ... */ };
+};
+
+// Composition root: instância default com os singletons reais.
+export const xService = makeXService({ xRepository, validations: { validateXExists } });
+```
+
+Regras:
+
+- Funções internas usam **somente** as deps desestruturadas — nunca importam repositório/serviço concreto dentro da factory.
+- Composition root no fim do arquivo; é o único lugar que referencia os singletons reais.
+- Controller consome a instância: `xService.metodo(...)`. Sem named exports de função de negócio soltos.
+- Funções **puras** (cálculo sem deps, ex.: `computeSpendingStats`, `calculateAlerts`) ficam como exports de módulo, fora da factory.
+- Dependência entre services: injetar o método da instância vizinha (`getBudgetProgress: budgetService.getProgress`) — nunca importar named export solto.
+- Interfaces de repositório vivem **só** em `src/repositories/interfaces/IXRepository.ts`; `interfaces/index.ts` é barrel puro de re-export (proibido definir interface inline lá — causa drift).
+- Teste unit instancia `makeXService({ ...fakes })` com `jest.fn()` — **proibido** `jest.mock` de módulo para repos/validações de service.
 
 ## Resposta HTTP — sempre `ResponseHandler`
 
@@ -34,8 +70,8 @@ Nunca `res.status().json()` direto. Métodos: `success`, `created`, `paginated`,
 
 ## Erros
 
-- Classe única: `HttpError(status, message, details?)` — duas cópias: `src/validations/errors.ts` e `src/services/errors/index.ts` (usar conforme imports do módulo vizinho).
-- Service lança `HttpError`. Controller: `catch (error) { if (isHttpError(error)) return next(error); return ResponseHandler.error(res, "msg", error); }`.
+- Base: `HttpError(status, message, details?)` (`src/validations/errors.ts`). Em **service**, usar as subclasses semânticas de `src/services/errors` (`NotFoundError`, `ConflictError`, `UnauthorizedError`, `BadRequestError`, ...) — nunca `new HttpError(404,...)` cru. Validations (`src/validations/*.validation.ts`) podem lançar `HttpError` direto.
+- Controller: `catch (error) { if (isHttpError(error)) return next(error); return ResponseHandler.error(res, "msg", error); }`.
 - `errorHandler` global (`src/middlewares/error-handler.ts`) trata, nesta ordem: `status/statusCode` → `ZodError` (UUID inválido em param `id` vira **404**, resto 400) → códigos Postgres (`23503`→400 FK, `23505`→409 unique, `23514`→400 check) → JWT (`JsonWebTokenError`/`TokenExpiredError`→401) → fallback 500.
 - `isHttpError` (`src/helpers/errors.ts`): checa `status` ou `statusCode` no objeto.
 

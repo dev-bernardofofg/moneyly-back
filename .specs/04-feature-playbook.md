@@ -1,6 +1,6 @@
 # 04 — Playbook: Adicionar Feature
 
-Ordem canônica. Seguir camada por camada (bottom-up). Exemplo de referência: módulo **budget**.
+Ordem canônica. Seguir camada por camada (bottom-up). Exemplo de referência: módulo **transaction** (factory DI) — budget/goal seguem o mesmo template.
 
 ## 0. Antes
 
@@ -15,8 +15,8 @@ Ordem canônica. Seguir camada por camada (bottom-up). Exemplo de referência: m
 
 ## 2. Interface do repositório
 
-- `src/repositories/interfaces/IXRepository.ts`: métodos granulares tipados (`create`, `findByIdAndUserId`, `update`, `delete`, queries específicas).
-- Reexportar em `src/repositories/interfaces/index.ts`.
+- `src/repositories/interfaces/IXRepository.ts`: métodos granulares tipados (`create`, `findByIdAndUserId`, `update`, `delete`, queries específicas). Fonte única — nunca definir interface inline no barrel.
+- Adicionar `export * from './IXRepository'` em `src/repositories/interfaces/index.ts` (barrel puro).
 
 ## 3. Repositório
 
@@ -26,27 +26,33 @@ Ordem canônica. Seguir camada por camada (bottom-up). Exemplo de referência: m
 > Regras de cada camada (assinaturas, padrões obrigatórios, proibições): ver `02-conventions.md`. Aqui só **ordem** e **o que criar**.
 
 ## 4. Validações de domínio
+
 - `src/validations/x.validation.ts`: `validateXExists(id, userId)` etc. (regra: `02 §Validação`).
 
 ## 5. Service
-- `src/services/x.service.ts`: `createXService(userId, data)` etc. (regra: `02 §SOLID/Erros`).
-- Cálculos derivados (progresso, %) aqui, nunca no controller.
+
+- `src/services/x.service.ts`: `XServiceDeps` + `makeXService(deps)` retornando os métodos (`create`, `update`, `delete: remove`...) + composition root `export const xService = makeXService({...singletons})` (regra: `02 §Service/Erros`).
+- Deps tipadas por interface (`Pick<IXRepository, ...>`); erros via classes semânticas de `services/errors`.
+- Cálculos derivados (progresso, %) aqui, nunca no controller; puras sem deps ficam fora da factory.
 
 ## 6. Schema Zod
+
 - `src/schemas/x.schema.ts`: `create*/update*/*QuerySchema`. `idParamSchema` reaproveitável de `auth.schema.ts` (regra: `02 §Validação`).
 
 ## 7. Controller
-- `src/controllers/x.controller.ts`: 1 função/endpoint (regra: `02 §Resposta/Erros/Auth`).
+
+- `src/controllers/x.controller.ts`: 1 função/endpoint, consumindo a instância `xService.metodo(...)` (regra: `02 §Resposta/Erros/Auth`). Nunca acessar repositório direto.
 
 ## 8. Router
+
 - `src/routes/x.router.ts` + registrar em `src/routes.ts` `router.use("/x", XRouter)` (regra: `02 §Auth`).
 
 ## 9. Testes
 
-- Unit service: `__tests__/unit/services/x.service.test.ts` (mock repositório).
-- Integração: `__tests__/integration/x.test.ts` (supertest contra app + test DB).
+- Unit service: `__tests__/unit/services/x.service.test.ts` — `makeXService({...fakes com jest.fn()})`; sem `jest.mock` de módulo. Títulos describe/it em inglês. Roda 100% em memória (projeto jest `unit`, sem DB).
+- Integração: `__tests__/integration/x.test.ts` (supertest contra app + test DB; projeto jest `integration`).
 - E2E (fluxo completo): `__tests__/e2e/*.spec.ts` (Playwright) se for fluxo de usuário relevante.
-- Rodar `pnpm test:unit` / `pnpm test:integration`.
+- Rodar `pnpm test:unit` / `pnpm test:integration` (scripts usam `--selectProjects`).
 
 ## 10. Docs & geração front
 
@@ -57,11 +63,13 @@ Ordem canônica. Seguir camada por camada (bottom-up). Exemplo de referência: m
 
 ## Checklist final
 
-- [ ] Sem regra de negócio em controller
+- [ ] Sem regra de negócio em controller (nem acesso a repositório)
 - [ ] `ResponseHandler` em toda resposta
-- [ ] `HttpError` + `isHttpError → next` para erros de domínio
+- [ ] Erros semânticos de `services/errors` + `isHttpError → next`
 - [ ] Zod via middleware `validate`
-- [ ] Repositório `satisfies IXRepository`
+- [ ] Repositório `satisfies IXRepository`; interface só no arquivo próprio (barrel re-exporta)
+- [ ] Service = `makeXService(deps)` + composition root; controller usa a instância
+- [ ] Teste unit injeta fakes na factory (sem `jest.mock` de módulo)
 - [ ] `requireUser` no início do service
 - [ ] Datas no timezone São Paulo
 - [ ] Testes unit + integração passando

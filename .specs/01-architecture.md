@@ -31,7 +31,7 @@ Erro de domínio: lança `HttpError(status, msg, details)` no Service → contro
 
 - **Router:** monta path, aplica middlewares (auth/period/validate), liga ao controller. Sem lógica.
 - **Controller:** extrai `req.user`/`params`/`body`/`query`, chama service, retorna `ResponseHandler`. Try/catch + `isHttpError → next`. Checa `req.user` (401).
-- **Service:** orquestra regra. Chama `requireUser`, validações (`src/validations/*`), repositórios. Lança `HttpError`. Retorna dados puros (sem `res`).
+- **Service:** orquestra regra. Padrão DI por factory: `makeXService(deps)` recebe repositórios (tipados pelas interfaces `I*Repository`), validações e serviços vizinhos; um **composition root** no fim do arquivo monta `export const xService = makeXService({...singletons reais})`. Controller consome a instância (`xService.metodo`). Lança erros semânticos de `services/errors`. Retorna dados puros (sem `res`). Funções puras (sem deps) ficam como exports de módulo.
 - **Repository:** objeto literal `satisfies I<Nome>Repository`. Só queries Drizzle. Reexporta a interface.
 - **Validations (`src/validations/`):** funções async que checam existência/ownership e lançam `HttpError`.
 - **Schemas (`src/schemas/`):** schemas Zod, validados pelo middleware genérico `validate.ts`.
@@ -40,7 +40,7 @@ Erro de domínio: lança `HttpError(status, msg, details)` no Service → contro
 
 - **Entrypoints:** `src/server.ts` (local, `app.listen` + scheduler) | `api/index.ts` (Vercel).
 - **Middlewares globais** (`src/server.ts`): `securityMiddleware` (helmet/cors/rate-limit/slow-down), `express.json({limit:"10mb"})`, `sanitizeData`, router, `errorHandler` (último).
-- **Scheduler:** `processRecurringTransactions()` roda a cada 1h + 1x no startup (só fora de `NODE_ENV=test`).
+- **Scheduler:** `recurringTransactionService.processDue()` + `notificationService.processBudgetAlerts()` rodam a cada 1h + 1x no startup (só fora de `NODE_ENV=test`).
 - **DB connect:** `connectDB()` em `src/db/index.ts`, exporta `db`.
 - **Health:** `GET /health`.
 - **Períodos financeiros:** middleware `ensurePeriodExists` cria período atual + 1 futuro a cada request autenticado nas rotas que o usam.
