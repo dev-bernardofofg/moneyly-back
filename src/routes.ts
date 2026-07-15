@@ -6,7 +6,7 @@ import { logger } from './core/lib/logger';
 import { AuthRouters } from './routes/auth.router';
 import { BudgetRouter } from './modules/budget';
 import { CategoryRouter } from './routes/category.router';
-import savingsGoalRoutes from './routes/goal.router';
+import savingsGoalRoutes from './modules/goal/goal.router';
 import { NotificationRouter } from './modules/notification';
 import { OverviewRouter } from './routes/overview.router';
 import { CompanyRouter, OvertimeRouter } from './modules/overtime';

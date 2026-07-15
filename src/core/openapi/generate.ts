@@ -7,6 +7,7 @@ import './paths'; // side-effect: registra endpoints legados (layer-first)
 import '../../modules/notification/notification.paths';
 import '../../modules/overtime/overtime.paths';
 import '../../modules/budget/budget.paths';
+import '../../modules/goal/goal.paths';
 
 /**
  * zod-to-openapi v7 emite ref-nullable como `{ allOf: [ {$ref}, {nullable:true} ] }`.

@@ -23,7 +23,6 @@ import {
   FinancialPeriodSchema,
   FinancialPeriodSummarySchema,
   ForecastResponseSchema,
-  GoalSchema,
   MonthlySummaryItemSchema,
   SubscriptionCandidateSchema,
   PlannerOverviewSchema,
@@ -49,11 +48,6 @@ import {
 } from '../../schemas/user.schema';
 import { transactionSchema, transactionUpdateSchema } from '../../schemas/transaction.schema';
 import { createCategorySchema, updateCategorySchema } from '../../schemas/category.schema';
-import {
-  addAmountToGoalSchema,
-  createSavingsGoalSchema,
-  updateSavingsGoalSchema,
-} from '../../schemas/goal.schema';
 import {
   getAvailablePeriodsQuerySchema,
   getDashboardOverviewQuerySchema,
@@ -305,57 +299,6 @@ route({
   path: '/categories/delete/{id}',
   tag: 'Categories',
   summary: 'Deletar categoria',
-  params: idParamSchema,
-  ok: ok(nullData),
-});
-
-/* ───────────────────────── goals ───────────────────────── */
-route({
-  method: 'post',
-  path: '/goals/',
-  tag: 'Goals',
-  summary: 'Criar meta de poupança',
-  body: createSavingsGoalSchema,
-  ok: created(wrapSuccess(GoalSchema)),
-});
-route({
-  method: 'get',
-  path: '/goals/',
-  tag: 'Goals',
-  summary: 'Listar metas',
-  ok: ok(wrapSuccess(z.array(GoalSchema))),
-});
-route({
-  method: 'get',
-  path: '/goals/{id}',
-  tag: 'Goals',
-  summary: 'Detalhe da meta',
-  params: idParamSchema,
-  ok: ok(wrapSuccess(GoalSchema)),
-});
-route({
-  method: 'put',
-  path: '/goals/{id}',
-  tag: 'Goals',
-  summary: 'Atualizar meta',
-  body: updateSavingsGoalSchema,
-  params: idParamSchema,
-  ok: ok(wrapSuccess(GoalSchema)),
-});
-route({
-  method: 'post',
-  path: '/goals/{id}/add-amount',
-  tag: 'Goals',
-  summary: 'Adicionar valor à meta',
-  body: addAmountToGoalSchema,
-  params: idParamSchema,
-  ok: ok(wrapSuccess(GoalSchema)),
-});
-route({
-  method: 'delete',
-  path: '/goals/{id}',
-  tag: 'Goals',
-  summary: 'Deletar meta',
   params: idParamSchema,
   ok: ok(nullData),
 });

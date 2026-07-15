@@ -1,4 +1,4 @@
-import type { GoalWithMilestones } from '../repositories/interfaces/IGoalRepository';
+import type { GoalWithMilestones } from '../modules/goal/repositories/IGoalRepository';
 import type { BudgetProgress } from '../modules/budget';
 import { getCurrentSaoPauloDate } from '../core/helpers/dates';
 import {
@@ -21,7 +21,7 @@ import type { TransactionWithCategory } from '../repositories/transaction.reposi
 import { transactionRepository } from '../repositories/transaction.repository';
 import { userRepository } from '../repositories/user.repository';
 import { getBudgetProgressUseCase } from '../modules/budget';
-import { getGoalsProgressService } from './goal.service';
+import { getGoalsProgressUseCase } from '../modules/goal';
 
 export const getTransactionsByUserId = async (
   userId: string,
@@ -429,7 +429,7 @@ export const getFinancialInsightsService = async (userId: string, monthlyIncome:
 
 export const getPlannerOverviewService = async (userId: string, monthlyIncome: number) => {
   const budgetProgress = await getBudgetProgressUseCase(userId);
-  const goalsProgress = await getGoalsProgressService(userId);
+  const goalsProgress = await getGoalsProgressUseCase(userId);
   const stats = calculatePlanningStats(budgetProgress, goalsProgress, monthlyIncome);
   const alerts = calculateAlerts(stats, monthlyIncome, budgetProgress, goalsProgress);
 

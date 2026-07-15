@@ -6,16 +6,16 @@ import {
   getGoalById,
   getUserGoals,
   updateSavingsGoal,
-} from '../controllers/goal.controller';
-import { authenticateUser } from '../core/middlewares/auth';
-import { ensurePeriodExists } from '../core/middlewares/auto-period-creation';
-import { validateBody, validateParams } from '../core/middlewares/validate';
-import { idParamSchema } from '../schemas/auth.schema';
+} from './goal.controller';
+import { authenticateUser } from '../../core/middlewares/auth';
+import { ensurePeriodExists } from '../../core/middlewares/auto-period-creation';
+import { validateBody, validateParams } from '../../core/middlewares/validate';
+import { idParamSchema } from '../../schemas/auth.schema';
 import {
   addAmountToGoalSchema,
   createSavingsGoalSchema,
   updateSavingsGoalSchema,
-} from '../schemas/goal.schema';
+} from './schemas/goal.schema';
 
 const GoalRouter: Router = Router();
 

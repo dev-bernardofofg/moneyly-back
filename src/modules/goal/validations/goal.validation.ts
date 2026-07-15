@@ -1,5 +1,5 @@
-import { Goal } from '../infra/db/schema';
-import { HttpError } from './errors';
+import { Goal } from '../../../infra/db/schema';
+import { HttpError } from '../../../validations/errors';
 
 export const validateGoal = (goal: Goal | null, userId: string) => {
   if (!goal || goal.userId !== userId) {

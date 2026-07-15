@@ -2,31 +2,29 @@
  * Unit tests for GoalService
  */
 
-import { goalRepository } from '../../../src/repositories/goal.repository';
-import {
-  addAmountToGoalService,
-  createGoalService,
-  deleteGoalService,
-  getGoalByIdService,
-  getGoalsProgressService,
-  getGoalsService,
-  getGoalStatusService,
-  updateGoalService,
-} from '../../../src/services/goal.service';
+import { goalRepository } from '../../../../src/modules/goal/repositories/goal.repository';
+import { addAmountToGoalUseCase } from '../../../../src/modules/goal/use-cases/add-amount-to-goal.use-case';
+import { createGoalUseCase } from '../../../../src/modules/goal/use-cases/create-goal.use-case';
+import { deleteGoalUseCase } from '../../../../src/modules/goal/use-cases/delete-goal.use-case';
+import { getGoalByIdUseCase } from '../../../../src/modules/goal/use-cases/get-goal-by-id.use-case';
+import { getGoalsProgressUseCase } from '../../../../src/modules/goal/use-cases/get-goals-progress.use-case';
+import { getGoalStatusUseCase } from '../../../../src/modules/goal/use-cases/get-goal-status.use-case';
+import { listGoalsUseCase } from '../../../../src/modules/goal/use-cases/list-goals.use-case';
+import { updateGoalUseCase } from '../../../../src/modules/goal/use-cases/update-goal.use-case';
 import {
   validateDeleteGoal,
   validateGoal,
   validateGoalExists,
   validateUpdateGoal,
-} from '../../../src/validations/goal.validation';
+} from '../../../../src/modules/goal/validations/goal.validation';
 
-import { notifyGoalMilestones } from '../../../src/modules/notification';
+import { notifyGoalMilestones } from '../../../../src/modules/notification';
 
 // Mock dos módulos
-jest.mock('../../../src/repositories/goal.repository');
-jest.mock('../../../src/validations/goal.validation');
-jest.mock('../../../src/modules/notification');
-jest.mock('../../../src/services/financial-period.service', () => ({
+jest.mock('../../../../src/modules/goal/repositories/goal.repository');
+jest.mock('../../../../src/modules/goal/validations/goal.validation');
+jest.mock('../../../../src/modules/notification');
+jest.mock('../../../../src/services/financial-period.service', () => ({
   financialPeriodService: {
     createNextPeriods: jest.fn().mockResolvedValue([]),
     ensureCurrentPeriodExists: jest.fn().mockResolvedValue({ id: 'p1' }),
@@ -63,7 +61,7 @@ describe('GoalService', () => {
     it('creates a goal successfully', async () => {
       (goalRepository.create as jest.Mock).mockResolvedValue(mockCreatedGoal);
 
-      const result = await createGoalService(mockUserId, mockGoalData);
+      const result = await createGoalUseCase(mockUserId, mockGoalData);
 
       expect(goalRepository.create).toHaveBeenCalledWith({
         userId: mockUserId,
@@ -87,7 +85,7 @@ describe('GoalService', () => {
         description: undefined,
       });
 
-      await createGoalService(mockUserId, dataWithoutDescription);
+      await createGoalUseCase(mockUserId, dataWithoutDescription);
 
       expect(goalRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -99,7 +97,7 @@ describe('GoalService', () => {
     it('converts targetAmount to string', async () => {
       (goalRepository.create as jest.Mock).mockResolvedValue(mockCreatedGoal);
 
-      await createGoalService(mockUserId, {
+      await createGoalUseCase(mockUserId, {
         ...mockGoalData,
         targetAmount: 15000.5,
       });
@@ -114,7 +112,7 @@ describe('GoalService', () => {
     it('converts targetDate to Date', async () => {
       (goalRepository.create as jest.Mock).mockResolvedValue(mockCreatedGoal);
 
-      await createGoalService(mockUserId, mockGoalData);
+      await createGoalUseCase(mockUserId, mockGoalData);
 
       expect(goalRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -146,7 +144,7 @@ describe('GoalService', () => {
     it('returns all active goals for the user', async () => {
       (goalRepository.findByUserIdActive as jest.Mock).mockResolvedValue(mockGoals);
 
-      const result = await getGoalsService(mockUserId);
+      const result = await listGoalsUseCase(mockUserId);
 
       expect(goalRepository.findByUserIdActive).toHaveBeenCalledWith(mockUserId);
       expect(result).toHaveLength(2);
@@ -158,7 +156,7 @@ describe('GoalService', () => {
     it('returns an empty array when the user has no goals', async () => {
       (goalRepository.findByUserIdActive as jest.Mock).mockResolvedValue([]);
 
-      const result = await getGoalsService(mockUserId);
+      const result = await listGoalsUseCase(mockUserId);
 
       expect(result).toEqual([]);
       expect(result).toHaveLength(0);
@@ -190,7 +188,7 @@ describe('GoalService', () => {
         .mockResolvedValueOnce(mockGoalsWithProgress[0])
         .mockResolvedValueOnce(mockGoalsWithProgress[1]);
 
-      const result = await getGoalsProgressService(mockUserId);
+      const result = await getGoalsProgressUseCase(mockUserId);
 
       expect(goalRepository.getGoalWithMilestones).toHaveBeenCalledTimes(2);
       expect(goalRepository.getGoalWithMilestones).toHaveBeenCalledWith('goal-1');
@@ -219,7 +217,7 @@ describe('GoalService', () => {
       (goalRepository.getGoalWithMilestones as jest.Mock).mockResolvedValue(mockGoalWithMilestones);
       (validateGoalExists as jest.Mock).mockReturnValue(undefined);
 
-      const result = await getGoalByIdService(mockUserId, mockGoalId);
+      const result = await getGoalByIdUseCase(mockUserId, mockGoalId);
 
       expect(goalRepository.findByIdAndUserId).toHaveBeenCalledWith(mockGoalId, mockUserId);
       expect(validateGoalExists).toHaveBeenCalledWith(mockGoal);
@@ -233,7 +231,7 @@ describe('GoalService', () => {
         if (!goal) throw new Error('Meta não encontrada');
       });
 
-      await expect(getGoalByIdService(mockUserId, mockGoalId)).rejects.toThrow(
+      await expect(getGoalByIdUseCase(mockUserId, mockGoalId)).rejects.toThrow(
         'Meta não encontrada'
       );
     });
@@ -269,7 +267,7 @@ describe('GoalService', () => {
         mockUpdatedGoalWithMilestones
       );
 
-      const result = await updateGoalService(mockUserId, mockGoalId, {
+      const result = await updateGoalUseCase(mockUserId, mockGoalId, {
         title: 'Meta Atualizada',
         targetAmount: 7500,
       });
@@ -293,7 +291,7 @@ describe('GoalService', () => {
         mockUpdatedGoalWithMilestones
       );
 
-      await updateGoalService(mockUserId, mockGoalId, {
+      await updateGoalUseCase(mockUserId, mockGoalId, {
         title: 'Novo Título',
       });
 
@@ -311,7 +309,7 @@ describe('GoalService', () => {
         mockUpdatedGoalWithMilestones
       );
 
-      await updateGoalService(mockUserId, mockGoalId, {
+      await updateGoalUseCase(mockUserId, mockGoalId, {
         targetDate: '2025-12-31',
       });
 
@@ -329,7 +327,7 @@ describe('GoalService', () => {
         throw new Error('Meta não pertence ao usuário');
       });
 
-      await expect(updateGoalService(mockUserId, mockGoalId, { title: 'Novo' })).rejects.toThrow(
+      await expect(updateGoalUseCase(mockUserId, mockGoalId, { title: 'Novo' })).rejects.toThrow(
         'Meta não pertence ao usuário'
       );
 
@@ -352,7 +350,7 @@ describe('GoalService', () => {
       (goalRepository.delete as jest.Mock).mockResolvedValue(true);
       (validateDeleteGoal as jest.Mock).mockReturnValue(undefined);
 
-      const result = await deleteGoalService(mockUserId, mockGoalId);
+      const result = await deleteGoalUseCase(mockUserId, mockGoalId);
 
       expect(goalRepository.findByIdAndUserId).toHaveBeenCalledWith(mockGoalId, mockUserId);
       expect(validateGoal).toHaveBeenCalledWith(mockGoal, mockUserId);
@@ -367,7 +365,7 @@ describe('GoalService', () => {
         throw new Error('Meta não pertence ao usuário');
       });
 
-      await expect(deleteGoalService(mockUserId, mockGoalId)).rejects.toThrow(
+      await expect(deleteGoalUseCase(mockUserId, mockGoalId)).rejects.toThrow(
         'Meta não pertence ao usuário'
       );
 
@@ -404,7 +402,7 @@ describe('GoalService', () => {
         mockUpdatedGoalWithMilestones
       );
 
-      const result = await addAmountToGoalService(mockUserId, mockGoalId, 500);
+      const result = await addAmountToGoalUseCase(mockUserId, mockGoalId, 500);
 
       expect(goalRepository.addAmount).toHaveBeenCalledWith(mockGoalId, 500);
       expect(result).toEqual(mockUpdatedGoalWithMilestones);
@@ -416,7 +414,7 @@ describe('GoalService', () => {
         throw new Error('Meta não pertence ao usuário');
       });
 
-      await expect(addAmountToGoalService(mockUserId, mockGoalId, 500)).rejects.toThrow(
+      await expect(addAmountToGoalUseCase(mockUserId, mockGoalId, 500)).rejects.toThrow(
         'Meta não pertence ao usuário'
       );
 
@@ -446,7 +444,7 @@ describe('GoalService', () => {
         milestones: milestonesAfter,
       });
 
-      await addAmountToGoalService(mockUserId, mockGoalId, 3000);
+      await addAmountToGoalUseCase(mockUserId, mockGoalId, 3000);
 
       expect(notifyGoalMilestones).toHaveBeenCalledTimes(1);
       expect(notifyGoalMilestones).toHaveBeenCalledWith(mockUserId, updatedGoal, [
@@ -468,7 +466,7 @@ describe('GoalService', () => {
         milestones,
       });
 
-      await addAmountToGoalService(mockUserId, mockGoalId, 10);
+      await addAmountToGoalUseCase(mockUserId, mockGoalId, 10);
 
       expect(notifyGoalMilestones).not.toHaveBeenCalled();
     });
@@ -489,7 +487,7 @@ describe('GoalService', () => {
       });
       (notifyGoalMilestones as jest.Mock).mockRejectedValue(new Error('notification down'));
 
-      const result = await addAmountToGoalService(mockUserId, mockGoalId, 500);
+      const result = await addAmountToGoalUseCase(mockUserId, mockGoalId, 500);
 
       expect(result).toMatchObject({ id: mockGoalId });
     });
@@ -525,7 +523,7 @@ describe('GoalService', () => {
         .mockResolvedValueOnce(mockGoalsWithProgress[0])
         .mockResolvedValueOnce(mockGoalsWithProgress[1]);
 
-      const result = await getGoalStatusService(mockUserId);
+      const result = await getGoalStatusUseCase(mockUserId);
 
       expect(result).toHaveLength(2);
       expect(result[0]).toMatchObject({
@@ -551,7 +549,7 @@ describe('GoalService', () => {
         .mockResolvedValueOnce(mockGoalsWithProgress[0])
         .mockResolvedValueOnce(null);
 
-      const result = await getGoalStatusService(mockUserId);
+      const result = await getGoalStatusUseCase(mockUserId);
 
       expect(result).toHaveLength(1);
       expect(result[0]!.id).toBe('goal-1');
@@ -566,7 +564,7 @@ describe('GoalService', () => {
         currentAmount: 5000,
       });
 
-      const result = await getGoalStatusService(mockUserId);
+      const result = await getGoalStatusUseCase(mockUserId);
 
       expect(result[0]!.status).toBe('overdue');
     });
@@ -592,7 +590,7 @@ describe('GoalService', () => {
           currentAmount: 0,
         });
 
-        const result = await getGoalStatusService(mockUserId);
+        const result = await getGoalStatusUseCase(mockUserId);
         expect(result[0]!.status).toBe(testCase.expected);
       }
     });
