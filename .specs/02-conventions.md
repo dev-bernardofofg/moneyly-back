@@ -17,13 +17,16 @@ Base: `.cursor/rules/pern-back.mdc`. SOLID + Clean Code + WCAG.
 - Persistir decimal como number → `.toString()`; comparar string de decimal → `Number()`.
 - Editar `openapi.json` à mão → é gerado por `pnpm openapi:gen` (zod-to-openapi). Ver `.specs/features/00-openapi-generator.md`.
 - Commit sem confirmação do usuário ou com `Co-Authored-By`.
+- **Feature nova fora de `src/modules/<x>/`** → estrutura modular é a regra desde `06-project-structure.md` (código legado layer-first migra por PR, não cresce).
+- Use-case com mais de 1 operação de negócio, ou `services/` de módulo chamando use-case (ciclo).
+- `core/` importando de `modules/`; módulo importando internals de outro módulo (só via `index.ts` público).
 
 ## SOLID aplicado
 
-- **SRP:** controller delega tudo ao service. Zero regra de negócio em controller.
-- **OCP:** feature nova = service novo, não modificar existente.
-- **LSP/DIP:** service depende de interface de repositório (`src/repositories/interfaces/I*`), não da implementação concreta.
-- **ISP:** interfaces granulares por entidade (`IUserRepository`, `ITransactionRepository`...).
+- **SRP:** controller delega tudo ao service/use-case. Zero regra de negócio em controller. Na estrutura modular: 1 use-case = 1 operação de negócio (`use-cases/<verbo>-<recurso>.use-case.ts`).
+- **OCP:** feature nova = use-case novo (ou service novo no legado), não modificar existente.
+- **LSP/DIP:** use-case/service depende de interface de repositório (`I*Repository`), não da implementação concreta.
+- **ISP:** interfaces granulares por entidade (`IUserRepository`, `ITransactionRepository`...); na estrutura modular, a interface vive no módulo dono (`modules/<x>/repositories/interfaces.ts`).
 
 ## Resposta HTTP — sempre `ResponseHandler`
 

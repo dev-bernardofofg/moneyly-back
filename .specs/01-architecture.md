@@ -1,5 +1,9 @@
 # 01 — Arquitetura
 
+> **⚠️ Estrutura em transição:** a organização de pastas descrita aqui é a **atual (layer-first)**.
+> A estrutura **alvo é modular** (module-first, base serverJB) — ver `06-project-structure.md`.
+> Feature nova nasce em `src/modules/`; o restante migra incrementalmente.
+
 ## Stack
 
 - **Runtime:** Node.js + TypeScript (`tsc` build, `ts-node-dev` dev)
@@ -23,6 +27,9 @@ Router (src/routes/*.router.ts)
   → Repository (src/repositories/*.repository.ts)   # acesso a dados Drizzle, satisfies I*Repository
   → DB (src/db/schema.ts)
 ```
+
+> Na estrutura alvo (ver `06`), o fluxo conceitual é o mesmo, mas Service vira **Use-Case**
+> (1 operação por arquivo) e as camadas do domínio moram juntas em `src/modules/<x>/`.
 
 Resposta sempre via `ResponseHandler` (`src/helpers/response-handler.ts`).
 Erro de domínio: lança `HttpError(status, msg, details)` no Service → controller faz `if (isHttpError(error)) return next(error)` → `errorHandler` global formata.

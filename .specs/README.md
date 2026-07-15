@@ -5,13 +5,14 @@ Mantida manualmente. Atualizar sempre que padrão ou domínio mudar.
 
 ## Índice
 
-| Arquivo | Conteúdo |
-|---|---|
-| [01-architecture.md](01-architecture.md) | Camadas, fluxo de request, stack, infraestrutura |
-| [02-conventions.md](02-conventions.md) | Padrões de código obrigatórios (SOLID, ResponseHandler, erros, Zod) |
-| [03-domain-model.md](03-domain-model.md) | Modelo de dados, tabelas, relacionamentos, regras de negócio |
-| [04-feature-playbook.md](04-feature-playbook.md) | Passo a passo para adicionar nova feature |
-| [05-feature-catalog.md](05-feature-catalog.md) | Catálogo de features existentes e endpoints |
+| Arquivo                                            | Conteúdo                                                            |
+| -------------------------------------------------- | ------------------------------------------------------------------- |
+| [01-architecture.md](01-architecture.md)           | Camadas, fluxo de request, stack, infraestrutura                    |
+| [02-conventions.md](02-conventions.md)             | Padrões de código obrigatórios (SOLID, ResponseHandler, erros, Zod) |
+| [03-domain-model.md](03-domain-model.md)           | Modelo de dados, tabelas, relacionamentos, regras de negócio        |
+| [04-feature-playbook.md](04-feature-playbook.md)   | Passo a passo para adicionar nova feature                           |
+| [05-feature-catalog.md](05-feature-catalog.md)     | Catálogo de features existentes e endpoints                         |
+| [06-project-structure.md](06-project-structure.md) | Estrutura modular alvo (base serverJB) + plano de migração          |
 
 ## Specs compartilhados (Front ↔ Back)
 
@@ -29,4 +30,5 @@ Mudou endpoint/payload/invariante de domínio → atualizar `../../.specs/01-api
 
 Mudou padrão de código → atualizar `02`.
 Mudou `src/db/schema.ts` → atualizar `03`.
-Nova feature → atualizar `05` e seguir `04`.
+Nova feature → atualizar `05` e seguir `04` (estrutura modular — `06`).
+Migrou módulo para `src/modules/` → atualizar checklist/status em `06` e paths em `05`.
