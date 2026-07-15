@@ -5,7 +5,7 @@ import {
   formatPeriodLabel,
   getCurrentFinancialPeriod,
   getPreviousFinancialPeriods,
-} from '../core/helpers/financial-period';
+} from '../modules/financial-period';
 import { groupSubscriptionCandidates } from '../core/helpers/subscription-detector';
 import { sumAmounts } from '../core/helpers/amount';
 import { buildComparison } from '../core/helpers/comparative-insights';
@@ -16,7 +16,7 @@ import {
   calculateStats,
   getRecentTransactions,
 } from '../core/helpers/handlers/overview-handlers';
-import { financialPeriodRepository } from '../repositories/financial-period.repository';
+import { financialPeriodRepository } from '../modules/financial-period/repositories/financial-period.repository';
 import type { TransactionWithCategory } from '../repositories/transaction.repository';
 import { transactionRepository } from '../repositories/transaction.repository';
 import { userRepository } from '../repositories/user.repository';

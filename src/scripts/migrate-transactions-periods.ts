@@ -3,7 +3,7 @@ import { db } from '../infra/db';
 import { financialPeriods, transactions, users } from '../infra/db/schema';
 import type { Transaction } from '../infra/db/schema';
 import { toSaoPauloTimezone } from '../core/helpers/dates';
-import { getCurrentFinancialPeriod } from '../core/helpers/financial-period';
+import { getCurrentFinancialPeriod } from '../modules/financial-period';
 
 export async function migrateTransactionsPeriods() {
   console.log(' Iniciando migração de períodos para transações...');

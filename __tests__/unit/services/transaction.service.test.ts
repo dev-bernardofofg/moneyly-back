@@ -12,7 +12,7 @@ import { validateCategoryExistsForUser } from '../../../src/validations/transact
 // Mock dos módulos
 jest.mock('../../../src/repositories/transaction.repository');
 jest.mock('../../../src/validations/transaction.validation');
-jest.mock('../../../src/services/financial-period.service', () => ({
+jest.mock('../../../src/modules/financial-period', () => ({
   financialPeriodService: {
     findOrCreatePeriodForDate: jest.fn().mockResolvedValue('p1'),
     ensureCurrentPeriodExists: jest.fn().mockResolvedValue({ id: 'p1' }),

@@ -1,12 +1,12 @@
 import { sumAmounts } from '../core/helpers/amount';
 import { calculateNextExecution, getCurrentSaoPauloDate } from '../core/helpers/dates';
-import { formatPeriodLabel } from '../core/helpers/financial-period';
+import { formatPeriodLabel } from '../modules/financial-period';
 import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
 import { transactionRepository } from '../repositories/transaction.repository';
 import type { RecurringFrequency } from '../types/recurring-transaction.types';
 import { requireUser } from '../validations/user.validation';
 import { HttpError } from '../validations/errors';
-import { financialPeriodService } from './financial-period.service';
+import { financialPeriodService } from '../modules/financial-period';
 
 const MAX_OCCURRENCE_ITERATIONS = 400; // teto p/ frequência daily em janelas longas
 

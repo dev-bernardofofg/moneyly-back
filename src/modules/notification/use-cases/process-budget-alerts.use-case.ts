@@ -2,7 +2,7 @@ import { logger } from '../../../core/lib/logger';
 import { notificationRepository } from '../repositories/notification.repository';
 import { userRepository } from '../../../repositories/user.repository';
 import { getBudgetProgressUseCase } from '../../budget';
-import { financialPeriodService } from '../../../services/financial-period.service';
+import { financialPeriodService } from '../../financial-period';
 
 type BudgetStatus = 'safe' | 'attention' | 'warning' | 'exceeded';
 

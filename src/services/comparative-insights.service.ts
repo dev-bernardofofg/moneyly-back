@@ -1,5 +1,5 @@
 import { buildComparison, type ComparativeInsights } from '../core/helpers/comparative-insights';
-import { formatPeriodLabel, getPreviousFinancialPeriods } from '../core/helpers/financial-period';
+import { formatPeriodLabel, getPreviousFinancialPeriods } from '../modules/financial-period';
 import { transactionRepository } from '../repositories/transaction.repository';
 import { userRepository } from '../repositories/user.repository';
 import { HttpError } from '../validations/errors';

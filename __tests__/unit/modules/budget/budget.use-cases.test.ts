@@ -10,14 +10,14 @@ import { listBudgetsUseCase } from '../../../../src/modules/budget/use-cases/lis
 import { updateBudgetUseCase } from '../../../../src/modules/budget/use-cases/update-budget.use-case';
 import { budgetRepository } from '../../../../src/modules/budget/repositories/budget.repository';
 import { transactionRepository } from '../../../../src/repositories/transaction.repository';
-import { financialPeriodService } from '../../../../src/services/financial-period.service';
+import { financialPeriodService } from '../../../../src/modules/financial-period';
 import { validateBudgetExists } from '../../../../src/modules/budget/validations/budget.validation';
 import { HttpError } from '../../../../src/validations/errors';
 
 jest.mock('../../../../src/modules/budget/repositories/budget.repository');
 jest.mock('../../../../src/repositories/transaction.repository');
 jest.mock('../../../../src/modules/budget/validations/budget.validation');
-jest.mock('../../../../src/services/financial-period.service', () => ({
+jest.mock('../../../../src/modules/financial-period', () => ({
   financialPeriodService: {
     ensureCurrentPeriodExists: jest.fn().mockResolvedValue({ id: 'p1' }),
     getPeriodById: jest.fn().mockResolvedValue({ id: 'p1' }),

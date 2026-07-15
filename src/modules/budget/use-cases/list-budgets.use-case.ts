@@ -1,6 +1,6 @@
 import { sumAmounts } from '../../../core/helpers/amount';
 import { transactionRepository } from '../../../repositories/transaction.repository';
-import { financialPeriodService } from '../../../services/financial-period.service';
+import { financialPeriodService } from '../../financial-period';
 import { HttpError } from '../../../validations/errors';
 import { getBudgetStatus } from '../helpers/budget-status';
 import { budgetRepository } from '../repositories/budget.repository';

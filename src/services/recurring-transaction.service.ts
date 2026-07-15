@@ -14,7 +14,7 @@ import type {
 import { PaginationHelper } from '../core/helpers/pagination';
 import { transactionRepository } from '../repositories/transaction.repository';
 import { createTransactionService } from './transaction.service';
-import { financialPeriodService } from './financial-period.service';
+import { financialPeriodService } from '../modules/financial-period';
 
 function calcMonthsNeeded(
   frequency: RecurringFrequency,

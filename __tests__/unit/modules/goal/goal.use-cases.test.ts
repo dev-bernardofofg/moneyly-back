@@ -24,7 +24,7 @@ import { notifyGoalMilestones } from '../../../../src/modules/notification';
 jest.mock('../../../../src/modules/goal/repositories/goal.repository');
 jest.mock('../../../../src/modules/goal/validations/goal.validation');
 jest.mock('../../../../src/modules/notification');
-jest.mock('../../../../src/services/financial-period.service', () => ({
+jest.mock('../../../../src/modules/financial-period', () => ({
   financialPeriodService: {
     createNextPeriods: jest.fn().mockResolvedValue([]),
     ensureCurrentPeriodExists: jest.fn().mockResolvedValue({ id: 'p1' }),

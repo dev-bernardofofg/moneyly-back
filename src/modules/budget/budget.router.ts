@@ -6,7 +6,7 @@ import {
   updateCategoryBudget,
 } from './budget.controller';
 import { authenticateUser } from '../../core/middlewares/auth';
-import { ensurePeriodExists } from '../../core/middlewares/auto-period-creation';
+import { ensurePeriodExists } from '../financial-period/middlewares/ensure-period-exists';
 import { validateBody, validateParams, validateQuery } from '../../core/middlewares/validate';
 import { idParamSchema } from '../../schemas/auth.schema';
 import {

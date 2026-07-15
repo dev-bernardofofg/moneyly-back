@@ -1,7 +1,11 @@
 import { formatInTimeZone } from 'date-fns-tz';
 import { ptBR } from 'date-fns/locale';
-import { transactionRepository } from '../../repositories/transaction.repository';
-import { createNormalizedSaoPauloDate, getCurrentSaoPauloDate, toSaoPauloTimezone } from './dates';
+import { transactionRepository } from '../../../repositories/transaction.repository';
+import {
+  createNormalizedSaoPauloDate,
+  getCurrentSaoPauloDate,
+  toSaoPauloTimezone,
+} from '../../../core/helpers/dates';
 
 export interface FinancialPeriod {
   startDate: Date;

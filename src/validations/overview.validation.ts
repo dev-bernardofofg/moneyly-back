@@ -1,4 +1,4 @@
-import { IAvailablePeriod } from '../core/helpers/financial-period';
+import { IAvailablePeriod } from '../modules/financial-period';
 import { HttpError } from './errors';
 
 export const validatePeriodId = (periodId: string, availablePeriods: IAvailablePeriod[]) => {

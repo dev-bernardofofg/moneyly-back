@@ -10,20 +10,20 @@ import {
   getStatsOverview,
   getTransactionsByUserId,
 } from '../../../src/services/overview.service';
-import { financialPeriodRepository } from '../../../src/repositories/financial-period.repository';
+import { financialPeriodRepository } from '../../../src/modules/financial-period/repositories/financial-period.repository';
 import { transactionRepository } from '../../../src/repositories/transaction.repository';
 import { getBudgetProgressUseCase } from '../../../src/modules/budget';
-import { getGoalsProgressService } from '../../../src/services/goal.service';
+import { getGoalsProgressUseCase } from '../../../src/modules/goal';
 
-jest.mock('../../../src/repositories/financial-period.repository');
+jest.mock('../../../src/modules/financial-period/repositories/financial-period.repository');
 jest.mock('../../../src/repositories/transaction.repository');
 jest.mock('../../../src/modules/budget');
-jest.mock('../../../src/services/goal.service');
+jest.mock('../../../src/modules/goal');
 
 const fpRepo = financialPeriodRepository as jest.Mocked<typeof financialPeriodRepository>;
 const txRepo = transactionRepository as jest.Mocked<typeof transactionRepository>;
 const mockedBudgetProgress = getBudgetProgressUseCase as jest.Mock;
-const mockedGoalsProgress = getGoalsProgressService as jest.Mock;
+const mockedGoalsProgress = getGoalsProgressUseCase as jest.Mock;
 
 const USER = 'user-123';
 

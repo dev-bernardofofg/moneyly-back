@@ -1,7 +1,7 @@
 import { ResponseHandler } from '../core/helpers/response-handler';
 import { asyncHandler } from '../core/middlewares/async-handler';
 import type { AuthRequest } from '../core/middlewares/auth';
-import { financialPeriodService } from '../services/financial-period.service';
+import { financialPeriodService } from '../modules/financial-period';
 import {
   updatefinancialPeriodService,
   updateIncomeAndPeriodService,

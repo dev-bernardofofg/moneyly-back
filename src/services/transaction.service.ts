@@ -1,12 +1,12 @@
 import { format } from 'date-fns';
 import { sumAmounts } from '../core/helpers/amount';
-import { getCurrentFinancialPeriod } from '../core/helpers/financial-period';
+import { getCurrentFinancialPeriod } from '../modules/financial-period';
 import type { PaginationQuery } from '../core/helpers/pagination';
 import { toSaoPauloTimezone } from '../core/helpers/dates';
 import { transactionRepository } from '../repositories/transaction.repository';
 import { userRepository } from '../repositories/user.repository';
 import type { ITransaction, TransactionFilters } from '../types/transaction.types';
-import { financialPeriodService } from './financial-period.service';
+import { financialPeriodService } from '../modules/financial-period';
 import { validateCategoryExistsForUser } from '../validations/transaction.validation';
 import { HttpError } from '../validations/errors';
 import { NotFoundError } from './errors';

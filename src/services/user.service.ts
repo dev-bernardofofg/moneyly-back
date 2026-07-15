@@ -3,7 +3,7 @@ import { createDefaultPreferencesForUser } from '../infra/db/seed';
 import { logger } from '../core/lib/logger';
 import { NotFoundError, UnauthorizedError } from './errors';
 import { generateAccessToken, generateRefreshToken, hashRefreshToken } from '../core/helpers/token';
-import { financialPeriodRepository } from '../repositories/financial-period.repository';
+import { financialPeriodRepository } from '../modules/financial-period/repositories/financial-period.repository';
 import { refreshTokenRepository } from '../repositories/refresh-token.repository';
 import { userRepository } from '../repositories/user.repository';
 import {

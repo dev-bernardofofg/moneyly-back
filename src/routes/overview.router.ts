@@ -8,7 +8,7 @@ import {
   getPlannerOverview,
 } from '../controllers/overview.controller';
 import { authenticateUser } from '../core/middlewares/auth';
-import { ensurePeriodExists } from '../core/middlewares/auto-period-creation';
+import { ensurePeriodExists } from '../modules/financial-period';
 import { validate } from '../core/middlewares/validate';
 import {
   comparativeInsightsQuerySchema,

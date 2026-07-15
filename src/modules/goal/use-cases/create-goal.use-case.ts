@@ -1,4 +1,4 @@
-import { financialPeriodService } from '../../../services/financial-period.service';
+import { financialPeriodService } from '../../financial-period';
 import { monthsUntilDate } from '../helpers/months-until-date';
 import { goalRepository } from '../repositories/goal.repository';
 

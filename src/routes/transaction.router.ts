@@ -11,7 +11,7 @@ import {
   updateTransaction,
 } from '../controllers/transaction.controller';
 import { authenticateUser } from '../core/middlewares/auth';
-import { ensurePeriodExists } from '../core/middlewares/auto-period-creation';
+import { ensurePeriodExists } from '../modules/financial-period';
 import { validate } from '../core/middlewares/validate';
 import { idParamSchema } from '../schemas/auth.schema';
 import { transactionListQuerySchema } from '../schemas/pagination.schema';

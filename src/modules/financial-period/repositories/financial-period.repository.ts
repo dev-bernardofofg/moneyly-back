@@ -1,7 +1,7 @@
 import { and, count, desc, eq, gte, lte } from 'drizzle-orm';
-import { db } from '../infra/db';
-import { financialPeriods, transactions, type FinancialPeriod } from '../infra/db/schema';
-import type { IFinancialPeriodRepository } from './interfaces/IFinancialPeriodRepository';
+import { db } from '../../../infra/db';
+import { financialPeriods, transactions, type FinancialPeriod } from '../../../infra/db/schema';
+import type { IFinancialPeriodRepository } from './IFinancialPeriodRepository';
 
 async function createPeriod(data: {
   userId: string;

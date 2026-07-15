@@ -9,7 +9,7 @@ import {
 import { ResponseHandler } from '../core/helpers/response-handler';
 import { AuthenticatedRequest, authenticateUser } from '../core/middlewares/auth';
 import { validateBody } from '../core/middlewares/validate';
-import { financialPeriodRepository } from '../repositories/financial-period.repository';
+import { financialPeriodRepository } from '../modules/financial-period/repositories/financial-period.repository';
 import {
   updateFinancialPeriodSchema,
   updateIncomeAndPeriodSchema,
