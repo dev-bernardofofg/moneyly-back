@@ -1,6 +1,6 @@
-import { HttpError } from './errors';
+import { HttpError } from '../../../validations/errors';
 import { overtimeRepository } from '../repositories/overtime.repository';
-import type { OvertimeWithCompany } from '../repositories/interfaces/IOvertimeRepository';
+import type { OvertimeWithCompany } from '../repositories/IOvertimeRepository';
 
 export async function validateOvertimeOwnership(
   id: string,

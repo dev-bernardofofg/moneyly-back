@@ -18,7 +18,9 @@ const ROUTER_PREFIX: Record<string, string> = {
 
 // Routers de módulos migrados (src/modules/<x>/<x>.router.ts — ver .specs/06)
 const MODULE_ROUTER_PREFIX: Record<string, string> = {
-  notification: '/notifications',
+  'notification/notification.router.ts': '/notifications',
+  'overtime/company.router.ts': '/companies',
+  'overtime/overtime.router.ts': '/overtime',
 };
 
 const ROUTES_DIR = join(__dirname, '../../../src/routes');
@@ -54,8 +56,8 @@ function scanRouters(): Array<{ method: string; path: string; file: string }> {
     if (!prefix) continue;
     scanFile(join(ROUTES_DIR, file), prefix, file);
   }
-  for (const [mod, prefix] of Object.entries(MODULE_ROUTER_PREFIX)) {
-    scanFile(join(MODULES_DIR, mod, `${mod}.router.ts`), prefix, `modules/${mod}`);
+  for (const [rel, prefix] of Object.entries(MODULE_ROUTER_PREFIX)) {
+    scanFile(join(MODULES_DIR, rel), prefix, `modules/${rel}`);
   }
   return out;
 }

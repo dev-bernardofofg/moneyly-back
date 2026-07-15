@@ -1,5 +1,5 @@
-import type { NewOvertimeRecord, OvertimeRecord } from '../../infra/db/schema';
-import type { PaginationQuery, PaginationResult } from '../../core/helpers/pagination';
+import type { NewOvertimeRecord, OvertimeRecord } from '../../../infra/db/schema';
+import type { PaginationQuery, PaginationResult } from '../../../core/helpers/pagination';
 
 export interface OvertimeWithCompany extends OvertimeRecord {
   company: { id: string; name: string };

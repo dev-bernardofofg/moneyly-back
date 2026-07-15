@@ -1,14 +1,9 @@
 import { Router } from 'express';
-import {
-  createCompany,
-  deleteCompany,
-  getCompanies,
-  updateCompany,
-} from '../controllers/company.controller';
-import { authenticateUser } from '../core/middlewares/auth';
-import { validateBody, validateParams } from '../core/middlewares/validate';
-import { idParamSchema } from '../schemas/auth.schema';
-import { createCompanySchema, updateCompanySchema } from '../schemas/company.schema';
+import { createCompany, deleteCompany, getCompanies, updateCompany } from './company.controller';
+import { authenticateUser } from '../../core/middlewares/auth';
+import { validateBody, validateParams } from '../../core/middlewares/validate';
+import { idParamSchema } from '../../schemas/auth.schema';
+import { createCompanySchema, updateCompanySchema } from './schemas/company.schema';
 
 const CompanyRouter: Router = Router();
 

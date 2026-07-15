@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
-import { db } from '../infra/db';
-import { companies, type Company, type NewCompany } from '../infra/db/schema';
-import type { ICompanyRepository } from './interfaces/ICompanyRepository';
+import { db } from '../../../infra/db';
+import { companies, type Company, type NewCompany } from '../../../infra/db/schema';
+import type { ICompanyRepository } from './ICompanyRepository';
 
 export const companyRepository = {
   async create(data: Omit<NewCompany, 'id' | 'createdAt' | 'updatedAt'>): Promise<Company> {
