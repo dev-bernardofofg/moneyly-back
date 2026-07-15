@@ -8,8 +8,8 @@
  *   continua tolerante a string — schemas de src/schemas/ inalterados.
  *   Decisão registrada em moneyly/.specs/03-feature-roadmap.md.
  */
-import { registry, z } from './registry';
-import { errorResponse, wrapPaginated, wrapPaginatedWithSummary, wrapSuccess } from './envelopes';
+import { z } from './registry';
+import { wrapPaginated, wrapPaginatedWithSummary, wrapSuccess } from './envelopes';
 import {
   AuthRefreshSchema,
   AuthSessionSchema,
@@ -84,10 +84,6 @@ import {
   overtimeSummaryQuerySchema,
 } from '../../schemas/overtime.schema';
 
-const json = (schema: z.ZodTypeAny) => ({
-  content: { 'application/json': { schema } },
-});
-
 const periodIdParam = z.object({ periodId: z.string().uuid() });
 const intQuery = z.coerce.number().int().positive().optional();
 const dateQuery = z.string().optional();
@@ -120,61 +116,7 @@ const notificationsQuery = z.object({
   limit: intQuery,
 });
 
-type RouteOpts = {
-  method: 'get' | 'post' | 'put' | 'patch' | 'delete';
-  path: string;
-  tag: string;
-  summary: string;
-  auth?: boolean; // default true
-  body?: z.ZodTypeAny;
-  query?: z.ZodTypeAny;
-  params?: z.AnyZodObject;
-  ok?: { status: 200 | 201; schema: z.ZodTypeAny };
-  csv?: boolean;
-};
-
-function route(o: RouteOpts) {
-  const auth = o.auth !== false;
-  const ok = o.ok ?? { status: 200 as const, schema: wrapSuccess() };
-
-  const responses: Record<string, unknown> = {
-    [ok.status]: {
-      description: 'Sucesso',
-      ...(o.csv ? { content: { 'text/csv': { schema: z.string() } } } : json(ok.schema)),
-    },
-    400: { description: 'Requisição inválida', ...json(errorResponse) },
-  };
-  if (auth) {
-    responses[401] = { description: 'Não autenticado', ...json(errorResponse) };
-  }
-  if (o.params) {
-    responses[404] = {
-      description: 'Recurso não encontrado',
-      ...json(errorResponse),
-    };
-  }
-
-  registry.registerPath({
-    method: o.method,
-    path: o.path,
-    tags: [o.tag],
-    summary: o.summary,
-    ...(auth ? { security: [{ bearerAuth: [] }] } : { security: [] }),
-    request: {
-      ...(o.body ? { body: json(o.body) } : {}),
-      ...(o.query ? { query: o.query as z.AnyZodObject } : {}),
-      ...(o.params ? { params: o.params } : {}),
-    },
-    responses: responses as never,
-  });
-}
-
-const ok = (schema: z.ZodTypeAny) => ({ status: 200 as const, schema });
-const created = (schema: z.ZodTypeAny = wrapSuccess()) => ({
-  status: 201 as const,
-  schema,
-});
-const nullData = wrapSuccess(z.null());
+import { created, nullData, ok, route } from './route';
 
 /* ───────────────────────── health ───────────────────────── */
 route({
