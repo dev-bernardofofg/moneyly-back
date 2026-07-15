@@ -4,16 +4,16 @@ import {
   deleteCategoryBudget,
   getUserBudgets,
   updateCategoryBudget,
-} from '../controllers/budget.controller';
-import { authenticateUser } from '../core/middlewares/auth';
-import { ensurePeriodExists } from '../core/middlewares/auto-period-creation';
-import { validateBody, validateParams, validateQuery } from '../core/middlewares/validate';
-import { idParamSchema } from '../schemas/auth.schema';
+} from './budget.controller';
+import { authenticateUser } from '../../core/middlewares/auth';
+import { ensurePeriodExists } from '../../core/middlewares/auto-period-creation';
+import { validateBody, validateParams, validateQuery } from '../../core/middlewares/validate';
+import { idParamSchema } from '../../schemas/auth.schema';
 import {
   createCategoryBudgetSchema,
   getBudgetsQuerySchema,
   updateCategoryBudgetSchema,
-} from '../schemas/category.schema';
+} from './schemas/budget.schema';
 
 const BudgetRouter: Router = Router();
 

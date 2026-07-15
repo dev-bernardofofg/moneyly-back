@@ -4,7 +4,7 @@ import { join } from 'path';
 import swaggerUi from 'swagger-ui-express';
 import { logger } from './core/lib/logger';
 import { AuthRouters } from './routes/auth.router';
-import { BudgetRouter } from './routes/budget.router';
+import { BudgetRouter } from './modules/budget';
 import { CategoryRouter } from './routes/category.router';
 import savingsGoalRoutes from './routes/goal.router';
 import { NotificationRouter } from './modules/notification';

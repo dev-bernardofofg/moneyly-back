@@ -1,15 +1,15 @@
 import { processUserBudgetAlerts } from '../../../../../src/modules/notification/use-cases/process-budget-alerts.use-case';
 import { notificationRepository } from '../../../../../src/modules/notification/repositories/notification.repository';
 import { financialPeriodService } from '../../../../../src/services/financial-period.service';
-import { getBudgetProgressService } from '../../../../../src/services/budget.service';
+import { getBudgetProgressUseCase } from '../../../../../src/modules/budget';
 
 jest.mock('../../../../../src/modules/notification/repositories/notification.repository');
 jest.mock('../../../../../src/services/financial-period.service');
-jest.mock('../../../../../src/services/budget.service');
+jest.mock('../../../../../src/modules/budget');
 
 const mockedRepo = notificationRepository as jest.Mocked<typeof notificationRepository>;
 const mockedPeriod = financialPeriodService as jest.Mocked<typeof financialPeriodService>;
-const mockedBudget = getBudgetProgressService as jest.Mock;
+const mockedBudget = getBudgetProgressUseCase as jest.Mock;
 
 const USER = '11111111-1111-1111-1111-111111111111';
 const PERIOD = { id: '22222222-2222-2222-2222-222222222222' };

@@ -6,6 +6,7 @@ import './paths'; // side-effect: registra endpoints legados (layer-first)
 // Módulos migrados registram seus próprios paths (ver .specs/06):
 import '../../modules/notification/notification.paths';
 import '../../modules/overtime/overtime.paths';
+import '../../modules/budget/budget.paths';
 
 /**
  * zod-to-openapi v7 emite ref-nullable como `{ allOf: [ {$ref}, {nullable:true} ] }`.

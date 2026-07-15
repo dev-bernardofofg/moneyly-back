@@ -1,4 +1,4 @@
-import { BudgetWithCategory } from '../repositories/interfaces/IBudgetRepository';
+import { BudgetWithCategory } from './repositories/IBudgetRepository';
 
 export type BudgetProgress = BudgetWithCategory & {
   spent: number;

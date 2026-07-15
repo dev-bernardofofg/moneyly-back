@@ -12,17 +12,17 @@ import {
 } from '../../../src/services/overview.service';
 import { financialPeriodRepository } from '../../../src/repositories/financial-period.repository';
 import { transactionRepository } from '../../../src/repositories/transaction.repository';
-import { getBudgetProgressService } from '../../../src/services/budget.service';
+import { getBudgetProgressUseCase } from '../../../src/modules/budget';
 import { getGoalsProgressService } from '../../../src/services/goal.service';
 
 jest.mock('../../../src/repositories/financial-period.repository');
 jest.mock('../../../src/repositories/transaction.repository');
-jest.mock('../../../src/services/budget.service');
+jest.mock('../../../src/modules/budget');
 jest.mock('../../../src/services/goal.service');
 
 const fpRepo = financialPeriodRepository as jest.Mocked<typeof financialPeriodRepository>;
 const txRepo = transactionRepository as jest.Mocked<typeof transactionRepository>;
-const mockedBudgetProgress = getBudgetProgressService as jest.Mock;
+const mockedBudgetProgress = getBudgetProgressUseCase as jest.Mock;
 const mockedGoalsProgress = getGoalsProgressService as jest.Mock;
 
 const USER = 'user-123';

@@ -13,8 +13,6 @@ import { wrapPaginated, wrapPaginatedWithSummary, wrapSuccess } from './envelope
 import {
   AuthRefreshSchema,
   AuthSessionSchema,
-  BudgetProgressSchema,
-  BudgetSchema,
   CategorySchema,
   ComparativeInsightsSchema,
   FinancialPeriodUpdateSchema,
@@ -50,13 +48,7 @@ import {
   updateMonthlyIncomeSchema,
 } from '../../schemas/user.schema';
 import { transactionSchema, transactionUpdateSchema } from '../../schemas/transaction.schema';
-import {
-  createCategorySchema,
-  updateCategorySchema,
-  createCategoryBudgetSchema,
-  updateCategoryBudgetSchema,
-  getBudgetsQuerySchema,
-} from '../../schemas/category.schema';
+import { createCategorySchema, updateCategorySchema } from '../../schemas/category.schema';
 import {
   addAmountToGoalSchema,
   createSavingsGoalSchema,
@@ -313,41 +305,6 @@ route({
   path: '/categories/delete/{id}',
   tag: 'Categories',
   summary: 'Deletar categoria',
-  params: idParamSchema,
-  ok: ok(nullData),
-});
-
-/* ───────────────────────── budgets ───────────────────────── */
-route({
-  method: 'post',
-  path: '/budgets/',
-  tag: 'Budgets',
-  summary: 'Criar orçamento por categoria',
-  body: createCategoryBudgetSchema,
-  ok: created(wrapSuccess(BudgetSchema)),
-});
-route({
-  method: 'get',
-  path: '/budgets/',
-  tag: 'Budgets',
-  summary: 'Listar orçamentos com progresso',
-  query: getBudgetsQuerySchema,
-  ok: ok(wrapSuccess(z.array(BudgetProgressSchema))),
-});
-route({
-  method: 'put',
-  path: '/budgets/{id}',
-  tag: 'Budgets',
-  summary: 'Atualizar orçamento',
-  body: updateCategoryBudgetSchema,
-  params: idParamSchema,
-  ok: ok(wrapSuccess(BudgetSchema)),
-});
-route({
-  method: 'delete',
-  path: '/budgets/{id}',
-  tag: 'Budgets',
-  summary: 'Deletar orçamento',
   params: idParamSchema,
   ok: ok(nullData),
 });

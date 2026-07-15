@@ -1,31 +1,29 @@
 /**
  * Testes unitários para budget.service (reescrito contra a API atual).
  */
-import {
-  createBudgetService,
-  deleteBudgetService,
-  getBudgetProgressByCategory,
-  getBudgetProgressService,
-  getBudgetStatus,
-  getUserBudgetsService,
-  updateBudgetService,
-} from '../../../src/services/budget.service';
-import { budgetRepository } from '../../../src/repositories/budget.repository';
-import { transactionRepository } from '../../../src/repositories/transaction.repository';
-import { financialPeriodService } from '../../../src/services/financial-period.service';
-import { validateBudgetExists } from '../../../src/validations/budget.validation';
-import { HttpError } from '../../../src/validations/errors';
+import { createBudgetUseCase } from '../../../../src/modules/budget/use-cases/create-budget.use-case';
+import { deleteBudgetUseCase } from '../../../../src/modules/budget/use-cases/delete-budget.use-case';
+import { getBudgetProgressByCategoryUseCase } from '../../../../src/modules/budget/use-cases/get-budget-progress-by-category.use-case';
+import { getBudgetProgressUseCase } from '../../../../src/modules/budget/use-cases/get-budget-progress.use-case';
+import { getBudgetStatus } from '../../../../src/modules/budget/helpers/budget-status';
+import { listBudgetsUseCase } from '../../../../src/modules/budget/use-cases/list-budgets.use-case';
+import { updateBudgetUseCase } from '../../../../src/modules/budget/use-cases/update-budget.use-case';
+import { budgetRepository } from '../../../../src/modules/budget/repositories/budget.repository';
+import { transactionRepository } from '../../../../src/repositories/transaction.repository';
+import { financialPeriodService } from '../../../../src/services/financial-period.service';
+import { validateBudgetExists } from '../../../../src/modules/budget/validations/budget.validation';
+import { HttpError } from '../../../../src/validations/errors';
 
-jest.mock('../../../src/repositories/budget.repository');
-jest.mock('../../../src/repositories/transaction.repository');
-jest.mock('../../../src/validations/budget.validation');
-jest.mock('../../../src/services/financial-period.service', () => ({
+jest.mock('../../../../src/modules/budget/repositories/budget.repository');
+jest.mock('../../../../src/repositories/transaction.repository');
+jest.mock('../../../../src/modules/budget/validations/budget.validation');
+jest.mock('../../../../src/services/financial-period.service', () => ({
   financialPeriodService: {
     ensureCurrentPeriodExists: jest.fn().mockResolvedValue({ id: 'p1' }),
     getPeriodById: jest.fn().mockResolvedValue({ id: 'p1' }),
   },
 }));
-jest.mock('../../../src/validations/user.validation', () => ({
+jest.mock('../../../../src/validations/user.validation', () => ({
   requireUser: jest.fn().mockResolvedValue({ id: 'user-123' }),
 }));
 
@@ -56,12 +54,12 @@ beforeEach(() => {
   periodSvc.getPeriodById.mockResolvedValue({ id: 'p1' } as never);
 });
 
-describe('createBudgetService', () => {
+describe('createBudgetUseCase', () => {
   it('creates budget (limit becomes string)', async () => {
     budgetRepo.findByUserIdAndCategoryId.mockResolvedValue(null);
     budgetRepo.create.mockResolvedValue({ id: 'b1' } as never);
 
-    const r = await createBudgetService(USER, {
+    const r = await createBudgetUseCase(USER, {
       categoryId: 'cat-1',
       monthlyLimit: 1500.5,
     });
@@ -77,18 +75,18 @@ describe('createBudgetService', () => {
   it('rejects duplicate (409)', async () => {
     budgetRepo.findByUserIdAndCategoryId.mockResolvedValue({ id: 'x' } as never);
     await expect(
-      createBudgetService(USER, { categoryId: 'cat-1', monthlyLimit: 100 })
+      createBudgetUseCase(USER, { categoryId: 'cat-1', monthlyLimit: 100 })
     ).rejects.toThrow(HttpError);
     expect(budgetRepo.create).not.toHaveBeenCalled();
   });
 });
 
-describe('getUserBudgetsService', () => {
+describe('listBudgetsUseCase', () => {
   it('computes spent/remaining/percentage/status for current period', async () => {
     budgetRepo.getBudgetWithCategory.mockResolvedValue([budgetWithCat()] as never);
     txRepo.findByPeriodId.mockResolvedValue([expense('250'), expense('150')] as never);
 
-    const r = await getUserBudgetsService(USER);
+    const r = await listBudgetsUseCase(USER);
 
     expect(periodSvc.ensureCurrentPeriodExists).toHaveBeenCalledWith(USER);
     expect(r[0]).toMatchObject({
@@ -103,7 +101,7 @@ describe('getUserBudgetsService', () => {
     budgetRepo.getBudgetWithCategory.mockResolvedValue([] as never);
     txRepo.findByPeriodId.mockResolvedValue([] as never);
 
-    await getUserBudgetsService(USER, 'period-9');
+    await listBudgetsUseCase(USER, 'period-9');
 
     expect(periodSvc.getPeriodById).toHaveBeenCalledWith('period-9', USER);
   });
@@ -112,16 +110,16 @@ describe('getUserBudgetsService', () => {
     budgetRepo.getBudgetWithCategory.mockResolvedValue([] as never);
     periodSvc.ensureCurrentPeriodExists.mockResolvedValue(null as never);
 
-    await expect(getUserBudgetsService(USER)).rejects.toThrow(HttpError);
+    await expect(listBudgetsUseCase(USER)).rejects.toThrow(HttpError);
   });
 });
 
-describe('updateBudgetService', () => {
+describe('updateBudgetUseCase', () => {
   it('validates existence and updates with string limit', async () => {
     mockedValidateBudgetExists.mockResolvedValue(undefined);
     budgetRepo.update.mockResolvedValue({ id: 'b1' } as never);
 
-    const r = await updateBudgetService(USER, 'b1', { monthlyLimit: 2000 });
+    const r = await updateBudgetUseCase(USER, 'b1', { monthlyLimit: 2000 });
 
     expect(mockedValidateBudgetExists).toHaveBeenCalledWith('b1', USER);
     expect(budgetRepo.update).toHaveBeenCalledWith('b1', {
@@ -132,17 +130,17 @@ describe('updateBudgetService', () => {
 
   it('propagates validation error', async () => {
     mockedValidateBudgetExists.mockRejectedValue(new HttpError(404, 'Orçamento não encontrado'));
-    await expect(updateBudgetService(USER, 'b1', { monthlyLimit: 1 })).rejects.toThrow(HttpError);
+    await expect(updateBudgetUseCase(USER, 'b1', { monthlyLimit: 1 })).rejects.toThrow(HttpError);
     expect(budgetRepo.update).not.toHaveBeenCalled();
   });
 });
 
-describe('deleteBudgetService', () => {
+describe('deleteBudgetUseCase', () => {
   it('validates existence and deletes', async () => {
     mockedValidateBudgetExists.mockResolvedValue(undefined);
     budgetRepo.delete.mockResolvedValue(true as never);
 
-    const r = await deleteBudgetService(USER, 'b1');
+    const r = await deleteBudgetUseCase(USER, 'b1');
 
     expect(mockedValidateBudgetExists).toHaveBeenCalledWith('b1', USER);
     expect(budgetRepo.delete).toHaveBeenCalledWith('b1');
@@ -163,12 +161,12 @@ describe('getBudgetStatus', () => {
   });
 });
 
-describe('getBudgetProgressService', () => {
+describe('getBudgetProgressUseCase', () => {
   it('percentage capped at 100 and remaining non-negative', async () => {
     budgetRepo.getBudgetWithCategory.mockResolvedValue([budgetWithCat()] as never);
     txRepo.findByPeriodId.mockResolvedValue([expense('1200')] as never);
 
-    const r = await getBudgetProgressService(USER);
+    const r = await getBudgetProgressUseCase(USER);
 
     expect(r[0]).toMatchObject({
       spent: 1200,
@@ -183,7 +181,7 @@ describe('getBudgetProgressByCategory', () => {
   it('no budget → safe 0%', async () => {
     budgetRepo.findByCategoryId.mockResolvedValue(null);
 
-    const r = await getBudgetProgressByCategory(USER, 'cat-1');
+    const r = await getBudgetProgressByCategoryUseCase(USER, 'cat-1');
 
     expect(r).toEqual({ percentage: 0, status: 'safe' });
   });
@@ -194,7 +192,7 @@ describe('getBudgetProgressByCategory', () => {
     } as never);
     txRepo.findByPeriodId.mockResolvedValue([expense('950')] as never);
 
-    const r = await getBudgetProgressByCategory(USER, 'cat-1');
+    const r = await getBudgetProgressByCategoryUseCase(USER, 'cat-1');
 
     expect(r.percentage).toBeCloseTo(95);
     expect(r.status).toBe('warning');

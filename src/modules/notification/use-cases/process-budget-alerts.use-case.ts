@@ -1,7 +1,7 @@
 import { logger } from '../../../core/lib/logger';
 import { notificationRepository } from '../repositories/notification.repository';
 import { userRepository } from '../../../repositories/user.repository';
-import { getBudgetProgressService } from '../../../services/budget.service';
+import { getBudgetProgressUseCase } from '../../budget';
 import { financialPeriodService } from '../../../services/financial-period.service';
 
 type BudgetStatus = 'safe' | 'attention' | 'warning' | 'exceeded';
@@ -21,7 +21,7 @@ const STATUS_MAP: Record<
  */
 export const processUserBudgetAlerts = async (userId: string): Promise<void> => {
   const period = await financialPeriodService.ensureCurrentPeriodExists(userId);
-  const budgets = await getBudgetProgressService(userId);
+  const budgets = await getBudgetProgressUseCase(userId);
 
   for (const budget of budgets) {
     const status = budget.status as BudgetStatus;

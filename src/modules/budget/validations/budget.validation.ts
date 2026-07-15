@@ -1,5 +1,5 @@
 import { budgetRepository } from '../repositories/budget.repository';
-import { HttpError } from '../services/errors';
+import { HttpError } from '../../../services/errors';
 
 export const validateBudgetExistsByUserId = async (categoryId: string, userId: string) => {
   const budget = await budgetRepository.findByIdAndUserId(categoryId, userId);

@@ -10,7 +10,6 @@ const ROUTER_PREFIX: Record<string, string> = {
   'user.router.ts': '/user',
   'transaction.router.ts': '/transactions',
   'category.router.ts': '/categories',
-  'budget.router.ts': '/budgets',
   'goal.router.ts': '/goals',
   'overview.router.ts': '/overview',
   'recurring-transaction.router.ts': '/recurring-transactions',
@@ -21,6 +20,7 @@ const MODULE_ROUTER_PREFIX: Record<string, string> = {
   'notification/notification.router.ts': '/notifications',
   'overtime/company.router.ts': '/companies',
   'overtime/overtime.router.ts': '/overtime',
+  'budget/budget.router.ts': '/budgets',
 };
 
 const ROUTES_DIR = join(__dirname, '../../../src/routes');
