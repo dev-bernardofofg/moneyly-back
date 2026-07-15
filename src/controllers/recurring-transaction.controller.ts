@@ -11,7 +11,7 @@ import {
   reactivateRecurringTransactionService,
   updateRecurringTransactionService,
 } from '../services/recurring-transaction.service';
-import { convertSubscriptionToRecurringService } from '../services/subscription.service';
+import { convertSubscriptionToRecurringUseCase } from '../modules/subscription';
 
 export const createRecurringTransaction = asyncHandler<AuthRequest>(async (req, res) => {
   const {
@@ -43,7 +43,7 @@ export const createRecurringTransaction = asyncHandler<AuthRequest>(async (req, 
 
 export const createRecurringFromSubscription = asyncHandler<AuthRequest>(async (req, res) => {
   const { title, amount, categoryId, cadence, nextEstimatedDate, description } = req.body;
-  const recurring = await convertSubscriptionToRecurringService(req.user.id, {
+  const recurring = await convertSubscriptionToRecurringUseCase(req.user.id, {
     title,
     amount: String(amount),
     categoryId,

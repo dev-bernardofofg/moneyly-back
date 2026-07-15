@@ -1,4 +1,4 @@
-import type { TransactionWithCategory } from '../../repositories/transaction.repository';
+import type { TransactionWithCategory } from '../../../repositories/transaction.repository';
 
 export type SubscriptionCadence = 'weekly' | 'monthly' | 'yearly';
 

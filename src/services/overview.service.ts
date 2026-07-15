@@ -6,7 +6,7 @@ import {
   getCurrentFinancialPeriod,
   getPreviousFinancialPeriods,
 } from '../modules/financial-period';
-import { groupSubscriptionCandidates } from '../core/helpers/subscription-detector';
+import { groupSubscriptionCandidates } from '../modules/subscription';
 import { sumAmounts } from '../core/helpers/amount';
 import { buildComparison } from '../core/helpers/comparative-insights';
 import { NotFoundError } from './errors';

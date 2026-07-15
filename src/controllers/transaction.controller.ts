@@ -15,7 +15,7 @@ import {
   updateTransactionService,
 } from '../services/transaction.service';
 import { validatePagination } from '../validations/pagination.validation';
-import { detectSubscriptionsService } from '../services/subscription.service';
+import { detectSubscriptionsUseCase } from '../modules/subscription';
 
 export const createTransaction = asyncHandler<AuthRequest>(async (req, res) => {
   const { type, title, amount, category, description, date } = req.body;
@@ -154,7 +154,7 @@ export const exportTransactionsCsv = asyncHandler<AuthRequest>(async (req, res) 
 });
 
 export const getSubscriptions = asyncHandler<AuthRequest>(async (req, res) => {
-  const candidates = await detectSubscriptionsService(req.user.id);
+  const candidates = await detectSubscriptionsUseCase(req.user.id);
   return ResponseHandler.success(res, candidates, 'Possíveis assinaturas detectadas');
 });
 

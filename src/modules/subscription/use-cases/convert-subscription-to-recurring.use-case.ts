@@ -1,25 +1,13 @@
-import type { RecurringTransaction } from '../infra/db/schema';
-import { getCurrentSaoPauloDate } from '../core/helpers/dates';
+import type { RecurringTransaction } from '../../../infra/db/schema';
+import { getCurrentSaoPauloDate } from '../../../core/helpers/dates';
+import { recurringTransactionRepository } from '../../../repositories/recurring-transaction.repository';
+import { HttpError } from '../../../validations/errors';
+import { createRecurringTransactionService } from '../../../services/recurring-transaction.service';
 import {
   addCadence,
-  groupSubscriptionCandidates,
   normalizeTitle,
   type SubscriptionCadence,
-  type SubscriptionCandidate,
-} from '../core/helpers/subscription-detector';
-import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
-import { transactionRepository } from '../repositories/transaction.repository';
-import { HttpError } from '../validations/errors';
-import { requireUser } from '../validations/user.validation';
-import { createRecurringTransactionService } from './recurring-transaction.service';
-
-export const detectSubscriptionsService = async (
-  userId: string
-): Promise<SubscriptionCandidate[]> => {
-  await requireUser(userId);
-  const transactions = await transactionRepository.findAllByUserId(userId);
-  return groupSubscriptionCandidates(transactions);
-};
+} from '../helpers/subscription-detector';
 
 export interface ConvertSubscriptionInput {
   title: string;
@@ -36,7 +24,7 @@ export interface ConvertSubscriptionInput {
  * então startDate é avançada até ser estritamente futura — startDate ≤ hoje
  * faria createRecurringTransactionService lançar a despesa de novo.
  */
-export const convertSubscriptionToRecurringService = async (
+export const convertSubscriptionToRecurringUseCase = async (
   userId: string,
   input: ConvertSubscriptionInput
 ): Promise<RecurringTransaction> => {

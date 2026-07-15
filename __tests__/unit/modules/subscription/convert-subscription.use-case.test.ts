@@ -1,12 +1,12 @@
-import { convertSubscriptionToRecurringService } from '../../../src/services/subscription.service';
-import { createRecurringTransactionService } from '../../../src/services/recurring-transaction.service';
-import { recurringTransactionRepository } from '../../../src/repositories/recurring-transaction.repository';
-import { HttpError } from '../../../src/validations/errors';
+import { convertSubscriptionToRecurringUseCase } from '../../../../src/modules/subscription/use-cases/convert-subscription-to-recurring.use-case';
+import { createRecurringTransactionService } from '../../../../src/services/recurring-transaction.service';
+import { recurringTransactionRepository } from '../../../../src/repositories/recurring-transaction.repository';
+import { HttpError } from '../../../../src/validations/errors';
 
-jest.mock('../../../src/repositories/recurring-transaction.repository');
-jest.mock('../../../src/repositories/transaction.repository');
-jest.mock('../../../src/services/recurring-transaction.service');
-jest.mock('../../../src/validations/user.validation');
+jest.mock('../../../../src/repositories/recurring-transaction.repository');
+jest.mock('../../../../src/repositories/transaction.repository');
+jest.mock('../../../../src/services/recurring-transaction.service');
+jest.mock('../../../../src/validations/user.validation');
 
 const mockedRepo = recurringTransactionRepository as jest.Mocked<
   typeof recurringTransactionRepository
@@ -32,7 +32,7 @@ beforeEach(() => {
 
 describe('convertSubscriptionToRecurringService', () => {
   it('creates expense recurring delegating to createRecurringTransactionService', async () => {
-    const result = await convertSubscriptionToRecurringService(USER, baseInput);
+    const result = await convertSubscriptionToRecurringUseCase(USER, baseInput);
 
     expect(result).toEqual({ id: 'rec-1' });
     expect(mockedCreate).toHaveBeenCalledTimes(1);
@@ -47,17 +47,17 @@ describe('convertSubscriptionToRecurringService', () => {
   it('rejects duplicate active recurring with same normalized title → 409', async () => {
     mockedRepo.findByUserId.mockResolvedValue([{ title: 'NETFLIX 03/12' }] as never);
 
-    await expect(convertSubscriptionToRecurringService(USER, baseInput)).rejects.toMatchObject({
+    await expect(convertSubscriptionToRecurringUseCase(USER, baseInput)).rejects.toMatchObject({
       status: 409,
     });
-    await expect(convertSubscriptionToRecurringService(USER, baseInput)).rejects.toBeInstanceOf(
+    await expect(convertSubscriptionToRecurringUseCase(USER, baseInput)).rejects.toBeInstanceOf(
       HttpError
     );
     expect(mockedCreate).not.toHaveBeenCalled();
   });
 
   it('past nextEstimatedDate is advanced to a strictly future startDate', async () => {
-    await convertSubscriptionToRecurringService(USER, {
+    await convertSubscriptionToRecurringUseCase(USER, {
       ...baseInput,
       nextEstimatedDate: new Date(Date.now() - 40 * DAY_MS),
     });
@@ -67,7 +67,7 @@ describe('convertSubscriptionToRecurringService', () => {
   });
 
   it('monthly derives dayOfMonth from startDate', async () => {
-    await convertSubscriptionToRecurringService(USER, baseInput);
+    await convertSubscriptionToRecurringUseCase(USER, baseInput);
 
     const [, data] = mockedCreate.mock.calls[0]!;
     expect(data.dayOfMonth).toBe(data.startDate.getDate());
@@ -75,7 +75,7 @@ describe('convertSubscriptionToRecurringService', () => {
   });
 
   it('weekly derives dayOfWeek from startDate', async () => {
-    await convertSubscriptionToRecurringService(USER, {
+    await convertSubscriptionToRecurringUseCase(USER, {
       ...baseInput,
       cadence: 'weekly',
       nextEstimatedDate: new Date(Date.now() + 5 * DAY_MS),
@@ -88,7 +88,7 @@ describe('convertSubscriptionToRecurringService', () => {
   });
 
   it('yearly sets neither dayOfMonth nor dayOfWeek', async () => {
-    await convertSubscriptionToRecurringService(USER, {
+    await convertSubscriptionToRecurringUseCase(USER, {
       ...baseInput,
       cadence: 'yearly',
       nextEstimatedDate: new Date(Date.now() + 100 * DAY_MS),
