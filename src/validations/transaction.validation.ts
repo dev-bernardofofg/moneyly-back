@@ -1,4 +1,4 @@
-import { categoryRepository } from '../repositories/categories.repository';
+import { categoryRepository } from '../modules/category/repositories/category.repository';
 import { HttpError } from './errors';
 
 export const validateCategoryExistsForUser = async (categoryId: string, userId: string) => {

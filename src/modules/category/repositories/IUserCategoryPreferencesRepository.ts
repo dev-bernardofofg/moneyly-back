@@ -1,4 +1,4 @@
-import type { NewUserCategoryPreference, UserCategoryPreference } from '../../infra/db/schema';
+import type { NewUserCategoryPreference, UserCategoryPreference } from '../../../infra/db/schema';
 
 export interface IUserCategoryPreferencesRepository {
   create(data: NewUserCategoryPreference): Promise<UserCategoryPreference | undefined>;

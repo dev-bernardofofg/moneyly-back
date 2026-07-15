@@ -13,7 +13,6 @@ import { wrapPaginated, wrapPaginatedWithSummary, wrapSuccess } from './envelope
 import {
   AuthRefreshSchema,
   AuthSessionSchema,
-  CategorySchema,
   ComparativeInsightsSchema,
   FinancialPeriodUpdateSchema,
   IncomeAndPeriodUpdateSchema,
@@ -47,7 +46,6 @@ import {
   updateMonthlyIncomeSchema,
 } from '../../schemas/user.schema';
 import { transactionSchema, transactionUpdateSchema } from '../../schemas/transaction.schema';
-import { createCategorySchema, updateCategorySchema } from '../../schemas/category.schema';
 import {
   getAvailablePeriodsQuerySchema,
   getDashboardOverviewQuerySchema,
@@ -78,7 +76,6 @@ const transactionsListQuery = z.object({
   page: intQuery,
   limit: intQuery,
 });
-const categoriesQuery = z.object({ page: intQuery, limit: intQuery });
 const recurringListQuery = z.object({
   includeInactive: z.coerce.boolean().optional(),
   page: intQuery,
@@ -266,41 +263,6 @@ route({
   tag: 'Transactions',
   summary: 'Detectar assinaturas (heurística)',
   ok: ok(wrapSuccess(z.array(SubscriptionCandidateSchema))),
-});
-
-/* ───────────────────────── categories ───────────────────────── */
-route({
-  method: 'post',
-  path: '/categories/create',
-  tag: 'Categories',
-  summary: 'Criar categoria',
-  body: createCategorySchema,
-  ok: created(wrapSuccess(CategorySchema)),
-});
-route({
-  method: 'get',
-  path: '/categories/',
-  tag: 'Categories',
-  summary: 'Listar categorias paginadas (params: page, limit)',
-  query: categoriesQuery,
-  ok: ok(wrapPaginated(CategorySchema)),
-});
-route({
-  method: 'put',
-  path: '/categories/update/{id}',
-  tag: 'Categories',
-  summary: 'Atualizar categoria',
-  body: updateCategorySchema,
-  params: idParamSchema,
-  ok: ok(wrapSuccess(CategorySchema)),
-});
-route({
-  method: 'delete',
-  path: '/categories/delete/{id}',
-  tag: 'Categories',
-  summary: 'Deletar categoria',
-  params: idParamSchema,
-  ok: ok(nullData),
 });
 
 /* ───────────────────────── overview ───────────────────────── */

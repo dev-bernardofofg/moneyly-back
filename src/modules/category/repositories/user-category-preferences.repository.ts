@@ -1,11 +1,11 @@
 import { and, eq } from 'drizzle-orm';
-import { db } from '../infra/db';
+import { db } from '../../../infra/db';
 import {
   userCategoryPreferences,
   type NewUserCategoryPreference,
   type UserCategoryPreference,
-} from '../infra/db/schema';
-import type { IUserCategoryPreferencesRepository } from './interfaces/IUserCategoryPreferencesRepository';
+} from '../../../infra/db/schema';
+import type { IUserCategoryPreferencesRepository } from './IUserCategoryPreferencesRepository';
 
 export const userCategoryPreferencesRepository = {
   async create(data: NewUserCategoryPreference): Promise<UserCategoryPreference | undefined> {

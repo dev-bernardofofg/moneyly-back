@@ -1,4 +1,4 @@
-import { categoryRepository } from '../../../repositories/categories.repository';
+import { categoryRepository } from '../../category';
 import { HttpError } from '../../../validations/errors';
 
 /** Resolve a categoria do lançamento de hora extra (default: global "Salário"). */

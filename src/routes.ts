@@ -5,7 +5,7 @@ import swaggerUi from 'swagger-ui-express';
 import { logger } from './core/lib/logger';
 import { AuthRouters } from './routes/auth.router';
 import { BudgetRouter } from './modules/budget';
-import { CategoryRouter } from './routes/category.router';
+import { CategoryRouter } from './modules/category';
 import savingsGoalRoutes from './modules/goal/goal.router';
 import { NotificationRouter } from './modules/notification';
 import { OverviewRouter } from './routes/overview.router';
