@@ -1,4 +1,4 @@
-import { createDefaultPreferencesForUser } from '../db/seed';
+import { createDefaultPreferencesForUser } from '../infra/db/seed';
 import { logger } from '../core/lib/logger';
 import { userRepository } from '../repositories/user.repository';
 import { HttpError } from '../validations/errors';

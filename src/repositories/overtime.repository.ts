@@ -1,11 +1,11 @@
 import { and, count, desc, eq, sql } from 'drizzle-orm';
-import { db } from '../db';
+import { db } from '../infra/db';
 import {
   companies,
   overtimeRecords,
   type NewOvertimeRecord,
   type OvertimeRecord,
-} from '../db/schema';
+} from '../infra/db/schema';
 import {
   PaginationHelper,
   type PaginationQuery,

@@ -1,4 +1,4 @@
-import type { Company, NewCompany } from '../../db/schema';
+import type { Company, NewCompany } from '../../infra/db/schema';
 
 export interface ICompanyRepository {
   create(data: Omit<NewCompany, 'id' | 'createdAt' | 'updatedAt'>): Promise<Company>;

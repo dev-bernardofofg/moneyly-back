@@ -20,7 +20,7 @@ import type {
   Transaction,
   User,
   UserCategoryPreference,
-} from '../../db/schema';
+} from '../../infra/db/schema';
 import type { PaginationQuery, PaginationResult } from '../../core/helpers/pagination';
 import type { TransactionWithCategory } from '../transaction.repository';
 

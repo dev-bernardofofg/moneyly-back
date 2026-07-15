@@ -1,7 +1,7 @@
 import { and, eq, isNull } from 'drizzle-orm';
-import { db } from '../db';
-import { financialPeriods, transactions, users } from '../db/schema';
-import type { Transaction } from '../db/schema';
+import { db } from '../infra/db';
+import { financialPeriods, transactions, users } from '../infra/db/schema';
+import type { Transaction } from '../infra/db/schema';
 import { toSaoPauloTimezone } from '../core/helpers/dates';
 import { getCurrentFinancialPeriod } from '../core/helpers/financial-period';
 

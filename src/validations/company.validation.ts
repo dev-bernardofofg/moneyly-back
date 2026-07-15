@@ -1,6 +1,6 @@
 import { HttpError } from './errors';
 import { companyRepository } from '../repositories/company.repository';
-import type { Company } from '../db/schema';
+import type { Company } from '../infra/db/schema';
 
 export async function validateCompanyOwnership(id: string, userId: string): Promise<Company> {
   const company = await companyRepository.findByIdAndUserId(id, userId);

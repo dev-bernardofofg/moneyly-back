@@ -1,6 +1,11 @@
 import { and, count, desc, eq, gte, lte } from 'drizzle-orm';
-import { db } from '../db';
-import { categories, transactions, type NewTransaction, type Transaction } from '../db/schema';
+import { db } from '../infra/db';
+import {
+  categories,
+  transactions,
+  type NewTransaction,
+  type Transaction,
+} from '../infra/db/schema';
 import {
   PaginationHelper,
   type PaginationQuery,

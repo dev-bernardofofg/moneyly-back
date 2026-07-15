@@ -1,6 +1,6 @@
 import { and, eq, gte, lt } from 'drizzle-orm';
-import { db } from '../db';
-import { refreshTokens, type NewRefreshToken, type RefreshToken } from '../db/schema';
+import { db } from '../infra/db';
+import { refreshTokens, type NewRefreshToken, type RefreshToken } from '../infra/db/schema';
 import type { IRefreshTokenRepository } from './interfaces/IRefreshTokenRepository';
 
 export const refreshTokenRepository = {

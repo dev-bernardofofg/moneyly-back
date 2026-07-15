@@ -1,5 +1,5 @@
-import { db } from '../db';
-import { transactions, financialPeriods, users } from '../db/schema';
+import { db } from '../infra/db';
+import { transactions, financialPeriods, users } from '../infra/db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 import { getCurrentFinancialPeriod } from '../core/helpers/financial-period';
 import { toSaoPauloTimezone } from '../core/helpers/dates';

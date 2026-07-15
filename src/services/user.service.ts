@@ -1,5 +1,5 @@
 import { hash } from '../core/helpers/bcrypt';
-import { createDefaultPreferencesForUser } from '../db/seed';
+import { createDefaultPreferencesForUser } from '../infra/db/seed';
 import { logger } from '../core/lib/logger';
 import { NotFoundError, UnauthorizedError } from './errors';
 import { generateAccessToken, generateRefreshToken, hashRefreshToken } from '../core/helpers/token';

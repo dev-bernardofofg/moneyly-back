@@ -2,7 +2,7 @@
  * Helpers para testes
  */
 
-import type { User } from '../../src/db/schema';
+import type { User } from '../../src/infra/db/schema';
 import { generateToken } from '../../src/core/helpers/token';
 
 /**

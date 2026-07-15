@@ -9,7 +9,7 @@ module.exports = {
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
     '!src/scripts/**',
-    '!src/db/seed.ts',
+    '!src/infra/db/seed.ts',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],

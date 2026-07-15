@@ -1,6 +1,6 @@
 import { and, eq } from 'drizzle-orm';
-import { db } from '../db';
-import { budgets, categories, NewCategoryBudget, type CategoryBudget } from '../db/schema';
+import { db } from '../infra/db';
+import { budgets, categories, NewCategoryBudget, type CategoryBudget } from '../infra/db/schema';
 import type { IBudgetRepository } from './interfaces/IBudgetRepository';
 
 export const budgetRepository = {

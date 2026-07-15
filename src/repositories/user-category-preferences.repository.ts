@@ -1,10 +1,10 @@
 import { and, eq } from 'drizzle-orm';
-import { db } from '../db';
+import { db } from '../infra/db';
 import {
   userCategoryPreferences,
   type NewUserCategoryPreference,
   type UserCategoryPreference,
-} from '../db/schema';
+} from '../infra/db/schema';
 import type { IUserCategoryPreferencesRepository } from './interfaces/IUserCategoryPreferencesRepository';
 
 export const userCategoryPreferencesRepository = {

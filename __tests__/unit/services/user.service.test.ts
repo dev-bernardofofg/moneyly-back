@@ -11,7 +11,7 @@ import { HttpError } from '../../../src/validations/errors';
 // Mock dos repositories e módulos
 jest.mock('../../../src/repositories/user.repository');
 jest.mock('../../../src/repositories/refresh-token.repository');
-jest.mock('../../../src/db/seed');
+jest.mock('../../../src/infra/db/seed');
 jest.mock('../../../src/core/helpers/token');
 
 // Mock das funções de token e seed
@@ -26,7 +26,7 @@ jest.mock('../../../src/core/helpers/token', () => ({
   hashRefreshToken: () => mockHashRefreshToken(),
 }));
 
-jest.mock('../../../src/db/seed', () => ({
+jest.mock('../../../src/infra/db/seed', () => ({
   createDefaultPreferencesForUser: () => mockCreateDefaultPreferencesForUser(),
 }));
 

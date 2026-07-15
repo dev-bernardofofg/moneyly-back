@@ -1,6 +1,6 @@
 import { and, count, desc, eq } from 'drizzle-orm';
-import { db } from '../db';
-import { notifications, type NewNotification, type Notification } from '../db/schema';
+import { db } from '../infra/db';
+import { notifications, type NewNotification, type Notification } from '../infra/db/schema';
 import {
   PaginationHelper,
   type PaginationQuery,

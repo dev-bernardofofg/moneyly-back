@@ -1,4 +1,4 @@
-import type { Category, NewCategory } from '../../db/schema';
+import type { Category, NewCategory } from '../../infra/db/schema';
 import type { PaginationQuery, PaginationResult } from '../../core/helpers/pagination';
 
 export interface ICategoryRepository {

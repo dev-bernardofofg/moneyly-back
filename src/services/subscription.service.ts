@@ -1,4 +1,4 @@
-import type { RecurringTransaction } from '../db/schema';
+import type { RecurringTransaction } from '../infra/db/schema';
 import { getCurrentSaoPauloDate } from '../core/helpers/dates';
 import {
   addCadence,

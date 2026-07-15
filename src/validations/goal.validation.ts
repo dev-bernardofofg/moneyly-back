@@ -1,4 +1,4 @@
-import { Goal } from '../db/schema';
+import { Goal } from '../infra/db/schema';
 import { HttpError } from './errors';
 
 export const validateGoal = (goal: Goal | null, userId: string) => {

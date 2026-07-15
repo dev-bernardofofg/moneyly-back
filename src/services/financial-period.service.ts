@@ -1,4 +1,4 @@
-import type { FinancialPeriod } from '../db/schema';
+import type { FinancialPeriod } from '../infra/db/schema';
 import {
   formatPeriodLabel,
   getCurrentFinancialPeriod,

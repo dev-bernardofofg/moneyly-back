@@ -1,6 +1,6 @@
 import type { Application } from 'express';
 import express from 'express';
-import { connectDB } from './db';
+import { connectDB } from './infra/db';
 import { env } from './core/config/env';
 import { logger } from './core/lib/logger';
 import { errorHandler } from './core/middlewares/error-handler';

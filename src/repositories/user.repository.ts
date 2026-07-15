@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
-import { db } from '../db';
-import { users, type NewUser, type User } from '../db/schema';
+import { db } from '../infra/db';
+import { users, type NewUser, type User } from '../infra/db/schema';
 import type { IUserRepository } from './interfaces/IUserRepository';
 
 export const userRepository = {

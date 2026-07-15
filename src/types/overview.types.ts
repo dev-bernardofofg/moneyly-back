@@ -1,4 +1,4 @@
-import type { Category } from '../db/schema';
+import type { Category } from '../infra/db/schema';
 import type { TransactionWithCategory } from '../repositories/transaction.repository';
 import type { CategoryChartData, TransactionStats } from './transaction.types';
 

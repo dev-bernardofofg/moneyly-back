@@ -1,4 +1,4 @@
-import type { RecurringTransaction } from '../db/schema';
+import type { RecurringTransaction } from '../infra/db/schema';
 import { logger } from '../core/lib/logger';
 import {
   calculateFirstExecution,
