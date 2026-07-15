@@ -1,4 +1,4 @@
-import { calculateNextExecution } from '../helpers/dates';
+import { calculateNextExecution } from '../core/helpers/dates';
 import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
 import { transactionRepository } from '../repositories/transaction.repository';
 import { createTransactionService } from '../services/transaction.service';

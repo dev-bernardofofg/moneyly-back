@@ -1,7 +1,7 @@
-import { logger } from '../lib/logger';
+import { logger } from '../core/lib/logger';
 import { notificationRepository } from '../repositories/notification.repository';
 import { userRepository } from '../repositories/user.repository';
-import { PaginationHelper } from '../helpers/pagination';
+import { PaginationHelper } from '../core/helpers/pagination';
 import { HttpError } from '../validations/errors';
 import { requireUser } from '../validations/user.validation';
 import { getBudgetProgressService } from './budget.service';

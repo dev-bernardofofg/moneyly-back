@@ -7,9 +7,9 @@ import {
   getUserGoals,
   updateSavingsGoal,
 } from '../controllers/goal.controller';
-import { authenticateUser } from '../middlewares/auth';
-import { ensurePeriodExists } from '../middlewares/auto-period-creation';
-import { validateBody, validateParams } from '../middlewares/validate';
+import { authenticateUser } from '../core/middlewares/auth';
+import { ensurePeriodExists } from '../core/middlewares/auto-period-creation';
+import { validateBody, validateParams } from '../core/middlewares/validate';
 import { idParamSchema } from '../schemas/auth.schema';
 import {
   addAmountToGoalSchema,

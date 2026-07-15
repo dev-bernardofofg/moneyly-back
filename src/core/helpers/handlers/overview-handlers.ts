@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { TransactionWithCategory } from '../../repositories/transaction.repository';
+import type { TransactionWithCategory } from '../../../repositories/transaction.repository';
 
 export const calculateStats = (transactions: TransactionWithCategory[], monthlyIncome: number) => {
   const totalIncome = transactions

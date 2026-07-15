@@ -1,8 +1,8 @@
-import { formatBrazilianDate } from '../helpers/dates';
-import { getCurrentFinancialPeriod } from '../helpers/financial-period';
-import { ResponseHandler } from '../helpers/response-handler';
-import { asyncHandler } from '../middlewares/async-handler';
-import type { AuthRequest } from '../middlewares/auth';
+import { formatBrazilianDate } from '../core/helpers/dates';
+import { getCurrentFinancialPeriod } from '../core/helpers/financial-period';
+import { ResponseHandler } from '../core/helpers/response-handler';
+import { asyncHandler } from '../core/middlewares/async-handler';
+import type { AuthRequest } from '../core/middlewares/auth';
 import type { GetDashboardOverviewQuery } from '../schemas/overview.schema';
 import {
   getAvailablePeriodsService,

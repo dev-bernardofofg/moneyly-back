@@ -1,5 +1,5 @@
 import type { NewRecurringTransaction, RecurringTransaction } from '../../db/schema';
-import type { PaginationQuery, PaginationResult } from '../../helpers/pagination';
+import type { PaginationQuery, PaginationResult } from '../../core/helpers/pagination';
 
 export interface IRecurringTransactionRepository {
   create(

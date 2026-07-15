@@ -1,5 +1,5 @@
 import { formatInTimeZone, fromZonedTime, toZonedTime } from 'date-fns-tz';
-import type { RecurringFrequency } from '../types/recurring-transaction.types';
+import type { RecurringFrequency } from '../../types/recurring-transaction.types';
 
 const SAO_PAULO_TIMEZONE = 'America/Sao_Paulo';
 

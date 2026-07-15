@@ -7,9 +7,9 @@ import {
   getForecast,
   getPlannerOverview,
 } from '../controllers/overview.controller';
-import { authenticateUser } from '../middlewares/auth';
-import { ensurePeriodExists } from '../middlewares/auto-period-creation';
-import { validate } from '../middlewares/validate';
+import { authenticateUser } from '../core/middlewares/auth';
+import { ensurePeriodExists } from '../core/middlewares/auto-period-creation';
+import { validate } from '../core/middlewares/validate';
 import {
   comparativeInsightsQuerySchema,
   forecastQuerySchema,

@@ -1,6 +1,6 @@
-import { ResponseHandler } from '../helpers/response-handler';
-import { asyncHandler } from '../middlewares/async-handler';
-import type { AuthRequest } from '../middlewares/auth';
+import { ResponseHandler } from '../core/helpers/response-handler';
+import { asyncHandler } from '../core/middlewares/async-handler';
+import type { AuthRequest } from '../core/middlewares/auth';
 import { BadRequestError } from '../services/errors';
 import {
   createCompanyService,

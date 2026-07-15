@@ -5,8 +5,8 @@ import {
   getCompanies,
   updateCompany,
 } from '../controllers/company.controller';
-import { authenticateUser } from '../middlewares/auth';
-import { validateBody, validateParams } from '../middlewares/validate';
+import { authenticateUser } from '../core/middlewares/auth';
+import { validateBody, validateParams } from '../core/middlewares/validate';
 import { idParamSchema } from '../schemas/auth.schema';
 import { createCompanySchema, updateCompanySchema } from '../schemas/company.schema';
 

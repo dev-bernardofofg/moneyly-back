@@ -10,9 +10,9 @@ import {
   getTransactionSummary,
   updateTransaction,
 } from '../controllers/transaction.controller';
-import { authenticateUser } from '../middlewares/auth';
-import { ensurePeriodExists } from '../middlewares/auto-period-creation';
-import { validate } from '../middlewares/validate';
+import { authenticateUser } from '../core/middlewares/auth';
+import { ensurePeriodExists } from '../core/middlewares/auto-period-creation';
+import { validate } from '../core/middlewares/validate';
 import { idParamSchema } from '../schemas/auth.schema';
 import { transactionListQuerySchema } from '../schemas/pagination.schema';
 import { transactionSchema, transactionUpdateSchema } from '../schemas/transaction.schema';

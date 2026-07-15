@@ -5,9 +5,9 @@ import {
   getUserBudgets,
   updateCategoryBudget,
 } from '../controllers/budget.controller';
-import { authenticateUser } from '../middlewares/auth';
-import { ensurePeriodExists } from '../middlewares/auto-period-creation';
-import { validateBody, validateParams, validateQuery } from '../middlewares/validate';
+import { authenticateUser } from '../core/middlewares/auth';
+import { ensurePeriodExists } from '../core/middlewares/auto-period-creation';
+import { validateBody, validateParams, validateQuery } from '../core/middlewares/validate';
 import { idParamSchema } from '../schemas/auth.schema';
 import {
   createCategoryBudgetSchema,

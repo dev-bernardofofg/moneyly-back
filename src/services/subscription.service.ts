@@ -1,12 +1,12 @@
 import type { RecurringTransaction } from '../db/schema';
-import { getCurrentSaoPauloDate } from '../helpers/dates';
+import { getCurrentSaoPauloDate } from '../core/helpers/dates';
 import {
   addCadence,
   groupSubscriptionCandidates,
   normalizeTitle,
   type SubscriptionCadence,
   type SubscriptionCandidate,
-} from '../helpers/subscription-detector';
+} from '../core/helpers/subscription-detector';
 import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
 import { transactionRepository } from '../repositories/transaction.repository';
 import { HttpError } from '../validations/errors';

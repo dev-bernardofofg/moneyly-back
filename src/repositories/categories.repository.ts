@@ -10,7 +10,7 @@ import {
   PaginationHelper,
   type PaginationQuery,
   type PaginationResult,
-} from '../helpers/pagination';
+} from '../core/helpers/pagination';
 import type { ICategoryRepository } from './interfaces/ICategoryRepository';
 import { userCategoryPreferencesRepository } from './user-category-preferences.repository';
 

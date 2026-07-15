@@ -2,8 +2,8 @@ import {
   formatBrazilianDate,
   formatIsoDateSaoPaulo,
   getCurrentSaoPauloDate,
-} from '../helpers/dates';
-import { logger } from '../lib/logger';
+} from '../core/helpers/dates';
+import { logger } from '../core/lib/logger';
 import { notificationRepository } from '../repositories/notification.repository';
 import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
 

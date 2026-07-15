@@ -9,7 +9,7 @@ import {
   PaginationHelper,
   type PaginationQuery,
   type PaginationResult,
-} from '../helpers/pagination';
+} from '../core/helpers/pagination';
 import type { IRecurringTransactionRepository } from './interfaces/IRecurringTransactionRepository';
 
 export const recurringTransactionRepository = {

@@ -1,7 +1,7 @@
 import {
   groupSubscriptionCandidates,
   normalizeTitle,
-} from '../../../src/helpers/subscription-detector';
+} from '../../../src/core/helpers/subscription-detector';
 
 type Tx = Parameters<typeof groupSubscriptionCandidates>[0][number];
 

@@ -9,7 +9,7 @@ import {
   NewGoalMilestone,
 } from '../db/schema';
 import type { GoalWithMilestones, IGoalRepository } from './interfaces/IGoalRepository';
-import { calculateGoalProgress } from '../helpers/goal-progress';
+import { calculateGoalProgress } from '../core/helpers/goal-progress';
 
 async function checkMilestones(goalId: string, currentAmount: number): Promise<void> {
   const milestones = await db

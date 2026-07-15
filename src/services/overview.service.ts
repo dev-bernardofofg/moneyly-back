@@ -1,21 +1,21 @@
 import type { GoalWithMilestones } from '../repositories/interfaces/IGoalRepository';
 import type { BudgetProgress } from '../types/budget.types';
-import { getCurrentSaoPauloDate } from '../helpers/dates';
+import { getCurrentSaoPauloDate } from '../core/helpers/dates';
 import {
   formatPeriodLabel,
   getCurrentFinancialPeriod,
   getPreviousFinancialPeriods,
-} from '../helpers/financial-period';
-import { groupSubscriptionCandidates } from '../helpers/subscription-detector';
-import { sumAmounts } from '../helpers/amount';
-import { buildComparison } from '../helpers/comparative-insights';
+} from '../core/helpers/financial-period';
+import { groupSubscriptionCandidates } from '../core/helpers/subscription-detector';
+import { sumAmounts } from '../core/helpers/amount';
+import { buildComparison } from '../core/helpers/comparative-insights';
 import { NotFoundError } from './errors';
 import {
   calculateMonthlyAggregates,
   calculatePeriodChartData,
   calculateStats,
   getRecentTransactions,
-} from '../helpers/handlers/overview-handlers';
+} from '../core/helpers/handlers/overview-handlers';
 import { financialPeriodRepository } from '../repositories/financial-period.repository';
 import type { TransactionWithCategory } from '../repositories/transaction.repository';
 import { transactionRepository } from '../repositories/transaction.repository';

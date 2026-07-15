@@ -6,9 +6,9 @@ import {
   logout,
   refreshToken,
 } from '../controllers/auth.controller';
-import { authenticateUser } from '../middlewares/auth';
-import { authRateLimit } from '../middlewares/security';
-import { validateBody } from '../middlewares/validate';
+import { authenticateUser } from '../core/middlewares/auth';
+import { authRateLimit } from '../core/middlewares/security';
+import { validateBody } from '../core/middlewares/validate';
 import {
   createUserSchema,
   googleAuthSchema,

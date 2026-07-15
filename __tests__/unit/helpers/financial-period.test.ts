@@ -2,7 +2,7 @@
  * Unit tests for financial-period helper
  */
 
-import { createSaoPauloDate } from '../../../src/helpers/dates';
+import { createSaoPauloDate } from '../../../src/core/helpers/dates';
 import {
   getAvailableFinancialPeriods,
   getCurrentFinancialPeriod,
@@ -11,7 +11,7 @@ import {
   getPreviousFinancialPeriods,
   isDateInCurrentFinancialPeriod,
   normalizeDayForMonth,
-} from '../../../src/helpers/financial-period';
+} from '../../../src/core/helpers/financial-period';
 
 describe('FinancialPeriodHelper', () => {
   describe('normalizeDayForMonth', () => {

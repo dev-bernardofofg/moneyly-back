@@ -1,6 +1,6 @@
-import { sumAmounts } from '../helpers/amount';
-import { calculateNextExecution, getCurrentSaoPauloDate } from '../helpers/dates';
-import { formatPeriodLabel } from '../helpers/financial-period';
+import { sumAmounts } from '../core/helpers/amount';
+import { calculateNextExecution, getCurrentSaoPauloDate } from '../core/helpers/dates';
+import { formatPeriodLabel } from '../core/helpers/financial-period';
 import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
 import { transactionRepository } from '../repositories/transaction.repository';
 import type { RecurringFrequency } from '../types/recurring-transaction.types';

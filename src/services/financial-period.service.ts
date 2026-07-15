@@ -3,8 +3,8 @@ import {
   formatPeriodLabel,
   getCurrentFinancialPeriod,
   getFinancialPeriodForMonth,
-} from '../helpers/financial-period';
-import { getCurrentSaoPauloDate, toSaoPauloTimezone } from '../helpers/dates';
+} from '../core/helpers/financial-period';
+import { getCurrentSaoPauloDate, toSaoPauloTimezone } from '../core/helpers/dates';
 import { financialPeriodRepository } from '../repositories/financial-period.repository';
 import { userRepository } from '../repositories/user.repository';
 import { HttpError } from '../validations/errors';

@@ -1,17 +1,17 @@
 import type { RecurringTransaction } from '../db/schema';
-import { logger } from '../lib/logger';
+import { logger } from '../core/lib/logger';
 import {
   calculateFirstExecution,
   calculateNextExecution,
   getCurrentSaoPauloDate,
-} from '../helpers/dates';
+} from '../core/helpers/dates';
 import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
 import type {
   CreateRecurringTransactionInput,
   RecurringFrequency,
   UpdateRecurringTransactionInput,
 } from '../types/recurring-transaction.types';
-import { PaginationHelper } from '../helpers/pagination';
+import { PaginationHelper } from '../core/helpers/pagination';
 import { transactionRepository } from '../repositories/transaction.repository';
 import { createTransactionService } from './transaction.service';
 import { financialPeriodService } from './financial-period.service';

@@ -1,5 +1,5 @@
 import type { NewTransaction, Transaction } from '../../db/schema';
-import type { PaginationQuery, PaginationResult } from '../../helpers/pagination';
+import type { PaginationQuery, PaginationResult } from '../../core/helpers/pagination';
 import type { TransactionWithCategory } from '../transaction.repository';
 
 export interface ITransactionRepository {

@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { env } from '../env';
-import { logger } from '../lib/logger';
+import { env } from '../core/config/env';
+import { logger } from '../core/lib/logger';
 import * as schema from './schema';
 
 // Configuração da conexão com PostgreSQL

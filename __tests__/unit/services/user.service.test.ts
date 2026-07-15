@@ -12,7 +12,7 @@ import { HttpError } from '../../../src/validations/errors';
 jest.mock('../../../src/repositories/user.repository');
 jest.mock('../../../src/repositories/refresh-token.repository');
 jest.mock('../../../src/db/seed');
-jest.mock('../../../src/helpers/token');
+jest.mock('../../../src/core/helpers/token');
 
 // Mock das funções de token e seed
 const mockGenerateAccessToken = jest.fn(() => 'mock-access-token');
@@ -20,7 +20,7 @@ const mockGenerateRefreshToken = jest.fn(() => 'mock-refresh-token');
 const mockHashRefreshToken = jest.fn(() => Promise.resolve('hashed-refresh-token'));
 const mockCreateDefaultPreferencesForUser = jest.fn(() => Promise.resolve([]));
 
-jest.mock('../../../src/helpers/token', () => ({
+jest.mock('../../../src/core/helpers/token', () => ({
   generateAccessToken: () => mockGenerateAccessToken(),
   generateRefreshToken: () => mockGenerateRefreshToken(),
   hashRefreshToken: () => mockHashRefreshToken(),

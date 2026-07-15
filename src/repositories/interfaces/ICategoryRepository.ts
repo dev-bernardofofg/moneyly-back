@@ -1,5 +1,5 @@
 import type { Category, NewCategory } from '../../db/schema';
-import type { PaginationQuery, PaginationResult } from '../../helpers/pagination';
+import type { PaginationQuery, PaginationResult } from '../../core/helpers/pagination';
 
 export interface ICategoryRepository {
   create(data: NewCategory): Promise<Category | undefined>;

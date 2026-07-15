@@ -1,6 +1,6 @@
 import { NextFunction, Response } from 'express';
 import { logger } from '../lib/logger';
-import { financialPeriodService } from '../services/financial-period.service';
+import { financialPeriodService } from '../../services/financial-period.service';
 import { AuthenticatedRequest } from './auth';
 
 export const ensurePeriodExists = async (

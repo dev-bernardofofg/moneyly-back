@@ -1,11 +1,11 @@
 import type { Application } from 'express';
 import express from 'express';
 import { connectDB } from './db';
-import { env } from './env';
-import { logger } from './lib/logger';
-import { errorHandler } from './middlewares/error-handler';
-import { sanitizeData } from './middlewares/sanitize';
-import { securityMiddleware } from './middlewares/security';
+import { env } from './core/config/env';
+import { logger } from './core/lib/logger';
+import { errorHandler } from './core/middlewares/error-handler';
+import { sanitizeData } from './core/middlewares/sanitize';
+import { securityMiddleware } from './core/middlewares/security';
 import router from './routes';
 import { processRecurringTransactions } from './services/recurring-transaction.service';
 import { processBudgetAlerts } from './services/notification.service';

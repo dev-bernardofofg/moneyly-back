@@ -1,4 +1,4 @@
-import { compare } from '../helpers/bcrypt';
+import { compare } from '../core/helpers/bcrypt';
 import { userRepository } from '../repositories/user.repository';
 import { authenticateWithGoogle } from '../services/google.service';
 import { HttpError } from './errors';

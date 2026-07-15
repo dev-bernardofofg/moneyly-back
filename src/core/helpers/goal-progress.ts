@@ -1,4 +1,4 @@
-import type { Goal } from '../db/schema';
+import type { Goal } from '../../db/schema';
 
 export type GoalProgress = {
   percentage: number;

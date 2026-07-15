@@ -6,9 +6,9 @@ import {
   updateIncomeAndPeriod,
   updateMonthlyIncome,
 } from '../controllers/user.controller';
-import { ResponseHandler } from '../helpers/response-handler';
-import { AuthenticatedRequest, authenticateUser } from '../middlewares/auth';
-import { validateBody } from '../middlewares/validate';
+import { ResponseHandler } from '../core/helpers/response-handler';
+import { AuthenticatedRequest, authenticateUser } from '../core/middlewares/auth';
+import { validateBody } from '../core/middlewares/validate';
 import { financialPeriodRepository } from '../repositories/financial-period.repository';
 import {
   updateFinancialPeriodSchema,

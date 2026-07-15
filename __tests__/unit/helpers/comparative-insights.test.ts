@@ -1,4 +1,7 @@
-import { buildComparison, type ComparativePeriod } from '../../../src/helpers/comparative-insights';
+import {
+  buildComparison,
+  type ComparativePeriod,
+} from '../../../src/core/helpers/comparative-insights';
 
 type Tx = Parameters<typeof buildComparison>[0][number];
 

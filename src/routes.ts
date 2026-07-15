@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import swaggerUi from 'swagger-ui-express';
-import { logger } from './lib/logger';
+import { logger } from './core/lib/logger';
 import { AuthRouters } from './routes/auth.router';
 import { BudgetRouter } from './routes/budget.router';
 import { CategoryRouter } from './routes/category.router';

@@ -1,4 +1,4 @@
-import { sumAmounts } from '../helpers/amount';
+import { sumAmounts } from '../core/helpers/amount';
 import { budgetRepository } from '../repositories/budget.repository';
 import { transactionRepository } from '../repositories/transaction.repository';
 import { financialPeriodService } from './financial-period.service';

@@ -5,8 +5,8 @@ import { HttpError } from '../validations/errors';
 import { validateActiveCompany } from '../validations/company.validation';
 import { validateOvertimeOwnership, validateTimeRange } from '../validations/overtime.validation';
 import { financialPeriodService } from './financial-period.service';
-import { toSaoPauloTimezone } from '../helpers/dates';
-import { PaginationHelper, type PaginationParams } from '../helpers/pagination';
+import { toSaoPauloTimezone } from '../core/helpers/dates';
+import { PaginationHelper, type PaginationParams } from '../core/helpers/pagination';
 import type { CreateOvertimeInput, UpdateOvertimeInput } from '../schemas/overtime.schema';
 
 async function resolveCategory(categoryId: string | undefined, userId: string): Promise<string> {

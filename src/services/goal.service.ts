@@ -1,6 +1,6 @@
-import { getCurrentSaoPauloDate } from '../helpers/dates';
-import { calculateGoalProgress } from '../helpers/goal-progress';
-import { logger } from '../lib/logger';
+import { getCurrentSaoPauloDate } from '../core/helpers/dates';
+import { calculateGoalProgress } from '../core/helpers/goal-progress';
+import { logger } from '../core/lib/logger';
 import { goalRepository } from '../repositories/goal.repository';
 import { financialPeriodService } from './financial-period.service';
 import { notifyGoalMilestones } from './notification.service';

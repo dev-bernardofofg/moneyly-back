@@ -1,8 +1,8 @@
-import { hash } from '../helpers/bcrypt';
+import { hash } from '../core/helpers/bcrypt';
 import { createDefaultPreferencesForUser } from '../db/seed';
-import { logger } from '../lib/logger';
+import { logger } from '../core/lib/logger';
 import { NotFoundError, UnauthorizedError } from './errors';
-import { generateAccessToken, generateRefreshToken, hashRefreshToken } from '../helpers/token';
+import { generateAccessToken, generateRefreshToken, hashRefreshToken } from '../core/helpers/token';
 import { financialPeriodRepository } from '../repositories/financial-period.repository';
 import { refreshTokenRepository } from '../repositories/refresh-token.repository';
 import { userRepository } from '../repositories/user.repository';

@@ -5,8 +5,8 @@ import {
   getCategories,
   updateCategory,
 } from '../controllers/categories.controller';
-import { authenticateUser } from '../middlewares/auth';
-import { validate } from '../middlewares/validate';
+import { authenticateUser } from '../core/middlewares/auth';
+import { validate } from '../core/middlewares/validate';
 import { idParamSchema } from '../schemas/auth.schema';
 import { createCategorySchema, updateCategorySchema } from '../schemas/category.schema';
 import { paginationQuerySchema } from '../schemas/pagination.schema';

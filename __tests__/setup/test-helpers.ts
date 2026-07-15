@@ -3,7 +3,7 @@
  */
 
 import type { User } from '../../src/db/schema';
-import { generateToken } from '../../src/helpers/token';
+import { generateToken } from '../../src/core/helpers/token';
 
 /**
  * Cria um usuário de teste

@@ -4,8 +4,8 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from '../controllers/notification.controller';
-import { authenticateUser } from '../middlewares/auth';
-import { validateParams, validateQuery } from '../middlewares/validate';
+import { authenticateUser } from '../core/middlewares/auth';
+import { validateParams, validateQuery } from '../core/middlewares/validate';
 import { idParamSchema } from '../schemas/auth.schema';
 import { notificationQuerySchema } from '../schemas/notification.schema';
 

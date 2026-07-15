@@ -3,7 +3,7 @@
  * Lança erro se req.user não existir
  */
 
-import type { AuthenticatedUser } from '../types/auth.types';
+import type { AuthenticatedUser } from '../../types/auth.types';
 
 export function ensureAuthenticated(user: AuthenticatedUser | undefined): AuthenticatedUser {
   if (!user) {

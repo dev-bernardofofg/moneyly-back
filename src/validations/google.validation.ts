@@ -1,5 +1,5 @@
 import { OAuth2Client } from 'google-auth-library';
-import { env } from '../env';
+import { env } from '../core/config/env';
 import { HttpError } from './errors';
 
 interface GoogleUserInfo {

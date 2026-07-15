@@ -2,8 +2,8 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../db';
 import { financialPeriods, transactions, users } from '../db/schema';
 import type { Transaction } from '../db/schema';
-import { toSaoPauloTimezone } from '../helpers/dates';
-import { getCurrentFinancialPeriod } from '../helpers/financial-period';
+import { toSaoPauloTimezone } from '../core/helpers/dates';
+import { getCurrentFinancialPeriod } from '../core/helpers/financial-period';
 
 export async function migrateTransactionsPeriods() {
   console.log(' Iniciando migração de períodos para transações...');

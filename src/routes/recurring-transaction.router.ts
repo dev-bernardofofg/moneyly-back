@@ -9,8 +9,8 @@ import {
   reactivateRecurringTransaction,
   updateRecurringTransaction,
 } from '../controllers/recurring-transaction.controller';
-import { authenticateUser } from '../middlewares/auth';
-import { validate } from '../middlewares/validate';
+import { authenticateUser } from '../core/middlewares/auth';
+import { validate } from '../core/middlewares/validate';
 import { idParamSchema } from '../schemas/auth.schema';
 import {
   fromSubscriptionSchema,

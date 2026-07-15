@@ -1,5 +1,5 @@
 import { createDefaultPreferencesForUser } from '../db/seed';
-import { logger } from '../lib/logger';
+import { logger } from '../core/lib/logger';
 import { userRepository } from '../repositories/user.repository';
 import { HttpError } from '../validations/errors';
 import { verifyGoogleToken } from '../validations/google.validation';

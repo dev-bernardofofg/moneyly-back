@@ -3,7 +3,7 @@ import express from 'express';
 import rateLimit from 'express-rate-limit';
 import slowDown from 'express-slow-down';
 import helmet from 'helmet';
-import { env } from '../env';
+import { env } from '../config/env';
 
 // Rate limiting para endpoints de autenticação
 export const authRateLimit = rateLimit({

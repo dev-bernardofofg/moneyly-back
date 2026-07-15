@@ -3,7 +3,7 @@
  * Fornece logging estruturado com níveis de log e respeita NODE_ENV
  */
 
-import { env } from '../env';
+import { env } from '../config/env';
 
 // Níveis de log disponíveis
 export enum LogLevel {

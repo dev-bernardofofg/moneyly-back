@@ -1,8 +1,8 @@
 import { format } from 'date-fns';
-import { sumAmounts } from '../helpers/amount';
-import { getCurrentFinancialPeriod } from '../helpers/financial-period';
-import type { PaginationQuery } from '../helpers/pagination';
-import { toSaoPauloTimezone } from '../helpers/dates';
+import { sumAmounts } from '../core/helpers/amount';
+import { getCurrentFinancialPeriod } from '../core/helpers/financial-period';
+import type { PaginationQuery } from '../core/helpers/pagination';
+import { toSaoPauloTimezone } from '../core/helpers/dates';
 import { transactionRepository } from '../repositories/transaction.repository';
 import { userRepository } from '../repositories/user.repository';
 import type { ITransaction, TransactionFilters } from '../types/transaction.types';

@@ -5,7 +5,7 @@ import {
   PaginationHelper,
   type PaginationQuery,
   type PaginationResult,
-} from '../helpers/pagination';
+} from '../core/helpers/pagination';
 import type { INotificationRepository } from './interfaces';
 
 export const notificationRepository = {
