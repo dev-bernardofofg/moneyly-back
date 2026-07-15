@@ -1,6 +1,6 @@
 import { ResponseHandler } from '../../core/helpers/response-handler';
 import { asyncHandler } from '../../core/middlewares/async-handler';
-import type { AuthRequest } from '../../core/middlewares/auth';
+import type { AuthRequest } from '../auth/middlewares/auth';
 import { BadRequestError } from '../../services/errors';
 import { createBudgetUseCase } from './use-cases/create-budget.use-case';
 import { deleteBudgetUseCase } from './use-cases/delete-budget.use-case';

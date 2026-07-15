@@ -4,7 +4,7 @@ import { getCurrentFinancialPeriod } from '../modules/financial-period';
 import type { PaginationQuery } from '../core/helpers/pagination';
 import { toSaoPauloTimezone } from '../core/helpers/dates';
 import { transactionRepository } from '../repositories/transaction.repository';
-import { userRepository } from '../repositories/user.repository';
+import { userRepository } from '../modules/user';
 import type { ITransaction, TransactionFilters } from '../types/transaction.types';
 import { financialPeriodService } from '../modules/financial-period';
 import { validateCategoryExistsForUser } from '../validations/transaction.validation';

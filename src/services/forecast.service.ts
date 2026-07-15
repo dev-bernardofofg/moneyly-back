@@ -4,7 +4,7 @@ import { formatPeriodLabel } from '../modules/financial-period';
 import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
 import { transactionRepository } from '../repositories/transaction.repository';
 import type { RecurringFrequency } from '../types/recurring-transaction.types';
-import { requireUser } from '../validations/user.validation';
+import { requireUser } from '../modules/user';
 import { HttpError } from '../validations/errors';
 import { financialPeriodService } from '../modules/financial-period';
 

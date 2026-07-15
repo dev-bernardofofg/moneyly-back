@@ -3,16 +3,16 @@
  */
 
 import { randomUUID } from 'crypto';
-import { refreshTokenRepository } from '../../../src/repositories/refresh-token.repository';
-import { userRepository } from '../../../src/repositories/user.repository';
-import { createUserService } from '../../../src/services/user.service';
-import { HttpError } from '../../../src/validations/errors';
+import { refreshTokenRepository } from '../../../../src/modules/auth/repositories/refresh-token.repository';
+import { userRepository } from '../../../../src/modules/user/repositories/user.repository';
+import { signUpUseCase } from '../../../../src/modules/auth/use-cases/sign-up.use-case';
+import { HttpError } from '../../../../src/validations/errors';
 
 // Mock dos repositories e módulos
-jest.mock('../../../src/repositories/user.repository');
-jest.mock('../../../src/repositories/refresh-token.repository');
-jest.mock('../../../src/infra/db/seed');
-jest.mock('../../../src/core/helpers/token');
+jest.mock('../../../../src/modules/user/repositories/user.repository');
+jest.mock('../../../../src/modules/auth/repositories/refresh-token.repository');
+jest.mock('../../../../src/infra/db/seed');
+jest.mock('../../../../src/core/helpers/token');
 
 // Mock das funções de token e seed
 const mockGenerateAccessToken = jest.fn(() => 'mock-access-token');
@@ -20,13 +20,13 @@ const mockGenerateRefreshToken = jest.fn(() => 'mock-refresh-token');
 const mockHashRefreshToken = jest.fn(() => Promise.resolve('hashed-refresh-token'));
 const mockCreateDefaultPreferencesForUser = jest.fn(() => Promise.resolve([]));
 
-jest.mock('../../../src/core/helpers/token', () => ({
+jest.mock('../../../../src/core/helpers/token', () => ({
   generateAccessToken: () => mockGenerateAccessToken(),
   generateRefreshToken: () => mockGenerateRefreshToken(),
   hashRefreshToken: () => mockHashRefreshToken(),
 }));
 
-jest.mock('../../../src/infra/db/seed', () => ({
+jest.mock('../../../../src/infra/db/seed', () => ({
   createDefaultPreferencesForUser: () => mockCreateDefaultPreferencesForUser(),
 }));
 
@@ -70,7 +70,7 @@ describe('UserService', () => {
       (userRepository.create as jest.Mock).mockResolvedValue(mockUser);
       (refreshTokenRepository.create as jest.Mock).mockResolvedValue(mockRefreshToken);
 
-      const result = await createUserService(userData);
+      const result = await signUpUseCase(userData);
 
       expect(result).toHaveProperty('user');
       expect(result).toHaveProperty('accessToken');
@@ -92,8 +92,8 @@ describe('UserService', () => {
         email: 'existing@example.com',
       });
 
-      await expect(createUserService(userData)).rejects.toThrow(HttpError);
-      await expect(createUserService(userData)).rejects.toMatchObject({
+      await expect(signUpUseCase(userData)).rejects.toThrow(HttpError);
+      await expect(signUpUseCase(userData)).rejects.toMatchObject({
         status: 409,
         message: 'Email já cadastrado',
       });

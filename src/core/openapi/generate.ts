@@ -9,6 +9,8 @@ import '../../modules/overtime/overtime.paths';
 import '../../modules/budget/budget.paths';
 import '../../modules/goal/goal.paths';
 import '../../modules/category/category.paths';
+import '../../modules/auth/auth.paths';
+import '../../modules/user/user.paths';
 
 /**
  * zod-to-openapi v7 emite ref-nullable como `{ allOf: [ {$ref}, {nullable:true} ] }`.

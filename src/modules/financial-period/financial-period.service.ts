@@ -6,7 +6,7 @@ import {
 } from './helpers/financial-period';
 import { getCurrentSaoPauloDate, toSaoPauloTimezone } from '../../core/helpers/dates';
 import { financialPeriodRepository } from './repositories/financial-period.repository';
-import { userRepository } from '../../repositories/user.repository';
+import { userRepository } from '../user';
 import { HttpError } from '../../validations/errors';
 
 async function getUser(userId: string) {

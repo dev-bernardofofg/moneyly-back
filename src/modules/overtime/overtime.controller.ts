@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 import { ResponseHandler } from '../../core/helpers/response-handler';
 import { asyncHandler } from '../../core/middlewares/async-handler';
-import type { AuthRequest } from '../../core/middlewares/auth';
+import type { AuthRequest } from '../auth/middlewares/auth';
 import { overtimeRepository } from './repositories/overtime.repository';
 import { BadRequestError } from '../../services/errors';
 import { createOvertimeUseCase } from './use-cases/create-overtime.use-case';

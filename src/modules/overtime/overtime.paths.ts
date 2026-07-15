@@ -10,7 +10,7 @@ import {
   OvertimeSummarySchema,
 } from '../../core/openapi/schemas';
 import { nullData, ok, route } from '../../core/openapi/route';
-import { idParamSchema } from '../../schemas/auth.schema';
+import { idParamSchema } from '../../core/schemas/id-param.schema';
 import { createCompanySchema, updateCompanySchema } from './schemas/company.schema';
 import {
   createOvertimeSchema,

@@ -1,13 +1,11 @@
-import { ResponseHandler } from '../core/helpers/response-handler';
-import { asyncHandler } from '../core/middlewares/async-handler';
-import type { AuthRequest } from '../core/middlewares/auth';
-import { financialPeriodService } from '../modules/financial-period';
-import {
-  updatefinancialPeriodService,
-  updateIncomeAndPeriodService,
-  updateUserProfileService,
-} from '../services/user.service';
-import { NotFoundError } from '../services/errors';
+import { ResponseHandler } from '../../core/helpers/response-handler';
+import { asyncHandler } from '../../core/middlewares/async-handler';
+import type { AuthRequest } from '../auth/middlewares/auth';
+import { financialPeriodService } from '../financial-period';
+import { updateFinancialPeriodUseCase } from './use-cases/update-financial-period.use-case';
+import { updateIncomeAndPeriodUseCase } from './use-cases/update-income-and-period.use-case';
+import { updateUserProfileUseCase } from './use-cases/update-user-profile.use-case';
+import { NotFoundError } from '../../services/errors';
 
 export const getMe = asyncHandler<AuthRequest>(async (req, res) => {
   const {
@@ -39,7 +37,7 @@ export const getMe = asyncHandler<AuthRequest>(async (req, res) => {
 
 export const updateMonthlyIncome = asyncHandler<AuthRequest>(async (req, res) => {
   const { monthlyIncome } = req.body;
-  const updatedUser = await updateUserProfileService(req.user, { monthlyIncome });
+  const updatedUser = await updateUserProfileUseCase(req.user, { monthlyIncome });
   return ResponseHandler.success(
     res,
     { monthlyIncome: updatedUser.monthlyIncome, firstAccess: false },
@@ -49,7 +47,7 @@ export const updateMonthlyIncome = asyncHandler<AuthRequest>(async (req, res) =>
 
 export const updateFinancialPeriod = asyncHandler<AuthRequest>(async (req, res) => {
   const { financialDayStart, financialDayEnd } = req.body;
-  await updatefinancialPeriodService(req.user.id, financialDayStart, financialDayEnd);
+  await updateFinancialPeriodUseCase(req.user.id, financialDayStart, financialDayEnd);
   return ResponseHandler.success(
     res,
     { financialDayStart, financialDayEnd, firstAccess: false },
@@ -59,7 +57,7 @@ export const updateFinancialPeriod = asyncHandler<AuthRequest>(async (req, res) 
 
 export const updateIncomeAndPeriod = asyncHandler<AuthRequest>(async (req, res) => {
   const { monthlyIncome, financialDayStart, financialDayEnd } = req.body;
-  await updateIncomeAndPeriodService(
+  await updateIncomeAndPeriodUseCase(
     req.user.id,
     monthlyIncome,
     financialDayStart,

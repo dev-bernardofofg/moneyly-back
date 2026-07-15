@@ -1,4 +1,4 @@
-import type { NewUser, User } from '../../infra/db/schema';
+import type { NewUser, User } from '../../../infra/db/schema';
 
 export interface IUserRepository {
   create(userData: Omit<NewUser, 'id' | 'createdAt' | 'updatedAt'>): Promise<User>;

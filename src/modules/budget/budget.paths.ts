@@ -5,7 +5,7 @@ import { z } from '../../core/openapi/registry';
 import { wrapSuccess } from '../../core/openapi/envelopes';
 import { BudgetProgressSchema, BudgetSchema } from '../../core/openapi/schemas';
 import { created, nullData, ok, route } from '../../core/openapi/route';
-import { idParamSchema } from '../../schemas/auth.schema';
+import { idParamSchema } from '../../core/schemas/id-param.schema';
 import {
   createCategoryBudgetSchema,
   getBudgetsQuerySchema,

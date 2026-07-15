@@ -1,5 +1,5 @@
 import { PaginationHelper } from '../../../core/helpers/pagination';
-import { requireUser } from '../../../validations/user.validation';
+import { requireUser } from '../../user';
 import { notificationRepository } from '../repositories/notification.repository';
 
 export const listNotificationsUseCase = async (

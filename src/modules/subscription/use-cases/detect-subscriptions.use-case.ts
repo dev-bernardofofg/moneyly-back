@@ -1,5 +1,5 @@
 import { transactionRepository } from '../../../repositories/transaction.repository';
-import { requireUser } from '../../../validations/user.validation';
+import { requireUser } from '../../user';
 import {
   groupSubscriptionCandidates,
   type SubscriptionCandidate,

@@ -1,4 +1,4 @@
-import { requireUser } from '../../../validations/user.validation';
+import { requireUser } from '../../user';
 import { notificationRepository } from '../repositories/notification.repository';
 
 export const markAllNotificationsReadUseCase = async (userId: string) => {

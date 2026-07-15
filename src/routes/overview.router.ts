@@ -7,7 +7,7 @@ import {
   getForecast,
   getPlannerOverview,
 } from '../controllers/overview.controller';
-import { authenticateUser } from '../core/middlewares/auth';
+import { authenticateUser } from '../modules/auth/middlewares/auth';
 import { ensurePeriodExists } from '../modules/financial-period';
 import { validate } from '../core/middlewares/validate';
 import {

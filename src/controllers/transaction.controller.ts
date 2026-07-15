@@ -2,7 +2,7 @@ import { format } from 'date-fns';
 import { ResponseHandler } from '../core/helpers/response-handler';
 import { buildTransactionFilters } from '../core/helpers/transaction-filters';
 import { asyncHandler } from '../core/middlewares/async-handler';
-import type { AuthRequest } from '../core/middlewares/auth';
+import type { AuthRequest } from '../modules/auth/middlewares/auth';
 import { BadRequestError } from '../services/errors';
 import {
   createTransactionService,

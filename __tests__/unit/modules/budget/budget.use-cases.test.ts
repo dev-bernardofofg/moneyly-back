@@ -23,7 +23,7 @@ jest.mock('../../../../src/modules/financial-period', () => ({
     getPeriodById: jest.fn().mockResolvedValue({ id: 'p1' }),
   },
 }));
-jest.mock('../../../../src/validations/user.validation', () => ({
+jest.mock('../../../../src/modules/user/validations/user.validation', () => ({
   requireUser: jest.fn().mockResolvedValue({ id: 'user-123' }),
 }));
 

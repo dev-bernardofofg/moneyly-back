@@ -5,10 +5,10 @@ import {
   getUserBudgets,
   updateCategoryBudget,
 } from './budget.controller';
-import { authenticateUser } from '../../core/middlewares/auth';
+import { authenticateUser } from '../auth/middlewares/auth';
 import { ensurePeriodExists } from '../financial-period/middlewares/ensure-period-exists';
 import { validateBody, validateParams, validateQuery } from '../../core/middlewares/validate';
-import { idParamSchema } from '../../schemas/auth.schema';
+import { idParamSchema } from '../../core/schemas/id-param.schema';
 import {
   createCategoryBudgetSchema,
   getBudgetsQuerySchema,

@@ -5,16 +5,16 @@ import {
   updateFinancialPeriod,
   updateIncomeAndPeriod,
   updateMonthlyIncome,
-} from '../controllers/user.controller';
-import { ResponseHandler } from '../core/helpers/response-handler';
-import { AuthenticatedRequest, authenticateUser } from '../core/middlewares/auth';
-import { validateBody } from '../core/middlewares/validate';
-import { financialPeriodRepository } from '../modules/financial-period/repositories/financial-period.repository';
+} from './user.controller';
+import { ResponseHandler } from '../../core/helpers/response-handler';
+import { AuthenticatedRequest, authenticateUser } from '../auth/middlewares/auth';
+import { validateBody } from '../../core/middlewares/validate';
+import { financialPeriodRepository } from '../financial-period/repositories/financial-period.repository';
 import {
   updateFinancialPeriodSchema,
   updateIncomeAndPeriodSchema,
   updateMonthlyIncomeSchema,
-} from '../schemas/user.schema';
+} from './schemas/user.schema';
 
 const UserRouters: Router = Router();
 

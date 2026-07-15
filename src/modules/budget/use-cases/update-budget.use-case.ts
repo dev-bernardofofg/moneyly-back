@@ -1,4 +1,4 @@
-import { requireUser } from '../../../validations/user.validation';
+import { requireUser } from '../../user';
 import { budgetRepository } from '../repositories/budget.repository';
 import { validateBudgetExists } from '../validations/budget.validation';
 

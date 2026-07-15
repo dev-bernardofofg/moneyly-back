@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
-import { db } from '../infra/db';
-import { users, type NewUser, type User } from '../infra/db/schema';
-import type { IUserRepository } from './interfaces/IUserRepository';
+import { db } from '../../../infra/db';
+import { users, type NewUser, type User } from '../../../infra/db/schema';
+import type { IUserRepository } from './IUserRepository';
 
 export const userRepository = {
   async create(userData: Omit<NewUser, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {

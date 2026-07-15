@@ -1,5 +1,5 @@
 import { HttpError } from '../../../validations/errors';
-import { requireUser } from '../../../validations/user.validation';
+import { requireUser } from '../../user';
 import { budgetRepository } from '../repositories/budget.repository';
 
 export const createBudgetUseCase = async (

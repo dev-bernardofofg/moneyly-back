@@ -1,6 +1,6 @@
 import { logger } from '../../../core/lib/logger';
 import { notificationRepository } from '../repositories/notification.repository';
-import { userRepository } from '../../../repositories/user.repository';
+import { userRepository } from '../../user';
 import { getBudgetProgressUseCase } from '../../budget';
 import { financialPeriodService } from '../../financial-period';
 

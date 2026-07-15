@@ -1,8 +1,8 @@
 import type { NextFunction, Request, Response } from 'express';
-import { verifyAccessToken } from '../helpers/token';
-import { ResponseHandler } from '../helpers/response-handler';
-import type { AuthenticatedUser } from '../../types/auth.types';
-import { requireUser } from '../../validations/user.validation';
+import { verifyAccessToken } from '../../../core/helpers/token';
+import { ResponseHandler } from '../../../core/helpers/response-handler';
+import type { AuthenticatedUser } from '../auth.types';
+import { requireUser } from '../../user';
 
 export interface AuthenticatedRequest extends Request {
   user?: AuthenticatedUser;

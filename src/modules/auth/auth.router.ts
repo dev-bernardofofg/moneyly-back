@@ -5,16 +5,16 @@ import {
   createUser,
   logout,
   refreshToken,
-} from '../controllers/auth.controller';
-import { authenticateUser } from '../core/middlewares/auth';
-import { authRateLimit } from '../core/middlewares/security';
-import { validateBody } from '../core/middlewares/validate';
+} from './auth.controller';
+import { authenticateUser } from './middlewares/auth';
+import { authRateLimit } from '../../core/middlewares/security';
+import { validateBody } from '../../core/middlewares/validate';
 import {
   createUserSchema,
   googleAuthSchema,
   loginSchema,
   refreshTokenSchema,
-} from '../schemas/auth.schema';
+} from './schemas/auth.schema';
 
 const AuthRouters: Router = Router();
 

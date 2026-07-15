@@ -11,16 +11,10 @@
 import { z } from './registry';
 import { wrapPaginated, wrapPaginatedWithSummary, wrapSuccess } from './envelopes';
 import {
-  AuthRefreshSchema,
-  AuthSessionSchema,
   ComparativeInsightsSchema,
-  FinancialPeriodUpdateSchema,
-  IncomeAndPeriodUpdateSchema,
-  IncomeUpdateSchema,
   DashboardOverviewSchema,
-  FinancialInsightsSchema,
-  FinancialPeriodSchema,
   FinancialPeriodSummarySchema,
+  FinancialInsightsSchema,
   ForecastResponseSchema,
   MonthlySummaryItemSchema,
   SubscriptionCandidateSchema,
@@ -30,21 +24,9 @@ import {
   TransactionListSummarySchema,
   TransactionSummarySchema,
   TransactionSchema,
-  UserSchema,
 } from './schemas';
 
-import {
-  createUserSchema,
-  googleAuthSchema,
-  loginSchema,
-  refreshTokenSchema,
-  idParamSchema,
-} from '../../schemas/auth.schema';
-import {
-  updateFinancialPeriodSchema,
-  updateIncomeAndPeriodSchema,
-  updateMonthlyIncomeSchema,
-} from '../../schemas/user.schema';
+import { idParamSchema } from '../schemas/id-param.schema';
 import { transactionSchema, transactionUpdateSchema } from '../../schemas/transaction.schema';
 import {
   getAvailablePeriodsQuerySchema,
@@ -56,7 +38,6 @@ import {
   recurringTransactionUpdateSchema,
 } from '../../schemas/recurring-transaction.schema';
 
-const periodIdParam = z.object({ periodId: z.string().uuid() });
 const intQuery = z.coerce.number().int().positive().optional();
 const dateQuery = z.string().optional();
 
@@ -98,100 +79,6 @@ route({
       environment: z.string(),
     })
   ),
-});
-
-/* ───────────────────────── auth ───────────────────────── */
-route({
-  method: 'post',
-  path: '/auth/sign-up',
-  tag: 'Auth',
-  summary: 'Cadastro de usuário',
-  auth: false,
-  body: createUserSchema,
-  ok: created(wrapSuccess(AuthSessionSchema)),
-});
-route({
-  method: 'post',
-  path: '/auth/sign-in',
-  tag: 'Auth',
-  summary: 'Login',
-  auth: false,
-  body: loginSchema,
-  ok: ok(wrapSuccess(AuthSessionSchema)),
-});
-route({
-  method: 'post',
-  path: '/auth/google',
-  tag: 'Auth',
-  summary: 'Login com Google',
-  auth: false,
-  body: googleAuthSchema,
-  ok: ok(wrapSuccess(AuthSessionSchema)),
-});
-route({
-  method: 'post',
-  path: '/auth/refresh',
-  tag: 'Auth',
-  summary: 'Renovar access token',
-  auth: false,
-  body: refreshTokenSchema,
-  ok: ok(wrapSuccess(AuthRefreshSchema)),
-});
-route({
-  method: 'post',
-  path: '/auth/logout',
-  tag: 'Auth',
-  summary: 'Logout (revoga refresh token)',
-  body: refreshTokenSchema,
-  ok: ok(wrapSuccess(z.object({ success: z.boolean() }))),
-});
-
-/* ───────────────────────── user ───────────────────────── */
-route({
-  method: 'get',
-  path: '/user/me',
-  tag: 'User',
-  summary: 'Perfil do usuário autenticado',
-  ok: ok(wrapSuccess(UserSchema)),
-});
-route({
-  method: 'put',
-  path: '/user/income',
-  tag: 'User',
-  summary: 'Atualizar renda mensal',
-  body: updateMonthlyIncomeSchema,
-  ok: ok(wrapSuccess(IncomeUpdateSchema)),
-});
-route({
-  method: 'put',
-  path: '/user/financial-period',
-  tag: 'User',
-  summary: 'Atualizar período financeiro',
-  body: updateFinancialPeriodSchema,
-  ok: ok(wrapSuccess(FinancialPeriodUpdateSchema)),
-});
-route({
-  method: 'put',
-  path: '/user/income-and-period',
-  tag: 'User',
-  summary: 'Atualizar renda + período',
-  body: updateIncomeAndPeriodSchema,
-  ok: ok(wrapSuccess(IncomeAndPeriodUpdateSchema)),
-});
-route({
-  method: 'get',
-  path: '/user/financial-periods',
-  tag: 'User',
-  summary: 'Listar períodos financeiros',
-  ok: ok(wrapSuccess(z.array(FinancialPeriodSummarySchema))),
-});
-route({
-  method: 'get',
-  path: '/user/financial-periods/{periodId}',
-  tag: 'User',
-  summary: 'Buscar período por ID',
-  params: periodIdParam,
-  ok: ok(wrapSuccess(FinancialPeriodSchema)),
 });
 
 /* ───────────────────────── transactions ───────────────────────── */

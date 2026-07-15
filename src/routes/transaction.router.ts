@@ -10,10 +10,10 @@ import {
   getTransactionSummary,
   updateTransaction,
 } from '../controllers/transaction.controller';
-import { authenticateUser } from '../core/middlewares/auth';
+import { authenticateUser } from '../modules/auth/middlewares/auth';
 import { ensurePeriodExists } from '../modules/financial-period';
 import { validate } from '../core/middlewares/validate';
-import { idParamSchema } from '../schemas/auth.schema';
+import { idParamSchema } from '../core/schemas/id-param.schema';
 import { transactionListQuerySchema } from '../schemas/pagination.schema';
 import { transactionSchema, transactionUpdateSchema } from '../schemas/transaction.schema';
 

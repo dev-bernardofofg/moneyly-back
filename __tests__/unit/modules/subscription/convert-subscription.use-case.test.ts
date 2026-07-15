@@ -6,7 +6,7 @@ import { HttpError } from '../../../../src/validations/errors';
 jest.mock('../../../../src/repositories/recurring-transaction.repository');
 jest.mock('../../../../src/repositories/transaction.repository');
 jest.mock('../../../../src/services/recurring-transaction.service');
-jest.mock('../../../../src/validations/user.validation');
+jest.mock('../../../../src/modules/user/validations/user.validation');
 
 const mockedRepo = recurringTransactionRepository as jest.Mocked<
   typeof recurringTransactionRepository

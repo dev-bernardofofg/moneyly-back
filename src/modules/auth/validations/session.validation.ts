@@ -1,7 +1,7 @@
-import { compare } from '../core/helpers/bcrypt';
-import { userRepository } from '../repositories/user.repository';
+import { compare } from '../../../core/helpers/bcrypt';
+import { HttpError } from '../../../validations/errors';
+import { userRepository } from '../../user';
 import { authenticateWithGoogle } from '../services/google.service';
-import { HttpError } from './errors';
 
 export const ensureEmailNotExists = async (email: string) => {
   const existingUser = await userRepository.findByEmail(email);
@@ -9,12 +9,6 @@ export const ensureEmailNotExists = async (email: string) => {
   if (existingUser) {
     throw new HttpError(409, 'Email já cadastrado');
   }
-};
-
-export const requireUser = async (userId: string) => {
-  const user = await userRepository.findById(userId);
-  if (!user) throw new HttpError(401, 'Usuário não autenticado', { userId });
-  return user;
 };
 
 export const validateCreateSession = async (email: string, password: string) => {

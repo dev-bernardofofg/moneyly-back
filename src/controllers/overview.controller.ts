@@ -2,7 +2,7 @@ import { formatBrazilianDate } from '../core/helpers/dates';
 import { getCurrentFinancialPeriod } from '../modules/financial-period';
 import { ResponseHandler } from '../core/helpers/response-handler';
 import { asyncHandler } from '../core/middlewares/async-handler';
-import type { AuthRequest } from '../core/middlewares/auth';
+import type { AuthRequest } from '../modules/auth/middlewares/auth';
 import type { GetDashboardOverviewQuery } from '../schemas/overview.schema';
 import {
   getAvailablePeriodsService,

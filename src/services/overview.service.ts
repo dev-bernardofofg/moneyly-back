@@ -19,7 +19,7 @@ import {
 import { financialPeriodRepository } from '../modules/financial-period/repositories/financial-period.repository';
 import type { TransactionWithCategory } from '../repositories/transaction.repository';
 import { transactionRepository } from '../repositories/transaction.repository';
-import { userRepository } from '../repositories/user.repository';
+import { userRepository } from '../modules/user';
 import { getBudgetProgressUseCase } from '../modules/budget';
 import { getGoalsProgressUseCase } from '../modules/goal';
 

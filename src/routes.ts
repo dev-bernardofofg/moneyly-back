@@ -3,7 +3,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import swaggerUi from 'swagger-ui-express';
 import { logger } from './core/lib/logger';
-import { AuthRouters } from './routes/auth.router';
+import { AuthRouters } from './modules/auth';
 import { BudgetRouter } from './modules/budget';
 import { CategoryRouter } from './modules/category';
 import savingsGoalRoutes from './modules/goal/goal.router';
@@ -12,7 +12,7 @@ import { OverviewRouter } from './routes/overview.router';
 import { CompanyRouter, OvertimeRouter } from './modules/overtime';
 import { RecurringTransactionRouter } from './routes/recurring-transaction.router';
 import transactionRoutes from './routes/transaction.router';
-import { UserRouters } from './routes/user.router';
+import { UserRouters } from './modules/user';
 
 let openApiDocument: Record<string, unknown> = {};
 try {
