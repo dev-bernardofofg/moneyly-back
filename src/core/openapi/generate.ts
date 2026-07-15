@@ -51,8 +51,8 @@ export function generateOpenApiDocument(): ReturnType<OpenApiGeneratorV3['genera
   return normalizeNullableRefs(doc);
 }
 
-// Execução direta (tsx src/openapi/generate.ts) → escreve openapi.json na raiz do back
-const OUTPUT = join(__dirname, '../../openapi.json');
+// Execução direta (tsx src/core/openapi/generate.ts) → escreve openapi.json na raiz do back
+const OUTPUT = join(__dirname, '../../../openapi.json');
 
 function main() {
   const doc = generateOpenApiDocument();

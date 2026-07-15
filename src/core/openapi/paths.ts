@@ -47,42 +47,42 @@ import {
   loginSchema,
   refreshTokenSchema,
   idParamSchema,
-} from '../schemas/auth.schema';
+} from '../../schemas/auth.schema';
 import {
   updateFinancialPeriodSchema,
   updateIncomeAndPeriodSchema,
   updateMonthlyIncomeSchema,
-} from '../schemas/user.schema';
-import { transactionSchema, transactionUpdateSchema } from '../schemas/transaction.schema';
+} from '../../schemas/user.schema';
+import { transactionSchema, transactionUpdateSchema } from '../../schemas/transaction.schema';
 import {
   createCategorySchema,
   updateCategorySchema,
   createCategoryBudgetSchema,
   updateCategoryBudgetSchema,
   getBudgetsQuerySchema,
-} from '../schemas/category.schema';
+} from '../../schemas/category.schema';
 import {
   addAmountToGoalSchema,
   createSavingsGoalSchema,
   updateSavingsGoalSchema,
-} from '../schemas/goal.schema';
+} from '../../schemas/goal.schema';
 import {
   getAvailablePeriodsQuerySchema,
   getDashboardOverviewQuerySchema,
-} from '../schemas/overview.schema';
+} from '../../schemas/overview.schema';
 import {
   fromSubscriptionSchema,
   recurringTransactionSchema,
   recurringTransactionUpdateSchema,
-} from '../schemas/recurring-transaction.schema';
-import { createCompanySchema, updateCompanySchema } from '../schemas/company.schema';
+} from '../../schemas/recurring-transaction.schema';
+import { createCompanySchema, updateCompanySchema } from '../../schemas/company.schema';
 import {
   createOvertimeSchema,
   updateOvertimeSchema,
   overtimeExportQuerySchema,
   overtimeListQuerySchema,
   overtimeSummaryQuerySchema,
-} from '../schemas/overtime.schema';
+} from '../../schemas/overtime.schema';
 
 const json = (schema: z.ZodTypeAny) => ({
   content: { 'application/json': { schema } },

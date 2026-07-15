@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
-import { generateOpenApiDocument } from '../../../src/openapi/generate';
+import { generateOpenApiDocument } from '../../../src/core/openapi/generate';
 
 const doc = generateOpenApiDocument();
 
