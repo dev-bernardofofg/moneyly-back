@@ -8,8 +8,8 @@ import { sanitizeData } from './core/middlewares/sanitize';
 import { securityMiddleware } from './core/middlewares/security';
 import router from './routes';
 import { processRecurringTransactions } from './services/recurring-transaction.service';
-import { processBudgetAlerts } from './services/notification.service';
-import { processBillReminders } from './services/bill-reminder.service';
+
+import { processBillReminders, processBudgetAlerts } from './modules/notification';
 
 export const app: Application = express();
 

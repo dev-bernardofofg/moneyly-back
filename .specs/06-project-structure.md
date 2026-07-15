@@ -1,6 +1,6 @@
 # 06 — Estrutura Modular do Projeto (alvo)
 
-**Tipo:** infra / arquitetural. **Status:** spec (não migrado — código atual ainda é layer-first).
+**Tipo:** infra / arquitetural. **Status:** em migração — PR 0 (fundação `core/` + `infra/db` + `core/openapi`) concluído; piloto `modules/notification` migrado. Demais módulos ainda layer-first.
 **Base:** estrutura do `serverJB` (NestJS), adaptada para Express + Drizzle.
 **Regra de transição:** feature nova nasce na estrutura modular; módulo existente migra incrementalmente (strangler), 1 módulo por PR.
 

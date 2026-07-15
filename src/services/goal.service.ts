@@ -3,7 +3,7 @@ import { calculateGoalProgress } from '../core/helpers/goal-progress';
 import { logger } from '../core/lib/logger';
 import { goalRepository } from '../repositories/goal.repository';
 import { financialPeriodService } from './financial-period.service';
-import { notifyGoalMilestones } from './notification.service';
+import { notifyGoalMilestones } from '../modules/notification';
 import { HttpError } from '../validations/errors';
 
 import {

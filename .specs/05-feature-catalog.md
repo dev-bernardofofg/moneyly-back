@@ -57,7 +57,7 @@ Cada módulo segue camadas: `routes/<x>.router.ts` → `controllers/<x>.controll
 ## Notifications (`/notifications`) — F2/F8/F9
 
 - `GET /notifications?unreadOnly=&page=&limit=` paginado · `PATCH /notifications/:id/read` · `PATCH /notifications/read-all`.
-- `notification.*` (controller/service/repository). `processBudgetAlerts` ligado ao scheduler de `src/server.ts` (mesmo `setInterval` do recurring). Idempotência via `notifications.dedupeKey` unique. Geração reusa `getBudgetProgressService`.
+- **Migrado para `src/modules/notification/`** (piloto da estrutura modular — ver `06`): use-cases 1-operação, repositório + interface no módulo, `notification.paths.ts` próprio. `processBudgetAlerts` ligado ao scheduler de `src/server.ts` (mesmo `setInterval` do recurring). Idempotência via `notifications.dedupeKey` unique. Geração reusa `getBudgetProgressService`.
 - **F8 lembrete de contas:** `processBillReminders` (bill-reminder.service) no mesmo scheduler — despesas recorrentes ativas com `nextExecution` em ≤3 dias → `type: bill_reminder`. Ver `.specs/features/07-bill-reminders.md`.
 - **F9 milestones de meta:** `notifyGoalMilestones` (notification.service) chamado por `addAmountToGoalService` quando milestone 25/50/75/100 é recém-atingido → `type: goal_milestone`. Falha de notificação não quebra o add-amount. Ver `.specs/features/08-goal-milestone-alerts.md`.
 

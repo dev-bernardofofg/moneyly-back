@@ -2,10 +2,10 @@ import {
   formatBrazilianDate,
   formatIsoDateSaoPaulo,
   getCurrentSaoPauloDate,
-} from '../core/helpers/dates';
-import { logger } from '../core/lib/logger';
+} from '../../../core/helpers/dates';
+import { logger } from '../../../core/lib/logger';
 import { notificationRepository } from '../repositories/notification.repository';
-import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
+import { recurringTransactionRepository } from '../../../repositories/recurring-transaction.repository';
 
 const REMINDER_WINDOW_DAYS = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;

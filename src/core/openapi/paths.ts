@@ -27,7 +27,6 @@ import {
   ForecastResponseSchema,
   GoalSchema,
   MonthlySummaryItemSchema,
-  NotificationSchema,
   SubscriptionCandidateSchema,
   PlannerOverviewSchema,
   CurrentPeriodSummarySchema,
@@ -110,12 +109,6 @@ const recurringListQuery = z.object({
   page: intQuery,
   limit: intQuery,
 });
-const notificationsQuery = z.object({
-  unreadOnly: z.coerce.boolean().optional(),
-  page: intQuery,
-  limit: intQuery,
-});
-
 import { created, nullData, ok, route } from './route';
 
 /* ───────────────────────── health ───────────────────────── */
@@ -534,31 +527,6 @@ route({
   summary: 'Deletar recorrente',
   params: idParamSchema,
   ok: ok(nullData),
-});
-
-/* ───────────────────────── notifications ───────────────────────── */
-route({
-  method: 'get',
-  path: '/notifications/',
-  tag: 'Notifications',
-  summary: 'Listar notificações (paginado)',
-  query: notificationsQuery,
-  ok: ok(wrapPaginated(NotificationSchema)),
-});
-route({
-  method: 'patch',
-  path: '/notifications/read-all',
-  tag: 'Notifications',
-  summary: 'Marcar todas como lidas',
-  ok: ok(wrapSuccess(z.object({ updatedCount: z.number().int() }))),
-});
-route({
-  method: 'patch',
-  path: '/notifications/{id}/read',
-  tag: 'Notifications',
-  summary: 'Marcar notificação como lida',
-  params: idParamSchema,
-  ok: ok(wrapSuccess(NotificationSchema)),
 });
 
 /* ───────────────────────── companies ───────────────────────── */

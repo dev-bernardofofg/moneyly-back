@@ -12,11 +12,9 @@ import type {
   NewCategoryBudget,
   NewGoal,
   NewGoalMilestone,
-  NewNotification,
   NewTransaction,
   NewUser,
   NewUserCategoryPreference,
-  Notification,
   Transaction,
   User,
   UserCategoryPreference,
@@ -192,21 +190,6 @@ export interface IUserCategoryPreferencesRepository {
     userId: string,
     globalCategoryIds: string[]
   ): Promise<UserCategoryPreference[]>;
-}
-
-// ============================================================
-// NOTIFICATION REPOSITORY INTERFACE
-// ============================================================
-export interface INotificationRepository {
-  create(data: Omit<NewNotification, 'id' | 'createdAt'>): Promise<Notification>;
-  findByDedupeKey(dedupeKey: string): Promise<Notification | null>;
-  findByUserPaginated(
-    userId: string,
-    pagination: PaginationQuery,
-    unreadOnly?: boolean
-  ): Promise<PaginationResult<Notification>>;
-  markRead(id: string, userId: string): Promise<Notification | null>;
-  markAllRead(userId: string): Promise<number>;
 }
 
 // ============================================================

@@ -3,11 +3,11 @@ import {
   getNotifications,
   markAllNotificationsRead,
   markNotificationRead,
-} from '../controllers/notification.controller';
-import { authenticateUser } from '../core/middlewares/auth';
-import { validateParams, validateQuery } from '../core/middlewares/validate';
-import { idParamSchema } from '../schemas/auth.schema';
-import { notificationQuerySchema } from '../schemas/notification.schema';
+} from './notification.controller';
+import { authenticateUser } from '../../core/middlewares/auth';
+import { validateParams, validateQuery } from '../../core/middlewares/validate';
+import { idParamSchema } from '../../schemas/auth.schema';
+import { notificationQuerySchema } from './schemas/notification.schema';
 
 const NotificationRouter: Router = Router();
 

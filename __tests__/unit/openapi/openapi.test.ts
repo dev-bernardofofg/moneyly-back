@@ -4,7 +4,7 @@ import { generateOpenApiDocument } from '../../../src/core/openapi/generate';
 
 const doc = generateOpenApiDocument();
 
-// Prefixo de montagem de cada router (ver src/routes.ts)
+// Prefixo de montagem de cada router legado (ver src/routes.ts)
 const ROUTER_PREFIX: Record<string, string> = {
   'auth.router.ts': '/auth',
   'user.router.ts': '/user',
@@ -14,10 +14,15 @@ const ROUTER_PREFIX: Record<string, string> = {
   'goal.router.ts': '/goals',
   'overview.router.ts': '/overview',
   'recurring-transaction.router.ts': '/recurring-transactions',
-  'notification.router.ts': '/notifications',
+};
+
+// Routers de módulos migrados (src/modules/<x>/<x>.router.ts — ver .specs/06)
+const MODULE_ROUTER_PREFIX: Record<string, string> = {
+  notification: '/notifications',
 };
 
 const ROUTES_DIR = join(__dirname, '../../../src/routes');
+const MODULES_DIR = join(__dirname, '../../../src/modules');
 
 function toOpenApiPath(prefix: string, sub: string): string {
   const joined = sub === '/' ? `${prefix}/` : `${prefix}${sub}`;
@@ -28,10 +33,9 @@ function toOpenApiPath(prefix: string, sub: string): string {
 function scanRouters(): Array<{ method: string; path: string; file: string }> {
   const out: Array<{ method: string; path: string; file: string }> = [];
   const re = /\.(get|post|put|patch|delete)\(\s*["'`]([^"'`]+)["'`]/g;
-  for (const file of readdirSync(ROUTES_DIR)) {
-    const prefix = ROUTER_PREFIX[file];
-    if (!prefix) continue;
-    const src = readFileSync(join(ROUTES_DIR, file), 'utf-8');
+
+  const scanFile = (filePath: string, prefix: string, label: string) => {
+    const src = readFileSync(filePath, 'utf-8');
     let m: RegExpExecArray | null;
     while ((m = re.exec(src)) !== null) {
       const method = m[1];
@@ -40,9 +44,18 @@ function scanRouters(): Array<{ method: string; path: string; file: string }> {
       out.push({
         method: method.toLowerCase(),
         path: toOpenApiPath(prefix, sub),
-        file,
+        file: label,
       });
     }
+  };
+
+  for (const file of readdirSync(ROUTES_DIR)) {
+    const prefix = ROUTER_PREFIX[file];
+    if (!prefix) continue;
+    scanFile(join(ROUTES_DIR, file), prefix, file);
+  }
+  for (const [mod, prefix] of Object.entries(MODULE_ROUTER_PREFIX)) {
+    scanFile(join(MODULES_DIR, mod, `${mod}.router.ts`), prefix, `modules/${mod}`);
   }
   return out;
 }

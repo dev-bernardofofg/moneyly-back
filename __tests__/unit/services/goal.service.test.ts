@@ -20,12 +20,12 @@ import {
   validateUpdateGoal,
 } from '../../../src/validations/goal.validation';
 
-import { notifyGoalMilestones } from '../../../src/services/notification.service';
+import { notifyGoalMilestones } from '../../../src/modules/notification';
 
 // Mock dos módulos
 jest.mock('../../../src/repositories/goal.repository');
 jest.mock('../../../src/validations/goal.validation');
-jest.mock('../../../src/services/notification.service');
+jest.mock('../../../src/modules/notification');
 jest.mock('../../../src/services/financial-period.service', () => ({
   financialPeriodService: {
     createNextPeriods: jest.fn().mockResolvedValue([]),

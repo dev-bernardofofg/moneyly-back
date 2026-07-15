@@ -2,7 +2,9 @@ import { OpenApiGeneratorV3 } from '@asteasolutions/zod-to-openapi';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
 import { registry } from './registry';
-import './paths'; // side-effect: registra todos os endpoints
+import './paths'; // side-effect: registra endpoints legados (layer-first)
+// Módulos migrados registram seus próprios paths (ver .specs/06):
+import '../../modules/notification/notification.paths';
 
 /**
  * zod-to-openapi v7 emite ref-nullable como `{ allOf: [ {$ref}, {nullable:true} ] }`.
