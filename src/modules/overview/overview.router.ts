@@ -6,16 +6,16 @@ import {
   getFinancialInsights,
   getForecast,
   getPlannerOverview,
-} from '../controllers/overview.controller';
-import { authenticateUser } from '../modules/auth/middlewares/auth';
-import { ensurePeriodExists } from '../modules/financial-period';
-import { validate } from '../core/middlewares/validate';
+} from './overview.controller';
+import { authenticateUser } from '../auth/middlewares/auth';
+import { ensurePeriodExists } from '../financial-period';
+import { validate } from '../../core/middlewares/validate';
 import {
   comparativeInsightsQuerySchema,
   forecastQuerySchema,
   getAvailablePeriodsQuerySchema,
   getDashboardOverviewQuerySchema,
-} from '../schemas/overview.schema';
+} from './schemas/overview.schema';
 
 const OverviewRouter: Router = Router();
 

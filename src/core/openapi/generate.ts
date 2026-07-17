@@ -13,6 +13,7 @@ import '../../modules/auth/auth.paths';
 import '../../modules/user/user.paths';
 import '../../modules/recurring-transaction/recurring-transaction.paths';
 import '../../modules/transaction/transaction.paths';
+import '../../modules/overview/overview.paths';
 
 /**
  * zod-to-openapi v7 emite ref-nullable como `{ allOf: [ {$ref}, {nullable:true} ] }`.

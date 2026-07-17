@@ -1,5 +1,5 @@
-import { IAvailablePeriod } from '../modules/financial-period';
-import { HttpError } from './errors';
+import { IAvailablePeriod } from '../../financial-period';
+import { HttpError } from '../../../validations/errors';
 
 export const validatePeriodId = (periodId: string, availablePeriods: IAvailablePeriod[]) => {
   const period = availablePeriods.find((p) => p.id === periodId);

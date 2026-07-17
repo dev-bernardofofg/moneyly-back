@@ -1,27 +1,27 @@
-import type { GoalWithMilestones } from '../modules/goal/repositories/IGoalRepository';
-import type { BudgetProgress } from '../modules/budget';
-import { getCurrentSaoPauloDate } from '../core/helpers/dates';
+import type { GoalWithMilestones } from '../../goal/repositories/IGoalRepository';
+import type { BudgetProgress } from '../../budget';
+import { getCurrentSaoPauloDate } from '../../../core/helpers/dates';
 import {
   formatPeriodLabel,
   getCurrentFinancialPeriod,
   getPreviousFinancialPeriods,
-} from '../modules/financial-period';
-import { groupSubscriptionCandidates } from '../modules/subscription';
-import { sumAmounts } from '../core/helpers/amount';
-import { buildComparison } from '../core/helpers/comparative-insights';
-import { NotFoundError } from './errors';
+} from '../../financial-period';
+import { groupSubscriptionCandidates } from '../../subscription';
+import { sumAmounts } from '../../../core/helpers/amount';
+import { buildComparison } from '../helpers/comparative-insights';
+import { NotFoundError } from '../../../services/errors';
 import {
   calculateMonthlyAggregates,
   calculatePeriodChartData,
   calculateStats,
   getRecentTransactions,
-} from '../core/helpers/handlers/overview-handlers';
-import { financialPeriodRepository } from '../modules/financial-period/repositories/financial-period.repository';
-import type { TransactionWithCategory } from '../modules/transaction/repositories/transaction.repository';
-import { transactionRepository } from '../modules/transaction/repositories/transaction.repository';
-import { userRepository } from '../modules/user';
-import { getBudgetProgressUseCase } from '../modules/budget';
-import { getGoalsProgressUseCase } from '../modules/goal';
+} from '../helpers/overview-handlers';
+import { financialPeriodRepository } from '../../financial-period/repositories/financial-period.repository';
+import type { TransactionWithCategory } from '../../transaction/repositories/transaction.repository';
+import { transactionRepository } from '../../transaction/repositories/transaction.repository';
+import { userRepository } from '../../user';
+import { getBudgetProgressUseCase } from '../../budget';
+import { getGoalsProgressUseCase } from '../../goal';
 
 export const getTransactionsByUserId = async (
   userId: string,

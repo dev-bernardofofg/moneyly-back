@@ -9,16 +9,16 @@ import {
   getPlannerOverviewService,
   getStatsOverview,
   getTransactionsByUserId,
-} from '../../../src/services/overview.service';
-import { financialPeriodRepository } from '../../../src/modules/financial-period/repositories/financial-period.repository';
-import { transactionRepository } from '../../../src/modules/transaction/repositories/transaction.repository';
-import { getBudgetProgressUseCase } from '../../../src/modules/budget';
-import { getGoalsProgressUseCase } from '../../../src/modules/goal';
+} from '../../../../src/modules/overview/services/overview.service';
+import { financialPeriodRepository } from '../../../../src/modules/financial-period/repositories/financial-period.repository';
+import { transactionRepository } from '../../../../src/modules/transaction/repositories/transaction.repository';
+import { getBudgetProgressUseCase } from '../../../../src/modules/budget';
+import { getGoalsProgressUseCase } from '../../../../src/modules/goal';
 
-jest.mock('../../../src/modules/financial-period/repositories/financial-period.repository');
-jest.mock('../../../src/modules/transaction/repositories/transaction.repository');
-jest.mock('../../../src/modules/budget');
-jest.mock('../../../src/modules/goal');
+jest.mock('../../../../src/modules/financial-period/repositories/financial-period.repository');
+jest.mock('../../../../src/modules/transaction/repositories/transaction.repository');
+jest.mock('../../../../src/modules/budget');
+jest.mock('../../../../src/modules/goal');
 
 const fpRepo = financialPeriodRepository as jest.Mocked<typeof financialPeriodRepository>;
 const txRepo = transactionRepository as jest.Mocked<typeof transactionRepository>;

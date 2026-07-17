@@ -8,7 +8,7 @@ import { BudgetRouter } from './modules/budget';
 import { CategoryRouter } from './modules/category';
 import savingsGoalRoutes from './modules/goal/goal.router';
 import { NotificationRouter } from './modules/notification';
-import { OverviewRouter } from './routes/overview.router';
+import { OverviewRouter } from './modules/overview';
 import { CompanyRouter, OvertimeRouter } from './modules/overtime';
 import { RecurringTransactionRouter } from './modules/recurring-transaction';
 import transactionRoutes from './modules/transaction/transaction.router';

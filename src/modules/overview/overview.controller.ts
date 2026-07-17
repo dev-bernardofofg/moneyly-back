@@ -1,9 +1,9 @@
-import { formatBrazilianDate } from '../core/helpers/dates';
-import { getCurrentFinancialPeriod } from '../modules/financial-period';
-import { ResponseHandler } from '../core/helpers/response-handler';
-import { asyncHandler } from '../core/middlewares/async-handler';
-import type { AuthRequest } from '../modules/auth/middlewares/auth';
-import type { GetDashboardOverviewQuery } from '../schemas/overview.schema';
+import { formatBrazilianDate } from '../../core/helpers/dates';
+import { getCurrentFinancialPeriod } from '../financial-period';
+import { ResponseHandler } from '../../core/helpers/response-handler';
+import { asyncHandler } from '../../core/middlewares/async-handler';
+import type { AuthRequest } from '../auth/middlewares/auth';
+import type { GetDashboardOverviewQuery } from './schemas/overview.schema';
 import {
   getAvailablePeriodsService,
   getDashboardOverviewService,
@@ -11,9 +11,9 @@ import {
   getFinancialInsightsService,
   getPlannerOverviewService,
   getTransactionsByUserId,
-} from '../services/overview.service';
-import { getForecastService } from '../services/forecast.service';
-import { getComparativeInsightsService } from '../services/comparative-insights.service';
+} from './services/overview.service';
+import { getForecastService } from './services/forecast.service';
+import { getComparativeInsightsService } from './services/comparative-insights.service';
 
 export const getDashboardOverview = asyncHandler<
   AuthRequest & { query: GetDashboardOverviewQuery }

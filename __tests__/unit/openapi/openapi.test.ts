@@ -5,9 +5,7 @@ import { generateOpenApiDocument } from '../../../src/core/openapi/generate';
 const doc = generateOpenApiDocument();
 
 // Prefixo de montagem de cada router legado (ver src/routes.ts)
-const ROUTER_PREFIX: Record<string, string> = {
-  'overview.router.ts': '/overview',
-};
+const ROUTER_PREFIX: Record<string, string> = {};
 
 // Routers de módulos migrados (src/modules/<x>/<x>.router.ts — ver .specs/06)
 const MODULE_ROUTER_PREFIX: Record<string, string> = {
@@ -21,6 +19,7 @@ const MODULE_ROUTER_PREFIX: Record<string, string> = {
   'user/user.router.ts': '/user',
   'recurring-transaction/recurring-transaction.router.ts': '/recurring-transactions',
   'transaction/transaction.router.ts': '/transactions',
+  'overview/overview.router.ts': '/overview',
 };
 
 const ROUTES_DIR = join(__dirname, '../../../src/routes');

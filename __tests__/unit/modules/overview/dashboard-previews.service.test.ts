@@ -2,10 +2,10 @@
  * Testes unitários para getDashboardPreviewsService (F5).
  * findAllByUserId mockado; heurísticas F3/F4 reais.
  */
-import { getDashboardPreviewsService } from '../../../src/services/overview.service';
-import { transactionRepository } from '../../../src/modules/transaction/repositories/transaction.repository';
+import { getDashboardPreviewsService } from '../../../../src/modules/overview/services/overview.service';
+import { transactionRepository } from '../../../../src/modules/transaction/repositories/transaction.repository';
 
-jest.mock('../../../src/modules/transaction/repositories/transaction.repository');
+jest.mock('../../../../src/modules/transaction/repositories/transaction.repository');
 
 const txRepo = transactionRepository as jest.Mocked<typeof transactionRepository>;
 

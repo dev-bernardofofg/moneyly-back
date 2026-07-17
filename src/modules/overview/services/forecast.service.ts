@@ -1,13 +1,13 @@
-import { sumAmounts } from '../core/helpers/amount';
-import { getCurrentSaoPauloDate } from '../core/helpers/dates';
-import { calculateNextExecution } from '../modules/recurring-transaction/helpers/execution-dates';
-import { formatPeriodLabel } from '../modules/financial-period';
-import { recurringTransactionRepository } from '../modules/recurring-transaction/repositories/recurring-transaction.repository';
-import { transactionRepository } from '../modules/transaction/repositories/transaction.repository';
-import type { RecurringFrequency } from '../modules/recurring-transaction/recurring-transaction.types';
-import { requireUser } from '../modules/user';
-import { HttpError } from '../validations/errors';
-import { financialPeriodService } from '../modules/financial-period';
+import { sumAmounts } from '../../../core/helpers/amount';
+import { getCurrentSaoPauloDate } from '../../../core/helpers/dates';
+import { calculateNextExecution } from '../../recurring-transaction/helpers/execution-dates';
+import { formatPeriodLabel } from '../../financial-period';
+import { recurringTransactionRepository } from '../../recurring-transaction/repositories/recurring-transaction.repository';
+import { transactionRepository } from '../../transaction/repositories/transaction.repository';
+import type { RecurringFrequency } from '../../recurring-transaction/recurring-transaction.types';
+import { requireUser } from '../../user';
+import { HttpError } from '../../../validations/errors';
+import { financialPeriodService } from '../../financial-period';
 
 const MAX_OCCURRENCE_ITERATIONS = 400; // teto p/ frequência daily em janelas longas
 
