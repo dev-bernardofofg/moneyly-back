@@ -1,16 +1,16 @@
 import { and, count, eq, gt, lte } from 'drizzle-orm';
-import { db } from '../infra/db';
+import { db } from '../../../infra/db';
 import {
   recurringTransactions,
   type NewRecurringTransaction,
   type RecurringTransaction,
-} from '../infra/db/schema';
+} from '../../../infra/db/schema';
 import {
   PaginationHelper,
   type PaginationQuery,
   type PaginationResult,
-} from '../core/helpers/pagination';
-import type { IRecurringTransactionRepository } from './interfaces/IRecurringTransactionRepository';
+} from '../../../core/helpers/pagination';
+import type { IRecurringTransactionRepository } from './IRecurringTransactionRepository';
 
 export const recurringTransactionRepository = {
   async create(

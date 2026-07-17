@@ -1,13 +1,15 @@
 import { getForecastService } from '../../../src/services/forecast.service';
 import { financialPeriodService } from '../../../src/modules/financial-period';
 import { transactionRepository } from '../../../src/repositories/transaction.repository';
-import { recurringTransactionRepository } from '../../../src/repositories/recurring-transaction.repository';
+import { recurringTransactionRepository } from '../../../src/modules/recurring-transaction/repositories/recurring-transaction.repository';
 import { requireUser } from '../../../src/modules/user/validations/user.validation';
 import { HttpError } from '../../../src/validations/errors';
 
 jest.mock('../../../src/modules/financial-period');
 jest.mock('../../../src/repositories/transaction.repository');
-jest.mock('../../../src/repositories/recurring-transaction.repository');
+jest.mock(
+  '../../../src/modules/recurring-transaction/repositories/recurring-transaction.repository'
+);
 jest.mock('../../../src/modules/user/validations/user.validation');
 
 const mockedPeriodSvc = financialPeriodService as jest.Mocked<typeof financialPeriodService>;

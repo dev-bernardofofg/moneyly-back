@@ -7,7 +7,7 @@ import { errorHandler } from './core/middlewares/error-handler';
 import { sanitizeData } from './core/middlewares/sanitize';
 import { securityMiddleware } from './core/middlewares/security';
 import router from './routes';
-import { processRecurringTransactions } from './services/recurring-transaction.service';
+import { processRecurringTransactions } from './modules/recurring-transaction';
 
 import { processBillReminders, processBudgetAlerts } from './modules/notification';
 

@@ -1,8 +1,10 @@
 import type { RecurringTransaction } from '../../../infra/db/schema';
 import { getCurrentSaoPauloDate } from '../../../core/helpers/dates';
-import { recurringTransactionRepository } from '../../../repositories/recurring-transaction.repository';
+import {
+  createRecurringTransactionUseCase,
+  recurringTransactionRepository,
+} from '../../recurring-transaction';
 import { HttpError } from '../../../validations/errors';
-import { createRecurringTransactionService } from '../../../services/recurring-transaction.service';
 import {
   addCadence,
   normalizeTitle,
@@ -41,7 +43,7 @@ export const convertSubscriptionToRecurringUseCase = async (
     startDate = addCadence(startDate, input.cadence);
   }
 
-  return createRecurringTransactionService(userId, {
+  return createRecurringTransactionUseCase(userId, {
     type: 'expense',
     title: input.title,
     amount: input.amount,

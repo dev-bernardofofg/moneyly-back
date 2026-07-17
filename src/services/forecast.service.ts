@@ -1,9 +1,10 @@
 import { sumAmounts } from '../core/helpers/amount';
-import { calculateNextExecution, getCurrentSaoPauloDate } from '../core/helpers/dates';
+import { getCurrentSaoPauloDate } from '../core/helpers/dates';
+import { calculateNextExecution } from '../modules/recurring-transaction/helpers/execution-dates';
 import { formatPeriodLabel } from '../modules/financial-period';
-import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
+import { recurringTransactionRepository } from '../modules/recurring-transaction/repositories/recurring-transaction.repository';
 import { transactionRepository } from '../repositories/transaction.repository';
-import type { RecurringFrequency } from '../types/recurring-transaction.types';
+import type { RecurringFrequency } from '../modules/recurring-transaction/recurring-transaction.types';
 import { requireUser } from '../modules/user';
 import { HttpError } from '../validations/errors';
 import { financialPeriodService } from '../modules/financial-period';

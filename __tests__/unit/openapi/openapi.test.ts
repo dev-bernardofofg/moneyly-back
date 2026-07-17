@@ -8,7 +8,6 @@ const doc = generateOpenApiDocument();
 const ROUTER_PREFIX: Record<string, string> = {
   'transaction.router.ts': '/transactions',
   'overview.router.ts': '/overview',
-  'recurring-transaction.router.ts': '/recurring-transactions',
 };
 
 // Routers de módulos migrados (src/modules/<x>/<x>.router.ts — ver .specs/06)
@@ -21,6 +20,7 @@ const MODULE_ROUTER_PREFIX: Record<string, string> = {
   'category/category.router.ts': '/categories',
   'auth/auth.router.ts': '/auth',
   'user/user.router.ts': '/user',
+  'recurring-transaction/recurring-transaction.router.ts': '/recurring-transactions',
 };
 
 const ROUTES_DIR = join(__dirname, '../../../src/routes');

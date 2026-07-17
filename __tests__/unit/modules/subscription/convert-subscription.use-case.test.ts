@@ -1,17 +1,21 @@
 import { convertSubscriptionToRecurringUseCase } from '../../../../src/modules/subscription/use-cases/convert-subscription-to-recurring.use-case';
-import { createRecurringTransactionService } from '../../../../src/services/recurring-transaction.service';
-import { recurringTransactionRepository } from '../../../../src/repositories/recurring-transaction.repository';
+import { createRecurringTransactionUseCase } from '../../../../src/modules/recurring-transaction/use-cases/create-recurring-transaction.use-case';
+import { recurringTransactionRepository } from '../../../../src/modules/recurring-transaction/repositories/recurring-transaction.repository';
 import { HttpError } from '../../../../src/validations/errors';
 
-jest.mock('../../../../src/repositories/recurring-transaction.repository');
+jest.mock(
+  '../../../../src/modules/recurring-transaction/repositories/recurring-transaction.repository'
+);
 jest.mock('../../../../src/repositories/transaction.repository');
-jest.mock('../../../../src/services/recurring-transaction.service');
+jest.mock(
+  '../../../../src/modules/recurring-transaction/use-cases/create-recurring-transaction.use-case'
+);
 jest.mock('../../../../src/modules/user/validations/user.validation');
 
 const mockedRepo = recurringTransactionRepository as jest.Mocked<
   typeof recurringTransactionRepository
 >;
-const mockedCreate = createRecurringTransactionService as jest.Mock;
+const mockedCreate = createRecurringTransactionUseCase as jest.Mock;
 
 const USER = '11111111-1111-1111-1111-111111111111';
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -31,7 +35,7 @@ beforeEach(() => {
 });
 
 describe('convertSubscriptionToRecurringService', () => {
-  it('creates expense recurring delegating to createRecurringTransactionService', async () => {
+  it('creates expense recurring delegating to createRecurringTransactionUseCase', async () => {
     const result = await convertSubscriptionToRecurringUseCase(USER, baseInput);
 
     expect(result).toEqual({ id: 'rec-1' });
