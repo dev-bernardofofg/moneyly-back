@@ -6,7 +6,6 @@ const doc = generateOpenApiDocument();
 
 // Prefixo de montagem de cada router legado (ver src/routes.ts)
 const ROUTER_PREFIX: Record<string, string> = {
-  'transaction.router.ts': '/transactions',
   'overview.router.ts': '/overview',
 };
 
@@ -21,6 +20,7 @@ const MODULE_ROUTER_PREFIX: Record<string, string> = {
   'auth/auth.router.ts': '/auth',
   'user/user.router.ts': '/user',
   'recurring-transaction/recurring-transaction.router.ts': '/recurring-transactions',
+  'transaction/transaction.router.ts': '/transactions',
 };
 
 const ROUTES_DIR = join(__dirname, '../../../src/routes');

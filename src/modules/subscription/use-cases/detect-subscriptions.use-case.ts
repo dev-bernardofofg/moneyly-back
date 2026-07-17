@@ -1,4 +1,4 @@
-import { transactionRepository } from '../../../repositories/transaction.repository';
+import { transactionRepository } from '../../transaction/repositories/transaction.repository';
 import { requireUser } from '../../user';
 import {
   groupSubscriptionCandidates,

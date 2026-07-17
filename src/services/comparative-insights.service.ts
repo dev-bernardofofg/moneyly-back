@@ -1,6 +1,6 @@
 import { buildComparison, type ComparativeInsights } from '../core/helpers/comparative-insights';
 import { formatPeriodLabel, getPreviousFinancialPeriods } from '../modules/financial-period';
-import { transactionRepository } from '../repositories/transaction.repository';
+import { transactionRepository } from '../modules/transaction/repositories/transaction.repository';
 import { userRepository } from '../modules/user';
 import { HttpError } from '../validations/errors';
 import { requireUser } from '../modules/user';

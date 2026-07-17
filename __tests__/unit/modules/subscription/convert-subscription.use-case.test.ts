@@ -6,7 +6,7 @@ import { HttpError } from '../../../../src/validations/errors';
 jest.mock(
   '../../../../src/modules/recurring-transaction/repositories/recurring-transaction.repository'
 );
-jest.mock('../../../../src/repositories/transaction.repository');
+jest.mock('../../../../src/modules/transaction/repositories/transaction.repository');
 jest.mock(
   '../../../../src/modules/recurring-transaction/use-cases/create-recurring-transaction.use-case'
 );

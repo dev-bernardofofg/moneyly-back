@@ -1,6 +1,6 @@
-import type { NewTransaction, Transaction } from '../../infra/db/schema';
-import type { PaginationQuery, PaginationResult } from '../../core/helpers/pagination';
-import type { TransactionWithCategory } from '../transaction.repository';
+import type { NewTransaction, Transaction } from '../../../infra/db/schema';
+import type { PaginationQuery, PaginationResult } from '../../../core/helpers/pagination';
+import type { TransactionWithCategory } from './transaction.repository';
 
 export interface ITransactionRepository {
   create(data: Omit<NewTransaction, 'id' | 'createdAt' | 'updatedAt'>): Promise<Transaction>;

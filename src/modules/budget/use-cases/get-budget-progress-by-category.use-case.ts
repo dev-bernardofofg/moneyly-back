@@ -1,5 +1,5 @@
 import { sumAmounts } from '../../../core/helpers/amount';
-import { transactionRepository } from '../../../repositories/transaction.repository';
+import { transactionRepository } from '../../transaction/repositories/transaction.repository';
 import { financialPeriodService } from '../../financial-period';
 import { requireUser } from '../../user';
 import { getBudgetStatus } from '../helpers/budget-status';

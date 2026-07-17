@@ -1,5 +1,5 @@
 import { toSaoPauloTimezone } from '../../../core/helpers/dates';
-import { transactionRepository } from '../../../repositories/transaction.repository';
+import { transactionRepository } from '../../transaction/repositories/transaction.repository';
 import { financialPeriodService } from '../../financial-period';
 import { calcHours } from '../helpers/calc-hours';
 import { overtimeRepository } from '../repositories/overtime.repository';

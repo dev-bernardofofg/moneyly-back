@@ -1,6 +1,6 @@
 import { getCurrentSaoPauloDate } from '../../../core/helpers/dates';
 import { logger } from '../../../core/lib/logger';
-import { createTransactionService } from '../../../services/transaction.service';
+import { createTransactionUseCase } from '../../transaction';
 import { calculateNextExecution } from '../helpers/execution-dates';
 import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
 
@@ -36,7 +36,7 @@ export const processRecurringTransactions = async (): Promise<void> => {
         continue;
       }
 
-      await createTransactionService(recurring.userId, {
+      await createTransactionUseCase(recurring.userId, {
         type: recurring.type as 'income' | 'expense',
         title: recurring.title,
         amount: recurring.amount,

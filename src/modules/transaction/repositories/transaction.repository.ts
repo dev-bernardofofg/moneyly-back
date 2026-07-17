@@ -1,17 +1,17 @@
 import { and, count, desc, eq, gte, lte } from 'drizzle-orm';
-import { db } from '../infra/db';
+import { db } from '../../../infra/db';
 import {
   categories,
   transactions,
   type NewTransaction,
   type Transaction,
-} from '../infra/db/schema';
+} from '../../../infra/db/schema';
 import {
   PaginationHelper,
   type PaginationQuery,
   type PaginationResult,
-} from '../core/helpers/pagination';
-import type { ITransactionRepository } from './interfaces/ITransactionRepository';
+} from '../../../core/helpers/pagination';
+import type { ITransactionRepository } from './ITransactionRepository';
 
 export type TransactionWithCategory = Omit<Transaction, 'categoryId' | 'userId'> & {
   category: { id: string; name: string };

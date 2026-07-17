@@ -1,5 +1,5 @@
-import { categoryRepository } from '../modules/category/repositories/category.repository';
-import { HttpError } from './errors';
+import { categoryRepository } from '../../category/repositories/category.repository';
+import { HttpError } from '../../../validations/errors';
 
 export const validateCategoryExistsForUser = async (categoryId: string, userId: string) => {
   const category = await categoryRepository.findByIdAndUserId(categoryId, userId);

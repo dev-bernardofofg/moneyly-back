@@ -9,7 +9,7 @@ import { authenticateUser } from '../auth/middlewares/auth';
 import { validate } from '../../core/middlewares/validate';
 import { idParamSchema } from '../../core/schemas/id-param.schema';
 import { createCategorySchema, updateCategorySchema } from './schemas/category.schema';
-import { paginationQuerySchema } from '../../schemas/pagination.schema';
+import { paginationQuerySchema } from '../../core/schemas/pagination.schema';
 
 const CategoryRouter: Router = Router();
 

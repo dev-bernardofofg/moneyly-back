@@ -1,6 +1,6 @@
 import { formatInTimeZone } from 'date-fns-tz';
 import { ptBR } from 'date-fns/locale';
-import { transactionRepository } from '../../../repositories/transaction.repository';
+import { transactionRepository } from '../../transaction/repositories/transaction.repository';
 import {
   createNormalizedSaoPauloDate,
   getCurrentSaoPauloDate,

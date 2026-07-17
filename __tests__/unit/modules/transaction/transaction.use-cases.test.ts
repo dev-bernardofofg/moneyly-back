@@ -2,17 +2,16 @@
  * Testes unitários para TransactionService
  */
 
-import { transactionRepository } from '../../../src/repositories/transaction.repository';
-import {
-  createTransactionService,
-  updateTransactionService,
-} from '../../../src/services/transaction.service';
-import { validateCategoryExistsForUser } from '../../../src/validations/transaction.validation';
+import { transactionRepository } from '../../../../src/modules/transaction/repositories/transaction.repository';
+import { createTransactionUseCase } from '../../../../src/modules/transaction/use-cases/create-transaction.use-case';
+import { updateTransactionUseCase } from '../../../../src/modules/transaction/use-cases/update-transaction.use-case';
+import { validateCategoryExistsForUser } from '../../../../src/modules/transaction/validations/transaction.validation';
 
 // Mock dos módulos
-jest.mock('../../../src/repositories/transaction.repository');
-jest.mock('../../../src/validations/transaction.validation');
-jest.mock('../../../src/modules/financial-period', () => ({
+jest.mock('../../../../src/modules/transaction/repositories/transaction.repository');
+jest.mock('../../../../src/modules/transaction/validations/transaction.validation');
+jest.mock('../../../../src/modules/financial-period', () => ({
+  ensurePeriodExists: jest.fn((_req: unknown, _res: unknown, next: () => void) => next()),
   financialPeriodService: {
     findOrCreatePeriodForDate: jest.fn().mockResolvedValue('p1'),
     ensureCurrentPeriodExists: jest.fn().mockResolvedValue({ id: 'p1' }),
@@ -53,7 +52,7 @@ describe('TransactionService', () => {
       (validateCategoryExistsForUser as jest.Mock).mockResolvedValue(undefined);
       (transactionRepository.create as jest.Mock).mockResolvedValue(mockCreatedTransaction);
 
-      const result = await createTransactionService(mockUserId, mockTransactionData);
+      const result = await createTransactionUseCase(mockUserId, mockTransactionData);
 
       expect(validateCategoryExistsForUser).toHaveBeenCalledWith(
         mockTransactionData.category,
@@ -79,7 +78,7 @@ describe('TransactionService', () => {
       (validateCategoryExistsForUser as jest.Mock).mockResolvedValue(undefined);
       (transactionRepository.create as jest.Mock).mockResolvedValue(mockCreatedTransaction);
 
-      await createTransactionService(mockUserId, dataWithoutDate as any);
+      await createTransactionUseCase(mockUserId, dataWithoutDate as any);
 
       expect(transactionRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -94,7 +93,7 @@ describe('TransactionService', () => {
         new Error('Categoria não encontrada')
       );
 
-      await expect(createTransactionService(mockUserId, mockTransactionData)).rejects.toThrow(
+      await expect(createTransactionUseCase(mockUserId, mockTransactionData)).rejects.toThrow(
         'Categoria não encontrada'
       );
 
@@ -106,7 +105,7 @@ describe('TransactionService', () => {
         new Error('Categoria não pertence ao usuário')
       );
 
-      await expect(createTransactionService(mockUserId, mockTransactionData)).rejects.toThrow(
+      await expect(createTransactionUseCase(mockUserId, mockTransactionData)).rejects.toThrow(
         'Categoria não pertence ao usuário'
       );
 
@@ -142,7 +141,7 @@ describe('TransactionService', () => {
       (validateCategoryExistsForUser as jest.Mock).mockResolvedValue(undefined);
       (transactionRepository.update as jest.Mock).mockResolvedValue(mockUpdatedTransaction);
 
-      const result = await updateTransactionService(mockTransactionId, mockUserId, updateData);
+      const result = await updateTransactionUseCase(mockTransactionId, mockUserId, updateData);
 
       expect(validateCategoryExistsForUser).toHaveBeenCalledWith(updateData.categoryId, mockUserId);
       expect(transactionRepository.update).toHaveBeenCalledWith(
@@ -161,7 +160,7 @@ describe('TransactionService', () => {
 
       (transactionRepository.update as jest.Mock).mockResolvedValue(mockUpdatedTransaction);
 
-      await updateTransactionService(mockTransactionId, mockUserId, updateData);
+      await updateTransactionUseCase(mockTransactionId, mockUserId, updateData);
 
       expect(validateCategoryExistsForUser).not.toHaveBeenCalled();
       expect(transactionRepository.update).toHaveBeenCalledWith(
@@ -175,7 +174,7 @@ describe('TransactionService', () => {
       (transactionRepository.update as jest.Mock).mockResolvedValue(null);
 
       await expect(
-        updateTransactionService(mockTransactionId, mockUserId, {
+        updateTransactionUseCase(mockTransactionId, mockUserId, {
           title: 'Novo Título',
         })
       ).rejects.toThrow('Transação não encontrada');
@@ -187,7 +186,7 @@ describe('TransactionService', () => {
       );
 
       await expect(
-        updateTransactionService(mockTransactionId, mockUserId, {
+        updateTransactionUseCase(mockTransactionId, mockUserId, {
           categoryId: 'cat-invalid',
         })
       ).rejects.toThrow('Categoria não encontrada');
@@ -202,7 +201,7 @@ describe('TransactionService', () => {
 
       (transactionRepository.update as jest.Mock).mockResolvedValue(mockUpdatedTransaction);
 
-      await updateTransactionService(mockTransactionId, mockUserId, updateData);
+      await updateTransactionUseCase(mockTransactionId, mockUserId, updateData);
 
       expect(transactionRepository.update).toHaveBeenCalledWith(
         mockTransactionId,

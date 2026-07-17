@@ -1,6 +1,6 @@
 import type { RecurringTransaction } from '../../../infra/db/schema';
 import { getCurrentSaoPauloDate } from '../../../core/helpers/dates';
-import { createTransactionService } from '../../../services/transaction.service';
+import { createTransactionUseCase } from '../../transaction';
 import { financialPeriodService } from '../../financial-period';
 import { calculateNextExecution } from '../helpers/execution-dates';
 import { calcMonthsNeeded, generateExecutionDates } from '../helpers/installments';
@@ -47,7 +47,7 @@ export const createRecurringTransactionUseCase = async (
 
     // Sequencial para não saturar o pool de conexões em parcelas longas.
     for (const date of dates) {
-      await createTransactionService(userId, {
+      await createTransactionUseCase(userId, {
         type: data.type,
         title: data.title,
         amount: data.amount,
@@ -74,7 +74,7 @@ export const createRecurringTransactionUseCase = async (
   const isImmediate = startDay <= todayStart;
 
   if (isImmediate) {
-    await createTransactionService(userId, {
+    await createTransactionUseCase(userId, {
       type: data.type,
       title: data.title,
       amount: data.amount,

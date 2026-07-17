@@ -11,12 +11,12 @@ import {
   getTransactionsByUserId,
 } from '../../../src/services/overview.service';
 import { financialPeriodRepository } from '../../../src/modules/financial-period/repositories/financial-period.repository';
-import { transactionRepository } from '../../../src/repositories/transaction.repository';
+import { transactionRepository } from '../../../src/modules/transaction/repositories/transaction.repository';
 import { getBudgetProgressUseCase } from '../../../src/modules/budget';
 import { getGoalsProgressUseCase } from '../../../src/modules/goal';
 
 jest.mock('../../../src/modules/financial-period/repositories/financial-period.repository');
-jest.mock('../../../src/repositories/transaction.repository');
+jest.mock('../../../src/modules/transaction/repositories/transaction.repository');
 jest.mock('../../../src/modules/budget');
 jest.mock('../../../src/modules/goal');
 

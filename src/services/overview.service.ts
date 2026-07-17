@@ -17,8 +17,8 @@ import {
   getRecentTransactions,
 } from '../core/helpers/handlers/overview-handlers';
 import { financialPeriodRepository } from '../modules/financial-period/repositories/financial-period.repository';
-import type { TransactionWithCategory } from '../repositories/transaction.repository';
-import { transactionRepository } from '../repositories/transaction.repository';
+import type { TransactionWithCategory } from '../modules/transaction/repositories/transaction.repository';
+import { transactionRepository } from '../modules/transaction/repositories/transaction.repository';
 import { userRepository } from '../modules/user';
 import { getBudgetProgressUseCase } from '../modules/budget';
 import { getGoalsProgressUseCase } from '../modules/goal';

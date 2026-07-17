@@ -3,7 +3,7 @@ import { getCurrentSaoPauloDate } from '../core/helpers/dates';
 import { calculateNextExecution } from '../modules/recurring-transaction/helpers/execution-dates';
 import { formatPeriodLabel } from '../modules/financial-period';
 import { recurringTransactionRepository } from '../modules/recurring-transaction/repositories/recurring-transaction.repository';
-import { transactionRepository } from '../repositories/transaction.repository';
+import { transactionRepository } from '../modules/transaction/repositories/transaction.repository';
 import type { RecurringFrequency } from '../modules/recurring-transaction/recurring-transaction.types';
 import { requireUser } from '../modules/user';
 import { HttpError } from '../validations/errors';

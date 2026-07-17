@@ -11,7 +11,7 @@ import { NotificationRouter } from './modules/notification';
 import { OverviewRouter } from './routes/overview.router';
 import { CompanyRouter, OvertimeRouter } from './modules/overtime';
 import { RecurringTransactionRouter } from './modules/recurring-transaction';
-import transactionRoutes from './routes/transaction.router';
+import transactionRoutes from './modules/transaction/transaction.router';
 import { UserRouters } from './modules/user';
 
 let openApiDocument: Record<string, unknown> = {};

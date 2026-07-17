@@ -1,4 +1,4 @@
-import { transactionRepository } from '../../../repositories/transaction.repository';
+import { transactionRepository } from '../../transaction/repositories/transaction.repository';
 import { HttpError } from '../../../validations/errors';
 import { overtimeRepository } from '../repositories/overtime.repository';
 import { validateOvertimeOwnership } from '../validations/overtime.validation';

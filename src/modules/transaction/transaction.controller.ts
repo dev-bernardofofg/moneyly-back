@@ -1,26 +1,24 @@
 import { format } from 'date-fns';
-import { ResponseHandler } from '../core/helpers/response-handler';
-import { buildTransactionFilters } from '../core/helpers/transaction-filters';
-import { asyncHandler } from '../core/middlewares/async-handler';
-import type { AuthRequest } from '../modules/auth/middlewares/auth';
-import { BadRequestError } from '../services/errors';
-import {
-  createTransactionService,
-  deleteTransactionService,
-  getCurrentPeriodSummaryService,
-  getMonthlySummaryService,
-  getTransactionListService,
-  getTransactionsPaginatedService,
-  getTransactionSummaryService,
-  updateTransactionService,
-} from '../services/transaction.service';
-import { validatePagination } from '../validations/pagination.validation';
-import { detectSubscriptionsUseCase } from '../modules/subscription';
+import { ResponseHandler } from '../../core/helpers/response-handler';
+import { buildTransactionFilters } from './helpers/transaction-filters';
+import { asyncHandler } from '../../core/middlewares/async-handler';
+import type { AuthRequest } from '../auth/middlewares/auth';
+import { BadRequestError } from '../../services/errors';
+import { createTransactionUseCase } from './use-cases/create-transaction.use-case';
+import { deleteTransactionUseCase } from './use-cases/delete-transaction.use-case';
+import { getCurrentPeriodSummaryUseCase } from './use-cases/get-current-period-summary.use-case';
+import { getMonthlySummaryUseCase } from './use-cases/get-monthly-summary.use-case';
+import { getTransactionListUseCase } from './use-cases/get-transaction-list.use-case';
+import { getTransactionSummaryUseCase } from './use-cases/get-transaction-summary.use-case';
+import { listTransactionsPaginatedUseCase } from './use-cases/list-transactions-paginated.use-case';
+import { updateTransactionUseCase } from './use-cases/update-transaction.use-case';
+import { validatePagination } from '../../validations/pagination.validation';
+import { detectSubscriptionsUseCase } from '../subscription';
 
 export const createTransaction = asyncHandler<AuthRequest>(async (req, res) => {
   const { type, title, amount, category, description, date } = req.body;
 
-  const newTransaction = await createTransactionService(req.user.id, {
+  const newTransaction = await createTransactionUseCase(req.user.id, {
     type,
     title,
     amount,
@@ -38,8 +36,8 @@ export const getTransactions = asyncHandler<AuthRequest>(async (req, res) => {
   const pagination = await validatePagination(page, limit);
 
   const [paginatedResult, summary] = await Promise.all([
-    pagination ? getTransactionsPaginatedService(req.user.id, pagination, filters) : null,
-    getTransactionListService(req.user.id, filters),
+    pagination ? listTransactionsPaginatedUseCase(req.user.id, pagination, filters) : null,
+    getTransactionListUseCase(req.user.id, filters),
   ]);
 
   const transactionSummary = {
@@ -99,7 +97,7 @@ export const updateTransaction = asyncHandler<AuthRequest>(async (req, res) => {
   if (category) updateData.categoryId = category;
   if (description) updateData.description = description;
 
-  const transaction = await updateTransactionService(id, req.user.id, updateData);
+  const transaction = await updateTransactionUseCase(id, req.user.id, updateData);
   return ResponseHandler.success(res, transaction, 'Transação atualizada com sucesso');
 });
 
@@ -107,12 +105,12 @@ export const deleteTransaction = asyncHandler<AuthRequest>(async (req, res) => {
   const { id } = req.params;
   if (!id) throw new BadRequestError('ID da transação não fornecido');
 
-  await deleteTransactionService(id, req.user.id);
+  await deleteTransactionUseCase(id, req.user.id);
   return ResponseHandler.success(res, null, 'Transação deletada com sucesso');
 });
 
 export const getTransactionSummary = asyncHandler<AuthRequest>(async (req, res) => {
-  const summary = await getTransactionSummaryService(req.user.id);
+  const summary = await getTransactionSummaryUseCase(req.user.id);
   return ResponseHandler.success(res, summary, 'Resumo das transações gerado com sucesso');
 });
 
@@ -123,14 +121,14 @@ export const getMonthlySummary = asyncHandler<AuthRequest>(async (req, res) => {
   if (startDate) filters.startDate = new Date(startDate as string);
   if (endDate) filters.endDate = new Date(endDate as string);
 
-  const summaryArray = await getMonthlySummaryService(req.user.id, filters);
+  const summaryArray = await getMonthlySummaryUseCase(req.user.id, filters);
   return ResponseHandler.success(res, summaryArray, 'Resumo mensal gerado com sucesso');
 });
 
 export const exportTransactionsCsv = asyncHandler<AuthRequest>(async (req, res) => {
   const filters = buildTransactionFilters(req.query);
 
-  const { transactions } = await getTransactionListService(req.user.id, filters);
+  const { transactions } = await getTransactionListUseCase(req.user.id, filters);
 
   const headers = ['ID', 'Tipo', 'Título', 'Valor', 'Categoria', 'Descrição', 'Data'];
   const rows = transactions.map((tx) => [
@@ -159,7 +157,7 @@ export const getSubscriptions = asyncHandler<AuthRequest>(async (req, res) => {
 });
 
 export const getCurrentFinancialPeriodSummary = asyncHandler<AuthRequest>(async (req, res) => {
-  const summary = await getCurrentPeriodSummaryService(req.user.id);
+  const summary = await getCurrentPeriodSummaryUseCase(req.user.id);
   return ResponseHandler.success(
     res,
     summary,

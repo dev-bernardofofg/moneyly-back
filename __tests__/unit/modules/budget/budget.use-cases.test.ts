@@ -9,15 +9,16 @@ import { getBudgetStatus } from '../../../../src/modules/budget/helpers/budget-s
 import { listBudgetsUseCase } from '../../../../src/modules/budget/use-cases/list-budgets.use-case';
 import { updateBudgetUseCase } from '../../../../src/modules/budget/use-cases/update-budget.use-case';
 import { budgetRepository } from '../../../../src/modules/budget/repositories/budget.repository';
-import { transactionRepository } from '../../../../src/repositories/transaction.repository';
+import { transactionRepository } from '../../../../src/modules/transaction/repositories/transaction.repository';
 import { financialPeriodService } from '../../../../src/modules/financial-period';
 import { validateBudgetExists } from '../../../../src/modules/budget/validations/budget.validation';
 import { HttpError } from '../../../../src/validations/errors';
 
 jest.mock('../../../../src/modules/budget/repositories/budget.repository');
-jest.mock('../../../../src/repositories/transaction.repository');
+jest.mock('../../../../src/modules/transaction/repositories/transaction.repository');
 jest.mock('../../../../src/modules/budget/validations/budget.validation');
 jest.mock('../../../../src/modules/financial-period', () => ({
+  ensurePeriodExists: jest.fn((_req: unknown, _res: unknown, next: () => void) => next()),
   financialPeriodService: {
     ensureCurrentPeriodExists: jest.fn().mockResolvedValue({ id: 'p1' }),
     getPeriodById: jest.fn().mockResolvedValue({ id: 'p1' }),
