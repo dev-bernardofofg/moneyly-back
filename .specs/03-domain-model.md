@@ -1,8 +1,8 @@
 # 03 — Modelo de Domínio
 
-Fonte de verdade: `src/db/schema.ts` (Drizzle). Atualizar este doc quando o schema mudar.
+Fonte de verdade: `src/infra/db/schema.ts` (Drizzle). Atualizar este doc quando o schema mudar.
 
-> **Âncora:** sincronizado em commit `687b470` (refactor overtime month/year). Se HEAD divergiu e mexeu em `src/db/schema.ts`, releia o schema antes de confiar.
+> **Âncora:** sincronizado em commit `687b470` (refactor overtime month/year). Se HEAD divergiu e mexeu em `src/infra/db/schema.ts`, releia o schema antes de confiar.
 
 ## Tabelas
 

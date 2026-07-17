@@ -1,4 +1,4 @@
-import { HttpError } from '../../../validations/errors';
+import { HttpError } from '../../../core/errors/http-error';
 import { transactionRepository } from '../repositories/transaction.repository';
 
 export const deleteTransactionUseCase = async (id: string, userId: string) => {

@@ -3,7 +3,7 @@ import { ResponseHandler } from '../../core/helpers/response-handler';
 import { asyncHandler } from '../../core/middlewares/async-handler';
 import type { AuthRequest } from '../auth/middlewares/auth';
 import { overtimeRepository } from './repositories/overtime.repository';
-import { BadRequestError } from '../../services/errors';
+import { BadRequestError } from '../../core/errors';
 import { createOvertimeUseCase } from './use-cases/create-overtime.use-case';
 import { deleteOvertimeUseCase } from './use-cases/delete-overtime.use-case';
 import { getOvertimeSummaryUseCase } from './use-cases/get-overtime-summary.use-case';

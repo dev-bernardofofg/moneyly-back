@@ -14,12 +14,12 @@ import {
   validateCategoryNameIsNotInUse,
   validateHideGlobalCategory,
 } from '../../../../src/modules/category/validations/category.validation';
-import { validatePagination } from '../../../../src/validations/pagination.validation';
+import { validatePagination } from '../../../../src/core/validations/pagination.validation';
 
 // Mock dos módulos
 jest.mock('../../../../src/modules/category/repositories/category.repository');
 jest.mock('../../../../src/modules/category/validations/category.validation');
-jest.mock('../../../../src/validations/pagination.validation');
+jest.mock('../../../../src/core/validations/pagination.validation');
 
 describe('CategoryService', () => {
   beforeEach(() => {

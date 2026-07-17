@@ -1,7 +1,7 @@
 import { createDefaultPreferencesForUser } from '../../../infra/db/seed';
 import { logger } from '../../../core/lib/logger';
 import { userRepository } from '../../user';
-import { HttpError } from '../../../validations/errors';
+import { HttpError } from '../../../core/errors/http-error';
 import { verifyGoogleToken } from '../validations/google.validation';
 
 export const authenticateWithGoogle = async (idToken: string) => {

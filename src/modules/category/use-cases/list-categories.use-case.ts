@@ -1,4 +1,4 @@
-import { validatePagination } from '../../../validations/pagination.validation';
+import { validatePagination } from '../../../core/validations/pagination.validation';
 import { categoryRepository } from '../repositories/category.repository';
 
 export const listCategoriesUseCase = async (

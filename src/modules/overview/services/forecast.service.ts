@@ -6,7 +6,7 @@ import { recurringTransactionRepository } from '../../recurring-transaction/repo
 import { transactionRepository } from '../../transaction/repositories/transaction.repository';
 import type { RecurringFrequency } from '../../recurring-transaction/recurring-transaction.types';
 import { requireUser } from '../../user';
-import { HttpError } from '../../../validations/errors';
+import { HttpError } from '../../../core/errors/http-error';
 import { financialPeriodService } from '../../financial-period';
 
 const MAX_OCCURRENCE_ITERATIONS = 400; // teto p/ frequência daily em janelas longas

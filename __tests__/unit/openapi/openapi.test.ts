@@ -1,11 +1,8 @@
-import { readdirSync, readFileSync } from 'fs';
+import { readFileSync } from 'fs';
 import { join } from 'path';
 import { generateOpenApiDocument } from '../../../src/core/openapi/generate';
 
 const doc = generateOpenApiDocument();
-
-// Prefixo de montagem de cada router legado (ver src/routes.ts)
-const ROUTER_PREFIX: Record<string, string> = {};
 
 // Routers de módulos migrados (src/modules/<x>/<x>.router.ts — ver .specs/06)
 const MODULE_ROUTER_PREFIX: Record<string, string> = {
@@ -22,7 +19,6 @@ const MODULE_ROUTER_PREFIX: Record<string, string> = {
   'overview/overview.router.ts': '/overview',
 };
 
-const ROUTES_DIR = join(__dirname, '../../../src/routes');
 const MODULES_DIR = join(__dirname, '../../../src/modules');
 
 function toOpenApiPath(prefix: string, sub: string): string {
@@ -50,11 +46,6 @@ function scanRouters(): Array<{ method: string; path: string; file: string }> {
     }
   };
 
-  for (const file of readdirSync(ROUTES_DIR)) {
-    const prefix = ROUTER_PREFIX[file];
-    if (!prefix) continue;
-    scanFile(join(ROUTES_DIR, file), prefix, file);
-  }
   for (const [rel, prefix] of Object.entries(MODULE_ROUTER_PREFIX)) {
     scanFile(join(MODULES_DIR, rel), prefix, `modules/${rel}`);
   }

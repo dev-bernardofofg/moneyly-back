@@ -2,7 +2,7 @@ import { buildComparison, type ComparativeInsights } from '../helpers/comparativ
 import { formatPeriodLabel, getPreviousFinancialPeriods } from '../../financial-period';
 import { transactionRepository } from '../../transaction/repositories/transaction.repository';
 import { userRepository } from '../../user';
-import { HttpError } from '../../../validations/errors';
+import { HttpError } from '../../../core/errors/http-error';
 import { requireUser } from '../../user';
 
 export const getComparativeInsightsService = async (

@@ -1,4 +1,4 @@
-import { HttpError } from '../../../validations/errors';
+import { HttpError } from '../../../core/errors/http-error';
 import { notificationRepository } from '../repositories/notification.repository';
 
 export const markNotificationReadUseCase = async (id: string, userId: string) => {

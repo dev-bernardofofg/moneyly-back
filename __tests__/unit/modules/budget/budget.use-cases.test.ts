@@ -12,7 +12,7 @@ import { budgetRepository } from '../../../../src/modules/budget/repositories/bu
 import { transactionRepository } from '../../../../src/modules/transaction/repositories/transaction.repository';
 import { financialPeriodService } from '../../../../src/modules/financial-period';
 import { validateBudgetExists } from '../../../../src/modules/budget/validations/budget.validation';
-import { HttpError } from '../../../../src/validations/errors';
+import { HttpError } from '../../../../src/core/errors/http-error';
 
 jest.mock('../../../../src/modules/budget/repositories/budget.repository');
 jest.mock('../../../../src/modules/transaction/repositories/transaction.repository');

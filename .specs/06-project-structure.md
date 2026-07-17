@@ -1,6 +1,7 @@
 # 06 — Estrutura Modular do Projeto (alvo)
 
-**Tipo:** infra / arquitetural. **Status:** em migração — PR 0 (fundação `core/` + `infra/db` + `core/openapi`) concluído; piloto `modules/notification` migrado. Demais módulos ainda layer-first.
+**Tipo:** infra / arquitetural. **Status:** ✅ **migração concluída** — todos os módulos em `src/modules/` (notification, overtime, budget, goal, category, financial-period, subscription, user, auth, recurring-transaction, transaction, overview); pastas layer-first extintas; erros e validações genéricas em `core/`.
+**Pendências:** (1) split de `modules/overview/services/overview.service.ts` em use-cases 1-operação (TODO no index do módulo); (2) aliases `@core/@modules/@infra` (§Tooling — etapa separável); (3) integração/e2e a validar com Postgres local.
 **Base:** estrutura do `serverJB` (NestJS), adaptada para Express + Drizzle.
 **Regra de transição:** feature nova nasce na estrutura modular; módulo existente migra incrementalmente (strangler), 1 módulo por PR.
 

@@ -1,6 +1,6 @@
 import { markNotificationReadUseCase } from '../../../../../src/modules/notification/use-cases/mark-notification-read.use-case';
 import { notificationRepository } from '../../../../../src/modules/notification/repositories/notification.repository';
-import { HttpError } from '../../../../../src/validations/errors';
+import { HttpError } from '../../../../../src/core/errors/http-error';
 
 jest.mock('../../../../../src/modules/notification/repositories/notification.repository');
 

@@ -29,6 +29,6 @@ Mudou endpoint/payload/invariante de domínio → atualizar `../../.specs/01-api
 ## Regra de manutenção
 
 Mudou padrão de código → atualizar `02`.
-Mudou `src/db/schema.ts` → atualizar `03`.
+Mudou `src/infra/db/schema.ts` → atualizar `03`.
 Nova feature → atualizar `05` e seguir `04` (estrutura modular — `06`).
 Migrou módulo para `src/modules/` → atualizar checklist/status em `06` e paths em `05`.

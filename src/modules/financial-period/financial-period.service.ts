@@ -7,7 +7,7 @@ import {
 import { getCurrentSaoPauloDate, toSaoPauloTimezone } from '../../core/helpers/dates';
 import { financialPeriodRepository } from './repositories/financial-period.repository';
 import { userRepository } from '../user';
-import { HttpError } from '../../validations/errors';
+import { HttpError } from '../../core/errors/http-error';
 
 async function getUser(userId: string) {
   const user = await userRepository.findById(userId);

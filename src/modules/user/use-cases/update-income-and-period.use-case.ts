@@ -1,4 +1,4 @@
-import { NotFoundError } from '../../../services/errors';
+import { NotFoundError } from '../../../core/errors';
 import { financialPeriodRepository } from '../../financial-period/repositories/financial-period.repository';
 import { userRepository } from '../repositories/user.repository';
 

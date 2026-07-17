@@ -4,7 +4,7 @@ import {
   createRecurringTransactionUseCase,
   recurringTransactionRepository,
 } from '../../recurring-transaction';
-import { HttpError } from '../../../validations/errors';
+import { HttpError } from '../../../core/errors/http-error';
 import {
   addCadence,
   normalizeTitle,

@@ -1,4 +1,4 @@
-import { HttpError } from '../../../validations/errors';
+import { HttpError } from '../../../core/errors/http-error';
 import { requireUser } from '../../user';
 import { budgetRepository } from '../repositories/budget.repository';
 

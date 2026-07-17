@@ -1,5 +1,5 @@
 import { logger } from '../../../core/lib/logger';
-import { HttpError } from '../../../validations/errors';
+import { HttpError } from '../../../core/errors/http-error';
 import { notifyGoalMilestones } from '../../notification';
 import { goalRepository } from '../repositories/goal.repository';
 import { validateGoal, validateUpdateGoal } from '../validations/goal.validation';

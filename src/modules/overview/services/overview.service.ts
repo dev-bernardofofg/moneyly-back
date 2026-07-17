@@ -9,7 +9,7 @@ import {
 import { groupSubscriptionCandidates } from '../../subscription';
 import { sumAmounts } from '../../../core/helpers/amount';
 import { buildComparison } from '../helpers/comparative-insights';
-import { NotFoundError } from '../../../services/errors';
+import { NotFoundError } from '../../../core/errors';
 import {
   calculateMonthlyAggregates,
   calculatePeriodChartData,

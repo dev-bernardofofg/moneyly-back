@@ -1,4 +1,4 @@
-import { HttpError } from '../../../validations/errors';
+import { HttpError } from '../../../core/errors/http-error';
 import { goalRepository } from '../repositories/goal.repository';
 import { validateGoalExists } from '../validations/goal.validation';
 

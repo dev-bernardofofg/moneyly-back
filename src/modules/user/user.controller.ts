@@ -5,7 +5,7 @@ import { financialPeriodService } from '../financial-period';
 import { updateFinancialPeriodUseCase } from './use-cases/update-financial-period.use-case';
 import { updateIncomeAndPeriodUseCase } from './use-cases/update-income-and-period.use-case';
 import { updateUserProfileUseCase } from './use-cases/update-user-profile.use-case';
-import { NotFoundError } from '../../services/errors';
+import { NotFoundError } from '../../core/errors';
 
 export const getMe = asyncHandler<AuthRequest>(async (req, res) => {
   const {

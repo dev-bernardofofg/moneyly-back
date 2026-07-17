@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { NotFoundError } from '../../../services/errors';
+import { NotFoundError } from '../../../core/errors';
 import { getCurrentFinancialPeriod } from '../../financial-period';
 import { userRepository } from '../../user';
 import { computeSpendingStats } from '../helpers/spending-stats';

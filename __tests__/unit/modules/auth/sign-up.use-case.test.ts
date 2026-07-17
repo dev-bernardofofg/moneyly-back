@@ -6,7 +6,7 @@ import { randomUUID } from 'crypto';
 import { refreshTokenRepository } from '../../../../src/modules/auth/repositories/refresh-token.repository';
 import { userRepository } from '../../../../src/modules/user/repositories/user.repository';
 import { signUpUseCase } from '../../../../src/modules/auth/use-cases/sign-up.use-case';
-import { HttpError } from '../../../../src/validations/errors';
+import { HttpError } from '../../../../src/core/errors/http-error';
 
 // Mock dos repositories e módulos
 jest.mock('../../../../src/modules/user/repositories/user.repository');

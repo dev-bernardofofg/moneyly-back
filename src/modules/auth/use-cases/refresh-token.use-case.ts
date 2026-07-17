@@ -1,5 +1,5 @@
 import { generateAccessToken, hashRefreshToken } from '../../../core/helpers/token';
-import { NotFoundError, UnauthorizedError } from '../../../services/errors';
+import { NotFoundError, UnauthorizedError } from '../../../core/errors';
 import { userRepository } from '../../user';
 import { refreshTokenRepository } from '../repositories/refresh-token.repository';
 

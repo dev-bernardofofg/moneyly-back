@@ -1,7 +1,7 @@
 import { ResponseHandler } from '../../core/helpers/response-handler';
 import { asyncHandler } from '../../core/middlewares/async-handler';
 import type { AuthRequest } from '../auth/middlewares/auth';
-import { BadRequestError, NotFoundError } from '../../services/errors';
+import { BadRequestError, NotFoundError } from '../../core/errors';
 import { createRecurringTransactionUseCase } from './use-cases/create-recurring-transaction.use-case';
 import { deactivateRecurringTransactionUseCase } from './use-cases/deactivate-recurring-transaction.use-case';
 import { deleteRecurringTransactionUseCase } from './use-cases/delete-recurring-transaction.use-case';

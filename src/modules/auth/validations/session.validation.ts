@@ -1,5 +1,5 @@
 import { compare } from '../../../core/helpers/bcrypt';
-import { HttpError } from '../../../validations/errors';
+import { HttpError } from '../../../core/errors/http-error';
 import { userRepository } from '../../user';
 import { authenticateWithGoogle } from '../services/google.service';
 

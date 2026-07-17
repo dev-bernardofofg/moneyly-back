@@ -1,7 +1,7 @@
 import { toSaoPauloTimezone } from '../../../core/helpers/dates';
 import { transactionRepository } from '../../transaction/repositories/transaction.repository';
 import { financialPeriodService } from '../../financial-period';
-import { HttpError } from '../../../validations/errors';
+import { HttpError } from '../../../core/errors/http-error';
 import { calcHours } from '../helpers/calc-hours';
 import { overtimeRepository } from '../repositories/overtime.repository';
 import { validateActiveCompany } from '../validations/company.validation';

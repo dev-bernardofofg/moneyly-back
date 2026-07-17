@@ -3,7 +3,7 @@ import { financialPeriodService } from '../../../../src/modules/financial-period
 import { transactionRepository } from '../../../../src/modules/transaction/repositories/transaction.repository';
 import { recurringTransactionRepository } from '../../../../src/modules/recurring-transaction/repositories/recurring-transaction.repository';
 import { requireUser } from '../../../../src/modules/user/validations/user.validation';
-import { HttpError } from '../../../../src/validations/errors';
+import { HttpError } from '../../../../src/core/errors/http-error';
 
 jest.mock('../../../../src/modules/financial-period');
 jest.mock('../../../../src/modules/transaction/repositories/transaction.repository');

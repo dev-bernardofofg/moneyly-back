@@ -1,4 +1,4 @@
-import { HttpError } from '../../../validations/errors';
+import { HttpError } from '../../../core/errors/http-error';
 import { companyRepository } from '../repositories/company.repository';
 import type { Company } from '../../../infra/db/schema';
 
