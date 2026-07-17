@@ -5,11 +5,13 @@
 import {
   calculateAlerts,
   calculatePlanningStats,
-  getDashboardOverviewService,
-  getPlannerOverviewService,
+} from '../../../../src/modules/overview/helpers/planner-calcs';
+import {
+  getDashboardOverviewUseCase,
   getStatsOverview,
-  getTransactionsByUserId,
-} from '../../../../src/modules/overview/services/overview.service';
+} from '../../../../src/modules/overview/use-cases/get-dashboard-overview.use-case';
+import { getPeriodTransactionsUseCase } from '../../../../src/modules/overview/use-cases/get-period-transactions.use-case';
+import { getPlannerOverviewUseCase } from '../../../../src/modules/overview/use-cases/get-planner-overview.use-case';
 import { financialPeriodRepository } from '../../../../src/modules/financial-period/repositories/financial-period.repository';
 import { transactionRepository } from '../../../../src/modules/transaction/repositories/transaction.repository';
 import { getBudgetProgressUseCase } from '../../../../src/modules/budget';
@@ -56,7 +58,7 @@ describe('getStatsOverview (pure via handlers)', () => {
 
 describe('getDashboardOverviewService', () => {
   it('returns stats + chart + recentTransactions', async () => {
-    const r = await getDashboardOverviewService(3000, [
+    const r = await getDashboardOverviewUseCase(3000, [
       tx('expense', '100', 'c1'),
       tx('income', '500', 'c2'),
     ] as never);
@@ -127,7 +129,7 @@ describe('getPlannerOverviewService', () => {
     mockedBudgetProgress.mockResolvedValue([{ monthlyLimit: '1000' }]);
     mockedGoalsProgress.mockResolvedValue([{ targetAmount: '2000', currentAmount: '0' }]);
 
-    const r = await getPlannerOverviewService(USER, 5000);
+    const r = await getPlannerOverviewUseCase(USER, 5000);
 
     expect(mockedBudgetProgress).toHaveBeenCalledWith(USER);
     expect(mockedGoalsProgress).toHaveBeenCalledWith(USER);
@@ -151,7 +153,7 @@ describe('getTransactionsByUserId', () => {
     const txs = [tx('expense', '100')];
     txRepo.findByPeriodId.mockResolvedValue(txs as never);
 
-    const r = await getTransactionsByUserId(USER, undefined, 'sel');
+    const r = await getPeriodTransactionsUseCase(USER, undefined, 'sel');
 
     expect(txRepo.findByPeriodId).toHaveBeenCalledWith(USER, 'sel');
     expect(r.transactions).toEqual(txs);
@@ -161,7 +163,7 @@ describe('getTransactionsByUserId', () => {
   it('nonexistent periodId → empty transactions', async () => {
     fpRepo.findAllByUserWithTransactionCount.mockResolvedValue([] as never);
 
-    const r = await getTransactionsByUserId(USER, undefined, 'nope');
+    const r = await getPeriodTransactionsUseCase(USER, undefined, 'nope');
 
     expect(r.transactions).toEqual([]);
     expect(r.selectedPeriod).toBeUndefined();

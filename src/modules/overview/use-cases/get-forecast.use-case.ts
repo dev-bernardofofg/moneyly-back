@@ -19,7 +19,7 @@ export interface ForecastOccurrence {
   date: string;
 }
 
-export const getForecastService = async (userId: string, periodId?: string) => {
+export const getForecastUseCase = async (userId: string, periodId?: string) => {
   await requireUser(userId);
 
   const period = periodId

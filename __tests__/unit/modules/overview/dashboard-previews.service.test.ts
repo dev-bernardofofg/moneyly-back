@@ -2,7 +2,7 @@
  * Testes unitários para getDashboardPreviewsService (F5).
  * findAllByUserId mockado; heurísticas F3/F4 reais.
  */
-import { getDashboardPreviewsService } from '../../../../src/modules/overview/services/overview.service';
+import { getDashboardPreviewsUseCase } from '../../../../src/modules/overview/use-cases/get-dashboard-previews.use-case';
 import { transactionRepository } from '../../../../src/modules/transaction/repositories/transaction.repository';
 
 jest.mock('../../../../src/modules/transaction/repositories/transaction.repository');
@@ -31,7 +31,7 @@ describe('getDashboardPreviewsService', () => {
   it('no transactions → nulls and stable signal', async () => {
     txRepo.findAllByUserId.mockResolvedValue([] as never);
 
-    const r = await getDashboardPreviewsService(USER, 1, 31);
+    const r = await getDashboardPreviewsUseCase(USER, 1, 31);
 
     expect(r.subscriptions).toEqual({
       count: 0,
@@ -50,7 +50,7 @@ describe('getDashboardPreviewsService', () => {
       expense('19.90', new Date('2026-03-10')),
     ] as never);
 
-    const r = await getDashboardPreviewsService(USER, 1, 31);
+    const r = await getDashboardPreviewsUseCase(USER, 1, 31);
 
     expect(r.subscriptions.count).toBeGreaterThanOrEqual(1);
     expect(r.subscriptions.topTitle).toBe('Spotify');

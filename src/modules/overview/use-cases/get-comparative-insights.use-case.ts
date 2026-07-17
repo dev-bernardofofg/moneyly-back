@@ -5,7 +5,7 @@ import { userRepository } from '../../user';
 import { HttpError } from '../../../core/errors/http-error';
 import { requireUser } from '../../user';
 
-export const getComparativeInsightsService = async (
+export const getComparativeInsightsUseCase = async (
   userId: string,
   periodsBack = 3
 ): Promise<ComparativeInsights> => {

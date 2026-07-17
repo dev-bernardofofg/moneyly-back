@@ -1,4 +1,4 @@
-import { getForecastService } from '../../../../src/modules/overview/services/forecast.service';
+import { getForecastUseCase } from '../../../../src/modules/overview/use-cases/get-forecast.use-case';
 import { financialPeriodService } from '../../../../src/modules/financial-period';
 import { transactionRepository } from '../../../../src/modules/transaction/repositories/transaction.repository';
 import { recurringTransactionRepository } from '../../../../src/modules/recurring-transaction/repositories/recurring-transaction.repository';
@@ -38,7 +38,7 @@ beforeEach(() => {
   (requireUser as jest.Mock).mockResolvedValue({ id: USER });
 });
 
-describe('getForecastService', () => {
+describe('getForecastUseCase', () => {
   it('realized only, no recurrences → zeroed projection', async () => {
     const now = new Date();
     mockedPeriodSvc.ensureCurrentPeriodExists.mockResolvedValue(periodAround(now) as never);
@@ -48,7 +48,7 @@ describe('getForecastService', () => {
     ] as never);
     mockedRecRepo.findByUserId.mockResolvedValue([]);
 
-    const r = await getForecastService(USER);
+    const r = await getForecastUseCase(USER);
 
     expect(r.realized).toEqual({ income: 1000, expense: 300, balance: 700 });
     expect(r.projected.recurringIncome).toBe(0);
@@ -76,7 +76,7 @@ describe('getForecastService', () => {
       },
     ] as never);
 
-    const r = await getForecastService(USER);
+    const r = await getForecastUseCase(USER);
 
     expect(r.projected.occurrences).toHaveLength(1);
     expect(r.projected.recurringExpense).toBe(200);
@@ -102,14 +102,14 @@ describe('getForecastService', () => {
       },
     ] as never);
 
-    const r = await getForecastService(USER);
+    const r = await getForecastUseCase(USER);
     expect(r.projected.occurrences).toHaveLength(0);
     expect(r.projectedEndBalance).toBe(0);
   });
 
   it('invalid periodId → HttpError 404', async () => {
     mockedPeriodSvc.getPeriodById.mockResolvedValue(null as never);
-    await expect(getForecastService(USER, '99999999-9999-9999-9999-999999999999')).rejects.toThrow(
+    await expect(getForecastUseCase(USER, '99999999-9999-9999-9999-999999999999')).rejects.toThrow(
       HttpError
     );
   });
