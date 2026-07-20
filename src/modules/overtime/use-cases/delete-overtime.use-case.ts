@@ -1,5 +1,5 @@
-import { transactionRepository } from '../../transaction/repositories/transaction.repository';
-import { HttpError } from '../../../core/errors/http-error';
+import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
+import { HttpError } from '@core/errors/http-error';
 import { overtimeRepository } from '../repositories/overtime.repository';
 import { validateOvertimeOwnership } from '../validations/overtime.validation';
 

@@ -1,10 +1,10 @@
-import type { RecurringTransaction } from '../../../infra/db/schema';
-import { getCurrentSaoPauloDate } from '../../../core/helpers/dates';
+import type { RecurringTransaction } from '@infra/db/schema';
+import { getCurrentSaoPauloDate } from '@core/helpers/dates';
 import {
   createRecurringTransactionUseCase,
   recurringTransactionRepository,
-} from '../../recurring-transaction';
-import { HttpError } from '../../../core/errors/http-error';
+} from '@modules/recurring-transaction';
+import { HttpError } from '@core/errors/http-error';
 import {
   addCadence,
   normalizeTitle,

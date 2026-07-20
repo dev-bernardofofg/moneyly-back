@@ -1,8 +1,8 @@
 /**
  * Registro OpenAPI do módulo overview (importado por core/openapi/generate).
  */
-import { z } from '../../core/openapi/registry';
-import { wrapSuccess } from '../../core/openapi/envelopes';
+import { z } from '@core/openapi/registry';
+import { wrapSuccess } from '@core/openapi/envelopes';
 import {
   ComparativeInsightsSchema,
   DashboardOverviewSchema,
@@ -10,8 +10,8 @@ import {
   FinancialInsightsSchema,
   ForecastResponseSchema,
   PlannerOverviewSchema,
-} from '../../core/openapi/schemas';
-import { ok, route } from '../../core/openapi/route';
+} from '@core/openapi/schemas';
+import { ok, route } from '@core/openapi/route';
 import {
   getAvailablePeriodsQuerySchema,
   getDashboardOverviewQuerySchema,

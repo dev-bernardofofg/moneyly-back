@@ -1,5 +1,5 @@
-import { getBudgetProgressUseCase } from '../../budget';
-import { getGoalsProgressUseCase } from '../../goal';
+import { getBudgetProgressUseCase } from '@modules/budget';
+import { getGoalsProgressUseCase } from '@modules/goal';
 import { calculateAlerts, calculatePlanningStats } from '../helpers/planner-calcs';
 
 export const getPlannerOverviewUseCase = async (userId: string, monthlyIncome: number) => {

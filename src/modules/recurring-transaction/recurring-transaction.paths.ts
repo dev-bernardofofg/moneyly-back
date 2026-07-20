@@ -1,11 +1,11 @@
 /**
  * Registro OpenAPI do módulo recurring-transaction (importado por core/openapi/generate).
  */
-import { z } from '../../core/openapi/registry';
-import { wrapPaginated, wrapSuccess } from '../../core/openapi/envelopes';
-import { RecurringTransactionSchema, TransactionSchema } from '../../core/openapi/schemas';
-import { created, nullData, ok, route } from '../../core/openapi/route';
-import { idParamSchema } from '../../core/schemas/id-param.schema';
+import { z } from '@core/openapi/registry';
+import { wrapPaginated, wrapSuccess } from '@core/openapi/envelopes';
+import { RecurringTransactionSchema, TransactionSchema } from '@core/openapi/schemas';
+import { created, nullData, ok, route } from '@core/openapi/route';
+import { idParamSchema } from '@core/schemas/id-param.schema';
 import {
   fromSubscriptionSchema,
   recurringTransactionSchema,

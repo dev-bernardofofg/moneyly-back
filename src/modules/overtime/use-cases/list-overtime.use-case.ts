@@ -1,4 +1,4 @@
-import { PaginationHelper, type PaginationParams } from '../../../core/helpers/pagination';
+import { PaginationHelper, type PaginationParams } from '@core/helpers/pagination';
 import { overtimeRepository } from '../repositories/overtime.repository';
 
 export const listOvertimeUseCase = async (

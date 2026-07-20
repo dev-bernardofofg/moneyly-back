@@ -1,10 +1,10 @@
 /**
  * Registro OpenAPI do módulo auth (importado por core/openapi/generate).
  */
-import { z } from '../../core/openapi/registry';
-import { wrapSuccess } from '../../core/openapi/envelopes';
-import { AuthRefreshSchema, AuthSessionSchema } from '../../core/openapi/schemas';
-import { created, ok, route } from '../../core/openapi/route';
+import { z } from '@core/openapi/registry';
+import { wrapSuccess } from '@core/openapi/envelopes';
+import { AuthRefreshSchema, AuthSessionSchema } from '@core/openapi/schemas';
+import { created, ok, route } from '@core/openapi/route';
 import {
   createUserSchema,
   googleAuthSchema,

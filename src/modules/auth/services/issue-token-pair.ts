@@ -1,8 +1,4 @@
-import {
-  generateAccessToken,
-  generateRefreshToken,
-  hashRefreshToken,
-} from '../../../core/helpers/token';
+import { generateAccessToken, generateRefreshToken, hashRefreshToken } from '@core/helpers/token';
 import { refreshTokenRepository } from '../repositories/refresh-token.repository';
 
 const REFRESH_TOKEN_TTL_DAYS = 7;

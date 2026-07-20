@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
-import { NotFoundError } from '../../../core/errors';
-import { getCurrentFinancialPeriod } from '../../financial-period';
-import { userRepository } from '../../user';
+import { NotFoundError } from '@core/errors';
+import { getCurrentFinancialPeriod } from '@modules/financial-period';
+import { userRepository } from '@modules/user';
 import { computeSpendingStats } from '../helpers/spending-stats';
 import { transactionRepository } from '../repositories/transaction.repository';
 

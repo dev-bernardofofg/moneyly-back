@@ -1,6 +1,6 @@
-import { formatPeriodLabel, getPreviousFinancialPeriods } from '../../financial-period';
-import { groupSubscriptionCandidates } from '../../subscription';
-import { transactionRepository } from '../../transaction';
+import { formatPeriodLabel, getPreviousFinancialPeriods } from '@modules/financial-period';
+import { groupSubscriptionCandidates } from '@modules/subscription';
+import { transactionRepository } from '@modules/transaction';
 import { buildComparison } from '../helpers/comparative-insights';
 
 export interface DashboardPreviews {

@@ -2,8 +2,8 @@
  * Registro OpenAPI do módulo transaction (importado por core/openapi/generate).
  * Inclui o endpoint de detecção de assinaturas (F3), montado neste router.
  */
-import { z } from '../../core/openapi/registry';
-import { wrapPaginatedWithSummary, wrapSuccess } from '../../core/openapi/envelopes';
+import { z } from '@core/openapi/registry';
+import { wrapPaginatedWithSummary, wrapSuccess } from '@core/openapi/envelopes';
 import {
   CurrentPeriodSummarySchema,
   MonthlySummaryItemSchema,
@@ -11,9 +11,9 @@ import {
   TransactionListSummarySchema,
   TransactionSchema,
   TransactionSummarySchema,
-} from '../../core/openapi/schemas';
-import { created, nullData, ok, route } from '../../core/openapi/route';
-import { idParamSchema } from '../../core/schemas/id-param.schema';
+} from '@core/openapi/schemas';
+import { created, nullData, ok, route } from '@core/openapi/route';
+import { idParamSchema } from '@core/schemas/id-param.schema';
 import { transactionSchema, transactionUpdateSchema } from './schemas/transaction.schema';
 
 const intQuery = z.coerce.number().int().positive().optional();

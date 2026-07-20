@@ -10,11 +10,11 @@ import {
   getTransactionSummary,
   updateTransaction,
 } from './transaction.controller';
-import { authenticateUser } from '../auth/middlewares/auth';
-import { ensurePeriodExists } from '../financial-period';
-import { validate } from '../../core/middlewares/validate';
-import { idParamSchema } from '../../core/schemas/id-param.schema';
-import { transactionListQuerySchema } from '../../core/schemas/pagination.schema';
+import { authenticateUser } from '@modules/auth/middlewares/auth';
+import { ensurePeriodExists } from '@modules/financial-period';
+import { validate } from '@core/middlewares/validate';
+import { idParamSchema } from '@core/schemas/id-param.schema';
+import { transactionListQuerySchema } from '@core/schemas/pagination.schema';
 import { transactionSchema, transactionUpdateSchema } from './schemas/transaction.schema';
 
 const TransactionsRouter: Router = Router();

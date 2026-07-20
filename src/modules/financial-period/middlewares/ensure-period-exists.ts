@@ -1,7 +1,7 @@
 import { NextFunction, Response } from 'express';
-import { logger } from '../../../core/lib/logger';
+import { logger } from '@core/lib/logger';
 import { financialPeriodService } from '../financial-period.service';
-import { AuthenticatedRequest } from '../../auth/middlewares/auth';
+import { AuthenticatedRequest } from '@modules/auth/middlewares/auth';
 
 export const ensurePeriodExists = async (
   req: AuthenticatedRequest,

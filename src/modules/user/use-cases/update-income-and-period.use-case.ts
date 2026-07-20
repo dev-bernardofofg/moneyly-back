@@ -1,5 +1,5 @@
-import { NotFoundError } from '../../../core/errors';
-import { financialPeriodRepository } from '../../financial-period/repositories/financial-period.repository';
+import { NotFoundError } from '@core/errors';
+import { financialPeriodRepository } from '@modules/financial-period/repositories/financial-period.repository';
 import { userRepository } from '../repositories/user.repository';
 
 export const updateIncomeAndPeriodUseCase = async (

@@ -1,6 +1,6 @@
-import { compare } from '../../../core/helpers/bcrypt';
-import { HttpError } from '../../../core/errors/http-error';
-import { userRepository } from '../../user';
+import { compare } from '@core/helpers/bcrypt';
+import { HttpError } from '@core/errors/http-error';
+import { userRepository } from '@modules/user';
 import { authenticateWithGoogle } from '../services/google.service';
 
 export const ensureEmailNotExists = async (email: string) => {

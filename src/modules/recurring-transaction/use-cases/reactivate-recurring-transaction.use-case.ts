@@ -1,4 +1,4 @@
-import type { RecurringTransaction } from '../../../infra/db/schema';
+import type { RecurringTransaction } from '@infra/db/schema';
 import { calculateFirstExecution } from '../helpers/execution-dates';
 import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
 import type { RecurringFrequency } from '../recurring-transaction.types';

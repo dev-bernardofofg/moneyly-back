@@ -3,8 +3,8 @@
  */
 
 import jwt from 'jsonwebtoken';
-import { env } from '../../../src/core/config/env';
-import { generateAccessToken } from '../../../src/core/helpers/token';
+import { env } from '@core/config/env';
+import { generateAccessToken } from '@core/helpers/token';
 
 describe('TokenHelper', () => {
   describe('generateAccessToken', () => {

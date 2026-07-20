@@ -1,5 +1,5 @@
-import { sumAmounts } from '../../../core/helpers/amount';
-import { userRepository } from '../../user';
+import { sumAmounts } from '@core/helpers/amount';
+import { userRepository } from '@modules/user';
 import { computeSpendingStats } from '../helpers/spending-stats';
 import { transactionRepository } from '../repositories/transaction.repository';
 import type { TransactionFilters } from '../transaction.types';

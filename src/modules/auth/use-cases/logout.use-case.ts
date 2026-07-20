@@ -1,5 +1,5 @@
-import { hashRefreshToken } from '../../../core/helpers/token';
-import { NotFoundError } from '../../../core/errors';
+import { hashRefreshToken } from '@core/helpers/token';
+import { NotFoundError } from '@core/errors';
 import { refreshTokenRepository } from '../repositories/refresh-token.repository';
 
 export const logoutUseCase = async (userId: string, refreshToken: string) => {

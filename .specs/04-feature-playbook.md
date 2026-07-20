@@ -1,8 +1,8 @@
 # 04 — Playbook: Adicionar Feature
 
-Ordem canônica, camada por camada (bottom-up). **Feature nova nasce na estrutura modular**
-(`src/modules/<x>/` — ver `06-project-structure.md`); só toque nas pastas legadas
-(`src/controllers`, `src/services`...) para alterar módulo ainda não migrado.
+Ordem canônica, camada por camada (bottom-up). Feature vive em `src/modules/<x>/`
+(estrutura modular — ver `06-project-structure.md`). Import cross-boundary usa alias
+(`@core/*`, `@modules/*`, `@infra/*`); dentro do mesmo módulo, relativo.
 
 ## 0. Antes
 

@@ -1,11 +1,11 @@
 /**
  * Registro OpenAPI do módulo notification (importado por core/openapi/generate).
  */
-import { z } from '../../core/openapi/registry';
-import { wrapPaginated, wrapSuccess } from '../../core/openapi/envelopes';
-import { NotificationSchema } from '../../core/openapi/schemas';
-import { ok, route } from '../../core/openapi/route';
-import { idParamSchema } from '../../core/schemas/id-param.schema';
+import { z } from '@core/openapi/registry';
+import { wrapPaginated, wrapSuccess } from '@core/openapi/envelopes';
+import { NotificationSchema } from '@core/openapi/schemas';
+import { ok, route } from '@core/openapi/route';
+import { idParamSchema } from '@core/schemas/id-param.schema';
 
 const intQuery = z.coerce.number().int().positive().optional();
 const notificationsQuery = z.object({

@@ -1,7 +1,7 @@
-import { hash } from '../../../core/helpers/bcrypt';
-import { logger } from '../../../core/lib/logger';
-import { createDefaultPreferencesForUser } from '../../../infra/db/seed';
-import { userRepository } from '../../user';
+import { hash } from '@core/helpers/bcrypt';
+import { logger } from '@core/lib/logger';
+import { createDefaultPreferencesForUser } from '@infra/db/seed';
+import { userRepository } from '@modules/user';
 import { issueTokenPair } from '../services/issue-token-pair';
 import { ensureEmailNotExists } from '../validations/session.validation';
 import type { CreateUserInput } from '../schemas/auth.schema';

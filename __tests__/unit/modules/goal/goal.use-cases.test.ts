@@ -2,29 +2,29 @@
  * Unit tests for GoalService
  */
 
-import { goalRepository } from '../../../../src/modules/goal/repositories/goal.repository';
-import { addAmountToGoalUseCase } from '../../../../src/modules/goal/use-cases/add-amount-to-goal.use-case';
-import { createGoalUseCase } from '../../../../src/modules/goal/use-cases/create-goal.use-case';
-import { deleteGoalUseCase } from '../../../../src/modules/goal/use-cases/delete-goal.use-case';
-import { getGoalByIdUseCase } from '../../../../src/modules/goal/use-cases/get-goal-by-id.use-case';
-import { getGoalsProgressUseCase } from '../../../../src/modules/goal/use-cases/get-goals-progress.use-case';
-import { getGoalStatusUseCase } from '../../../../src/modules/goal/use-cases/get-goal-status.use-case';
-import { listGoalsUseCase } from '../../../../src/modules/goal/use-cases/list-goals.use-case';
-import { updateGoalUseCase } from '../../../../src/modules/goal/use-cases/update-goal.use-case';
+import { goalRepository } from '@modules/goal/repositories/goal.repository';
+import { addAmountToGoalUseCase } from '@modules/goal/use-cases/add-amount-to-goal.use-case';
+import { createGoalUseCase } from '@modules/goal/use-cases/create-goal.use-case';
+import { deleteGoalUseCase } from '@modules/goal/use-cases/delete-goal.use-case';
+import { getGoalByIdUseCase } from '@modules/goal/use-cases/get-goal-by-id.use-case';
+import { getGoalsProgressUseCase } from '@modules/goal/use-cases/get-goals-progress.use-case';
+import { getGoalStatusUseCase } from '@modules/goal/use-cases/get-goal-status.use-case';
+import { listGoalsUseCase } from '@modules/goal/use-cases/list-goals.use-case';
+import { updateGoalUseCase } from '@modules/goal/use-cases/update-goal.use-case';
 import {
   validateDeleteGoal,
   validateGoal,
   validateGoalExists,
   validateUpdateGoal,
-} from '../../../../src/modules/goal/validations/goal.validation';
+} from '@modules/goal/validations/goal.validation';
 
-import { notifyGoalMilestones } from '../../../../src/modules/notification';
+import { notifyGoalMilestones } from '@modules/notification';
 
 // Mock dos módulos
-jest.mock('../../../../src/modules/goal/repositories/goal.repository');
-jest.mock('../../../../src/modules/goal/validations/goal.validation');
-jest.mock('../../../../src/modules/notification');
-jest.mock('../../../../src/modules/financial-period', () => ({
+jest.mock('@modules/goal/repositories/goal.repository');
+jest.mock('@modules/goal/validations/goal.validation');
+jest.mock('@modules/notification');
+jest.mock('@modules/financial-period', () => ({
   ensurePeriodExists: jest.fn((_req: unknown, _res: unknown, next: () => void) => next()),
   financialPeriodService: {
     createNextPeriods: jest.fn().mockResolvedValue([]),

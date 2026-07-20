@@ -1,9 +1,9 @@
-import { sumAmounts } from '../../../core/helpers/amount';
-import { getCurrentSaoPauloDate } from '../../../core/helpers/dates';
-import { NotFoundError } from '../../../core/errors';
-import { getCurrentFinancialPeriod } from '../../financial-period';
-import { transactionRepository } from '../../transaction';
-import { userRepository } from '../../user';
+import { sumAmounts } from '@core/helpers/amount';
+import { getCurrentSaoPauloDate } from '@core/helpers/dates';
+import { NotFoundError } from '@core/errors';
+import { getCurrentFinancialPeriod } from '@modules/financial-period';
+import { transactionRepository } from '@modules/transaction';
+import { userRepository } from '@modules/user';
 import { calculateMonthlyAggregates } from '../helpers/overview-handlers';
 
 export const getFinancialInsightsUseCase = async (userId: string, monthlyIncome: number) => {

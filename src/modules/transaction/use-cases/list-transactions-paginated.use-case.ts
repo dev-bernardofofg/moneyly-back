@@ -1,4 +1,4 @@
-import type { PaginationQuery } from '../../../core/helpers/pagination';
+import type { PaginationQuery } from '@core/helpers/pagination';
 import { transactionRepository } from '../repositories/transaction.repository';
 
 export const listTransactionsPaginatedUseCase = async (

@@ -1,7 +1,7 @@
-import { ResponseHandler } from '../../core/helpers/response-handler';
-import { asyncHandler } from '../../core/middlewares/async-handler';
-import type { AuthRequest } from '../auth/middlewares/auth';
-import { BadRequestError, NotFoundError } from '../../core/errors';
+import { ResponseHandler } from '@core/helpers/response-handler';
+import { asyncHandler } from '@core/middlewares/async-handler';
+import type { AuthRequest } from '@modules/auth/middlewares/auth';
+import { BadRequestError, NotFoundError } from '@core/errors';
 import { createRecurringTransactionUseCase } from './use-cases/create-recurring-transaction.use-case';
 import { deactivateRecurringTransactionUseCase } from './use-cases/deactivate-recurring-transaction.use-case';
 import { deleteRecurringTransactionUseCase } from './use-cases/delete-recurring-transaction.use-case';
@@ -9,7 +9,7 @@ import { getRecurringTransactionHistoryUseCase } from './use-cases/get-recurring
 import { listRecurringTransactionsUseCase } from './use-cases/list-recurring-transactions.use-case';
 import { reactivateRecurringTransactionUseCase } from './use-cases/reactivate-recurring-transaction.use-case';
 import { updateRecurringTransactionUseCase } from './use-cases/update-recurring-transaction.use-case';
-import { convertSubscriptionToRecurringUseCase } from '../subscription';
+import { convertSubscriptionToRecurringUseCase } from '@modules/subscription';
 
 export const createRecurringTransaction = asyncHandler<AuthRequest>(async (req, res) => {
   const {

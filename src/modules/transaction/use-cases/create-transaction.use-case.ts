@@ -1,5 +1,5 @@
-import { toSaoPauloTimezone } from '../../../core/helpers/dates';
-import { financialPeriodService } from '../../financial-period';
+import { toSaoPauloTimezone } from '@core/helpers/dates';
+import { financialPeriodService } from '@modules/financial-period';
 import { transactionRepository } from '../repositories/transaction.repository';
 import type { ITransaction } from '../transaction.types';
 import { validateCategoryExistsForUser } from '../validations/transaction.validation';

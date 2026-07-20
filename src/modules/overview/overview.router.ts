@@ -7,9 +7,9 @@ import {
   getForecast,
   getPlannerOverview,
 } from './overview.controller';
-import { authenticateUser } from '../auth/middlewares/auth';
-import { ensurePeriodExists } from '../financial-period';
-import { validate } from '../../core/middlewares/validate';
+import { authenticateUser } from '@modules/auth/middlewares/auth';
+import { ensurePeriodExists } from '@modules/financial-period';
+import { validate } from '@core/middlewares/validate';
 import {
   comparativeInsightsQuerySchema,
   forecastQuerySchema,

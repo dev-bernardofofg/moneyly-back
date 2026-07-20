@@ -1,7 +1,7 @@
 # 06 — Estrutura Modular do Projeto (alvo)
 
-**Tipo:** infra / arquitetural. **Status:** ✅ **migração concluída** — todos os módulos em `src/modules/` (notification, overtime, budget, goal, category, financial-period, subscription, user, auth, recurring-transaction, transaction, overview); pastas layer-first extintas; erros e validações genéricas em `core/`.
-**Pendências:** (1) split de `modules/overview/services/overview.service.ts` em use-cases 1-operação (TODO no index do módulo); (2) aliases `@core/@modules/@infra` (§Tooling — etapa separável); (3) integração/e2e a validar com Postgres local.
+**Tipo:** infra / arquitetural. **Status:** ✅ **migração 100% concluída e validada** — todos os módulos em `src/modules/`; overview quebrado em use-cases; aliases `@core/@modules/@infra` ativos; pastas layer-first extintas; erros e validações genéricas em `core/`.
+**Validação:** 224 testes unit + 100 integração verdes (Postgres via Docker); build `tsc && tsc-alias` limpo (0 aliases no `dist`); bundle esbuild do `@vercel/node@5.8` resolve os aliases nativamente (deploy Vercel OK — sem plugin); smoke test HTTP real (`/health` 200, auth 401, `sign-up` end-to-end até o banco).
 **Base:** estrutura do `serverJB` (NestJS), adaptada para Express + Drizzle.
 **Regra de transição:** feature nova nasce na estrutura modular; módulo existente migra incrementalmente (strangler), 1 módulo por PR.
 
@@ -102,16 +102,16 @@ api/index.ts                       # entrypoint Vercel (inalterado)
 
 ## Tooling (aliases e build)
 
-Aliases `@core/*`, `@modules/*`, `@infra/*`:
+Aliases `@core/*`, `@modules/*`, `@infra/*` — **ativos e validados**:
 
-1. `tsconfig.json`: `baseUrl: "."` + `paths`.
-2. Dev (`ts-node-dev`): flag `-r tsconfig-paths/register`.
-3. Build (`tsc`): adicionar `tsc-alias` pós-build (`"build": "tsc && tsc-alias"`) — tsc não reescreve paths.
-4. Jest: `moduleNameMapper` (`@core/(.*) → <rootDir>/src/core/$1`, etc.).
-5. Vercel (`api/index.ts`): valida em preview — serverless usa o build do tsc, `tsc-alias` cobre.
-6. `drizzle.config.ts`: apontar schema para `src/infra/db/schema.ts`.
+1. `tsconfig.json`: `baseUrl: "."` + `paths` (`@core/*`→`src/core/*`, etc.).
+2. Dev (`ts-node-dev`): `-r tsconfig-paths/register` no script `dev`.
+3. Build (`tsc && tsc-alias`): `tsc-alias` reescreve os aliases para relativos no `dist` (`tsc` sozinho não faz). Confirmado: 0 aliases no `dist`.
+4. Jest: `moduleNameMapper` (`@core/(.*)`→`<rootDir>/src/core/$1`, idem modules/infra).
+5. **Vercel (`api/index.ts`):** o `@vercel/node@5.8` bundla com esbuild, que resolve `tsconfig paths` **nativamente** (sem plugin). Validado com bundle local: aliases inlinados, 0 require externo `@core/...`.
+6. `openapi:gen`/scripts (`tsx`): `tsx` lê o `tsconfig.json` da raiz e resolve os paths automaticamente.
 
-> Aliases são etapa separável: a estrutura funciona com imports relativos. Se o passo 3/5 der atrito no deploy, adiar aliases sem bloquear a migração.
+> **Convenção de uso:** import cross-boundary (módulo→core, módulo→outro módulo, →infra) usa alias; import dentro da mesma área (mesmo módulo, core→core) fica relativo. Isso mantém o alias como sinal visual de "estou cruzando fronteira".
 
 ## Plano de migração (strangler)
 

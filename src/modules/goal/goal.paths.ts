@@ -1,11 +1,11 @@
 /**
  * Registro OpenAPI do módulo goal (importado por core/openapi/generate).
  */
-import { z } from '../../core/openapi/registry';
-import { wrapSuccess } from '../../core/openapi/envelopes';
-import { GoalSchema } from '../../core/openapi/schemas';
-import { created, nullData, ok, route } from '../../core/openapi/route';
-import { idParamSchema } from '../../core/schemas/id-param.schema';
+import { z } from '@core/openapi/registry';
+import { wrapSuccess } from '@core/openapi/envelopes';
+import { GoalSchema } from '@core/openapi/schemas';
+import { created, nullData, ok, route } from '@core/openapi/route';
+import { idParamSchema } from '@core/schemas/id-param.schema';
 import {
   addAmountToGoalSchema,
   createSavingsGoalSchema,

@@ -1,11 +1,11 @@
 import { and, count, desc, eq } from 'drizzle-orm';
-import { db } from '../../../infra/db';
-import { notifications, type NewNotification, type Notification } from '../../../infra/db/schema';
+import { db } from '@infra/db';
+import { notifications, type NewNotification, type Notification } from '@infra/db/schema';
 import {
   PaginationHelper,
   type PaginationQuery,
   type PaginationResult,
-} from '../../../core/helpers/pagination';
+} from '@core/helpers/pagination';
 import type { INotificationRepository } from './interfaces';
 
 export const notificationRepository = {

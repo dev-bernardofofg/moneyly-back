@@ -1,4 +1,4 @@
-import { getCurrentSaoPauloDate } from '../../../core/helpers/dates';
+import { getCurrentSaoPauloDate } from '@core/helpers/dates';
 import type { RecurringFrequency } from '../recurring-transaction.types';
 
 export function calculateNextExecution(

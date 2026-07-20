@@ -1,5 +1,5 @@
-import type { NewNotification, Notification } from '../../../infra/db/schema';
-import type { PaginationQuery, PaginationResult } from '../../../core/helpers/pagination';
+import type { NewNotification, Notification } from '@infra/db/schema';
+import type { PaginationQuery, PaginationResult } from '@core/helpers/pagination';
 
 export interface INotificationRepository {
   create(data: Omit<NewNotification, 'id' | 'createdAt'>): Promise<Notification>;

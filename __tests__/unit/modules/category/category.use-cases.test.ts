@@ -2,24 +2,24 @@
  * Unit tests for CategoryService
  */
 
-import { categoryRepository } from '../../../../src/modules/category/repositories/category.repository';
-import { createCategoryUseCase } from '../../../../src/modules/category/use-cases/create-category.use-case';
-import { deleteCategoryUseCase } from '../../../../src/modules/category/use-cases/delete-category.use-case';
-import { listCategoriesUseCase } from '../../../../src/modules/category/use-cases/list-categories.use-case';
-import { updateCategoryUseCase } from '../../../../src/modules/category/use-cases/update-category.use-case';
+import { categoryRepository } from '@modules/category/repositories/category.repository';
+import { createCategoryUseCase } from '@modules/category/use-cases/create-category.use-case';
+import { deleteCategoryUseCase } from '@modules/category/use-cases/delete-category.use-case';
+import { listCategoriesUseCase } from '@modules/category/use-cases/list-categories.use-case';
+import { updateCategoryUseCase } from '@modules/category/use-cases/update-category.use-case';
 import {
   validateCategoryExists,
   validateCategoryExistsByUserId,
   validateCategoryIsNotGlobal,
   validateCategoryNameIsNotInUse,
   validateHideGlobalCategory,
-} from '../../../../src/modules/category/validations/category.validation';
-import { validatePagination } from '../../../../src/core/validations/pagination.validation';
+} from '@modules/category/validations/category.validation';
+import { validatePagination } from '@core/validations/pagination.validation';
 
 // Mock dos módulos
-jest.mock('../../../../src/modules/category/repositories/category.repository');
-jest.mock('../../../../src/modules/category/validations/category.validation');
-jest.mock('../../../../src/core/validations/pagination.validation');
+jest.mock('@modules/category/repositories/category.repository');
+jest.mock('@modules/category/validations/category.validation');
+jest.mock('@core/validations/pagination.validation');
 
 describe('CategoryService', () => {
   beforeEach(() => {

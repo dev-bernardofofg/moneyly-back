@@ -2,25 +2,22 @@
  * Testes unitários para overview.service (reescrito contra a API atual).
  * Funções puras testadas direto; serviços que tocam DB com mocks.
  */
-import {
-  calculateAlerts,
-  calculatePlanningStats,
-} from '../../../../src/modules/overview/helpers/planner-calcs';
+import { calculateAlerts, calculatePlanningStats } from '@modules/overview/helpers/planner-calcs';
 import {
   getDashboardOverviewUseCase,
   getStatsOverview,
-} from '../../../../src/modules/overview/use-cases/get-dashboard-overview.use-case';
-import { getPeriodTransactionsUseCase } from '../../../../src/modules/overview/use-cases/get-period-transactions.use-case';
-import { getPlannerOverviewUseCase } from '../../../../src/modules/overview/use-cases/get-planner-overview.use-case';
-import { financialPeriodRepository } from '../../../../src/modules/financial-period/repositories/financial-period.repository';
-import { transactionRepository } from '../../../../src/modules/transaction/repositories/transaction.repository';
-import { getBudgetProgressUseCase } from '../../../../src/modules/budget';
-import { getGoalsProgressUseCase } from '../../../../src/modules/goal';
+} from '@modules/overview/use-cases/get-dashboard-overview.use-case';
+import { getPeriodTransactionsUseCase } from '@modules/overview/use-cases/get-period-transactions.use-case';
+import { getPlannerOverviewUseCase } from '@modules/overview/use-cases/get-planner-overview.use-case';
+import { financialPeriodRepository } from '@modules/financial-period/repositories/financial-period.repository';
+import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
+import { getBudgetProgressUseCase } from '@modules/budget';
+import { getGoalsProgressUseCase } from '@modules/goal';
 
-jest.mock('../../../../src/modules/financial-period/repositories/financial-period.repository');
-jest.mock('../../../../src/modules/transaction/repositories/transaction.repository');
-jest.mock('../../../../src/modules/budget');
-jest.mock('../../../../src/modules/goal');
+jest.mock('@modules/financial-period/repositories/financial-period.repository');
+jest.mock('@modules/transaction/repositories/transaction.repository');
+jest.mock('@modules/budget');
+jest.mock('@modules/goal');
 
 const fpRepo = financialPeriodRepository as jest.Mocked<typeof financialPeriodRepository>;
 const txRepo = transactionRepository as jest.Mocked<typeof transactionRepository>;

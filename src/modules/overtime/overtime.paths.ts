@@ -2,15 +2,11 @@
  * Registro OpenAPI do módulo overtime — companies + overtime records
  * (importado por core/openapi/generate).
  */
-import { z } from '../../core/openapi/registry';
-import { wrapPaginated, wrapSuccess } from '../../core/openapi/envelopes';
-import {
-  CompanySchema,
-  OvertimeRecordSchema,
-  OvertimeSummarySchema,
-} from '../../core/openapi/schemas';
-import { nullData, ok, route } from '../../core/openapi/route';
-import { idParamSchema } from '../../core/schemas/id-param.schema';
+import { z } from '@core/openapi/registry';
+import { wrapPaginated, wrapSuccess } from '@core/openapi/envelopes';
+import { CompanySchema, OvertimeRecordSchema, OvertimeSummarySchema } from '@core/openapi/schemas';
+import { nullData, ok, route } from '@core/openapi/route';
+import { idParamSchema } from '@core/schemas/id-param.schema';
 import { createCompanySchema, updateCompanySchema } from './schemas/company.schema';
 import {
   createOvertimeSchema,

@@ -1,16 +1,16 @@
 import { and, count, eq, isNull, or } from 'drizzle-orm';
-import { db } from '../../../infra/db';
+import { db } from '@infra/db';
 import {
   categories as categoriesTable,
   userCategoryPreferences,
   type Category,
   type NewCategory,
-} from '../../../infra/db/schema';
+} from '@infra/db/schema';
 import {
   PaginationHelper,
   type PaginationQuery,
   type PaginationResult,
-} from '../../../core/helpers/pagination';
+} from '@core/helpers/pagination';
 import type { ICategoryRepository } from './ICategoryRepository';
 import { userCategoryPreferencesRepository } from './user-category-preferences.repository';
 

@@ -1,4 +1,4 @@
-import type { FinancialPeriod } from '../../../infra/db/schema';
+import type { FinancialPeriod } from '@infra/db/schema';
 
 export interface IFinancialPeriodRepository {
   create(data: {

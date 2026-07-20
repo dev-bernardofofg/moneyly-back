@@ -1,30 +1,30 @@
 /**
  * Testes unitários para budget.service (reescrito contra a API atual).
  */
-import { createBudgetUseCase } from '../../../../src/modules/budget/use-cases/create-budget.use-case';
-import { deleteBudgetUseCase } from '../../../../src/modules/budget/use-cases/delete-budget.use-case';
-import { getBudgetProgressByCategoryUseCase } from '../../../../src/modules/budget/use-cases/get-budget-progress-by-category.use-case';
-import { getBudgetProgressUseCase } from '../../../../src/modules/budget/use-cases/get-budget-progress.use-case';
-import { getBudgetStatus } from '../../../../src/modules/budget/helpers/budget-status';
-import { listBudgetsUseCase } from '../../../../src/modules/budget/use-cases/list-budgets.use-case';
-import { updateBudgetUseCase } from '../../../../src/modules/budget/use-cases/update-budget.use-case';
-import { budgetRepository } from '../../../../src/modules/budget/repositories/budget.repository';
-import { transactionRepository } from '../../../../src/modules/transaction/repositories/transaction.repository';
-import { financialPeriodService } from '../../../../src/modules/financial-period';
-import { validateBudgetExists } from '../../../../src/modules/budget/validations/budget.validation';
-import { HttpError } from '../../../../src/core/errors/http-error';
+import { createBudgetUseCase } from '@modules/budget/use-cases/create-budget.use-case';
+import { deleteBudgetUseCase } from '@modules/budget/use-cases/delete-budget.use-case';
+import { getBudgetProgressByCategoryUseCase } from '@modules/budget/use-cases/get-budget-progress-by-category.use-case';
+import { getBudgetProgressUseCase } from '@modules/budget/use-cases/get-budget-progress.use-case';
+import { getBudgetStatus } from '@modules/budget/helpers/budget-status';
+import { listBudgetsUseCase } from '@modules/budget/use-cases/list-budgets.use-case';
+import { updateBudgetUseCase } from '@modules/budget/use-cases/update-budget.use-case';
+import { budgetRepository } from '@modules/budget/repositories/budget.repository';
+import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
+import { financialPeriodService } from '@modules/financial-period';
+import { validateBudgetExists } from '@modules/budget/validations/budget.validation';
+import { HttpError } from '@core/errors/http-error';
 
-jest.mock('../../../../src/modules/budget/repositories/budget.repository');
-jest.mock('../../../../src/modules/transaction/repositories/transaction.repository');
-jest.mock('../../../../src/modules/budget/validations/budget.validation');
-jest.mock('../../../../src/modules/financial-period', () => ({
+jest.mock('@modules/budget/repositories/budget.repository');
+jest.mock('@modules/transaction/repositories/transaction.repository');
+jest.mock('@modules/budget/validations/budget.validation');
+jest.mock('@modules/financial-period', () => ({
   ensurePeriodExists: jest.fn((_req: unknown, _res: unknown, next: () => void) => next()),
   financialPeriodService: {
     ensureCurrentPeriodExists: jest.fn().mockResolvedValue({ id: 'p1' }),
     getPeriodById: jest.fn().mockResolvedValue({ id: 'p1' }),
   },
 }));
-jest.mock('../../../../src/modules/user/validations/user.validation', () => ({
+jest.mock('@modules/user/validations/user.validation', () => ({
   requireUser: jest.fn().mockResolvedValue({ id: 'user-123' }),
 }));
 

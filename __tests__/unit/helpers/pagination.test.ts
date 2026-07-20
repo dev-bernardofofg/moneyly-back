@@ -2,7 +2,7 @@
  * Testes unitários para pagination helper
  */
 
-import { PaginationHelper } from '../../../src/core/helpers/pagination';
+import { PaginationHelper } from '@core/helpers/pagination';
 
 describe('PaginationHelper', () => {
   describe('validateAndParse', () => {

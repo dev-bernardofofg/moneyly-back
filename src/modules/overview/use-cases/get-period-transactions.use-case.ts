@@ -1,8 +1,8 @@
-import { getCurrentSaoPauloDate } from '../../../core/helpers/dates';
-import { formatPeriodLabel, getCurrentFinancialPeriod } from '../../financial-period';
-import { financialPeriodRepository } from '../../financial-period/repositories/financial-period.repository';
-import type { TransactionWithCategory } from '../../transaction';
-import { transactionRepository } from '../../transaction';
+import { getCurrentSaoPauloDate } from '@core/helpers/dates';
+import { formatPeriodLabel, getCurrentFinancialPeriod } from '@modules/financial-period';
+import { financialPeriodRepository } from '@modules/financial-period/repositories/financial-period.repository';
+import type { TransactionWithCategory } from '@modules/transaction';
+import { transactionRepository } from '@modules/transaction';
 
 export const getPeriodTransactionsUseCase = async (
   userId: string,

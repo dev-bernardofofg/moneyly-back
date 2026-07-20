@@ -1,16 +1,12 @@
-import { convertSubscriptionToRecurringUseCase } from '../../../../src/modules/subscription/use-cases/convert-subscription-to-recurring.use-case';
-import { createRecurringTransactionUseCase } from '../../../../src/modules/recurring-transaction/use-cases/create-recurring-transaction.use-case';
-import { recurringTransactionRepository } from '../../../../src/modules/recurring-transaction/repositories/recurring-transaction.repository';
-import { HttpError } from '../../../../src/core/errors/http-error';
+import { convertSubscriptionToRecurringUseCase } from '@modules/subscription/use-cases/convert-subscription-to-recurring.use-case';
+import { createRecurringTransactionUseCase } from '@modules/recurring-transaction/use-cases/create-recurring-transaction.use-case';
+import { recurringTransactionRepository } from '@modules/recurring-transaction/repositories/recurring-transaction.repository';
+import { HttpError } from '@core/errors/http-error';
 
-jest.mock(
-  '../../../../src/modules/recurring-transaction/repositories/recurring-transaction.repository'
-);
-jest.mock('../../../../src/modules/transaction/repositories/transaction.repository');
-jest.mock(
-  '../../../../src/modules/recurring-transaction/use-cases/create-recurring-transaction.use-case'
-);
-jest.mock('../../../../src/modules/user/validations/user.validation');
+jest.mock('@modules/recurring-transaction/repositories/recurring-transaction.repository');
+jest.mock('@modules/transaction/repositories/transaction.repository');
+jest.mock('@modules/recurring-transaction/use-cases/create-recurring-transaction.use-case');
+jest.mock('@modules/user/validations/user.validation');
 
 const mockedRepo = recurringTransactionRepository as jest.Mocked<
   typeof recurringTransactionRepository

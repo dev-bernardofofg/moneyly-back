@@ -1,11 +1,11 @@
-import { processUserBudgetAlerts } from '../../../../../src/modules/notification/use-cases/process-budget-alerts.use-case';
-import { notificationRepository } from '../../../../../src/modules/notification/repositories/notification.repository';
-import { financialPeriodService } from '../../../../../src/modules/financial-period';
-import { getBudgetProgressUseCase } from '../../../../../src/modules/budget';
+import { processUserBudgetAlerts } from '@modules/notification/use-cases/process-budget-alerts.use-case';
+import { notificationRepository } from '@modules/notification/repositories/notification.repository';
+import { financialPeriodService } from '@modules/financial-period';
+import { getBudgetProgressUseCase } from '@modules/budget';
 
-jest.mock('../../../../../src/modules/notification/repositories/notification.repository');
-jest.mock('../../../../../src/modules/financial-period');
-jest.mock('../../../../../src/modules/budget');
+jest.mock('@modules/notification/repositories/notification.repository');
+jest.mock('@modules/financial-period');
+jest.mock('@modules/budget');
 
 const mockedRepo = notificationRepository as jest.Mocked<typeof notificationRepository>;
 const mockedPeriod = financialPeriodService as jest.Mocked<typeof financialPeriodService>;

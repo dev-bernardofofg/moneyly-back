@@ -1,5 +1,5 @@
-import { connectDB, disconnectDB } from '../../infra/db';
-import { createGlobalCategories } from '../../infra/db/seed';
+import { connectDB, disconnectDB } from '@infra/db';
+import { createGlobalCategories } from '@infra/db/seed';
 
 async function handleSeedCategories() {
   try {

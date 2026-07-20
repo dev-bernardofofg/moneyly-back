@@ -1,6 +1,6 @@
-import { getCurrentSaoPauloDate } from '../../../core/helpers/dates';
-import { logger } from '../../../core/lib/logger';
-import { createTransactionUseCase } from '../../transaction';
+import { getCurrentSaoPauloDate } from '@core/helpers/dates';
+import { logger } from '@core/lib/logger';
+import { createTransactionUseCase } from '@modules/transaction';
 import { calculateNextExecution } from '../helpers/execution-dates';
 import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
 

@@ -3,16 +3,16 @@
  */
 
 import { randomUUID } from 'crypto';
-import { refreshTokenRepository } from '../../../../src/modules/auth/repositories/refresh-token.repository';
-import { userRepository } from '../../../../src/modules/user/repositories/user.repository';
-import { signUpUseCase } from '../../../../src/modules/auth/use-cases/sign-up.use-case';
-import { HttpError } from '../../../../src/core/errors/http-error';
+import { refreshTokenRepository } from '@modules/auth/repositories/refresh-token.repository';
+import { userRepository } from '@modules/user/repositories/user.repository';
+import { signUpUseCase } from '@modules/auth/use-cases/sign-up.use-case';
+import { HttpError } from '@core/errors/http-error';
 
 // Mock dos repositories e módulos
-jest.mock('../../../../src/modules/user/repositories/user.repository');
-jest.mock('../../../../src/modules/auth/repositories/refresh-token.repository');
-jest.mock('../../../../src/infra/db/seed');
-jest.mock('../../../../src/core/helpers/token');
+jest.mock('@modules/user/repositories/user.repository');
+jest.mock('@modules/auth/repositories/refresh-token.repository');
+jest.mock('@infra/db/seed');
+jest.mock('@core/helpers/token');
 
 // Mock das funções de token e seed
 const mockGenerateAccessToken = jest.fn(() => 'mock-access-token');
@@ -20,13 +20,13 @@ const mockGenerateRefreshToken = jest.fn(() => 'mock-refresh-token');
 const mockHashRefreshToken = jest.fn(() => Promise.resolve('hashed-refresh-token'));
 const mockCreateDefaultPreferencesForUser = jest.fn(() => Promise.resolve([]));
 
-jest.mock('../../../../src/core/helpers/token', () => ({
+jest.mock('@core/helpers/token', () => ({
   generateAccessToken: () => mockGenerateAccessToken(),
   generateRefreshToken: () => mockGenerateRefreshToken(),
   hashRefreshToken: () => mockHashRefreshToken(),
 }));
 
-jest.mock('../../../../src/infra/db/seed', () => ({
+jest.mock('@infra/db/seed', () => ({
   createDefaultPreferencesForUser: () => mockCreateDefaultPreferencesForUser(),
 }));
 

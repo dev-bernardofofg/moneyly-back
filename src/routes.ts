@@ -2,17 +2,17 @@ import { Router } from 'express';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import swaggerUi from 'swagger-ui-express';
-import { logger } from './core/lib/logger';
-import { AuthRouters } from './modules/auth';
-import { BudgetRouter } from './modules/budget';
-import { CategoryRouter } from './modules/category';
-import savingsGoalRoutes from './modules/goal/goal.router';
-import { NotificationRouter } from './modules/notification';
-import { OverviewRouter } from './modules/overview';
-import { CompanyRouter, OvertimeRouter } from './modules/overtime';
-import { RecurringTransactionRouter } from './modules/recurring-transaction';
-import transactionRoutes from './modules/transaction/transaction.router';
-import { UserRouters } from './modules/user';
+import { logger } from '@core/lib/logger';
+import { AuthRouters } from '@modules/auth';
+import { BudgetRouter } from '@modules/budget';
+import { CategoryRouter } from '@modules/category';
+import savingsGoalRoutes from '@modules/goal/goal.router';
+import { NotificationRouter } from '@modules/notification';
+import { OverviewRouter } from '@modules/overview';
+import { CompanyRouter, OvertimeRouter } from '@modules/overtime';
+import { RecurringTransactionRouter } from '@modules/recurring-transaction';
+import transactionRoutes from '@modules/transaction/transaction.router';
+import { UserRouters } from '@modules/user';
 
 let openApiDocument: Record<string, unknown> = {};
 try {

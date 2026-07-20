@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
-import { logger } from '../../core/lib/logger';
-import { userCategoryPreferencesRepository } from '../../modules/category/repositories/user-category-preferences.repository';
+import { logger } from '@core/lib/logger';
+import { userCategoryPreferencesRepository } from '@modules/category/repositories/user-category-preferences.repository';
 import { db } from './index';
 import { categories } from './schema';
 

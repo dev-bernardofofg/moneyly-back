@@ -1,7 +1,7 @@
-import { notifyGoalMilestones } from '../../../../../src/modules/notification/use-cases/notify-goal-milestones.use-case';
-import { notificationRepository } from '../../../../../src/modules/notification/repositories/notification.repository';
+import { notifyGoalMilestones } from '@modules/notification/use-cases/notify-goal-milestones.use-case';
+import { notificationRepository } from '@modules/notification/repositories/notification.repository';
 
-jest.mock('../../../../../src/modules/notification/repositories/notification.repository');
+jest.mock('@modules/notification/repositories/notification.repository');
 
 const mockedRepo = notificationRepository as jest.Mocked<typeof notificationRepository>;
 

@@ -1,5 +1,5 @@
 import { and, desc, eq } from 'drizzle-orm';
-import { db } from '../../../infra/db';
+import { db } from '@infra/db';
 import {
   Goal,
   GoalMilestone,
@@ -7,7 +7,7 @@ import {
   goals,
   NewGoal,
   NewGoalMilestone,
-} from '../../../infra/db/schema';
+} from '@infra/db/schema';
 import type { GoalWithMilestones, IGoalRepository } from './IGoalRepository';
 import { calculateGoalProgress } from '../helpers/goal-progress';
 

@@ -1,4 +1,4 @@
-import { getCurrentSaoPauloDate } from '../../../core/helpers/dates';
+import { getCurrentSaoPauloDate } from '@core/helpers/dates';
 
 export function monthsUntilDate(target: Date): number {
   const now = getCurrentSaoPauloDate();

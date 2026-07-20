@@ -1,7 +1,7 @@
-import { sumAmounts } from '../../../core/helpers/amount';
-import { transactionRepository } from '../../transaction/repositories/transaction.repository';
-import { financialPeriodService } from '../../financial-period';
-import { HttpError } from '../../../core/errors/http-error';
+import { sumAmounts } from '@core/helpers/amount';
+import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
+import { financialPeriodService } from '@modules/financial-period';
+import { HttpError } from '@core/errors/http-error';
 import { getBudgetStatus } from '../helpers/budget-status';
 import { budgetRepository } from '../repositories/budget.repository';
 

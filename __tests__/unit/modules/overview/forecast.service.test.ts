@@ -1,16 +1,14 @@
-import { getForecastUseCase } from '../../../../src/modules/overview/use-cases/get-forecast.use-case';
-import { financialPeriodService } from '../../../../src/modules/financial-period';
-import { transactionRepository } from '../../../../src/modules/transaction/repositories/transaction.repository';
-import { recurringTransactionRepository } from '../../../../src/modules/recurring-transaction/repositories/recurring-transaction.repository';
-import { requireUser } from '../../../../src/modules/user/validations/user.validation';
-import { HttpError } from '../../../../src/core/errors/http-error';
+import { getForecastUseCase } from '@modules/overview/use-cases/get-forecast.use-case';
+import { financialPeriodService } from '@modules/financial-period';
+import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
+import { recurringTransactionRepository } from '@modules/recurring-transaction/repositories/recurring-transaction.repository';
+import { requireUser } from '@modules/user/validations/user.validation';
+import { HttpError } from '@core/errors/http-error';
 
-jest.mock('../../../../src/modules/financial-period');
-jest.mock('../../../../src/modules/transaction/repositories/transaction.repository');
-jest.mock(
-  '../../../../src/modules/recurring-transaction/repositories/recurring-transaction.repository'
-);
-jest.mock('../../../../src/modules/user/validations/user.validation');
+jest.mock('@modules/financial-period');
+jest.mock('@modules/transaction/repositories/transaction.repository');
+jest.mock('@modules/recurring-transaction/repositories/recurring-transaction.repository');
+jest.mock('@modules/user/validations/user.validation');
 
 const mockedPeriodSvc = financialPeriodService as jest.Mocked<typeof financialPeriodService>;
 const mockedTxRepo = transactionRepository as jest.Mocked<typeof transactionRepository>;

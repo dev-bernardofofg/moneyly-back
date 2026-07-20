@@ -1,5 +1,5 @@
-import type { GoalWithMilestones } from '../../goal/repositories/IGoalRepository';
-import type { BudgetProgress } from '../../budget';
+import type { GoalWithMilestones } from '@modules/goal/repositories/IGoalRepository';
+import type { BudgetProgress } from '@modules/budget';
 
 type AlertSeverity = 'danger' | 'warning' | 'info';
 type AlertPriority = 'high' | 'medium' | 'low';

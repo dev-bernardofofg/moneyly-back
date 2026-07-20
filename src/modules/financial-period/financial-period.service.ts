@@ -1,13 +1,13 @@
-import type { FinancialPeriod } from '../../infra/db/schema';
+import type { FinancialPeriod } from '@infra/db/schema';
 import {
   formatPeriodLabel,
   getCurrentFinancialPeriod,
   getFinancialPeriodForMonth,
 } from './helpers/financial-period';
-import { getCurrentSaoPauloDate, toSaoPauloTimezone } from '../../core/helpers/dates';
+import { getCurrentSaoPauloDate, toSaoPauloTimezone } from '@core/helpers/dates';
 import { financialPeriodRepository } from './repositories/financial-period.repository';
-import { userRepository } from '../user';
-import { HttpError } from '../../core/errors/http-error';
+import { userRepository } from '@modules/user';
+import { HttpError } from '@core/errors/http-error';
 
 async function getUser(userId: string) {
   const user = await userRepository.findById(userId);

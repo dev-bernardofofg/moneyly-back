@@ -7,8 +7,8 @@ import {
   refreshToken,
 } from './auth.controller';
 import { authenticateUser } from './middlewares/auth';
-import { authRateLimit } from '../../core/middlewares/security';
-import { validateBody } from '../../core/middlewares/validate';
+import { authRateLimit } from '@core/middlewares/security';
+import { validateBody } from '@core/middlewares/validate';
 import {
   createUserSchema,
   googleAuthSchema,

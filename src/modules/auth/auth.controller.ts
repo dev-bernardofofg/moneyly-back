@@ -1,9 +1,9 @@
 import type { Request, Response } from 'express';
 import { mapUserResponse } from './helpers/mappers';
-import { ResponseHandler } from '../../core/helpers/response-handler';
-import { asyncHandler } from '../../core/middlewares/async-handler';
+import { ResponseHandler } from '@core/helpers/response-handler';
+import { asyncHandler } from '@core/middlewares/async-handler';
 import type { AuthRequest } from './middlewares/auth';
-import { BadRequestError } from '../../core/errors';
+import { BadRequestError } from '@core/errors';
 import { googleSignInUseCase } from './use-cases/google-sign-in.use-case';
 import { logoutUseCase } from './use-cases/logout.use-case';
 import { refreshTokenUseCase } from './use-cases/refresh-token.use-case';

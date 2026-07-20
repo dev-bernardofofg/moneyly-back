@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { createCompany, deleteCompany, getCompanies, updateCompany } from './company.controller';
-import { authenticateUser } from '../auth/middlewares/auth';
-import { validateBody, validateParams } from '../../core/middlewares/validate';
-import { idParamSchema } from '../../core/schemas/id-param.schema';
+import { authenticateUser } from '@modules/auth/middlewares/auth';
+import { validateBody, validateParams } from '@core/middlewares/validate';
+import { idParamSchema } from '@core/schemas/id-param.schema';
 import { createCompanySchema, updateCompanySchema } from './schemas/company.schema';
 
 const CompanyRouter: Router = Router();

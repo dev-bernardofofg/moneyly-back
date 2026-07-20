@@ -1,11 +1,9 @@
-import { processBillReminders } from '../../../../../src/modules/notification/use-cases/process-bill-reminders.use-case';
-import { notificationRepository } from '../../../../../src/modules/notification/repositories/notification.repository';
-import { recurringTransactionRepository } from '../../../../../src/modules/recurring-transaction/repositories/recurring-transaction.repository';
+import { processBillReminders } from '@modules/notification/use-cases/process-bill-reminders.use-case';
+import { notificationRepository } from '@modules/notification/repositories/notification.repository';
+import { recurringTransactionRepository } from '@modules/recurring-transaction/repositories/recurring-transaction.repository';
 
-jest.mock('../../../../../src/modules/notification/repositories/notification.repository');
-jest.mock(
-  '../../../../../src/modules/recurring-transaction/repositories/recurring-transaction.repository'
-);
+jest.mock('@modules/notification/repositories/notification.repository');
+jest.mock('@modules/recurring-transaction/repositories/recurring-transaction.repository');
 
 const mockedNotificationRepo = notificationRepository as jest.Mocked<typeof notificationRepository>;
 const mockedRecurringRepo = recurringTransactionRepository as jest.Mocked<

@@ -1,9 +1,9 @@
 import { buildComparison, type ComparativeInsights } from '../helpers/comparative-insights';
-import { formatPeriodLabel, getPreviousFinancialPeriods } from '../../financial-period';
-import { transactionRepository } from '../../transaction/repositories/transaction.repository';
-import { userRepository } from '../../user';
-import { HttpError } from '../../../core/errors/http-error';
-import { requireUser } from '../../user';
+import { formatPeriodLabel, getPreviousFinancialPeriods } from '@modules/financial-period';
+import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
+import { userRepository } from '@modules/user';
+import { HttpError } from '@core/errors/http-error';
+import { requireUser } from '@modules/user';
 
 export const getComparativeInsightsUseCase = async (
   userId: string,

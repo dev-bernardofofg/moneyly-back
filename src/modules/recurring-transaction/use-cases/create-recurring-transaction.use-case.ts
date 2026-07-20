@@ -1,7 +1,7 @@
-import type { RecurringTransaction } from '../../../infra/db/schema';
-import { getCurrentSaoPauloDate } from '../../../core/helpers/dates';
-import { createTransactionUseCase } from '../../transaction';
-import { financialPeriodService } from '../../financial-period';
+import type { RecurringTransaction } from '@infra/db/schema';
+import { getCurrentSaoPauloDate } from '@core/helpers/dates';
+import { createTransactionUseCase } from '@modules/transaction';
+import { financialPeriodService } from '@modules/financial-period';
 import { calculateNextExecution } from '../helpers/execution-dates';
 import { calcMonthsNeeded, generateExecutionDates } from '../helpers/installments';
 import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';

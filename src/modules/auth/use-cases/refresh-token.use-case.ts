@@ -1,6 +1,6 @@
-import { generateAccessToken, hashRefreshToken } from '../../../core/helpers/token';
-import { NotFoundError, UnauthorizedError } from '../../../core/errors';
-import { userRepository } from '../../user';
+import { generateAccessToken, hashRefreshToken } from '@core/helpers/token';
+import { NotFoundError, UnauthorizedError } from '@core/errors';
+import { userRepository } from '@modules/user';
 import { refreshTokenRepository } from '../repositories/refresh-token.repository';
 
 export const refreshTokenUseCase = async (refreshToken: string) => {

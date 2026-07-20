@@ -1,4 +1,4 @@
-import type { TransactionWithCategory } from '../../transaction/repositories/transaction.repository';
+import type { TransactionWithCategory } from '@modules/transaction/repositories/transaction.repository';
 
 export type CompareSignal = 'up' | 'down' | 'stable';
 

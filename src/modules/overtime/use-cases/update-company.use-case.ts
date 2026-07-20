@@ -1,4 +1,4 @@
-import { HttpError } from '../../../core/errors/http-error';
+import { HttpError } from '@core/errors/http-error';
 import { companyRepository } from '../repositories/company.repository';
 import { validateActiveCompany } from '../validations/company.validation';
 import type { UpdateCompanyInput } from '../schemas/company.schema';

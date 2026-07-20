@@ -1,9 +1,9 @@
 import { format } from 'date-fns';
-import { ResponseHandler } from '../../core/helpers/response-handler';
+import { ResponseHandler } from '@core/helpers/response-handler';
 import { buildTransactionFilters } from './helpers/transaction-filters';
-import { asyncHandler } from '../../core/middlewares/async-handler';
-import type { AuthRequest } from '../auth/middlewares/auth';
-import { BadRequestError } from '../../core/errors';
+import { asyncHandler } from '@core/middlewares/async-handler';
+import type { AuthRequest } from '@modules/auth/middlewares/auth';
+import { BadRequestError } from '@core/errors';
 import { createTransactionUseCase } from './use-cases/create-transaction.use-case';
 import { deleteTransactionUseCase } from './use-cases/delete-transaction.use-case';
 import { getCurrentPeriodSummaryUseCase } from './use-cases/get-current-period-summary.use-case';
@@ -12,8 +12,8 @@ import { getTransactionListUseCase } from './use-cases/get-transaction-list.use-
 import { getTransactionSummaryUseCase } from './use-cases/get-transaction-summary.use-case';
 import { listTransactionsPaginatedUseCase } from './use-cases/list-transactions-paginated.use-case';
 import { updateTransactionUseCase } from './use-cases/update-transaction.use-case';
-import { validatePagination } from '../../core/validations/pagination.validation';
-import { detectSubscriptionsUseCase } from '../subscription';
+import { validatePagination } from '@core/validations/pagination.validation';
+import { detectSubscriptionsUseCase } from '@modules/subscription';
 
 export const createTransaction = asyncHandler<AuthRequest>(async (req, res) => {
   const { type, title, amount, category, description, date } = req.body;

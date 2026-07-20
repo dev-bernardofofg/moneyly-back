@@ -1,8 +1,8 @@
-import { markNotificationReadUseCase } from '../../../../../src/modules/notification/use-cases/mark-notification-read.use-case';
-import { notificationRepository } from '../../../../../src/modules/notification/repositories/notification.repository';
-import { HttpError } from '../../../../../src/core/errors/http-error';
+import { markNotificationReadUseCase } from '@modules/notification/use-cases/mark-notification-read.use-case';
+import { notificationRepository } from '@modules/notification/repositories/notification.repository';
+import { HttpError } from '@core/errors/http-error';
 
-jest.mock('../../../../../src/modules/notification/repositories/notification.repository');
+jest.mock('@modules/notification/repositories/notification.repository');
 
 const mockedRepo = notificationRepository as jest.Mocked<typeof notificationRepository>;
 

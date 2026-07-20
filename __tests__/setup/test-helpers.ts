@@ -2,8 +2,8 @@
  * Helpers para testes
  */
 
-import type { User } from '../../src/infra/db/schema';
-import { generateToken } from '../../src/core/helpers/token';
+import type { User } from '@infra/db/schema';
+import { generateToken } from '@core/helpers/token';
 
 /**
  * Cria um usuário de teste

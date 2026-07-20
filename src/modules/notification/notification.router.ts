@@ -4,9 +4,9 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from './notification.controller';
-import { authenticateUser } from '../auth/middlewares/auth';
-import { validateParams, validateQuery } from '../../core/middlewares/validate';
-import { idParamSchema } from '../../core/schemas/id-param.schema';
+import { authenticateUser } from '@modules/auth/middlewares/auth';
+import { validateParams, validateQuery } from '@core/middlewares/validate';
+import { idParamSchema } from '@core/schemas/id-param.schema';
 import { notificationQuerySchema } from './schemas/notification.schema';
 
 const NotificationRouter: Router = Router();

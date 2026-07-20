@@ -1,7 +1,7 @@
-import { ResponseHandler } from '../../core/helpers/response-handler';
-import { asyncHandler } from '../../core/middlewares/async-handler';
-import type { AuthRequest } from '../auth/middlewares/auth';
-import { BadRequestError } from '../../core/errors';
+import { ResponseHandler } from '@core/helpers/response-handler';
+import { asyncHandler } from '@core/middlewares/async-handler';
+import type { AuthRequest } from '@modules/auth/middlewares/auth';
+import { BadRequestError } from '@core/errors';
 import { createCompanyUseCase } from './use-cases/create-company.use-case';
 import { deleteCompanyUseCase } from './use-cases/delete-company.use-case';
 import { listCompaniesUseCase } from './use-cases/list-companies.use-case';

@@ -1,4 +1,4 @@
-import { userRepository } from '../../user';
+import { userRepository } from '@modules/user';
 import { computeSpendingStats } from '../helpers/spending-stats';
 import { transactionRepository } from '../repositories/transaction.repository';
 

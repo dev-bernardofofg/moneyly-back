@@ -2,15 +2,15 @@
  * Testes unitários para TransactionService
  */
 
-import { transactionRepository } from '../../../../src/modules/transaction/repositories/transaction.repository';
-import { createTransactionUseCase } from '../../../../src/modules/transaction/use-cases/create-transaction.use-case';
-import { updateTransactionUseCase } from '../../../../src/modules/transaction/use-cases/update-transaction.use-case';
-import { validateCategoryExistsForUser } from '../../../../src/modules/transaction/validations/transaction.validation';
+import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
+import { createTransactionUseCase } from '@modules/transaction/use-cases/create-transaction.use-case';
+import { updateTransactionUseCase } from '@modules/transaction/use-cases/update-transaction.use-case';
+import { validateCategoryExistsForUser } from '@modules/transaction/validations/transaction.validation';
 
 // Mock dos módulos
-jest.mock('../../../../src/modules/transaction/repositories/transaction.repository');
-jest.mock('../../../../src/modules/transaction/validations/transaction.validation');
-jest.mock('../../../../src/modules/financial-period', () => ({
+jest.mock('@modules/transaction/repositories/transaction.repository');
+jest.mock('@modules/transaction/validations/transaction.validation');
+jest.mock('@modules/financial-period', () => ({
   ensurePeriodExists: jest.fn((_req: unknown, _res: unknown, next: () => void) => next()),
   financialPeriodService: {
     findOrCreatePeriodForDate: jest.fn().mockResolvedValue('p1'),

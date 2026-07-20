@@ -1,4 +1,4 @@
-import { HttpError } from '../../../core/errors/http-error';
+import { HttpError } from '@core/errors/http-error';
 import { overtimeRepository } from '../repositories/overtime.repository';
 import type { OvertimeWithCompany } from '../repositories/IOvertimeRepository';
 

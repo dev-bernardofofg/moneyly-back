@@ -1,4 +1,4 @@
-import type { Goal } from '../../../infra/db/schema';
+import type { Goal } from '@infra/db/schema';
 
 export type GoalProgress = {
   percentage: number;

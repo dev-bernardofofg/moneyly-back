@@ -1,6 +1,6 @@
-import type { Category } from '../../infra/db/schema';
-import type { TransactionWithCategory } from '../transaction/repositories/transaction.repository';
-import type { CategoryChartData, TransactionStats } from '../transaction/transaction.types';
+import type { Category } from '@infra/db/schema';
+import type { TransactionWithCategory } from '@modules/transaction/repositories/transaction.repository';
+import type { CategoryChartData, TransactionStats } from '@modules/transaction/transaction.types';
 
 export interface BudgetProgress {
   categoryId: string;

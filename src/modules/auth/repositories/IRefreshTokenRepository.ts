@@ -1,4 +1,4 @@
-import type { NewRefreshToken, RefreshToken } from '../../../infra/db/schema';
+import type { NewRefreshToken, RefreshToken } from '@infra/db/schema';
 
 export interface IRefreshTokenRepository {
   create(tokenData: Omit<NewRefreshToken, 'id' | 'createdAt'>): Promise<RefreshToken>;

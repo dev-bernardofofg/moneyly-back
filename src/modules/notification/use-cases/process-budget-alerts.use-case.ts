@@ -1,8 +1,8 @@
-import { logger } from '../../../core/lib/logger';
+import { logger } from '@core/lib/logger';
 import { notificationRepository } from '../repositories/notification.repository';
-import { userRepository } from '../../user';
-import { getBudgetProgressUseCase } from '../../budget';
-import { financialPeriodService } from '../../financial-period';
+import { userRepository } from '@modules/user';
+import { getBudgetProgressUseCase } from '@modules/budget';
+import { financialPeriodService } from '@modules/financial-period';
 
 type BudgetStatus = 'safe' | 'attention' | 'warning' | 'exceeded';
 

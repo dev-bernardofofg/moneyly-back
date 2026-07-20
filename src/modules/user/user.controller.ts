@@ -1,11 +1,11 @@
-import { ResponseHandler } from '../../core/helpers/response-handler';
-import { asyncHandler } from '../../core/middlewares/async-handler';
-import type { AuthRequest } from '../auth/middlewares/auth';
-import { financialPeriodService } from '../financial-period';
+import { ResponseHandler } from '@core/helpers/response-handler';
+import { asyncHandler } from '@core/middlewares/async-handler';
+import type { AuthRequest } from '@modules/auth/middlewares/auth';
+import { financialPeriodService } from '@modules/financial-period';
 import { updateFinancialPeriodUseCase } from './use-cases/update-financial-period.use-case';
 import { updateIncomeAndPeriodUseCase } from './use-cases/update-income-and-period.use-case';
 import { updateUserProfileUseCase } from './use-cases/update-user-profile.use-case';
-import { NotFoundError } from '../../core/errors';
+import { NotFoundError } from '@core/errors';
 
 export const getMe = asyncHandler<AuthRequest>(async (req, res) => {
   const {

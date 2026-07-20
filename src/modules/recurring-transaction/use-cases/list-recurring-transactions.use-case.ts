@@ -1,4 +1,4 @@
-import { PaginationHelper } from '../../../core/helpers/pagination';
+import { PaginationHelper } from '@core/helpers/pagination';
 import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
 
 export const listRecurringTransactionsUseCase = async (

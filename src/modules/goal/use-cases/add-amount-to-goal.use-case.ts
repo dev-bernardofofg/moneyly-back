@@ -1,6 +1,6 @@
-import { logger } from '../../../core/lib/logger';
-import { HttpError } from '../../../core/errors/http-error';
-import { notifyGoalMilestones } from '../../notification';
+import { logger } from '@core/lib/logger';
+import { HttpError } from '@core/errors/http-error';
+import { notifyGoalMilestones } from '@modules/notification';
 import { goalRepository } from '../repositories/goal.repository';
 import { validateGoal, validateUpdateGoal } from '../validations/goal.validation';
 

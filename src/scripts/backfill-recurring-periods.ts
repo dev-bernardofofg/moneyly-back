@@ -1,6 +1,6 @@
-import { recurringTransactionRepository } from '../modules/recurring-transaction/repositories/recurring-transaction.repository';
-import { financialPeriodService } from '../modules/financial-period';
-import type { RecurringFrequency } from '../modules/recurring-transaction/recurring-transaction.types';
+import { recurringTransactionRepository } from '@modules/recurring-transaction/repositories/recurring-transaction.repository';
+import { financialPeriodService } from '@modules/financial-period';
+import type { RecurringFrequency } from '@modules/recurring-transaction/recurring-transaction.types';
 
 function calcMonthsNeeded(frequency: string, totalInstallments?: number | null): number {
   if (!totalInstallments) return 3;

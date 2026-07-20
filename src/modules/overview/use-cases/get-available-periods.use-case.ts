@@ -1,5 +1,5 @@
-import { formatPeriodLabel } from '../../financial-period';
-import { financialPeriodRepository } from '../../financial-period/repositories/financial-period.repository';
+import { formatPeriodLabel } from '@modules/financial-period';
+import { financialPeriodRepository } from '@modules/financial-period/repositories/financial-period.repository';
 
 export const getAvailablePeriodsUseCase = async (userId: string) => {
   const storedPeriods = await financialPeriodRepository.findAllByUserWithTransactionCount(userId);

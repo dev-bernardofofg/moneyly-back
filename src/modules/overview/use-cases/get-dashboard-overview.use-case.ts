@@ -1,4 +1,4 @@
-import type { TransactionWithCategory } from '../../transaction';
+import type { TransactionWithCategory } from '@modules/transaction';
 import {
   calculatePeriodChartData,
   calculateStats,

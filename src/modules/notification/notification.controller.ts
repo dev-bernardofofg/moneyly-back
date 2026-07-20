@@ -1,7 +1,7 @@
-import { ResponseHandler } from '../../core/helpers/response-handler';
-import { asyncHandler } from '../../core/middlewares/async-handler';
-import type { AuthRequest } from '../auth/middlewares/auth';
-import { BadRequestError } from '../../core/errors';
+import { ResponseHandler } from '@core/helpers/response-handler';
+import { asyncHandler } from '@core/middlewares/async-handler';
+import type { AuthRequest } from '@modules/auth/middlewares/auth';
+import { BadRequestError } from '@core/errors';
 import { listNotificationsUseCase } from './use-cases/list-notifications.use-case';
 import { markAllNotificationsReadUseCase } from './use-cases/mark-all-notifications-read.use-case';
 import { markNotificationReadUseCase } from './use-cases/mark-notification-read.use-case';

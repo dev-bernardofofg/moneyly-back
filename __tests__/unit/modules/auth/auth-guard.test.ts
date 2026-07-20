@@ -2,8 +2,8 @@
  * Testes unitários para auth-guard helper
  */
 
-import { ensureAuthenticated } from '../../../../src/modules/auth/helpers/auth-guard';
-import type { AuthenticatedUser } from '../../../../src/modules/auth/auth.types';
+import { ensureAuthenticated } from '@modules/auth/helpers/auth-guard';
+import type { AuthenticatedUser } from '@modules/auth/auth.types';
 
 describe('AuthGuard', () => {
   describe('ensureAuthenticated', () => {

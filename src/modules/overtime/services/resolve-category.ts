@@ -1,5 +1,5 @@
-import { categoryRepository } from '../../category';
-import { HttpError } from '../../../core/errors/http-error';
+import { categoryRepository } from '@modules/category';
+import { HttpError } from '@core/errors/http-error';
 
 /** Resolve a categoria do lançamento de hora extra (default: global "Salário"). */
 export async function resolveCategory(

@@ -1,7 +1,7 @@
-import { ResponseHandler } from '../../core/helpers/response-handler';
-import { asyncHandler } from '../../core/middlewares/async-handler';
-import type { AuthRequest } from '../auth/middlewares/auth';
-import { BadRequestError } from '../../core/errors';
+import { ResponseHandler } from '@core/helpers/response-handler';
+import { asyncHandler } from '@core/middlewares/async-handler';
+import type { AuthRequest } from '@modules/auth/middlewares/auth';
+import { BadRequestError } from '@core/errors';
 import { addAmountToGoalUseCase } from './use-cases/add-amount-to-goal.use-case';
 import { createGoalUseCase } from './use-cases/create-goal.use-case';
 import { deleteGoalUseCase } from './use-cases/delete-goal.use-case';
