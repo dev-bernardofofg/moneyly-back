@@ -2,7 +2,7 @@
   "name": "moneyly-backend",
   "version": "1.0.0",
   "description": "",
-  "main": "api/index.ts",
+  "main": "api/index.js",
   "scripts": {
     "dev": "ts-node-dev -r tsconfig-paths/register --respawn src/server.ts",
     "build": "tsc && tsc-alias",

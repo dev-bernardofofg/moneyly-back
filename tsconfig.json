@@ -32,7 +32,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": ["src/**/*", "api/*.ts"],
+  "include": ["src/**/*"],
   "exclude": [
     "node_modules",
     "dist",
