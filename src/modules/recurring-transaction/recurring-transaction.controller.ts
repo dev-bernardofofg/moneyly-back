@@ -1,0 +1,121 @@
+import { ResponseHandler } from '@core/helpers/response-handler';
+import { asyncHandler } from '@core/middlewares/async-handler';
+import type { AuthRequest } from '@modules/auth/middlewares/auth';
+import { BadRequestError, NotFoundError } from '@core/errors';
+import { createRecurringTransactionUseCase } from './use-cases/create-recurring-transaction.use-case';
+import { deactivateRecurringTransactionUseCase } from './use-cases/deactivate-recurring-transaction.use-case';
+import { deleteRecurringTransactionUseCase } from './use-cases/delete-recurring-transaction.use-case';
+import { getRecurringTransactionHistoryUseCase } from './use-cases/get-recurring-transaction-history.use-case';
+import { listRecurringTransactionsUseCase } from './use-cases/list-recurring-transactions.use-case';
+import { reactivateRecurringTransactionUseCase } from './use-cases/reactivate-recurring-transaction.use-case';
+import { updateRecurringTransactionUseCase } from './use-cases/update-recurring-transaction.use-case';
+import { convertSubscriptionToRecurringUseCase } from '@modules/subscription';
+
+export const createRecurringTransaction = asyncHandler<AuthRequest>(async (req, res) => {
+  const {
+    type,
+    title,
+    amount,
+    categoryId,
+    frequency,
+    dayOfMonth,
+    dayOfWeek,
+    description,
+    totalInstallments,
+    startDate,
+  } = req.body;
+  const recurring = await createRecurringTransactionUseCase(req.user.id, {
+    type,
+    title,
+    amount: String(amount),
+    categoryId,
+    frequency,
+    dayOfMonth,
+    dayOfWeek,
+    description,
+    totalInstallments,
+    startDate,
+  });
+  return ResponseHandler.created(res, recurring, 'Transação recorrente criada com sucesso');
+});
+
+export const createRecurringFromSubscription = asyncHandler<AuthRequest>(async (req, res) => {
+  const { title, amount, categoryId, cadence, nextEstimatedDate, description } = req.body;
+  const recurring = await convertSubscriptionToRecurringUseCase(req.user.id, {
+    title,
+    amount: String(amount),
+    categoryId,
+    cadence,
+    nextEstimatedDate,
+    description,
+  });
+  return ResponseHandler.created(
+    res,
+    recurring,
+    'Assinatura convertida em transação recorrente com sucesso'
+  );
+});
+
+export const getRecurringTransactions = asyncHandler<AuthRequest>(async (req, res) => {
+  const includeInactive = req.query.includeInactive === 'true';
+  const { page, limit } = req.query as { page?: number; limit?: number };
+  const result = await listRecurringTransactionsUseCase(
+    req.user.id,
+    { page, limit },
+    includeInactive
+  );
+  return ResponseHandler.paginated(
+    res,
+    result.data,
+    result.pagination,
+    'Transações recorrentes recuperadas com sucesso'
+  );
+});
+
+export const updateRecurringTransaction = asyncHandler<AuthRequest>(async (req, res) => {
+  const { id } = req.params;
+  if (!id) throw new BadRequestError('ID não fornecido');
+
+  const updated = await updateRecurringTransactionUseCase(id, req.user.id, req.body);
+  if (!updated) throw new NotFoundError('Transação recorrente não encontrada');
+  return ResponseHandler.success(res, updated, 'Transação recorrente atualizada com sucesso');
+});
+
+export const reactivateRecurringTransaction = asyncHandler<AuthRequest>(async (req, res) => {
+  const { id } = req.params;
+  if (!id) throw new BadRequestError('ID não fornecido');
+
+  const updated = await reactivateRecurringTransactionUseCase(id, req.user.id);
+  if (!updated) throw new NotFoundError('Transação recorrente não encontrada');
+  return ResponseHandler.success(res, updated, 'Transação recorrente reativada com sucesso');
+});
+
+export const deactivateRecurringTransaction = asyncHandler<AuthRequest>(async (req, res) => {
+  const { id } = req.params;
+  if (!id) throw new BadRequestError('ID não fornecido');
+
+  const success = await deactivateRecurringTransactionUseCase(id, req.user.id);
+  if (!success) throw new NotFoundError('Transação recorrente não encontrada');
+  return ResponseHandler.success(res, null, 'Transação recorrente desativada com sucesso');
+});
+
+export const getRecurringTransactionHistory = asyncHandler<AuthRequest>(async (req, res) => {
+  const { id } = req.params;
+  if (!id) throw new BadRequestError('ID não fornecido');
+
+  const transactions = await getRecurringTransactionHistoryUseCase(id, req.user.id);
+  return ResponseHandler.success(
+    res,
+    transactions,
+    'Histórico de transações recuperado com sucesso'
+  );
+});
+
+export const deleteRecurringTransaction = asyncHandler<AuthRequest>(async (req, res) => {
+  const { id } = req.params;
+  if (!id) throw new BadRequestError('ID não fornecido');
+
+  const success = await deleteRecurringTransactionUseCase(id, req.user.id);
+  if (!success) throw new NotFoundError('Transação recorrente não encontrada');
+  return ResponseHandler.success(res, null, 'Transação recorrente deletada com sucesso');
+});

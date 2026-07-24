@@ -18,7 +18,7 @@
 
 import { config } from 'dotenv';
 import postgres from 'postgres';
-import { spMidnight } from '../helpers/dates';
+import { spMidnight } from '@core/helpers/dates';
 
 config();
 

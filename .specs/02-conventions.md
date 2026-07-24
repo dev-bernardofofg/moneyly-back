@@ -21,47 +21,16 @@ Base: `.cursor/rules/pern-back.mdc`. SOLID + Clean Code + WCAG.
 - Persistir decimal como number → `.toString()`; comparar string de decimal → `Number()`.
 - Editar `openapi.json` à mão → é gerado por `pnpm openapi:gen` (zod-to-openapi). Ver `.specs/features/00-openapi-generator.md`.
 - Commit sem confirmação do usuário ou com `Co-Authored-By`.
+- **Feature nova fora de `src/modules/<x>/`** → estrutura modular é a regra desde `06-project-structure.md` (código legado layer-first migra por PR, não cresce).
+- Use-case com mais de 1 operação de negócio, ou `services/` de módulo chamando use-case (ciclo).
+- `core/` importando de `modules/`; módulo importando internals de outro módulo (só via `index.ts` público).
 
 ## SOLID aplicado
 
-- **SRP:** controller delega tudo ao service. Zero regra de negócio em controller.
-- **OCP:** feature nova = service novo, não modificar existente.
-- **LSP/DIP:** service depende de interface de repositório (`src/repositories/interfaces/I*`), não da implementação concreta — via injeção na factory (ver §Service).
-- **ISP:** interfaces granulares por entidade (`IUserRepository`, `ITransactionRepository`...). Nas deps do service, usar `Pick<IXRepository, '...'>` para declarar só os métodos consumidos.
-
-## Service — DI por factory (padrão obrigatório)
-
-Todo service segue o template (referência: `transaction.service.ts`):
-
-```ts
-export interface XServiceDeps {
-  xRepository: Pick<IXRepository, 'create' | 'update' /* só o que usa */>;
-  // serviços vizinhos: Pick<typeof yService, 'metodo'> ou typeof yService.metodo
-  validations: { validateXExists: typeof validateXExists /* ... */ };
-}
-
-export const makeXService = (deps: XServiceDeps) => {
-  const { xRepository, validations } = deps;
-  const create = async (userId: string, data: CreateXInput) => {
-    /* usa deps.* */
-  };
-  // ...demais métodos
-  return { create, update, delete: remove /* ... */ };
-};
-
-// Composition root: instância default com os singletons reais.
-export const xService = makeXService({ xRepository, validations: { validateXExists } });
-```
-
-Regras:
-
-- Funções internas usam **somente** as deps desestruturadas — nunca importam repositório/serviço concreto dentro da factory.
-- Composition root no fim do arquivo; é o único lugar que referencia os singletons reais.
-- Controller consome a instância: `xService.metodo(...)`. Sem named exports de função de negócio soltos.
-- Funções **puras** (cálculo sem deps, ex.: `computeSpendingStats`, `calculateAlerts`) ficam como exports de módulo, fora da factory.
-- Dependência entre services: injetar o método da instância vizinha (`getBudgetProgress: budgetService.getProgress`) — nunca importar named export solto.
-- Interfaces de repositório vivem **só** em `src/repositories/interfaces/IXRepository.ts`; `interfaces/index.ts` é barrel puro de re-export (proibido definir interface inline lá — causa drift).
-- Teste unit instancia `makeXService({ ...fakes })` com `jest.fn()` — **proibido** `jest.mock` de módulo para repos/validações de service.
+- **SRP:** controller delega tudo ao service/use-case. Zero regra de negócio em controller. Na estrutura modular: 1 use-case = 1 operação de negócio (`use-cases/<verbo>-<recurso>.use-case.ts`).
+- **OCP:** feature nova = use-case novo (ou service novo no legado), não modificar existente.
+- **LSP/DIP:** use-case/service depende de interface de repositório (`I*Repository`), não da implementação concreta.
+- **ISP:** interfaces granulares por entidade (`IUserRepository`, `ITransactionRepository`...); na estrutura modular, a interface vive no módulo dono (`modules/<x>/repositories/interfaces.ts`).
 
 ## Resposta HTTP — sempre `ResponseHandler`
 

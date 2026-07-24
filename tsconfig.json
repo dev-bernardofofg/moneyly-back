@@ -3,6 +3,12 @@
   "display": "Node 20",
   "_version": "20.1.0",
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@core/*": ["src/core/*"],
+      "@modules/*": ["src/modules/*"],
+      "@infra/*": ["src/infra/*"]
+    },
     "lib": ["es2023", "dom"],
     "module": "nodenext",
     "target": "es2022",
@@ -32,6 +38,6 @@
     "dist",
     "src/scripts/**",
     "src/generated/**",
-    "src/lib/axios-instance.ts"
+    "src/core/lib/axios-instance.ts"
   ]
 }

@@ -1,8 +1,8 @@
 # 03 — Modelo de Domínio
 
-Fonte de verdade: `src/db/schema.ts` (Drizzle). Atualizar este doc quando o schema mudar.
+Fonte de verdade: `src/infra/db/schema.ts` (Drizzle). Atualizar este doc quando o schema mudar.
 
-> **Âncora:** sincronizado em commit `687b470` (refactor overtime month/year). Se HEAD divergiu e mexeu em `src/db/schema.ts`, releia o schema antes de confiar.
+> **Âncora:** sincronizado em commit `687b470` (refactor overtime month/year). Se HEAD divergiu e mexeu em `src/infra/db/schema.ts`, releia o schema antes de confiar.
 
 ## Tabelas
 
@@ -49,11 +49,11 @@ Fonte de verdade: `src/db/schema.ts` (Drizzle). Atualizar este doc quando o sche
 
 > Materialização do período financeiro. Criado/garantido pelo middleware `ensurePeriodExists` (atual + 1 futuro). Transações referenciam via `periodId`.
 
-### `notifications` (F2 — alertas)
+### `notifications` (F2/F8/F9 — alertas)
 
-`id` · `userId`→users (cascade) · `type` enum `budget_alert` · `severity` enum `info|warning|danger` · `title` · `message` · `relatedId` uuid nullable (ex budgetId) · `periodId`→financial_periods (cascade, nullable) · `dedupeKey` text **unique** · `isRead` bool default false · `createdAt`.
+`id` · `userId`→users (cascade) · `type` enum `budget_alert|bill_reminder|goal_milestone` · `severity` enum `info|warning|danger` · `title` · `message` · `relatedId` uuid nullable (budgetId/recurringId/goalId) · `periodId`→financial_periods (cascade, nullable) · `dedupeKey` text **unique** · `isRead` bool default false · `createdAt`.
 
-> **Idempotência:** `dedupeKey = budget:<budgetId>:<periodId>:<status>` — 1 notificação por budget/período/nível. Geração interna (`processBudgetAlerts` no scheduler 1h, sem create manual). Migration `0004_happy_veda.sql`.
+> **Idempotência por `dedupeKey`:** `budget:<budgetId>:<periodId>:<status>` (F2) · `bill:<recurringId>:<yyyy-MM-dd>` (F8) · `goal:<goalId>:milestone:<pct>` (F9). Coluna `type` é text sem CHECK no Postgres — enum só em TS, extensão não exige migration. Geração interna: F2/F8 no scheduler 1h (`processBudgetAlerts`/`processBillReminders`), F9 no request `add-amount`. Migration `0004_happy_veda.sql`.
 
 ### `companies` (F7 — horas extras)
 

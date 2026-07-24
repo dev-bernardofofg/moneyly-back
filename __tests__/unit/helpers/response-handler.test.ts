@@ -2,7 +2,7 @@
  * Testes unitários para ResponseHandler
  */
 
-import { ResponseHandler } from '../../../src/helpers/response-handler';
+import { ResponseHandler } from '@core/helpers/response-handler';
 
 describe('ResponseHandler', () => {
   let mockRes: any;

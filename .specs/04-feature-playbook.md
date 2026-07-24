@@ -1,77 +1,80 @@
 # 04 — Playbook: Adicionar Feature
 
-Ordem canônica. Seguir camada por camada (bottom-up). Exemplo de referência: módulo **transaction** (factory DI) — budget/goal seguem o mesmo template.
+Ordem canônica, camada por camada (bottom-up). Feature vive em `src/modules/<x>/`
+(estrutura modular — ver `06-project-structure.md`). Import cross-boundary usa alias
+(`@core/*`, `@modules/*`, `@infra/*`); dentro do mesmo módulo, relativo.
 
 ## 0. Antes
 
 - Ler `02-conventions.md`. Se mexe em dados, ler/atualizar `03-domain-model.md`.
-- Decidir entidade, endpoints, regras.
+- Decidir: módulo novo ou extensão de existente? Entidade, endpoints, regras.
+- Criar esqueleto: `src/modules/<x>/{schemas,use-cases,repositories,validations}/`.
 
 ## 1. Schema DB (se nova tabela/coluna)
 
-- Editar `src/db/schema.ts`: `pgTable`, FKs `onDelete:"cascade"`, timestamps `defaultNow().notNull()`, decimais `decimal(_,{precision:10,scale:2})`.
+- Editar `src/infra/db/schema.ts` (legado: `src/db/schema.ts`): `pgTable`, FKs `onDelete:"cascade"`, timestamps `defaultNow().notNull()`, decimais `decimal(_,{precision:10,scale:2})`.
 - Adicionar `relations(...)` e exports `Entidade`/`NewEntidade`.
-- `pnpm db:generate` → revisar migration em `src/db/migrations/` → `pnpm db:push` (ou `db:migrate`).
+- `pnpm db:generate` → revisar migration → `pnpm db:migrate` (ou `db:push` em dev).
 
-## 2. Interface do repositório
+## 2. Repositório (interface + implementação)
 
-- `src/repositories/interfaces/IXRepository.ts`: métodos granulares tipados (`create`, `findByIdAndUserId`, `update`, `delete`, queries específicas). Fonte única — nunca definir interface inline no barrel.
-- Adicionar `export * from './IXRepository'` em `src/repositories/interfaces/index.ts` (barrel puro).
-
-## 3. Repositório
-
-- `src/repositories/x.repository.ts`: `export const xRepository = { ... } satisfies IXRepository;` + `export type { IXRepository };`.
+- `modules/<x>/repositories/interfaces.ts`: `I<X>Repository` com métodos granulares tipados.
+- `modules/<x>/repositories/<x>.repository.ts`: `export const xRepository = { ... } satisfies IXRepository;`.
 - Só Drizzle. `?? null`, `update` seta `updatedAt`, `delete` → boolean.
 
-> Regras de cada camada (assinaturas, padrões obrigatórios, proibições): ver `02-conventions.md`. Aqui só **ordem** e **o que criar**.
+> Regras de cada camada (assinaturas, padrões obrigatórios, proibições): `02-conventions.md`. Aqui só **ordem** e **o que criar**.
 
-## 4. Validações de domínio
+## 3. Validações de domínio
 
-- `src/validations/x.validation.ts`: `validateXExists(id, userId)` etc. (regra: `02 §Validação`).
+- `modules/<x>/validations/`: `validateXExists(id, userId)` etc. — lançam `HttpError`.
 
-## 5. Service
+## 4. Use-cases
 
-- `src/services/x.service.ts`: `XServiceDeps` + `makeXService(deps)` retornando os métodos (`create`, `update`, `delete: remove`...) + composition root `export const xService = makeXService({...singletons})` (regra: `02 §Service/Erros`).
-- Deps tipadas por interface (`Pick<IXRepository, ...>`); erros via classes semânticas de `services/errors`.
-- Cálculos derivados (progresso, %) aqui, nunca no controller; puras sem deps ficam fora da factory.
+- `modules/<x>/use-cases/<verbo>-<recurso>.use-case.ts` — **1 operação de negócio por arquivo**, exporta 1 função async.
+- Cálculos derivados (progresso, %) aqui, nunca no controller.
+- Lógica pura/testável sem DB → `modules/<x>/helpers/`. Utilitário stateless entre ≥2 use-cases → `modules/<x>/services/` (nunca chama use-case).
+- Precisa de outro módulo? Importar do `index.ts` público dele, nunca de internals.
+- Job de scheduler = use-case (`process-*.use-case.ts`), exportado no `index.ts` e ligado em `src/server.ts`.
 
-## 6. Schema Zod
+## 5. Schema Zod (request)
 
-- `src/schemas/x.schema.ts`: `create*/update*/*QuerySchema`. `idParamSchema` reaproveitável de `auth.schema.ts` (regra: `02 §Validação`).
+- `modules/<x>/schemas/`: `create*/update*/*QuerySchema`. `idParamSchema` reaproveitável (core). Mensagens em português.
 
-## 7. Controller
+## 6. Controller
 
-- `src/controllers/x.controller.ts`: 1 função/endpoint, consumindo a instância `xService.metodo(...)` (regra: `02 §Resposta/Erros/Auth`). Nunca acessar repositório direto.
+- `modules/<x>/<x>.controller.ts`: 1 função/endpoint, `asyncHandler`, chama 1 use-case, `ResponseHandler`.
 
-## 8. Router
+## 7. Router
 
-- `src/routes/x.router.ts` + registrar em `src/routes.ts` `router.use("/x", XRouter)` (regra: `02 §Auth`).
+- `modules/<x>/<x>.router.ts`: `authenticateUser` no topo, `validate({...})` por rota. Registrar em `src/routes.ts`.
+
+## 8. OpenAPI
+
+- `modules/<x>/<x>.paths.ts`: registrar cada endpoint (reusa os schemas Zod do módulo). Importar no agregador (`core/openapi/generate`). `pnpm openapi:gen`.
 
 ## 9. Testes
 
-- Unit service: `__tests__/unit/services/x.service.test.ts` — `makeXService({...fakes com jest.fn()})`; sem `jest.mock` de módulo. Títulos describe/it em inglês. Roda 100% em memória (projeto jest `unit`, sem DB).
-- Integração: `__tests__/integration/x.test.ts` (supertest contra app + test DB; projeto jest `integration`).
-- E2E (fluxo completo): `__tests__/e2e/*.spec.ts` (Playwright) se for fluxo de usuário relevante.
-- Rodar `pnpm test:unit` / `pnpm test:integration` (scripts usam `--selectProjects`).
+- Unit: `__tests__/unit/modules/<x>/use-cases/*.test.ts` (mock repositório) e `__tests__/unit/modules/<x>/helpers/*.test.ts` (puro, sem mock).
+- Integração: `__tests__/integration/<x>.test.ts` (supertest + test DB).
+- E2E (Playwright) se for fluxo de usuário relevante.
+- `pnpm test:unit` / `pnpm test:integration`.
 
 ## 10. Docs & geração front
 
-- Atualizar `openapi.json` se o front consome (Swagger em `/api-docs`).
 - `pnpm api:generate` regenera tipos/Zod/hooks p/ frontend.
-- Atualizar `.specs/05-feature-catalog.md` e `03-domain-model.md`.
+- Atualizar `.specs/05-feature-catalog.md` e `03-domain-model.md`; spec da feature em `.specs/features/`.
 - `client/requests/x.http` opcional para testes manuais.
 
 ## Checklist final
 
-- [ ] Sem regra de negócio em controller (nem acesso a repositório)
+- [ ] Feature inteira dentro de `src/modules/<x>/` (nada novo nas pastas legadas)
+- [ ] 1 use-case = 1 operação; sem regra de negócio em controller
 - [ ] `ResponseHandler` em toda resposta
 - [ ] Erros semânticos de `services/errors` + `isHttpError → next`
 - [ ] Zod via middleware `validate`
-- [ ] Repositório `satisfies IXRepository`; interface só no arquivo próprio (barrel re-exporta)
-- [ ] Service = `makeXService(deps)` + composition root; controller usa a instância
-- [ ] Teste unit injeta fakes na factory (sem `jest.mock` de módulo)
-- [ ] `requireUser` no início do service
+- [ ] Repositório `satisfies IXRepository` (interface no módulo)
 - [ ] Datas no timezone São Paulo
+- [ ] `<x>.paths.ts` registrado + `pnpm openapi:gen` rodado
 - [ ] Testes unit + integração passando
 - [ ] Specs atualizadas
 - [ ] Commit só após confirmação do usuário

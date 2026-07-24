@@ -18,7 +18,7 @@ import { join } from 'node:path';
 import postgres from 'postgres';
 import 'dotenv/config';
 
-const MIGRATIONS_DIR = join(__dirname, '../db/migrations');
+const MIGRATIONS_DIR = join(__dirname, '../infra/db/migrations');
 
 interface JournalEntry {
   tag: string;

@@ -1,6 +1,6 @@
 /**
  * Setup dos testes unitários — 100% em memória.
- * Sem banco: repositórios/serviços são injetados como fakes via factories (makeXService).
+ * Sem banco: repositórios/serviços singletons são mockados via jest.mock nos testes.
  * DATABASE_URL dummy garante que qualquer query acidental falhe em vez de tocar banco real.
  */
 

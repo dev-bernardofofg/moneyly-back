@@ -4,6 +4,9 @@ const base = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   moduleNameMapper: {
+    '^@core/(.*)$': '<rootDir>/src/core/$1',
+    '^@modules/(.*)$': '<rootDir>/src/modules/$1',
+    '^@infra/(.*)$': '<rootDir>/src/infra/$1',
     '^@/(.*)$': '<rootDir>/src/$1',
   },
 };
@@ -13,7 +16,7 @@ module.exports = {
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
     '!src/scripts/**',
-    '!src/db/seed.ts',
+    '!src/infra/db/seed.ts',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],

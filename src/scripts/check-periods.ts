@@ -1,4 +1,4 @@
-import { createSaoPauloDate, normalizeDayForMonthSaoPaulo } from '../helpers/dates';
+import { createSaoPauloDate, normalizeDayForMonthSaoPaulo } from '@core/helpers/dates';
 
 async function main() {
   console.log('TZ offset:', new Date().getTimezoneOffset());

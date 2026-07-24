@@ -5,8 +5,6 @@
  */
 
 import {
-  calculateFirstExecution,
-  calculateNextExecution,
   createNormalizedSaoPauloDate,
   createSaoPauloDate,
   formatBrazilianDate,
@@ -19,7 +17,11 @@ import {
   spMidnight,
   spMidnightOf,
   spParts,
-} from '../../../src/helpers/dates';
+} from '@core/helpers/dates';
+import {
+  calculateFirstExecution,
+  calculateNextExecution,
+} from '@modules/recurring-transaction/helpers/execution-dates';
 
 describe('sp contract core', () => {
   describe('spDayString', () => {

@@ -1,0 +1,47 @@
+import { Router } from 'express';
+import {
+  createTransaction,
+  deleteTransaction,
+  exportTransactionsCsv,
+  getCurrentFinancialPeriodSummary,
+  getMonthlySummary,
+  getSubscriptions,
+  getTransactions,
+  getTransactionSummary,
+  updateTransaction,
+} from './transaction.controller';
+import { authenticateUser } from '@modules/auth/middlewares/auth';
+import { ensurePeriodExists } from '@modules/financial-period';
+import { validate } from '@core/middlewares/validate';
+import { idParamSchema } from '@core/schemas/id-param.schema';
+import { transactionListQuerySchema } from '@core/schemas/pagination.schema';
+import { transactionSchema, transactionUpdateSchema } from './schemas/transaction.schema';
+
+const TransactionsRouter: Router = Router();
+
+TransactionsRouter.use(authenticateUser);
+TransactionsRouter.use(ensurePeriodExists);
+
+TransactionsRouter.post('/create', validate({ body: transactionSchema }), createTransaction);
+
+TransactionsRouter.get('/', validate({ query: transactionListQuerySchema }), getTransactions);
+
+TransactionsRouter.put(
+  '/:id',
+  validate({ body: transactionUpdateSchema, params: idParamSchema }),
+  updateTransaction
+);
+
+TransactionsRouter.delete('/:id', validate({ params: idParamSchema }), deleteTransaction);
+
+TransactionsRouter.get('/summary', getTransactionSummary);
+
+TransactionsRouter.get('/summary-by-month', getMonthlySummary);
+
+TransactionsRouter.get('/summary-current-period', getCurrentFinancialPeriodSummary);
+
+TransactionsRouter.get('/export', exportTransactionsCsv);
+
+TransactionsRouter.get('/subscriptions', getSubscriptions);
+
+export default TransactionsRouter;

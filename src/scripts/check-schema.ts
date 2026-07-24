@@ -1,6 +1,6 @@
 import { eq, isNull } from 'drizzle-orm';
-import { db } from '../db';
-import { transactions } from '../db/schema';
+import { db } from '@infra/db';
+import { transactions } from '@infra/db/schema';
 
 export async function checkSchema() {
   console.log(' Verificando schema da tabela transactions...');

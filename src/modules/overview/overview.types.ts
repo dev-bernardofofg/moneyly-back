@@ -1,0 +1,50 @@
+import type { Category } from '@infra/db/schema';
+import type { TransactionWithCategory } from '@modules/transaction/repositories/transaction.repository';
+import type { CategoryChartData, TransactionStats } from '@modules/transaction/transaction.types';
+
+export interface BudgetProgress {
+  categoryId: string;
+  categoryName: string;
+  limit: number;
+  spent: number;
+  remaining: number;
+  percentage: number;
+  status: 'safe' | 'warning' | 'danger';
+}
+
+export interface GoalProgress {
+  id: string;
+  title: string;
+  targetAmount: number;
+  currentAmount: number;
+  percentage: number;
+  daysRemaining: number;
+  status: 'on_track' | 'behind' | 'completed';
+}
+
+export interface SystemAlert {
+  type: 'budget_warning' | 'goal_deadline' | 'high_expense' | 'info';
+  severity: 'low' | 'medium' | 'high';
+  title: string;
+  message: string;
+  actionable?: boolean;
+  relatedId?: string;
+}
+
+export interface OverviewResponse {
+  stats: TransactionStats;
+  period: {
+    startDate: Date;
+    endDate: Date;
+    label: string;
+  };
+  budgetProgress: BudgetProgress[];
+  goalsProgress: GoalProgress[];
+  categoryExpenses: CategoryChartData[];
+  alerts: SystemAlert[];
+}
+
+export interface ChartCalculationParams {
+  transactions: TransactionWithCategory[];
+  categories: Category[];
+}

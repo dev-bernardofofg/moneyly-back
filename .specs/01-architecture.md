@@ -1,5 +1,9 @@
 # 01 — Arquitetura
 
+> **✅ Estrutura modular concluída** (base serverJB — ver `06-project-structure.md`).
+> Todo domínio vive em `src/modules/<x>/`; transversal em `src/core/`; DB em `src/infra/db/`.
+> Pendências registradas em `06`: split do overview.service em use-cases; aliases `@core/@modules/@infra`.
+
 ## Stack
 
 - **Runtime:** Node.js + TypeScript (`tsc` build, `ts-node-dev` dev)
@@ -16,37 +20,39 @@
 ## Camadas (fluxo de um request)
 
 ```
-Router (src/routes/*.router.ts)
-  → middlewares: authenticateUser → ensurePeriodExists → validateBody/Params/Query
-  → Controller (src/controllers/*.controller.ts)   # só HTTP, sem regra de negócio
-  → Service (src/services/*.service.ts)             # regra de negócio, validações de domínio
-  → Repository (src/repositories/*.repository.ts)   # acesso a dados Drizzle, satisfies I*Repository
-  → DB (src/db/schema.ts)
+Router (src/modules/<x>/<x>.router.ts)
+  → middlewares: authenticateUser (modules/auth) → ensurePeriodExists (modules/financial-period) → validate*
+  → Controller (modules/<x>/<x>.controller.ts)      # só HTTP, chama 1 use-case
+  → Use-Case (modules/<x>/use-cases/*.use-case.ts)  # 1 operação de negócio por arquivo
+  → Repository (modules/<x>/repositories/)          # Drizzle, satisfies I*Repository (interface no módulo)
+  → DB (src/infra/db/schema.ts)
 ```
 
-Resposta sempre via `ResponseHandler` (`src/helpers/response-handler.ts`).
-Erro de domínio: lança `HttpError(status, msg, details)` no Service → controller faz `if (isHttpError(error)) return next(error)` → `errorHandler` global formata.
+Resposta sempre via `ResponseHandler` (`src/core/helpers/response-handler.ts`).
+Erro de domínio: lança `HttpError` (`src/core/errors/http-error.ts`; subclasses em `src/core/errors/`) no use-case → `errorHandler` global formata.
 
 ### Responsabilidade por camada
 
 - **Router:** monta path, aplica middlewares (auth/period/validate), liga ao controller. Sem lógica.
-- **Controller:** extrai `req.user`/`params`/`body`/`query`, chama service, retorna `ResponseHandler`. Try/catch + `isHttpError → next`. Checa `req.user` (401).
-- **Service:** orquestra regra. Padrão DI por factory: `makeXService(deps)` recebe repositórios (tipados pelas interfaces `I*Repository`), validações e serviços vizinhos; um **composition root** no fim do arquivo monta `export const xService = makeXService({...singletons reais})`. Controller consome a instância (`xService.metodo`). Lança erros semânticos de `services/errors`. Retorna dados puros (sem `res`). Funções puras (sem deps) ficam como exports de módulo.
-- **Repository:** objeto literal `satisfies I<Nome>Repository`. Só queries Drizzle. Reexporta a interface.
-- **Validations (`src/validations/`):** funções async que checam existência/ownership e lançam `HttpError`.
-- **Schemas (`src/schemas/`):** schemas Zod, validados pelo middleware genérico `validate.ts`.
+- **Controller:** extrai `req.user`/`params`/`body`/`query`, chama **1 use-case**, retorna `ResponseHandler`.
+- **Use-Case:** 1 operação de negócio. Chama repositórios, validations e helpers do módulo; outro módulo só via `index.ts` público dele.
+- **Services de módulo (`modules/<x>/services/`):** utilitário stateless entre ≥2 use-cases. Nunca chama use-case.
+- **Repository:** objeto literal `satisfies I<Nome>Repository`. Só queries Drizzle. Interface no próprio módulo.
+- **Validations (`modules/<x>/validations/`):** funções async que checam existência/ownership e lançam `HttpError`.
+- **Schemas (`modules/<x>/schemas/`):** schemas Zod do módulo; genéricos compartilhados em `src/core/schemas/` (id-param, filter, pagination).
+- **OpenAPI:** cada módulo registra endpoints em `<x>.paths.ts`; `core/openapi/generate.ts` agrega (health em `core/openapi/paths.ts`).
 
 ## Infraestrutura
 
 - **Entrypoints:** `src/server.ts` (local, `app.listen` + scheduler) | `api/index.ts` (Vercel).
 - **Middlewares globais** (`src/server.ts`): `securityMiddleware` (helmet/cors/rate-limit/slow-down), `express.json({limit:"10mb"})`, `sanitizeData`, router, `errorHandler` (último).
-- **Scheduler:** `recurringTransactionService.processDue()` + `notificationService.processBudgetAlerts()` rodam a cada 1h + 1x no startup (só fora de `NODE_ENV=test`).
-- **DB connect:** `connectDB()` em `src/db/index.ts`, exporta `db`.
+- **Scheduler:** `processRecurringTransactions()` + `processBudgetAlerts()` + `processBillReminders()` rodam a cada 1h + 1x no startup (só fora de `NODE_ENV=test`) — importados via `index.ts` dos módulos.
+- **DB connect:** `connectDB()` em `src/infra/db/index.ts`, exporta `db`.
 - **Health:** `GET /health`.
-- **Períodos financeiros:** middleware `ensurePeriodExists` cria período atual + 1 futuro a cada request autenticado nas rotas que o usam.
+- **Períodos financeiros:** middleware `ensurePeriodExists` (`modules/financial-period`) cria período atual + 1 futuro a cada request autenticado nas rotas que o usam.
 
 ## Convenções de path
 
-- Routers montados em `src/routes.ts`: `/auth`, `/user`, `/transactions`, `/categories`, `/budgets`, `/goals`, `/overview`, `/recurring-transactions`, `/notifications`, `/companies`, `/overtime`.
-- Migrations: `src/db/migrations/` (geradas por `drizzle-kit generate`).
-- Tipos de domínio compartilhados: `src/types/*.types.ts`. Tipos de tabela: inferidos em `src/db/schema.ts` (`User`/`NewUser`, etc).
+- Routers montados em `src/routes.ts` (importados dos `index.ts` de cada módulo): `/auth`, `/user`, `/transactions`, `/categories`, `/budgets`, `/goals`, `/overview`, `/recurring-transactions`, `/notifications`, `/companies`, `/overtime`.
+- Migrations: `src/infra/db/migrations/` (geradas por `drizzle-kit generate`).
+- Tipos de domínio: dentro do módulo dono (`modules/<x>/<x>.types.ts`). Tipos de tabela: inferidos em `src/infra/db/schema.ts` (`User`/`NewUser`, etc).
