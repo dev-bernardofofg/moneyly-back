@@ -14,7 +14,6 @@ export const getComparativeInsightsUseCase = async (
   const user = await userRepository.findById(userId);
   if (!user) throw new HttpError(404, 'Usuário não encontrado');
 
-  // current + N anteriores
   const raw = getPreviousFinancialPeriods(
     user.financialDayStart ?? 1,
     user.financialDayEnd ?? 31,

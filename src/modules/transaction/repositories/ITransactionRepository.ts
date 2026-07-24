@@ -2,16 +2,24 @@ import type { NewTransaction, Transaction } from '@infra/db/schema';
 import type { PaginationQuery, PaginationResult } from '@core/helpers/pagination';
 import type { TransactionWithCategory } from './transaction.repository';
 
+export interface TransactionQueryFilters {
+  category?: string;
+  startDate?: Date;
+  endDate?: Date;
+  periodId?: string;
+  type?: 'income' | 'expense';
+}
+
 export interface ITransactionRepository {
   create(data: Omit<NewTransaction, 'id' | 'createdAt' | 'updatedAt'>): Promise<Transaction>;
   findByUserIdPaginated(
     userId: string,
     pagination: PaginationQuery,
-    filters?: { category?: string; startDate?: Date; endDate?: Date }
+    filters?: TransactionQueryFilters
   ): Promise<PaginationResult<TransactionWithCategory>>;
   findByUserId(
     userId: string,
-    filters?: { category?: string; startDate?: Date; endDate?: Date }
+    filters?: TransactionQueryFilters
   ): Promise<TransactionWithCategory[]>;
   findByIdAndUserId(id: string, userId: string): Promise<Transaction | null>;
   update(

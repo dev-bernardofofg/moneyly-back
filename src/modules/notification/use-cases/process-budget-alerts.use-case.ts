@@ -15,10 +15,6 @@ const STATUS_MAP: Record<
   exceeded: { severity: 'danger', label: 'foi excedido' },
 };
 
-/**
- * Gera alertas de orçamento para um usuário (idempotente via dedupeKey).
- * Não rebaixa: cada (budget, período, nível) gera no máximo 1 notificação.
- */
 export const processUserBudgetAlerts = async (userId: string): Promise<void> => {
   const period = await financialPeriodService.ensureCurrentPeriodExists(userId);
   const budgets = await getBudgetProgressUseCase(userId);
@@ -46,8 +42,6 @@ export const processUserBudgetAlerts = async (userId: string): Promise<void> => 
         isRead: false,
       });
     } catch (error) {
-      // Apenas corrida do scheduler: unique(dedupeKey) violado (pg 23505).
-      // Demais erros precisam propagar.
       const code = (error as { code?: string } | null)?.code;
       if (code === '23505') {
         logger.warn('[notifications] dedupe race skipped', { dedupeKey });
@@ -58,7 +52,6 @@ export const processUserBudgetAlerts = async (userId: string): Promise<void> => 
   }
 };
 
-/** Gatilho do scheduler: varre todos os usuários. */
 export const processBudgetAlerts = async (): Promise<void> => {
   const users = await userRepository.findAll();
   for (const user of users) {

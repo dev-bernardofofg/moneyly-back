@@ -90,6 +90,9 @@ importers:
       '@types/pg':
         specifier: ^8.11.0
         version: 8.20.0
+      '@types/qs':
+        specifier: ^6.15.1
+        version: 6.15.1
       '@types/supertest':
         specifier: ^6.0.2
         version: 6.0.3

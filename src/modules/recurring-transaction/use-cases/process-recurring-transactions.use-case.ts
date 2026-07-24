@@ -1,4 +1,3 @@
-import { getCurrentSaoPauloDate } from '@core/helpers/dates';
 import { logger } from '@core/lib/logger';
 import { createTransactionUseCase } from '@modules/transaction';
 import { calculateNextExecution } from '../helpers/execution-dates';
@@ -17,7 +16,7 @@ function isOverdue(nextExecution: Date, frequency: string, now: Date): boolean {
 }
 
 export const processRecurringTransactions = async (): Promise<void> => {
-  const now = getCurrentSaoPauloDate();
+  const now = new Date();
   const due = await recurringTransactionRepository.findDueTransactions(now);
 
   for (const recurring of due) {

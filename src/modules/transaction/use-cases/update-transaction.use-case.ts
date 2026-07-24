@@ -1,4 +1,4 @@
-import { toSaoPauloTimezone } from '@core/helpers/dates';
+import { parseTransactionDate } from '@core/helpers/dates';
 import { HttpError } from '@core/errors/http-error';
 import { financialPeriodService } from '@modules/financial-period';
 import { transactionRepository } from '../repositories/transaction.repository';
@@ -22,7 +22,8 @@ export const updateTransactionUseCase = async (
   }
 
   if (updateData.date) {
-    updateData.date = toSaoPauloTimezone(updateData.date);
+    // Contrato: dia-semântica → instante canônico (meia-noite SP).
+    updateData.date = parseTransactionDate(updateData.date);
     updateData.periodId = await financialPeriodService.findOrCreatePeriodForDate(
       userId,
       updateData.date

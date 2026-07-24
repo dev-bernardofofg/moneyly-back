@@ -9,7 +9,7 @@ import { requireUser } from '@modules/user';
 import { HttpError } from '@core/errors/http-error';
 import { financialPeriodService } from '@modules/financial-period';
 
-const MAX_OCCURRENCE_ITERATIONS = 400; // teto p/ frequência daily em janelas longas
+const MAX_OCCURRENCE_ITERATIONS = 400;
 
 export interface ForecastOccurrence {
   recurringTransactionId: string;
@@ -39,7 +39,6 @@ export const getForecastUseCase = async (userId: string, periodId?: string) => {
 
   const now = getCurrentSaoPauloDate();
 
-  // Recorrentes ativas (findByUserId já filtra isActive=true por padrão)
   const recurrences = await recurringTransactionRepository.findByUserId(userId);
 
   const occurrences: ForecastOccurrence[] = [];
@@ -61,8 +60,6 @@ export const getForecastUseCase = async (userId: string, periodId?: string) => {
     ) {
       iterations++;
 
-      // Conta só ocorrências que caem dentro do período (ignora vencidas
-      // anteriores ao início; futuras dentro da janela contam).
       if (cursor.getTime() >= startDate.getTime()) {
         occurrences.push({
           recurringTransactionId: rec.id,

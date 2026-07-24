@@ -1,7 +1,7 @@
 import { calculateNextExecution } from '@modules/recurring-transaction/helpers/execution-dates';
 import { recurringTransactionRepository } from '@modules/recurring-transaction/repositories/recurring-transaction.repository';
 import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
-import { createTransactionService } from '../services/transaction.service';
+import { createTransactionUseCase } from '@modules/transaction/use-cases/create-transaction.use-case';
 import type { RecurringFrequency } from '@modules/recurring-transaction/recurring-transaction.types';
 
 function generateExecutionDates(
@@ -67,7 +67,7 @@ async function run() {
       if (missingDates.length > 0) {
         await Promise.all(
           missingDates.map((date) =>
-            createTransactionService(r.userId, {
+            createTransactionUseCase(r.userId, {
               type: r.type as 'income' | 'expense',
               title: r.title,
               amount: r.amount,

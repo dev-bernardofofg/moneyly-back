@@ -70,7 +70,7 @@ Ordem canônica, camada por camada (bottom-up). Feature vive em `src/modules/<x>
 - [ ] Feature inteira dentro de `src/modules/<x>/` (nada novo nas pastas legadas)
 - [ ] 1 use-case = 1 operação; sem regra de negócio em controller
 - [ ] `ResponseHandler` em toda resposta
-- [ ] `HttpError` + `isHttpError → next` para erros de domínio
+- [ ] Erros semânticos de `services/errors` + `isHttpError → next`
 - [ ] Zod via middleware `validate`
 - [ ] Repositório `satisfies IXRepository` (interface no módulo)
 - [ ] Datas no timezone São Paulo

@@ -6,10 +6,20 @@ import {
   type PaginationQuery,
   type PaginationResult,
 } from '@core/helpers/pagination';
-import type { ITransactionRepository } from './ITransactionRepository';
+import type { ITransactionRepository, TransactionQueryFilters } from './ITransactionRepository';
 
 export type TransactionWithCategory = Omit<Transaction, 'categoryId' | 'userId'> & {
   category: { id: string; name: string };
+};
+
+const buildConditions = (userId: string, filters?: TransactionQueryFilters) => {
+  const conditions = [eq(transactions.userId, userId)];
+  if (filters?.category) conditions.push(eq(transactions.categoryId, filters.category));
+  if (filters?.periodId) conditions.push(eq(transactions.periodId, filters.periodId));
+  if (filters?.type) conditions.push(eq(transactions.type, filters.type));
+  if (filters?.startDate) conditions.push(gte(transactions.date, filters.startDate));
+  if (filters?.endDate) conditions.push(lte(transactions.date, filters.endDate));
+  return conditions;
 };
 
 const BASE_SELECT = {
@@ -37,20 +47,9 @@ export const transactionRepository = {
   async findByUserIdPaginated(
     userId: string,
     pagination: PaginationQuery,
-    filters?: {
-      category?: string;
-      startDate?: Date;
-      endDate?: Date;
-      periodId?: string;
-      type?: 'income' | 'expense';
-    }
+    filters?: TransactionQueryFilters
   ): Promise<PaginationResult<TransactionWithCategory>> {
-    const conditions = [eq(transactions.userId, userId)];
-    if (filters?.category) conditions.push(eq(transactions.categoryId, filters.category));
-    if (filters?.periodId) conditions.push(eq(transactions.periodId, filters.periodId));
-    if (filters?.type) conditions.push(eq(transactions.type, filters.type));
-    if (filters?.startDate) conditions.push(gte(transactions.date, filters.startDate));
-    if (filters?.endDate) conditions.push(lte(transactions.date, filters.endDate));
+    const conditions = buildConditions(userId, filters);
 
     const totalResult = await db
       .select({ value: count() })
@@ -72,20 +71,9 @@ export const transactionRepository = {
 
   async findByUserId(
     userId: string,
-    filters?: {
-      category?: string;
-      startDate?: Date;
-      endDate?: Date;
-      periodId?: string;
-      type?: 'income' | 'expense';
-    }
+    filters?: TransactionQueryFilters
   ): Promise<TransactionWithCategory[]> {
-    const conditions = [eq(transactions.userId, userId)];
-    if (filters?.category) conditions.push(eq(transactions.categoryId, filters.category));
-    if (filters?.periodId) conditions.push(eq(transactions.periodId, filters.periodId));
-    if (filters?.type) conditions.push(eq(transactions.type, filters.type));
-    if (filters?.startDate) conditions.push(gte(transactions.date, filters.startDate));
-    if (filters?.endDate) conditions.push(lte(transactions.date, filters.endDate));
+    const conditions = buildConditions(userId, filters);
 
     return db
       .select(BASE_SELECT)

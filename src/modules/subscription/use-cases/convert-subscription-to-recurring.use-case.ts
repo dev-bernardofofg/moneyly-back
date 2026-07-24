@@ -1,5 +1,5 @@
 import type { RecurringTransaction } from '@infra/db/schema';
-import { getCurrentSaoPauloDate } from '@core/helpers/dates';
+import { spMidnight, spParts } from '@core/helpers/dates';
 import {
   createRecurringTransactionUseCase,
   recurringTransactionRepository,
@@ -20,12 +20,6 @@ export interface ConvertSubscriptionInput {
   description?: string;
 }
 
-/**
- * F10 — converte um candidato do detector (F3) em transação recorrente.
- * A última cobrança real já está em transactions (foi ela que gerou a detecção),
- * então startDate é avançada até ser estritamente futura — startDate ≤ hoje
- * faria createRecurringTransactionService lançar a despesa de novo.
- */
 export const convertSubscriptionToRecurringUseCase = async (
   userId: string,
   input: ConvertSubscriptionInput
@@ -37,11 +31,16 @@ export const convertSubscriptionToRecurringUseCase = async (
     throw new HttpError(409, 'Já existe uma transação recorrente ativa com este título.');
   }
 
-  const now = getCurrentSaoPauloDate();
-  let startDate = input.nextEstimatedDate;
-  while (startDate <= now) {
+  // startDate ≤ hoje faria createRecurringTransactionUseCase lançar a despesa
+  // de novo (a última cobrança real já está em transactions) → avançar até
+  // ser estritamente futura, comparando dias no calendário SP.
+  const today = spMidnight(new Date());
+  let startDate = spMidnight(input.nextEstimatedDate);
+  while (startDate.getTime() <= today.getTime()) {
     startDate = addCadence(startDate, input.cadence);
   }
+
+  const startParts = spParts(startDate);
 
   return createRecurringTransactionUseCase(userId, {
     type: 'expense',
@@ -49,8 +48,8 @@ export const convertSubscriptionToRecurringUseCase = async (
     amount: input.amount,
     categoryId: input.categoryId,
     frequency: input.cadence,
-    dayOfMonth: input.cadence === 'monthly' ? startDate.getDate() : undefined,
-    dayOfWeek: input.cadence === 'weekly' ? startDate.getDay() : undefined,
+    dayOfMonth: input.cadence === 'monthly' ? startParts.day : undefined,
+    dayOfWeek: input.cadence === 'weekly' ? startParts.weekday : undefined,
     description: input.description,
     startDate,
   });

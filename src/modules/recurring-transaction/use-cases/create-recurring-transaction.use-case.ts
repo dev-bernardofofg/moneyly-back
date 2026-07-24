@@ -1,5 +1,5 @@
 import type { RecurringTransaction } from '@infra/db/schema';
-import { getCurrentSaoPauloDate } from '@core/helpers/dates';
+import { spMidnight, spParts } from '@core/helpers/dates';
 import { createTransactionUseCase } from '@modules/transaction';
 import { financialPeriodService } from '@modules/financial-period';
 import { calculateNextExecution } from '../helpers/execution-dates';
@@ -11,8 +11,14 @@ export const createRecurringTransactionUseCase = async (
   userId: string,
   data: CreateRecurringTransactionInput
 ): Promise<RecurringTransaction> => {
-  const now = getCurrentSaoPauloDate();
-  const startDate = data.startDate ?? now;
+  // Contrato: dia-semântica → meia-noite SP.
+  const startDate = spMidnight(data.startDate ?? new Date());
+  const startParts = spParts(startDate);
+
+  // Âncora persistida: sem ela, recorrência mensal criada dia 29-31 derraparia
+  // após passar por um mês curto (28/fev viraria a nova âncora).
+  const dayOfMonth = data.dayOfMonth ?? (data.frequency === 'monthly' ? startParts.day : null);
+  const dayOfWeek = data.dayOfWeek ?? (data.frequency === 'weekly' ? startParts.weekday : null);
 
   const months = calcMonthsNeeded(data.frequency, data.totalInstallments);
   const [recurring] = await Promise.all([
@@ -23,8 +29,8 @@ export const createRecurringTransactionUseCase = async (
       amount: data.amount,
       categoryId: data.categoryId,
       frequency: data.frequency,
-      dayOfMonth: data.dayOfMonth ?? null,
-      dayOfWeek: data.dayOfWeek ?? null,
+      dayOfMonth,
+      dayOfWeek,
       startDate,
       nextExecution: startDate,
       isActive: true,
@@ -41,8 +47,8 @@ export const createRecurringTransactionUseCase = async (
       data.frequency,
       startDate,
       data.totalInstallments,
-      data.dayOfMonth,
-      data.dayOfWeek
+      dayOfMonth,
+      dayOfWeek
     );
 
     // Sequencial para não saturar o pool de conexões em parcelas longas.
@@ -66,12 +72,8 @@ export const createRecurringTransactionUseCase = async (
     return { ...recurring, executedInstallments: data.totalInstallments, isActive: false };
   }
 
-  // Infinite recurring: create first transaction if startDate is today or past
-  const startDay = new Date(startDate);
-  startDay.setHours(0, 0, 0, 0);
-  const todayStart = new Date(now);
-  todayStart.setHours(0, 0, 0, 0);
-  const isImmediate = startDay <= todayStart;
+  // Infinite recurring: create first transaction if startDate is today or past (SP days)
+  const isImmediate = startDate.getTime() <= spMidnight(new Date()).getTime();
 
   if (isImmediate) {
     await createTransactionUseCase(userId, {
@@ -84,12 +86,7 @@ export const createRecurringTransactionUseCase = async (
       recurringTransactionId: recurring.id,
     });
 
-    const nextExecution = calculateNextExecution(
-      data.frequency,
-      data.dayOfMonth,
-      data.dayOfWeek,
-      startDate
-    );
+    const nextExecution = calculateNextExecution(data.frequency, dayOfMonth, dayOfWeek, startDate);
     await recurringTransactionRepository.update(recurring.id, userId, {
       executedInstallments: 1,
       nextExecution,

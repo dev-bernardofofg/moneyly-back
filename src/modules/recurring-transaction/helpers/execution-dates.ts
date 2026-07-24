@@ -1,85 +1,65 @@
-import { getCurrentSaoPauloDate } from '@core/helpers/dates';
+import { spMidnightOf, spParts } from '@core/helpers/dates';
 import type { RecurringFrequency } from '../recurring-transaction.types';
 
+/**
+ * Próxima execução a partir de `from`, no calendário SP. Retorna meia-noite SP.
+ * monthly sem dayOfMonth: âncora = dia SP de `from`, clampado ao fim do mês
+ * (31/jan → 28/fev; não pula mês). Para âncora fixa, persistir dayOfMonth.
+ */
 export function calculateNextExecution(
   frequency: RecurringFrequency,
   dayOfMonth?: number | null,
   dayOfWeek?: number | null,
   from: Date = new Date()
 ): Date {
-  const next = new Date(from);
+  const { year, month, day, weekday } = spParts(from);
 
   switch (frequency) {
     case 'daily':
-      next.setDate(next.getDate() + 1);
-      break;
+      return spMidnightOf(year, month, day + 1);
 
     case 'weekly': {
-      const daysUntil =
-        dayOfWeek !== null && dayOfWeek !== undefined
-          ? (dayOfWeek - next.getDay() + 7) % 7 || 7
-          : 7;
-      next.setDate(next.getDate() + daysUntil);
-      break;
+      const target = dayOfWeek ?? weekday;
+      const daysUntil = (target - weekday + 7) % 7 || 7;
+      return spMidnightOf(year, month, day + daysUntil);
     }
 
     case 'monthly': {
-      next.setMonth(next.getMonth() + 1);
-      if (dayOfMonth) {
-        const lastDay = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate();
-        next.setDate(Math.min(dayOfMonth, lastDay));
-      }
-      break;
+      const anchor = dayOfMonth ?? day;
+      return spMidnightOf(year, month + 1, anchor);
     }
 
     case 'yearly':
-      next.setFullYear(next.getFullYear() + 1);
-      break;
+      return spMidnightOf(year + 1, month, day);
   }
-
-  return next;
 }
 
+/** Primeira execução futura a partir de agora (calendário SP). */
 export function calculateFirstExecution(
   frequency: RecurringFrequency,
   dayOfMonth?: number | null,
   dayOfWeek?: number | null
 ): Date {
-  const now = getCurrentSaoPauloDate();
+  const now = new Date();
+  const { year, month, day } = spParts(now);
 
   switch (frequency) {
     case 'daily':
-      return calculateNextExecution('daily', null, null, now);
+      return spMidnightOf(year, month, day + 1);
 
-    case 'weekly': {
-      if (dayOfWeek !== null && dayOfWeek !== undefined) {
-        const next = new Date(now);
-        const daysUntil = (dayOfWeek - now.getDay() + 7) % 7 || 7;
-        next.setDate(next.getDate() + daysUntil);
-        return next;
-      }
-      return calculateNextExecution('weekly', null, null, now);
-    }
+    case 'weekly':
+      return calculateNextExecution('weekly', null, dayOfWeek ?? null, now);
 
     case 'monthly': {
       if (dayOfMonth) {
-        const next = new Date(now);
-        next.setDate(1);
-        if (now.getDate() >= dayOfMonth) next.setMonth(next.getMonth() + 1);
-        const lastDay = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate();
-        next.setDate(Math.min(dayOfMonth, lastDay));
-        return next;
+        // Próximo dia D: neste mês se ainda não passou, senão no seguinte.
+        const targetMonth = day >= dayOfMonth ? month + 1 : month;
+        return spMidnightOf(year, targetMonth, dayOfMonth);
       }
       return calculateNextExecution('monthly', null, null, now);
     }
 
-    case 'yearly': {
-      const next = new Date(now);
-      next.setFullYear(next.getFullYear() + 1);
-      return next;
-    }
-
-    default:
-      return calculateNextExecution(frequency, dayOfMonth, dayOfWeek, now);
+    case 'yearly':
+      return spMidnightOf(year + 1, month, day);
   }
 }

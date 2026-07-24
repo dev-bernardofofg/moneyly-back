@@ -4,7 +4,7 @@ import {
   getCurrentFinancialPeriod,
   getFinancialPeriodForMonth,
 } from './helpers/financial-period';
-import { getCurrentSaoPauloDate, toSaoPauloTimezone } from '@core/helpers/dates';
+import { spMidnightOf, spParts } from '@core/helpers/dates';
 import { financialPeriodRepository } from './repositories/financial-period.repository';
 import { userRepository } from '@modules/user';
 import { HttpError } from '@core/errors/http-error';
@@ -51,10 +51,11 @@ export const financialPeriodService = {
 
   async findOrCreatePeriodForDate(userId: string, date: Date): Promise<string> {
     const user = await getUser(userId);
+    // getCurrentFinancialPeriod extrai o dia SP do instante internamente.
     const period = getCurrentFinancialPeriod(
       user.financialDayStart ?? 1,
       user.financialDayEnd ?? 31,
-      toSaoPauloTimezone(date)
+      date
     );
     const stored = await financialPeriodRepository.findOrCreatePeriod(
       userId,
@@ -66,7 +67,7 @@ export const financialPeriodService = {
 
   async getUserPeriods(userId: string) {
     const stored = await financialPeriodRepository.findAllByUserWithTransactionCount(userId);
-    const now = getCurrentSaoPauloDate();
+    const now = new Date();
     return stored.map((p) => ({
       id: p.id,
       startDate: p.startDate,
@@ -85,11 +86,11 @@ export const financialPeriodService = {
   async createNextPeriods(userId: string, numberOfPeriods: number = 3): Promise<FinancialPeriod[]> {
     const user = await getUser(userId);
     const periods: FinancialPeriod[] = [];
-    const currentDate = getCurrentSaoPauloDate();
+    const { year, month } = spParts(new Date());
 
     for (let i = 0; i < numberOfPeriods; i++) {
-      const futureDate = new Date(currentDate);
-      futureDate.setMonth(futureDate.getMonth() + i);
+      // Âncora no dia 15 do mês alvo: imune a overflow de fim de mês.
+      const futureDate = spMidnightOf(year, month + i, 15);
       const period = getCurrentFinancialPeriod(
         user.financialDayStart || 1,
         user.financialDayEnd || 31,
