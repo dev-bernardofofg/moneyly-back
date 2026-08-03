@@ -61,7 +61,7 @@ export const exportOvertimeCsv = asyncHandler<AuthRequest>(async (req, res) => {
 
   const records = await overtimeRepository.findByUserId(req.user.id, { month, year, companyId });
 
-  const headers = ['Empresa', 'Data', 'Início', 'Fim', 'Horas', 'Valor (R$)'];
+  const headers = ['Empresa', 'Data', 'Início', 'Fim', 'Horas', 'Valor (R$)', 'Descrição'];
   const rows = records.map((r) => [
     r.company.name,
     format(new Date(r.startTime), 'dd/MM/yyyy'),
@@ -69,6 +69,7 @@ export const exportOvertimeCsv = asyncHandler<AuthRequest>(async (req, res) => {
     format(new Date(r.endTime), 'HH:mm'),
     Number(r.hoursWorked).toFixed(2).replace('.', ','),
     Number(r.amount).toFixed(2).replace('.', ','),
+    r.description ?? '',
   ]);
 
   const csv = [headers, ...rows]
