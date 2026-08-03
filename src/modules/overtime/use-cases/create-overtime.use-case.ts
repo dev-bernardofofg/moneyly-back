@@ -29,7 +29,7 @@ export const createOvertimeUseCase = async (userId: string, data: CreateOvertime
   const record = await overtimeRepository.create({
     userId,
     companyId: company.id,
-    description: data.description ?? null,
+    description: data.description || null,
     startTime,
     endTime,
     hoursWorked: hoursWorked.toString(),
@@ -46,7 +46,7 @@ export const createOvertimeUseCase = async (userId: string, data: CreateOvertime
     title: `Hora extra — ${company.name}`,
     amount: amount.toString(),
     categoryId,
-    description: data.description ?? null,
+    description: data.description || null,
     date: startTime,
     periodId,
     recurringTransactionId: null,

@@ -18,7 +18,7 @@ export const createTransactionUseCase = async (userId: string, transaction: ITra
     title: transaction.title,
     amount: transaction.amount,
     categoryId: transaction.category,
-    description: transaction.description,
+    description: transaction.description || null,
     date: transactionDate,
     periodId,
     recurringTransactionId: transaction.recurringTransactionId ?? null,

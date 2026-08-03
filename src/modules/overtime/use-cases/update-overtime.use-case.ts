@@ -32,7 +32,7 @@ export const updateOvertimeUseCase = async (
   if (needsRecalc) validateTimeRange(startTime, endTime);
 
   const updatePayload: Parameters<typeof overtimeRepository.update>[2] = {
-    ...(data.description !== undefined && { description: data.description }),
+    ...(data.description !== undefined && { description: data.description || null }),
     ...(data.companyId !== undefined && { companyId: data.companyId }),
   };
 
@@ -67,7 +67,7 @@ export const updateOvertimeUseCase = async (
   }
 
   if (data.description !== undefined) {
-    transactionUpdate.description = data.description;
+    transactionUpdate.description = data.description || null;
   }
 
   const updated = await overtimeRepository.update(id, userId, updatePayload);

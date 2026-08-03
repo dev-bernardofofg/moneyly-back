@@ -12,7 +12,7 @@ export const updateTransactionUseCase = async (
     title: string;
     amount: string;
     categoryId: string;
-    description: string;
+    description: string | null;
     date: Date;
     periodId: string;
   }>

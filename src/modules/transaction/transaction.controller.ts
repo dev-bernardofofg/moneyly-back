@@ -87,7 +87,7 @@ export const updateTransaction = asyncHandler<AuthRequest>(async (req, res) => {
     title: string;
     amount: string;
     categoryId: string;
-    description: string;
+    description: string | null;
     date: Date;
   }> = {};
   if (date) updateData.date = new Date(date);
@@ -95,7 +95,8 @@ export const updateTransaction = asyncHandler<AuthRequest>(async (req, res) => {
   if (title) updateData.title = title;
   if (amount) updateData.amount = amount;
   if (category) updateData.categoryId = category;
-  if (description) updateData.description = description;
+  // string vazia é intenção de limpar a descrição — só `undefined` significa "não mexer"
+  if (description !== undefined) updateData.description = description || null;
 
   const transaction = await updateTransactionUseCase(id, req.user.id, updateData);
   return ResponseHandler.success(res, transaction, 'Transação atualizada com sucesso');
