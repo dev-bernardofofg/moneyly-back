@@ -33,6 +33,13 @@ export const env = {
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
 
+  // Firebase Admin (push notifications) — opcional: sem isso o app roda
+  // normalmente, só não envia push. A chave privada vem do JSON da service
+  // account, com as quebras de linha escapadas como \n no .env.
+  FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID || '',
+  FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL || '',
+  FIREBASE_PRIVATE_KEY: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+
   // Configurações de CORS
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',')
@@ -54,4 +61,5 @@ console.log('🔧 Configurações carregadas:', {
   DATABASE_URL: env.DATABASE_URL ? '✅ Configurado' : '❌ Não configurado',
   JWT_SECRET: env.JWT_SECRET ? '✅ Configurado' : '❌ Não configurado',
   GOOGLE_CLIENT_ID: env.GOOGLE_CLIENT_ID ? '✅ Configurado' : '❌ Não configurado',
+  FIREBASE: env.FIREBASE_PROJECT_ID ? '✅ Configurado' : '⚠️ Push desabilitado',
 });

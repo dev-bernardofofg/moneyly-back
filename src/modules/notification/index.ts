@@ -9,3 +9,5 @@ export {
 } from './use-cases/process-budget-alerts.use-case';
 export { processBillReminders } from './use-cases/process-bill-reminders.use-case';
 export { notifyGoalMilestones } from './use-cases/notify-goal-milestones.use-case';
+export { dispatchNotification } from './use-cases/dispatch-notification.use-case';
+export { sendPushToUser } from './services/push.service';

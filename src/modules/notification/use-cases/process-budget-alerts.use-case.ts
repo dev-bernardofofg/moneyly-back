@@ -1,6 +1,6 @@
 import { logger } from '@core/lib/logger';
-import { notificationRepository } from '../repositories/notification.repository';
 import { userRepository } from '@modules/user';
+import { dispatchNotification } from './dispatch-notification.use-case';
 import { getBudgetProgressUseCase } from '@modules/budget';
 import { financialPeriodService } from '@modules/financial-period';
 
@@ -26,29 +26,17 @@ export const processUserBudgetAlerts = async (userId: string): Promise<void> => 
     const map = STATUS_MAP[status];
     const dedupeKey = `budget:${budget.id}:${period.id}:${status}`;
 
-    const existing = await notificationRepository.findByDedupeKey(dedupeKey);
-    if (existing) continue;
-
-    try {
-      await notificationRepository.create({
-        userId,
-        type: 'budget_alert',
-        severity: map.severity,
-        title: `Orçamento de ${budget.category.name}`,
-        message: `O orçamento de ${budget.category.name} ${map.label} (${budget.percentage}%).`,
-        relatedId: budget.id,
-        periodId: period.id,
-        dedupeKey,
-        isRead: false,
-      });
-    } catch (error) {
-      const code = (error as { code?: string } | null)?.code;
-      if (code === '23505') {
-        logger.warn('[notifications] dedupe race skipped', { dedupeKey });
-        continue;
-      }
-      throw error;
-    }
+    await dispatchNotification({
+      userId,
+      type: 'budget_alert',
+      severity: map.severity,
+      title: `Orçamento de ${budget.category.name}`,
+      message: `O orçamento de ${budget.category.name} ${map.label} (${budget.percentage}%).`,
+      relatedId: budget.id,
+      periodId: period.id,
+      dedupeKey,
+      isRead: false,
+    });
   }
 };
 

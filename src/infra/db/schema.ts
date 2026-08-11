@@ -2,6 +2,7 @@ import { relations } from 'drizzle-orm';
 import {
   boolean,
   decimal,
+  index,
   integer,
   pgTable,
   text,
@@ -352,6 +353,32 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   }),
 }));
 
+// Dispositivos registrados para push (FCM). Guardamos o Firebase Installation
+// ID (FID) — o registration token está deprecado nos SDKs web e admin.
+export const deviceRegistrations = pgTable(
+  'device_registrations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    // Unique: o mesmo browser tem sempre o mesmo FID. Se outro usuário logar
+    // nele, o upsert transfere o registro em vez de duplicar.
+    fid: text('fid').notNull().unique(),
+    userAgent: text('user_agent'),
+    lastSeenAt: timestamp('last_seen_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [index('device_registrations_user_id_idx').on(table.userId)]
+);
+
+export const deviceRegistrationsRelations = relations(deviceRegistrations, ({ one }) => ({
+  user: one(users, {
+    fields: [deviceRegistrations.userId],
+    references: [users.id],
+  }),
+}));
+
 export const companiesRelations = relations(companies, ({ one, many }) => ({
   user: one(users, {
     fields: [companies.userId],
@@ -394,6 +421,8 @@ export type FinancialPeriod = typeof financialPeriods.$inferSelect;
 export type NewFinancialPeriod = typeof financialPeriods.$inferInsert;
 export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
+export type DeviceRegistration = typeof deviceRegistrations.$inferSelect;
+export type NewDeviceRegistration = typeof deviceRegistrations.$inferInsert;
 export type Company = typeof companies.$inferSelect;
 export type NewCompany = typeof companies.$inferInsert;
 export type OvertimeRecord = typeof overtimeRecords.$inferSelect;

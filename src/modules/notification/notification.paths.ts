@@ -37,3 +37,19 @@ route({
   params: idParamSchema,
   ok: ok(wrapSuccess(NotificationSchema)),
 });
+route({
+  method: 'post',
+  path: '/notifications/devices',
+  tag: 'Notifications',
+  summary: 'Registrar dispositivo para push (FCM)',
+  body: z.object({ fid: z.string() }),
+  ok: ok(wrapSuccess(z.object({ registered: z.boolean() }))),
+});
+route({
+  method: 'delete',
+  path: '/notifications/devices/{fid}',
+  tag: 'Notifications',
+  summary: 'Remover dispositivo do push (FCM)',
+  params: z.object({ fid: z.string() }),
+  ok: ok(wrapSuccess(z.object({ unregistered: z.boolean() }))),
+});

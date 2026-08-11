@@ -3,9 +3,8 @@ import {
   formatIsoDateSaoPaulo,
   getCurrentSaoPauloDate,
 } from '@core/helpers/dates';
-import { logger } from '@core/lib/logger';
-import { notificationRepository } from '../repositories/notification.repository';
 import { recurringTransactionRepository } from '@modules/recurring-transaction';
+import { dispatchNotification } from './dispatch-notification.use-case';
 
 const REMINDER_WINDOW_DAYS = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -29,36 +28,22 @@ export const processBillReminders = async (): Promise<void> => {
   for (const recurring of upcoming) {
     const dedupeKey = `bill:${recurring.id}:${formatIsoDateSaoPaulo(recurring.nextExecution)}`;
 
-    const existing = await notificationRepository.findByDedupeKey(dedupeKey);
-    if (existing) continue;
-
     const daysUntil = Math.max(
       1,
       Math.ceil((recurring.nextExecution.getTime() - now.getTime()) / DAY_MS)
     );
     const dayLabel = daysUntil === 1 ? 'dia' : 'dias';
 
-    try {
-      await notificationRepository.create({
-        userId: recurring.userId,
-        type: 'bill_reminder',
-        severity: 'info',
-        title: `Conta a vencer: ${recurring.title}`,
-        message: `${recurring.title} de R$ ${formatAmount(recurring.amount)} vence em ${daysUntil} ${dayLabel} (${formatBrazilianDate(recurring.nextExecution)}).`,
-        relatedId: recurring.id,
-        periodId: null,
-        dedupeKey,
-        isRead: false,
-      });
-    } catch (error) {
-      // Apenas corrida do scheduler: unique(dedupeKey) violado (pg 23505).
-      // Demais erros precisam propagar.
-      const code = (error as { code?: string } | null)?.code;
-      if (code === '23505') {
-        logger.warn('[bill-reminder] dedupe race skipped', { dedupeKey });
-        continue;
-      }
-      throw error;
-    }
+    await dispatchNotification({
+      userId: recurring.userId,
+      type: 'bill_reminder',
+      severity: 'info',
+      title: `Conta a vencer: ${recurring.title}`,
+      message: `${recurring.title} de R$ ${formatAmount(recurring.amount)} vence em ${daysUntil} ${dayLabel} (${formatBrazilianDate(recurring.nextExecution)}).`,
+      relatedId: recurring.id,
+      periodId: null,
+      dedupeKey,
+      isRead: false,
+    });
   }
 };

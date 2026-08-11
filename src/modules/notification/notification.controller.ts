@@ -5,6 +5,8 @@ import { BadRequestError } from '@core/errors';
 import { listNotificationsUseCase } from './use-cases/list-notifications.use-case';
 import { markAllNotificationsReadUseCase } from './use-cases/mark-all-notifications-read.use-case';
 import { markNotificationReadUseCase } from './use-cases/mark-notification-read.use-case';
+import { registerDeviceUseCase } from './use-cases/register-device.use-case';
+import { unregisterDeviceUseCase } from './use-cases/unregister-device.use-case';
 
 export const getNotifications = asyncHandler<AuthRequest>(async (req, res) => {
   const { page, limit } = req.query as {
@@ -32,4 +34,18 @@ export const markNotificationRead = asyncHandler<AuthRequest>(async (req, res) =
 export const markAllNotificationsRead = asyncHandler<AuthRequest>(async (req, res) => {
   const result = await markAllNotificationsReadUseCase(req.user.id);
   return ResponseHandler.success(res, result, 'Notificações marcadas como lidas');
+});
+
+export const registerDevice = asyncHandler<AuthRequest>(async (req, res) => {
+  const { fid } = req.body as { fid: string };
+  const result = await registerDeviceUseCase(req.user.id, fid, req.get('user-agent'));
+  return ResponseHandler.success(res, result, 'Dispositivo registrado para notificações');
+});
+
+export const unregisterDevice = asyncHandler<AuthRequest>(async (req, res) => {
+  const { fid } = req.params;
+  if (!fid) throw new BadRequestError('FID do dispositivo é obrigatório');
+
+  const result = await unregisterDeviceUseCase(req.user.id, fid);
+  return ResponseHandler.success(res, result, 'Dispositivo removido das notificações');
 });

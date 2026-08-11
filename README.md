@@ -100,7 +100,7 @@ Gerado em `src/generated/`:
 **Frontend usa direto:**
 
 ```typescript
-import { usePostTransactionsCreate } from "@/generated/hooks/transactions/transactions";
+import { usePostTransactionsCreate } from '@/generated/hooks/transactions/transactions';
 
 const { mutate } = usePostTransactionsCreate();
 // Pronto! Hook com tipagem e validação automática!
@@ -146,6 +146,13 @@ JWT_SECRET=your-secret-key
 
 # Google OAuth (opcional)
 GOOGLE_CLIENT_ID=your-google-client-id
+
+# Firebase Admin — push notifications (opcional).
+# Sem essas variáveis a API sobe normal: as notificações continuam sendo
+# criadas no banco, só não saem como push.
+FIREBASE_PROJECT_ID=
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 ```
 
 ## 🧪 Testes
