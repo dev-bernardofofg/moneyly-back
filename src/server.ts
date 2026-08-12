@@ -9,7 +9,7 @@ import { securityMiddleware } from '@core/middlewares/security';
 import router from './routes';
 import { processRecurringTransactions } from '@modules/recurring-transaction';
 
-import { processBillReminders, processBudgetAlerts } from '@modules/notification';
+import { processBillReminders, processBudgetAlerts, processSpendingAlerts } from '@modules/notification';
 
 export const app: Application = express();
 
@@ -47,6 +47,11 @@ if (process.env.NODE_ENV !== 'test') {
       } catch (error) {
         logger.error('[scheduler] bill reminders error', error as Error);
       }
+      try {
+        await processSpendingAlerts();
+      } catch (error) {
+        logger.error('[scheduler] spending alerts error', error as Error);
+      }
     },
     60 * 60 * 1000
   );
@@ -59,5 +64,8 @@ if (process.env.NODE_ENV !== 'test') {
   );
   processBillReminders().catch((error) =>
     logger.error('[scheduler] bill reminders startup error', error as Error)
+  );
+  processSpendingAlerts().catch((error) =>
+    logger.error('[scheduler] spending alerts startup error', error as Error)
   );
 }

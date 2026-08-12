@@ -10,6 +10,7 @@ const DEEP_LINK: Record<string, string> = {
   budget_alert: '/dashboard',
   bill_reminder: '/recurring-transactions',
   goal_milestone: '/planner',
+  spending_alert: '/dashboard',
 };
 
 /**
