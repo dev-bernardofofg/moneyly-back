@@ -28,7 +28,7 @@ export const createTransactionUseCase = async (userId: string, transaction: ITra
 
   if (transaction.type === 'expense') {
     try {
-      await processUserSpendingAlert(userId);
+      await processUserSpendingAlert(userId, periodId);
     } catch (error) {
       // Falha de notificação nunca quebra a criação da transação.
       logger.error('[transactions] spending alert failed', error as Error);

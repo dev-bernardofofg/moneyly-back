@@ -1,4 +1,4 @@
-import { and, count, desc, eq } from 'drizzle-orm';
+import { and, count, desc, eq, inArray } from 'drizzle-orm';
 import { db } from '@infra/db';
 import { notifications, type NewNotification, type Notification } from '@infra/db/schema';
 import {
@@ -22,6 +22,15 @@ export const notificationRepository = {
       .where(eq(notifications.dedupeKey, dedupeKey))
       .limit(1);
     return notification ?? null;
+  },
+
+  async deleteByDedupeKeys(dedupeKeys: string[]): Promise<number> {
+    if (dedupeKeys.length === 0) return 0;
+    const deleted = await db
+      .delete(notifications)
+      .where(inArray(notifications.dedupeKey, dedupeKeys))
+      .returning({ id: notifications.id });
+    return deleted.length;
   },
 
   async findByUserPaginated(

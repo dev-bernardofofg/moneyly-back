@@ -26,12 +26,15 @@ const expense = (amount: string) =>
     amount,
   }) as never;
 
+const key = (status: string) => `spending:${USER}:${PERIOD.id}:${status}`;
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockedPeriod.ensureCurrentPeriodExists.mockResolvedValue(PERIOD as never);
   mockedUser.findById.mockResolvedValue({ id: USER, monthlyIncome: '2000' } as never);
   mockedRepo.findByDedupeKey.mockResolvedValue(null);
   mockedRepo.create.mockResolvedValue({} as never);
+  mockedRepo.deleteByDedupeKeys.mockResolvedValue(0);
 });
 
 describe('processUserSpendingAlert', () => {
@@ -44,8 +47,9 @@ describe('processUserSpendingAlert', () => {
     const arg = mockedRepo.create.mock.calls[0]![0];
     expect(arg.type).toBe('spending_alert');
     expect(arg.severity).toBe('info');
-    expect(arg.dedupeKey).toBe(`spending:${USER}:${PERIOD.id}:attention`);
+    expect(arg.dedupeKey).toBe(key('attention'));
     expect(arg.message).toContain('75%');
+    expect(mockedRepo.deleteByDedupeKeys).toHaveBeenCalledWith([key('warning'), key('exceeded')]);
   });
 
   it('creates warning notification at 90%', async () => {
@@ -55,8 +59,9 @@ describe('processUserSpendingAlert', () => {
 
     const arg = mockedRepo.create.mock.calls[0]![0];
     expect(arg.severity).toBe('warning');
-    expect(arg.dedupeKey).toBe(`spending:${USER}:${PERIOD.id}:warning`);
+    expect(arg.dedupeKey).toBe(key('warning'));
     expect(arg.message).toContain('90%');
+    expect(mockedRepo.deleteByDedupeKeys).toHaveBeenCalledWith([key('exceeded')]);
   });
 
   it('creates danger notification when spending exceeds 100%', async () => {
@@ -66,16 +71,32 @@ describe('processUserSpendingAlert', () => {
 
     const arg = mockedRepo.create.mock.calls[0]![0];
     expect(arg.severity).toBe('danger');
-    expect(arg.dedupeKey).toBe(`spending:${USER}:${PERIOD.id}:exceeded`);
+    expect(arg.dedupeKey).toBe(key('exceeded'));
+    expect(mockedRepo.deleteByDedupeKeys).not.toHaveBeenCalled();
   });
 
-  it('safe status → no notification', async () => {
+  it('safe status → remove all spending alerts and skip create', async () => {
     mockedTx.findByPeriodId.mockResolvedValue([expense('1000')]);
 
     await processUserSpendingAlert(USER);
 
+    expect(mockedRepo.deleteByDedupeKeys).toHaveBeenCalledWith([
+      key('attention'),
+      key('warning'),
+      key('exceeded'),
+    ]);
     expect(mockedRepo.findByDedupeKey).not.toHaveBeenCalled();
     expect(mockedRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('when spending drops from exceeded to attention → prune higher statuses', async () => {
+    mockedTx.findByPeriodId.mockResolvedValue([expense('1500')]);
+
+    await processUserSpendingAlert(USER, PERIOD.id);
+
+    expect(mockedPeriod.ensureCurrentPeriodExists).not.toHaveBeenCalled();
+    expect(mockedRepo.deleteByDedupeKeys).toHaveBeenCalledWith([key('warning'), key('exceeded')]);
+    expect(mockedRepo.create.mock.calls[0]![0].dedupeKey).toBe(key('attention'));
   });
 
   it('skips when monthlyIncome is 0', async () => {
@@ -85,6 +106,7 @@ describe('processUserSpendingAlert', () => {
 
     expect(mockedTx.findByPeriodId).not.toHaveBeenCalled();
     expect(mockedRepo.create).not.toHaveBeenCalled();
+    expect(mockedRepo.deleteByDedupeKeys).not.toHaveBeenCalled();
   });
 
   it('skips when user does not exist', async () => {
@@ -129,6 +151,6 @@ describe('processUserSpendingAlert', () => {
     await processUserSpendingAlert(USER);
 
     const arg = mockedRepo.create.mock.calls[0]![0];
-    expect(arg.dedupeKey).toBe(`spending:${USER}:${PERIOD.id}:warning`);
+    expect(arg.dedupeKey).toBe(key('warning'));
   });
 });

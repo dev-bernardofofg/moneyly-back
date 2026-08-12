@@ -111,6 +111,10 @@ export const sendPushToUser = async (userId: string, payload: PushPayload): Prom
       logger.info('[push] enviado', { userId, success: successCount });
     }
   } catch (error) {
-    logger.error('[push] falha ao enviar notificação', error as Error, { userId });
+    const err = error as Error & { cause?: unknown };
+    logger.error('[push] falha ao enviar notificação', err, {
+      userId,
+      cause: err.cause instanceof Error ? err.cause.message : err.cause,
+    });
   }
 };
