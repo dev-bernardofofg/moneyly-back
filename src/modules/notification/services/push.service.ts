@@ -44,11 +44,17 @@ const chunk = <T>(items: T[], size: number): T[][] => {
  */
 export const sendPushToUser = async (userId: string, payload: PushPayload): Promise<void> => {
   const messaging = getMessaging();
-  if (!messaging) return;
+  if (!messaging) {
+    logger.warn('[push] skip — Firebase Admin não configurado (FIREBASE_*)');
+    return;
+  }
 
   try {
     const devices = await deviceRegistrationRepository.findByUser(userId);
-    if (devices.length === 0) return;
+    if (devices.length === 0) {
+      logger.warn('[push] skip — nenhum device registrado para o usuário', { userId });
+      return;
+    }
 
     const data = {
       title: payload.title,
@@ -61,6 +67,8 @@ export const sendPushToUser = async (userId: string, payload: PushPayload): Prom
     const deadFids: string[] = [];
     let successCount = 0;
     let failureCount = 0;
+
+    logger.info('[push] enviando', { userId, devices: devices.length, type: payload.type });
 
     for (const batch of chunk(
       devices.map((device) => device.fid),
@@ -76,8 +84,18 @@ export const sendPushToUser = async (userId: string, payload: PushPayload): Prom
       failureCount += response.failureCount;
 
       response.responses.forEach((result, index) => {
-        if (result.error && DEAD_DEVICE_CODES.has(result.error.code)) {
-          deadFids.push(batch[index] as string);
+        if (!result.error) return;
+
+        const fid = batch[index] as string;
+        logger.warn('[push] falha por device', {
+          userId,
+          fidPrefix: fid.slice(0, 8),
+          code: result.error.code,
+          message: result.error.message,
+        });
+
+        if (DEAD_DEVICE_CODES.has(result.error.code)) {
+          deadFids.push(fid);
         }
       });
     }
@@ -89,6 +107,8 @@ export const sendPushToUser = async (userId: string, payload: PushPayload): Prom
 
     if (failureCount > 0) {
       logger.warn('[push] envio parcial', { userId, success: successCount, failure: failureCount });
+    } else if (successCount > 0) {
+      logger.info('[push] enviado', { userId, success: successCount });
     }
   } catch (error) {
     logger.error('[push] falha ao enviar notificação', error as Error, { userId });
