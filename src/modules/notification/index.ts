@@ -1,7 +1,3 @@
-/**
- * Interface pública do módulo notification.
- * Outros módulos e o server importam APENAS daqui (ver .specs/06).
- */
 export { NotificationRouter } from './notification.router';
 export {
   processBudgetAlerts,
@@ -13,5 +9,6 @@ export {
   processUserSpendingAlert,
 } from './use-cases/process-spending-alerts.use-case';
 export { notifyGoalMilestones } from './use-cases/notify-goal-milestones.use-case';
+export { notifyTransactionCreated } from './use-cases/notify-transaction-created.use-case';
 export { dispatchNotification } from './use-cases/dispatch-notification.use-case';
 export { sendPushToUser } from './services/push.service';

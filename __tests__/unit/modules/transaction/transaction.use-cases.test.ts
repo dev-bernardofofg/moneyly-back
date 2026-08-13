@@ -6,10 +6,12 @@ import { transactionRepository } from '@modules/transaction/repositories/transac
 import { createTransactionUseCase } from '@modules/transaction/use-cases/create-transaction.use-case';
 import { updateTransactionUseCase } from '@modules/transaction/use-cases/update-transaction.use-case';
 import { validateCategoryExistsForUser } from '@modules/transaction/validations/transaction.validation';
+import { notifyTransactionCreated, processUserSpendingAlert } from '@modules/notification';
 
 // Mock dos módulos
 jest.mock('@modules/transaction/repositories/transaction.repository');
 jest.mock('@modules/transaction/validations/transaction.validation');
+jest.mock('@modules/notification');
 jest.mock('@modules/financial-period', () => ({
   ensurePeriodExists: jest.fn((_req: unknown, _res: unknown, next: () => void) => next()),
   financialPeriodService: {
@@ -69,6 +71,31 @@ describe('TransactionService', () => {
         })
       );
       expect(result).toEqual(mockCreatedTransaction);
+      expect(notifyTransactionCreated).toHaveBeenCalledWith(mockCreatedTransaction);
+      expect(processUserSpendingAlert).toHaveBeenCalledWith(mockUserId, 'p1');
+    });
+
+    it('notifies income without spending alert', async () => {
+      const incomeData = { ...mockTransactionData, type: 'income' as const };
+      const created = { ...mockCreatedTransaction, type: 'income' as const };
+      (validateCategoryExistsForUser as jest.Mock).mockResolvedValue(undefined);
+      (transactionRepository.create as jest.Mock).mockResolvedValue(created);
+
+      await createTransactionUseCase(mockUserId, incomeData);
+
+      expect(notifyTransactionCreated).toHaveBeenCalledWith(created);
+      expect(processUserSpendingAlert).not.toHaveBeenCalled();
+    });
+
+    it('still creates the transaction when notification fails', async () => {
+      (validateCategoryExistsForUser as jest.Mock).mockResolvedValue(undefined);
+      (transactionRepository.create as jest.Mock).mockResolvedValue(mockCreatedTransaction);
+      (notifyTransactionCreated as jest.Mock).mockRejectedValueOnce(new Error('push down'));
+
+      const result = await createTransactionUseCase(mockUserId, mockTransactionData);
+
+      expect(result).toEqual(mockCreatedTransaction);
+      expect(processUserSpendingAlert).toHaveBeenCalled();
     });
 
     it('creates a transaction with the current date when no date is provided', async () => {

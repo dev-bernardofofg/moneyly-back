@@ -1,4 +1,6 @@
 import { toSaoPauloTimezone } from '@core/helpers/dates';
+import { logger } from '@core/lib/logger';
+import { notifyTransactionCreated } from '@modules/notification';
 import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
 import { financialPeriodService } from '@modules/financial-period';
 import { calcHours } from '../helpers/calc-hours';
@@ -54,6 +56,12 @@ export const createOvertimeUseCase = async (userId: string, data: CreateOvertime
   });
 
   await overtimeRepository.setTransactionId(record.id, transaction.id);
+
+  try {
+    await notifyTransactionCreated(transaction);
+  } catch (error) {
+    logger.error('[overtime] transaction notification failed', error as Error);
+  }
 
   return { ...record, transactionId: transaction.id };
 };
