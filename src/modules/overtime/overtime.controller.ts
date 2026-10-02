@@ -1,4 +1,8 @@
-import { format } from 'date-fns';
+import {
+  formatBrazilianDate,
+  formatBrazilianTime,
+  formatIsoDateSaoPaulo,
+} from '@core/helpers/dates';
 import { ResponseHandler } from '@core/helpers/response-handler';
 import { asyncHandler } from '@core/middlewares/async-handler';
 import type { AuthRequest } from '@modules/auth/middlewares/auth';
@@ -64,9 +68,9 @@ export const exportOvertimeCsv = asyncHandler<AuthRequest>(async (req, res) => {
   const headers = ['Empresa', 'Data', 'Início', 'Fim', 'Horas', 'Valor (R$)', 'Descrição'];
   const rows = records.map((r) => [
     r.company.name,
-    format(new Date(r.startTime), 'dd/MM/yyyy'),
-    format(new Date(r.startTime), 'HH:mm'),
-    format(new Date(r.endTime), 'HH:mm'),
+    formatBrazilianDate(r.startTime),
+    formatBrazilianTime(r.startTime),
+    formatBrazilianTime(r.endTime),
     Number(r.hoursWorked).toFixed(2).replace('.', ','),
     Number(r.amount).toFixed(2).replace('.', ','),
     r.description ?? '',
@@ -76,7 +80,7 @@ export const exportOvertimeCsv = asyncHandler<AuthRequest>(async (req, res) => {
     .map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(';'))
     .join('\r\n');
 
-  const filename = `horas-extras-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+  const filename = `horas-extras-${formatIsoDateSaoPaulo(new Date())}.csv`;
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
   res.send('﻿' + csv);

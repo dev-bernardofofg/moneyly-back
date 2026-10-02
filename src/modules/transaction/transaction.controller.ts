@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { formatBrazilianDate, formatIsoDateSaoPaulo } from '@core/helpers/dates';
 import { ResponseHandler } from '@core/helpers/response-handler';
 import { buildTransactionFilters } from './helpers/transaction-filters';
 import { asyncHandler } from '@core/middlewares/async-handler';
@@ -139,14 +139,14 @@ export const exportTransactionsCsv = asyncHandler<AuthRequest>(async (req, res) 
     Number(tx.amount).toFixed(2).replace('.', ','),
     tx.category.name,
     tx.description ?? '',
-    format(new Date(tx.date), 'dd/MM/yyyy'),
+    formatBrazilianDate(tx.date),
   ]);
 
   const csv = [headers, ...rows]
     .map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(';'))
     .join('\r\n');
 
-  const filename = `transacoes-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+  const filename = `transacoes-${formatIsoDateSaoPaulo(new Date())}.csv`;
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
   res.send('﻿' + csv);
