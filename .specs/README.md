@@ -13,6 +13,8 @@ Mantida manualmente. Atualizar sempre que padrão ou domínio mudar.
 | [04-feature-playbook.md](04-feature-playbook.md)   | Passo a passo para adicionar nova feature                           |
 | [05-feature-catalog.md](05-feature-catalog.md)     | Catálogo de features existentes e endpoints                         |
 | [06-project-structure.md](06-project-structure.md) | Estrutura modular alvo (base serverJB) + plano de migração          |
+| [front-handoff-push-devices.md](front-handoff-push-devices.md) | Prompt/handoff: registrar device FCM (FID) no front                 |
+| [front-handoff-transaction-push.md](front-handoff-transaction-push.md) | Handoff: push de entrada/saída (escopo fechado)                     |
 
 ## Specs compartilhados (Front ↔ Back)
 

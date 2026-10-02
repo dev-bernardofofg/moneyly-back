@@ -49,11 +49,11 @@ Fonte de verdade: `src/infra/db/schema.ts` (Drizzle). Atualizar este doc quando 
 
 > Materialização do período financeiro. Criado/garantido pelo middleware `ensurePeriodExists` (atual + 1 futuro). Transações referenciam via `periodId`.
 
-### `notifications` (F2/F8/F9 — alertas)
+### `notifications` (F2/F8/F9 + transações)
 
-`id` · `userId`→users (cascade) · `type` enum `budget_alert|bill_reminder|goal_milestone` · `severity` enum `info|warning|danger` · `title` · `message` · `relatedId` uuid nullable (budgetId/recurringId/goalId) · `periodId`→financial_periods (cascade, nullable) · `dedupeKey` text **unique** · `isRead` bool default false · `createdAt`.
+`id` · `userId`→users (cascade) · `type` enum `budget_alert|bill_reminder|goal_milestone|spending_alert|transaction_income|transaction_expense` · `severity` enum `info|warning|danger` · `title` · `message` · `relatedId` uuid nullable (budgetId/recurringId/goalId/transactionId) · `periodId`→financial_periods (cascade, nullable) · `dedupeKey` text **unique** · `isRead` bool default false · `createdAt`.
 
-> **Idempotência por `dedupeKey`:** `budget:<budgetId>:<periodId>:<status>` (F2) · `bill:<recurringId>:<yyyy-MM-dd>` (F8) · `goal:<goalId>:milestone:<pct>` (F9). Coluna `type` é text sem CHECK no Postgres — enum só em TS, extensão não exige migration. Geração interna: F2/F8 no scheduler 1h (`processBudgetAlerts`/`processBillReminders`), F9 no request `add-amount`. Migration `0004_happy_veda.sql`.
+> **Idempotência por `dedupeKey`:** `budget:<budgetId>:<periodId>:<status>` (F2) · `bill:<recurringId>:<yyyy-MM-dd>` (F8) · `goal:<goalId>:milestone:<pct>` (F9) · `spending:<userId>:<periodId>:<status>` · `transaction:<transactionId>` (criação de lançamento). Coluna `type` é text sem CHECK no Postgres — enum só em TS, extensão não exige migration. Push data-only inclui `url`/`icon`/`badge`/`relatedId` (ver `helpers/push-visual.ts`).
 
 ### `companies` (F7 — horas extras)
 

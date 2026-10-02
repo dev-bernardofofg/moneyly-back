@@ -7,7 +7,6 @@ import { getMessaging } from '@infra/firebase';
 import { logger } from '@core/lib/logger';
 import { deviceRegistrationRepository } from '../repositories/device-registration.repository';
 
-/** Códigos que significam "esse device morreu" — limpamos do banco. */
 const DEAD_DEVICE_CODES = new Set([
   'messaging/installation-id-not-registered',
   'messaging/registration-token-not-registered',
@@ -15,17 +14,34 @@ const DEAD_DEVICE_CODES = new Set([
   'messaging/invalid-argument',
 ]);
 
-/** Limite da API de multicast do FCM. */
 const FCM_MAX_BATCH_SIZE = 500;
 
 export interface PushPayload {
   title: string;
   body: string;
-  /** Rota aberta ao clicar na notificação. */
   url?: string;
   notificationId?: string;
   type?: string;
+  relatedId?: string;
+  icon?: string;
+  image?: string;
+  badge?: string;
 }
+
+const toFcmData = (payload: PushPayload): Record<string, string> => {
+  const data: Record<string, string> = {
+    title: payload.title,
+    body: payload.body,
+    url: payload.url ?? '/',
+  };
+  if (payload.notificationId) data.notificationId = payload.notificationId;
+  if (payload.type) data.type = payload.type;
+  if (payload.relatedId) data.relatedId = payload.relatedId;
+  if (payload.icon) data.icon = payload.icon;
+  if (payload.image) data.image = payload.image;
+  if (payload.badge) data.badge = payload.badge;
+  return data;
+};
 
 const chunk = <T>(items: T[], size: number): T[][] => {
   const batches: T[][] = [];
@@ -56,13 +72,7 @@ export const sendPushToUser = async (userId: string, payload: PushPayload): Prom
       return;
     }
 
-    const data = {
-      title: payload.title,
-      body: payload.body,
-      url: payload.url ?? '/',
-      ...(payload.notificationId ? { notificationId: payload.notificationId } : {}),
-      ...(payload.type ? { type: payload.type } : {}),
-    };
+    const data = toFcmData(payload);
 
     const deadFids: string[] = [];
     let successCount = 0;

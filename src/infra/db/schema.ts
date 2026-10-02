@@ -333,9 +333,16 @@ export const notifications = pgTable('notifications', {
   userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  type: text('type', {
-    enum: ['budget_alert', 'bill_reminder', 'goal_milestone', 'spending_alert'],
-  }).notNull(),
+    type: text('type', {
+      enum: [
+        'budget_alert',
+        'bill_reminder',
+        'goal_milestone',
+        'spending_alert',
+        'transaction_income',
+        'transaction_expense',
+      ],
+    }).notNull(),
   severity: text('severity', { enum: ['info', 'warning', 'danger'] }).notNull(),
   title: text('title').notNull(),
   message: text('message').notNull(),

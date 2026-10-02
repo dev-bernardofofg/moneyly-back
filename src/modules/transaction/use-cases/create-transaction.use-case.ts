@@ -1,7 +1,7 @@
 import { parseTransactionDate } from '@core/helpers/dates';
 import { logger } from '@core/lib/logger';
 import { financialPeriodService } from '@modules/financial-period';
-import { processUserSpendingAlert } from '@modules/notification';
+import { notifyTransactionCreated, processUserSpendingAlert } from '@modules/notification';
 import { transactionRepository } from '../repositories/transaction.repository';
 import type { ITransaction } from '../transaction.types';
 import { validateCategoryExistsForUser } from '../validations/transaction.validation';
@@ -26,11 +26,17 @@ export const createTransactionUseCase = async (userId: string, transaction: ITra
     recurringTransactionId: transaction.recurringTransactionId ?? null,
   });
 
+  try {
+    await notifyTransactionCreated(newTransaction);
+  } catch (error) {
+    // Falha de notificação nunca quebra a criação da transação.
+    logger.error('[transactions] transaction notification failed', error as Error);
+  }
+
   if (transaction.type === 'expense') {
     try {
       await processUserSpendingAlert(userId, periodId);
     } catch (error) {
-      // Falha de notificação nunca quebra a criação da transação.
       logger.error('[transactions] spending alert failed', error as Error);
     }
   }

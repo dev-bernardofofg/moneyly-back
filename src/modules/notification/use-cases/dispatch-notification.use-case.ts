@@ -2,16 +2,9 @@ import { logger } from '@core/lib/logger';
 import type { NewNotification, Notification } from '@infra/db/schema';
 import { notificationRepository } from '../repositories/notification.repository';
 import { sendPushToUser } from '../services/push.service';
+import { resolvePushVisual } from '../helpers/push-visual';
 
 type NotificationInput = Omit<NewNotification, 'id' | 'createdAt'>;
-
-/** Rota que o clique no push abre, por tipo de notificação. */
-const DEEP_LINK: Record<string, string> = {
-  budget_alert: '/dashboard',
-  bill_reminder: '/recurring-transactions',
-  goal_milestone: '/planner',
-  spending_alert: '/dashboard',
-};
 
 /**
  * Cria a notificação in-app (idempotente via dedupeKey) e dispara o push.
@@ -38,12 +31,18 @@ export const dispatchNotification = async (
     throw error;
   }
 
+  const visual = resolvePushVisual(created.type, created.relatedId);
+
   await sendPushToUser(created.userId, {
     title: created.title,
     body: created.message,
-    url: DEEP_LINK[created.type] ?? '/dashboard',
+    url: visual.url,
+    icon: visual.icon,
+    image: visual.image,
+    badge: visual.badge,
     notificationId: created.id,
     type: created.type,
+    relatedId: created.relatedId ?? undefined,
   });
 
   return created;

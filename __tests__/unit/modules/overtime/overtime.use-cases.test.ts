@@ -15,6 +15,7 @@ import { validateOvertimeOwnership } from '@modules/overtime/validations/overtim
 import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
 import { financialPeriodService } from '@modules/financial-period';
 import { categoryRepository } from '@modules/category';
+import { notifyTransactionCreated } from '@modules/notification';
 
 jest.mock('@modules/overtime/repositories/overtime.repository');
 jest.mock('@modules/overtime/validations/company.validation');
@@ -30,6 +31,9 @@ jest.mock('@modules/category', () => ({
     findByIdAndUserId: jest.fn(),
     findGlobalCategories: jest.fn(),
   },
+}));
+jest.mock('@modules/notification', () => ({
+  notifyTransactionCreated: jest.fn().mockResolvedValue(undefined),
 }));
 
 const mockedOvertimeRepo = overtimeRepository as jest.Mocked<typeof overtimeRepository>;
@@ -97,6 +101,7 @@ describe('overtime use-cases', () => {
         })
       );
       expect(mockedOvertimeRepo.setTransactionId).toHaveBeenCalledWith('ot-1', 'tx-1');
+      expect(notifyTransactionCreated).toHaveBeenCalledWith({ id: 'tx-1' });
       expect(result.transactionId).toBe('tx-1');
     });
 
