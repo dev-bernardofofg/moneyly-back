@@ -149,3 +149,6 @@ openapi.json
 
 # Public folder
 public/
+
+# graphify (gerado localmente)
+graphify-out/
