@@ -26,6 +26,8 @@ export const forecastQuerySchema = z.object({
   periodId: z.string().uuid('periodId inválido').optional(),
 });
 
+export const plannerQuerySchema = forecastQuerySchema;
+
 export const comparativeInsightsQuerySchema = z.object({
   periodsBack: z
     .string()

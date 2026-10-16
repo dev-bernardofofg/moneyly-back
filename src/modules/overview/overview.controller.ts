@@ -1,5 +1,4 @@
 import { formatBrazilianDate } from '@core/helpers/dates';
-import { getCurrentFinancialPeriod } from '@modules/financial-period';
 import { ResponseHandler } from '@core/helpers/response-handler';
 import { asyncHandler } from '@core/middlewares/async-handler';
 import type { AuthRequest } from '@modules/auth/middlewares/auth';
@@ -93,23 +92,26 @@ export const getComparativeInsights = asyncHandler<AuthRequest>(async (req, res)
 });
 
 export const getPlannerOverview = asyncHandler<AuthRequest>(async (req, res) => {
-  const { id: userId, financialDayStart, financialDayEnd, monthlyIncome } = req.user;
+  const { periodId } = req.query as { periodId?: string };
+  const { id: userId, monthlyIncome } = req.user;
 
-  const currentPeriod = getCurrentFinancialPeriod(financialDayStart ?? 1, financialDayEnd ?? 31);
-
-  const { stats, alerts } = await getPlannerOverviewUseCase(userId, Number(monthlyIncome) || 0);
+  const { stats, alerts, period, freeBalanceImpact } = await getPlannerOverviewUseCase(
+    userId,
+    Number(monthlyIncome) || 0,
+    periodId
+  );
 
   return ResponseHandler.success(
     res,
     {
       stats,
       currentPeriod: {
-        startDate: currentPeriod.startDate,
-        endDate: currentPeriod.endDate,
-        description: `Período financeiro: ${currentPeriod.startDate.toLocaleDateString(
-          'pt-BR'
-        )} a ${currentPeriod.endDate.toLocaleDateString('pt-BR')}`,
+        id: period.id,
+        startDate: period.startDate,
+        endDate: period.endDate,
+        description: `Período financeiro: ${formatBrazilianDate(period.startDate)} a ${formatBrazilianDate(period.endDate)}`,
       },
+      freeBalanceImpact,
       alerts,
     },
     'Stats do planejamento recuperados com sucesso'

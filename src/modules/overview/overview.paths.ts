@@ -15,6 +15,7 @@ import { ok, route } from '@core/openapi/route';
 import {
   getAvailablePeriodsQuerySchema,
   getDashboardOverviewQuerySchema,
+  plannerQuerySchema,
 } from './schemas/overview.schema';
 
 route({
@@ -37,7 +38,8 @@ route({
   method: 'get',
   path: '/overview/planner',
   tag: 'Overview',
-  summary: 'Planejamento financeiro',
+  summary: 'Planejamento financeiro e impacto no Saldo Livre',
+  query: plannerQuerySchema,
   ok: ok(wrapSuccess(PlannerOverviewSchema)),
 });
 route({

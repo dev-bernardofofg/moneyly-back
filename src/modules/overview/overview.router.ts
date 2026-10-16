@@ -13,6 +13,7 @@ import { validate } from '@core/middlewares/validate';
 import {
   comparativeInsightsQuerySchema,
   forecastQuerySchema,
+  plannerQuerySchema,
   getAvailablePeriodsQuerySchema,
   getDashboardOverviewQuerySchema,
 } from './schemas/overview.schema';
@@ -34,7 +35,7 @@ OverviewRouter.get(
   getDashboardOverview
 );
 
-OverviewRouter.get('/planner', getPlannerOverview);
+OverviewRouter.get('/planner', validate({ query: plannerQuerySchema }), getPlannerOverview);
 
 OverviewRouter.get('/insights', getFinancialInsights);
 

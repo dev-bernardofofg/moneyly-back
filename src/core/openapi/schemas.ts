@@ -341,9 +341,15 @@ export const PlannerOverviewSchema = registry.register(
       availableForBudget: z.number(),
     }),
     currentPeriod: z.object({
+      id: z.string().uuid(),
       startDate: isoDate,
       endDate: isoDate,
       description: z.string(),
+    }),
+    freeBalanceImpact: z.object({
+      budgetReserve: z.number(),
+      goalReserve: z.number(),
+      total: z.number(),
     }),
     alerts: z.array(PlanningAlertSchema),
   })
