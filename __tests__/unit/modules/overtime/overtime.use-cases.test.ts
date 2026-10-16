@@ -19,6 +19,7 @@ import { notifyTransactionCreated } from '@modules/notification';
 
 jest.mock('@modules/account/use-cases/account.use-cases', () => ({
   resolveAccountId: jest.fn().mockResolvedValue('account-1'),
+  resolveAccount: jest.fn().mockResolvedValue({ id: 'account-1', type: 'checking' }),
 }));
 jest.mock('@modules/overtime/repositories/overtime.repository');
 jest.mock('@modules/overtime/validations/company.validation');

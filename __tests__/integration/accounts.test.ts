@@ -153,3 +153,74 @@ describe('Accounts', () => {
     expect(res.body.data.map((account: { id: string }) => account.id)).not.toContain(cardId);
   });
 });
+
+describe('Credit card billing period', () => {
+  let token: string;
+  let categoryId: string;
+  let cardId: string;
+
+  const auth = () => ({ Authorization: `Bearer ${token}` });
+
+  const create = async (body: Record<string, unknown>) => {
+    const res = await request(app)
+      .post('/transactions/create')
+      .set(auth())
+      .send({ type: 'expense', title: 'Compra', amount: 10, category: categoryId, ...body })
+      .expect(201);
+    return res.body.data as { id: string; periodId: string; date: string };
+  };
+
+  // Período de referência: uma transação de conta corrente no próprio dia.
+  const periodOf = async (date: string) => (await create({ date })).periodId;
+
+  beforeAll(async () => {
+    token = await signUp('billing');
+    const category = await request(app)
+      .post('/categories/create')
+      .set(auth())
+      .send({ name: `Billing Category ${Date.now()}` });
+    categoryId = category.body.data.id;
+    const card = await request(app)
+      .post('/accounts')
+      .set(auth())
+      .send({ type: 'credit_card', name: 'Cartão Fatura', closingDay: 25, dueDay: 5 })
+      .expect(201);
+    cardId = card.body.data.id;
+  });
+
+  it('puts a card purchase in the period of the invoice due date', async () => {
+    const purchase = await create({ date: '2026-09-10', accountId: cardId });
+
+    expect(purchase.periodId).toBe(await periodOf('2026-10-05'));
+    expect(purchase.date.slice(0, 10)).toBe('2026-09-10');
+  });
+
+  it('moves card purchases when the closing day changes', async () => {
+    const purchase = await create({ date: '2026-08-12', accountId: cardId });
+    expect(purchase.periodId).toBe(await periodOf('2026-09-05'));
+
+    await request(app).put(`/accounts/${cardId}`).set(auth()).send({ closingDay: 5 }).expect(200);
+
+    const res = await request(app)
+      .get('/transactions/')
+      .set(auth())
+      .query({ page: 1, limit: 100, accountId: cardId })
+      .expect(200);
+    const moved = res.body.data.find(
+      (transaction: { id: string }) => transaction.id === purchase.id
+    );
+    expect(moved.periodId).toBe(await periodOf('2026-10-05'));
+  });
+
+  it('recalculates the period when a transaction moves to the card', async () => {
+    const transaction = await create({ date: '2026-09-01' });
+
+    const res = await request(app)
+      .put(`/transactions/${transaction.id}`)
+      .set(auth())
+      .send({ accountId: cardId })
+      .expect(200);
+
+    expect(res.body.data.periodId).toBe(await periodOf('2026-10-05'));
+  });
+});

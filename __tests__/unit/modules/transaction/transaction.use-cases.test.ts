@@ -9,8 +9,14 @@ import { validateCategoryExistsForUser } from '@modules/transaction/validations/
 import { notifyTransactionCreated, processUserSpendingAlert } from '@modules/notification';
 
 // Mock dos módulos
+jest.mock('@modules/account/repositories/account.repository', () => ({
+  accountRepository: {
+    findByIdAndUserId: jest.fn().mockResolvedValue({ id: 'account-1', type: 'checking' }),
+  },
+}));
 jest.mock('@modules/account/use-cases/account.use-cases', () => ({
   resolveAccountId: jest.fn().mockResolvedValue('account-1'),
+  resolveAccount: jest.fn().mockResolvedValue({ id: 'account-1', type: 'checking' }),
 }));
 jest.mock('@modules/transaction/repositories/transaction.repository');
 jest.mock('@modules/transaction/validations/transaction.validation');
@@ -188,6 +194,10 @@ describe('TransactionService', () => {
         amount: '100.00',
       };
 
+      (transactionRepository.findByIdAndUserId as jest.Mock).mockResolvedValue({
+        accountId: 'account-1',
+        date: new Date('2024-01-01T03:00:00Z'),
+      });
       (transactionRepository.update as jest.Mock).mockResolvedValue(mockUpdatedTransaction);
 
       await updateTransactionUseCase(mockTransactionId, mockUserId, updateData);
