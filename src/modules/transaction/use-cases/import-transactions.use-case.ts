@@ -4,7 +4,10 @@ import { logger } from '@core/lib/logger';
 import { categoryRepository } from '@modules/category/repositories/category.repository';
 import { financialPeriodService } from '@modules/financial-period';
 import { processUserSpendingAlert } from '@modules/notification';
-import { buildImportCategorySuggester } from '../helpers/import-category-suggester';
+import {
+  buildImportCategorySuggester,
+  isCardBillPayment,
+} from '../helpers/import-category-suggester';
 import { decodeOfxFile, parseOfx } from '../helpers/ofx-parser';
 import { transactionRepository } from '../repositories/transaction.repository';
 import type { ConfirmImportInput } from '../schemas/transaction-import.schema';
@@ -12,7 +15,7 @@ import { validateCategoryExistsForUser } from '../validations/transaction.valida
 
 const TITLE_HISTORY_LIMIT = 2000;
 
-export type ImportItemStatus = 'new' | 'imported' | 'possible_duplicate';
+export type ImportItemStatus = 'new' | 'imported' | 'possible_duplicate' | 'bill_payment';
 
 const dayKey = (type: string, amount: number, date: Date) =>
   `${type}:${amount.toFixed(2)}:${spDayString(date)}`;
@@ -60,9 +63,11 @@ export const previewTransactionImportUseCase = async (userId: string, fileBase64
       );
       const status: ImportItemStatus = importedIds.has(transaction.externalId)
         ? 'imported'
-        : duplicateOf
-          ? 'possible_duplicate'
-          : 'new';
+        : isCardBillPayment(transaction.title, transaction.type)
+          ? 'bill_payment'
+          : duplicateOf
+            ? 'possible_duplicate'
+            : 'new';
 
       return {
         ...transaction,

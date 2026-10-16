@@ -128,6 +128,12 @@ const RULES: Array<{ type: TransactionType; category: string; keywords: string[]
       'cafeteria',
       'rappi',
       'sorveteria',
+      'food',
+      'pizza',
+      'burguer',
+      'hamburgueria',
+      'cafes',
+      'acai',
     ],
   },
   {
@@ -251,6 +257,12 @@ const RULES: Array<{ type: TransactionType; category: string; keywords: string[]
       'telefonia',
       'gas',
       'fatura',
+      'iof',
+      'juros',
+      'tarifa',
+      'anuidade',
+      'multa',
+      'encargos',
     ],
   },
 ];
@@ -267,6 +279,19 @@ export const significantTokens = (title: string): string[] =>
   normalize(title)
     .split(/\s+/)
     .filter((token) => token.length > 2 && !NOISE.has(token));
+
+// Cartão gruda palavras ("DL*UberRides", "VersadoCafes"): separar o camelCase expõe a
+// palavra-chave. Só para as regras; a chave do histórico segue a descrição original.
+const ruleText = (title: string) =>
+  [title, title.replace(/([a-z])([A-Z])/g, '$1 $2')]
+    .map((text) => significantTokens(text).join(' '))
+    .join(' ');
+
+// Crédito na fatura do cartão que é o pagamento da fatura anterior, não renda.
+const BILL_PAYMENT = /\b(pagamento|pagto|pgto)\b.*\b(on ?line|fatura|efetuado|recebido)\b/;
+
+export const isCardBillPayment = (title: string, type: TransactionType): boolean =>
+  type === 'income' && BILL_PAYMENT.test(normalize(title));
 
 export interface ImportCategorySuggester {
   suggest(title: string, type: TransactionType): string | null;
@@ -310,9 +335,10 @@ export function buildImportCategorySuggester(
       const exact = byKey.get(key);
       if (exact) return exact;
 
+      const text = ruleText(title);
       for (const rule of RULES) {
         if (rule.type !== type) continue;
-        if (rule.keywords.some((keyword) => ` ${key} `.includes(` ${keyword} `))) {
+        if (rule.keywords.some((keyword) => ` ${text} `.includes(` ${keyword} `))) {
           const id = categoryId(rule.category);
           if (id) return id;
         }
