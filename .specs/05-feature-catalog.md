@@ -42,9 +42,9 @@ Cada módulo segue camadas: `routes/<x>.router.ts` → `controllers/<x>.controll
 
 ## Overview / Dashboard (`/overview`)
 
-- `POST /overview/periods` períodos disponíveis · `POST /overview/dashboard` dados dashboard · `GET /overview/planner` planejamento · insights.
+- `POST /overview/periods` períodos disponíveis · `POST /overview/dashboard` dados dashboard · `GET /overview/planner?periodId=` planejamento + `freeBalanceImpact` (reservas do forecast) · insights.
 - `overview.*`, `helpers/handlers/overview-handlers.ts`, `helpers/mappers.ts`. Schema `overview.schema.ts`.
-- `GET /overview/forecast?periodId=` (F1) saldo projetado: `forecast.service.ts` — reusa recurring + período + transactions, projeta ocorrências futuras até `endDate`. Sem schema DB. Read-only.
+- `GET /overview/forecast?periodId=` (F1) saldo projetado + Saldo Livre (`freeBalance`): `get-forecast.use-case.ts` — reusa recurring + período + transactions + horas extras + orçamentos/metas, projeta ocorrências futuras até `endDate`. Sem schema DB. Read-only.
 - `GET /overview/insights/comparison?periodsBack=` (F4) comparativo: `comparative-insights.service.ts` + helper puro `helpers/comparative-insights.ts`. Aditivo — não altera `/overview/insights`.
 - `GET /transactions/subscriptions` (F3) detector de assinaturas: `subscription.service.ts` + helper puro `helpers/subscription-detector.ts`. Heurística sobre transactions (≥3 ocorrências, valor ±10%, cadência semanal/mensal/anual), exclui já-recorrentes. Read-only.
 
