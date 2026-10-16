@@ -84,6 +84,10 @@ export const updateIncomeAndPeriodSchema = z
     }
   );
 
+export const periodIdParamSchema = z.object({
+  periodId: z.string().uuid('ID do período inválido'),
+});
+
 export const updateUserProfileSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').max(100, 'Nome muito longo'),
   email: z.string().email('Email inválido').max(100, 'Email muito longo'),

@@ -13,12 +13,11 @@ import {
 } from '@core/openapi/schemas';
 import { ok, route } from '@core/openapi/route';
 import {
+  periodIdParamSchema,
   updateFinancialPeriodSchema,
   updateIncomeAndPeriodSchema,
   updateMonthlyIncomeSchema,
 } from './schemas/user.schema';
-
-const periodIdParam = z.object({ periodId: z.string().uuid() });
 
 route({
   method: 'get',
@@ -63,6 +62,6 @@ route({
   path: '/user/financial-periods/{periodId}',
   tag: 'User',
   summary: 'Buscar período por ID',
-  params: periodIdParam,
+  params: periodIdParamSchema,
   ok: ok(wrapSuccess(FinancialPeriodSchema)),
 });
