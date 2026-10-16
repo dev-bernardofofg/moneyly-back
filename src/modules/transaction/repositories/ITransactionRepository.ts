@@ -47,6 +47,11 @@ export interface ITransactionRepository {
     endDate: Date
   ): Promise<ManualTransactionMatch[]>;
   findRecentTitleCategories(userId: string, limit: number): Promise<TitleCategory[]>;
+  findDatesByAccountId(
+    userId: string,
+    accountId: string
+  ): Promise<Pick<Transaction, 'id' | 'date'>[]>;
+  setPeriodId(userId: string, ids: string[], periodId: string): Promise<void>;
   createManyImported(
     rows: Omit<NewTransaction, 'id' | 'createdAt' | 'updatedAt'>[]
   ): Promise<Transaction[]>;

@@ -205,6 +205,24 @@ export const transactionRepository = {
       .limit(limit);
   },
 
+  async findDatesByAccountId(
+    userId: string,
+    accountId: string
+  ): Promise<Pick<Transaction, 'id' | 'date'>[]> {
+    return db
+      .select({ id: transactions.id, date: transactions.date })
+      .from(transactions)
+      .where(and(eq(transactions.userId, userId), eq(transactions.accountId, accountId)));
+  },
+
+  async setPeriodId(userId: string, ids: string[], periodId: string): Promise<void> {
+    if (ids.length === 0) return;
+    await db
+      .update(transactions)
+      .set({ periodId, updatedAt: new Date() })
+      .where(and(eq(transactions.userId, userId), inArray(transactions.id, ids)));
+  },
+
   async createManyImported(
     rows: Omit<NewTransaction, 'id' | 'createdAt' | 'updatedAt'>[]
   ): Promise<Transaction[]> {

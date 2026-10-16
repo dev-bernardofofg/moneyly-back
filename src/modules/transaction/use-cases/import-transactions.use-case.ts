@@ -2,7 +2,8 @@ import { spDayString, spEndOfDay } from '@core/helpers/dates';
 import { BadRequestError } from '@core/errors';
 import { logger } from '@core/lib/logger';
 import { categoryRepository } from '@modules/category/repositories/category.repository';
-import { resolveAccountId } from '@modules/account/use-cases/account.use-cases';
+import { billingDateFor } from '@modules/account/helpers/billing-date';
+import { resolveAccount } from '@modules/account/use-cases/account.use-cases';
 import { financialPeriodService } from '@modules/financial-period';
 import { processUserSpendingAlert } from '@modules/notification';
 import {
@@ -86,18 +87,20 @@ export const confirmTransactionImportUseCase = async (
   userId: string,
   { items, accountId: requestedAccountId }: ConfirmImportInput
 ) => {
-  const accountId = await resolveAccountId(userId, requestedAccountId);
+  const account = await resolveAccount(userId, requestedAccountId);
   const categoryIds = [...new Set(items.map((item) => item.categoryId))];
   for (const categoryId of categoryIds) await validateCategoryExistsForUser(categoryId, userId);
 
-  // Um período por dia, não por linha: extratos têm dezenas de lançamentos no mesmo dia.
+  // Um período por dia de cobrança, não por linha: extratos têm dezenas de lançamentos no
+  // mesmo dia (e numa fatura todas as compras vencem no mesmo dia).
   const periodByDay = new Map<string, string>();
   const rows = [];
   for (const item of items) {
-    const day = spDayString(item.date);
+    const billingDate = billingDateFor(account, item.date);
+    const day = spDayString(billingDate);
     let periodId = periodByDay.get(day);
     if (!periodId) {
-      periodId = await financialPeriodService.findOrCreatePeriodForDate(userId, item.date);
+      periodId = await financialPeriodService.findOrCreatePeriodForDate(userId, billingDate);
       periodByDay.set(day, periodId);
     }
     rows.push({
@@ -111,7 +114,7 @@ export const confirmTransactionImportUseCase = async (
       periodId,
       recurringTransactionId: null,
       externalId: item.externalId,
-      accountId,
+      accountId: account.id,
     });
   }
 

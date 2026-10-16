@@ -1,4 +1,9 @@
+import { spDayString } from '@core/helpers/dates';
 import { BadRequestError } from '@core/errors';
+import { financialPeriodService } from '@modules/financial-period';
+import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
+import type { Account } from '@infra/db/schema';
+import { billingDateFor } from '../helpers/billing-date';
 import { accountRepository } from '../repositories/account.repository';
 import type { CreateAccountInput, UpdateAccountInput } from '../schemas/account.schema';
 import {
@@ -35,7 +40,29 @@ export const updateAccountUseCase = async (
   }
   if (data.name !== undefined) await validateUniqueAccountName(userId, data.name, id);
 
-  return (await accountRepository.update(id, userId, data))!;
+  const updated = (await accountRepository.update(id, userId, data))!;
+  const billingChanged =
+    (data.closingDay !== undefined && data.closingDay !== account.closingDay) ||
+    (data.dueDay !== undefined && data.dueDay !== account.dueDay);
+  if (billingChanged) await reassignBillingPeriods(userId, updated);
+  return updated;
+};
+
+// Fechamento/vencimento mudou: cada compra pode cair em outra fatura e outro período.
+const reassignBillingPeriods = async (userId: string, account: Account) => {
+  const rows = await transactionRepository.findDatesByAccountId(userId, account.id);
+  const idsByBillingDay = new Map<string, { date: Date; ids: string[] }>();
+  for (const { id, date } of rows) {
+    const billingDate = billingDateFor(account, date);
+    const day = spDayString(billingDate);
+    const group = idsByBillingDay.get(day) ?? { date: billingDate, ids: [] };
+    group.ids.push(id);
+    idsByBillingDay.set(day, group);
+  }
+  for (const { date, ids } of idsByBillingDay.values()) {
+    const periodId = await financialPeriodService.findOrCreatePeriodForDate(userId, date);
+    await transactionRepository.setPeriodId(userId, ids, periodId);
+  }
 };
 
 export const deleteAccountUseCase = async (id: string, userId: string) => {
@@ -46,7 +73,10 @@ export const deleteAccountUseCase = async (id: string, userId: string) => {
 };
 
 /** Conta informada (validada) ou a padrão do usuário. Usado por todo caminho que cria transação. */
-export const resolveAccountId = async (userId: string, accountId?: string | null) => {
-  if (accountId) return (await validateActiveAccount(accountId, userId)).id;
-  return (await accountRepository.ensureDefault(userId)).id;
+export const resolveAccount = async (userId: string, accountId?: string | null) => {
+  if (accountId) return validateActiveAccount(accountId, userId);
+  return accountRepository.ensureDefault(userId);
 };
+
+export const resolveAccountId = async (userId: string, accountId?: string | null) =>
+  (await resolveAccount(userId, accountId)).id;
