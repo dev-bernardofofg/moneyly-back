@@ -40,6 +40,9 @@ export const env = {
   FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL || '',
   FIREBASE_PRIVATE_KEY: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
 
+  // Segredo do Vercel Cron (GET /internal/cron/daily). Sem ele o endpoint recusa tudo.
+  CRON_SECRET: process.env.CRON_SECRET || '',
+
   // Configurações de CORS
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',')

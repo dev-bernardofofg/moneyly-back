@@ -7,9 +7,7 @@ import { errorHandler } from '@core/middlewares/error-handler';
 import { sanitizeData } from '@core/middlewares/sanitize';
 import { securityMiddleware } from '@core/middlewares/security';
 import router from './routes';
-import { processRecurringTransactions } from '@modules/recurring-transaction';
-
-import { processBillReminders, processBudgetAlerts, processSpendingAlerts } from '@modules/notification';
+import { runScheduledJobs } from './jobs/scheduled-jobs';
 
 export const app: Application = express();
 
@@ -19,53 +17,20 @@ app.use(express.json({ limit: '10mb' })); // Limitar tamanho do payload
 
 app.use(sanitizeData);
 
-connectDB();
-
 app.use(router);
 
 app.use(errorHandler);
 
 if (process.env.NODE_ENV !== 'test') {
+  connectDB();
+}
+
+// Na Vercel (serverless) não há processo vivo: jobs rodam pelo Vercel Cron (vercel.json).
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
   app.listen(env.PORT, () => {
     logger.info(`Servidor rodando na porta ${env.PORT}`);
   });
 
-  setInterval(
-    async () => {
-      try {
-        await processRecurringTransactions();
-      } catch (error) {
-        logger.error('[scheduler] recurring transactions error', error as Error);
-      }
-      try {
-        await processBudgetAlerts();
-      } catch (error) {
-        logger.error('[scheduler] budget alerts error', error as Error);
-      }
-      try {
-        await processBillReminders();
-      } catch (error) {
-        logger.error('[scheduler] bill reminders error', error as Error);
-      }
-      try {
-        await processSpendingAlerts();
-      } catch (error) {
-        logger.error('[scheduler] spending alerts error', error as Error);
-      }
-    },
-    60 * 60 * 1000
-  );
-
-  processRecurringTransactions().catch((error) =>
-    logger.error('[scheduler] startup run error', error as Error)
-  );
-  processBudgetAlerts().catch((error) =>
-    logger.error('[scheduler] budget alerts startup error', error as Error)
-  );
-  processBillReminders().catch((error) =>
-    logger.error('[scheduler] bill reminders startup error', error as Error)
-  );
-  processSpendingAlerts().catch((error) =>
-    logger.error('[scheduler] spending alerts startup error', error as Error)
-  );
+  setInterval(runScheduledJobs, 60 * 60 * 1000);
+  void runScheduledJobs();
 }

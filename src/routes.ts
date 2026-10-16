@@ -13,6 +13,7 @@ import { CompanyRouter, OvertimeRouter } from '@modules/overtime';
 import { RecurringTransactionRouter } from '@modules/recurring-transaction';
 import transactionRoutes from '@modules/transaction/transaction.router';
 import { UserRouters } from '@modules/user';
+import { CronRouter } from './jobs/cron.router';
 
 let openApiDocument: Record<string, unknown> = {};
 try {
@@ -60,5 +61,6 @@ router.use('/recurring-transactions', RecurringTransactionRouter);
 router.use('/notifications', NotificationRouter);
 router.use('/companies', CompanyRouter);
 router.use('/overtime', OvertimeRouter);
+router.use('/internal/cron', CronRouter);
 
 export default router;
