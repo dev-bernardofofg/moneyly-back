@@ -4,14 +4,13 @@ import { logger } from '@core/lib/logger';
 import { categoryRepository } from '@modules/category/repositories/category.repository';
 import { financialPeriodService } from '@modules/financial-period';
 import { processUserSpendingAlert } from '@modules/notification';
-import { normalizeTitle } from '@modules/subscription/helpers/subscription-detector';
+import { buildImportCategorySuggester } from '../helpers/import-category-suggester';
 import { decodeOfxFile, parseOfx } from '../helpers/ofx-parser';
 import { transactionRepository } from '../repositories/transaction.repository';
 import type { ConfirmImportInput } from '../schemas/transaction-import.schema';
 import { validateCategoryExistsForUser } from '../validations/transaction.validation';
 
 const TITLE_HISTORY_LIMIT = 2000;
-const FALLBACK_CATEGORY_NAME = 'Outros';
 
 export type ImportItemStatus = 'new' | 'imported' | 'possible_duplicate';
 
@@ -30,7 +29,7 @@ export const previewTransactionImportUseCase = async (userId: string, fileBase64
   }
 
   const times = statement.transactions.map((transaction) => transaction.date.getTime());
-  const [imported, manual, history, globals] = await Promise.all([
+  const [imported, manual, history, categories] = await Promise.all([
     transactionRepository.findImportedExternalIds(
       userId,
       statement.transactions.map((transaction) => transaction.externalId)
@@ -41,7 +40,7 @@ export const previewTransactionImportUseCase = async (userId: string, fileBase64
       spEndOfDay(new Date(Math.max(...times)))
     ),
     transactionRepository.findRecentTitleCategories(userId, TITLE_HISTORY_LIMIT),
-    categoryRepository.findGlobalCategories(),
+    categoryRepository.findByUserId(userId),
   ]);
 
   const importedIds = new Set(imported);
@@ -51,14 +50,7 @@ export const previewTransactionImportUseCase = async (userId: string, fileBase64
       transaction.id,
     ])
   );
-  // Histórico vem do mais recente: a primeira categoria vista por título vence.
-  const categoryByTitle = new Map<string, string>();
-  for (const { title, categoryId } of history) {
-    const key = normalizeTitle(title);
-    if (!categoryByTitle.has(key)) categoryByTitle.set(key, categoryId);
-  }
-  const fallbackCategoryId =
-    globals.find((category) => category.name === FALLBACK_CATEGORY_NAME)?.id ?? null;
+  const suggester = buildImportCategorySuggester(history, categories);
 
   return {
     accountKey: statement.accountKey,
@@ -76,8 +68,7 @@ export const previewTransactionImportUseCase = async (userId: string, fileBase64
         ...transaction,
         status,
         duplicateOf: status === 'possible_duplicate' ? duplicateOf! : null,
-        suggestedCategoryId:
-          categoryByTitle.get(normalizeTitle(transaction.title)) ?? fallbackCategoryId,
+        suggestedCategoryId: suggester.suggest(transaction.title, transaction.type),
       };
     }),
   };
