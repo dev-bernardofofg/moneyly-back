@@ -1,6 +1,6 @@
 import {
   buildImportCategorySuggester,
-  isCardBillPayment,
+  isBillPayment,
   significantTokens,
 } from '@modules/transaction/helpers/import-category-suggester';
 
@@ -119,14 +119,21 @@ describe('suggestion source', () => {
   });
 });
 
-describe('isCardBillPayment', () => {
+describe('isBillPayment', () => {
   it('flags the previous bill payment credited on a card statement', () => {
-    expect(isCardBillPayment('PAGAMENTO ON LINE', 'income')).toBe(true);
-    expect(isCardBillPayment('PAGTO FATURA CARTAO', 'income')).toBe(true);
+    expect(isBillPayment('PAGAMENTO ON LINE', 'income')).toBe(true);
+    expect(isBillPayment('PAGTO FATURA CARTAO', 'income')).toBe(true);
+  });
+
+  it('flags the bill payment debited on a checking statement', () => {
+    expect(isBillPayment('PAGAMENTO FATURA CARTAO INTER', 'expense')).toBe(true);
+    expect(isBillPayment('PAG FATURA', 'expense')).toBe(true);
+    expect(isBillPayment('FATURA CARTAO DE CREDITO', 'expense')).toBe(true);
   });
 
   it('does not flag regular income or expenses', () => {
-    expect(isCardBillPayment('PIX RECEBIDO FULANO', 'income')).toBe(false);
-    expect(isCardBillPayment('PAGAMENTO ON LINE', 'expense')).toBe(false);
+    expect(isBillPayment('PIX RECEBIDO FULANO', 'income')).toBe(false);
+    expect(isBillPayment('PAGAMENTO ON LINE', 'expense')).toBe(false);
+    expect(isBillPayment('PAGAMENTO BOLETO CONDOMINIO', 'expense')).toBe(false);
   });
 });

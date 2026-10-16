@@ -36,6 +36,7 @@ type PreviewItem = {
 describe('Transaction import', () => {
   let token: string;
   let categoryId: string;
+  let accountId: string;
 
   beforeAll(async () => {
     const res = await request(app)
@@ -52,6 +53,9 @@ describe('Transaction import', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ name: `Mercado ${Date.now()}` });
     categoryId = category.body.data.id;
+
+    const accounts = await request(app).get('/accounts').set('Authorization', `Bearer ${token}`);
+    accountId = accounts.body.data[0].id;
   });
 
   const preview = async (content: string) => {
@@ -63,11 +67,12 @@ describe('Transaction import', () => {
     return res.body.data.items as PreviewItem[];
   };
 
-  const confirm = (items: PreviewItem[]) =>
+  const confirm = (items: PreviewItem[], targetAccountId: string | null = accountId) =>
     request(app)
       .post('/transactions/import')
       .set('Authorization', `Bearer ${token}`)
       .send({
+        accountId: targetAccountId ?? undefined,
         items: items.map(({ externalId, type, amount, date, title, suggestedCategoryId }) => ({
           externalId,
           type,
@@ -157,5 +162,54 @@ describe('Transaction import', () => {
     );
 
     expect(item!.suggestedCategoryId).toBe(categoryId);
+  });
+
+  it('requires the target account', async () => {
+    const items = await preview(
+      ofx([{ fitId: 'f6', date: '20260913', amount: '-9.00', memo: 'Banca' }])
+    );
+
+    await confirm(items, null).expect(400);
+  });
+
+  it('flags the card bill payment debited on a checking statement', async () => {
+    const [item] = await preview(
+      ofx([
+        {
+          fitId: 'f7',
+          date: '20260914',
+          amount: '-3822.00',
+          memo: 'PAGAMENTO FATURA CARTAO INTER',
+        },
+      ])
+    );
+
+    expect(item!.status).toBe('bill_payment');
+  });
+
+  it('imports card rows into the invoice period', async () => {
+    const card = await request(app)
+      .post('/accounts')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ type: 'credit_card', name: 'Cartão Import', closingDay: 25, dueDay: 5 })
+      .expect(201);
+    const items = await preview(
+      ofx([{ fitId: 'c1', date: '20260910', amount: '-30.00', memo: 'DL*UberRides' }])
+    );
+    await confirm(items, card.body.data.id).expect(201);
+
+    const reference = await request(app)
+      .post('/transactions/create')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ type: 'expense', title: 'Ref', amount: 1, category: categoryId, date: '2026-10-05' })
+      .expect(201);
+    const list = await request(app)
+      .get('/transactions/')
+      .set('Authorization', `Bearer ${token}`)
+      .query({ page: 1, limit: 10, accountId: card.body.data.id })
+      .expect(200);
+
+    expect(list.body.data).toHaveLength(1);
+    expect(list.body.data[0].periodId).toBe(reference.body.data.periodId);
   });
 });
