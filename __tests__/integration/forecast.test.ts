@@ -36,14 +36,22 @@ async function createCategory(token: string) {
   return res.body.data.id as string;
 }
 
+// /auth/sign-up tem rate limit de 10 por processo: reaproveitar usuários sem estado.
+let emptyUser: string;
+let intruder: string;
+
+beforeAll(async () => {
+  emptyUser = await signUp('empty');
+  intruder = await signUp('intruder');
+});
+
 describe('GET /overview/forecast', () => {
   it('requires authentication', async () => {
     await request(app).get('/overview/forecast').expect(401);
   });
 
   it('returns the full freeBalance contract', async () => {
-    const token = await signUp('contract');
-    const data = await getForecast(token);
+    const data = await getForecast(emptyUser);
 
     expect(data).toEqual({
       period: {
@@ -76,18 +84,15 @@ describe('GET /overview/forecast', () => {
   });
 
   it('rejects an invalid periodId', async () => {
-    const token = await signUp('invalid-period');
     await request(app)
       .get('/overview/forecast')
-      .set('Authorization', `Bearer ${token}`)
+      .set('Authorization', `Bearer ${emptyUser}`)
       .query({ periodId: 'not-a-uuid' })
       .expect(400);
   });
 
   it('returns 404 for a period owned by another user', async () => {
-    const owner = await signUp('period-owner');
-    const intruder = await signUp('period-intruder');
-    const { period } = await getForecast(owner);
+    const { period } = await getForecast(emptyUser);
 
     await request(app)
       .get('/overview/forecast')
@@ -176,5 +181,63 @@ describe('GET /overview/forecast', () => {
     expect(freeBalance.income).toEqual({ fixed: 0, variable: 40, pendingVariable: 0 });
     expect(freeBalance.components.realizedBalance).toBe(40);
     expect(freeBalance.total).toBe(40);
+  });
+});
+
+describe('GET /overview/planner', () => {
+  it('requires authentication', async () => {
+    await request(app).get('/overview/planner').expect(401);
+  });
+
+  it('rejects an invalid periodId', async () => {
+    await request(app)
+      .get('/overview/planner')
+      .set('Authorization', `Bearer ${emptyUser}`)
+      .query({ periodId: 'not-a-uuid' })
+      .expect(400);
+  });
+
+  it('returns 404 for a period owned by another user', async () => {
+    const { period } = await getForecast(emptyUser);
+
+    await request(app)
+      .get('/overview/planner')
+      .set('Authorization', `Bearer ${intruder}`)
+      .query({ periodId: period.id })
+      .expect(404);
+  });
+
+  it('reports the same reserves the forecast subtracts from the free balance', async () => {
+    const token = await signUp('planner-impact');
+    const categoryId = await createCategory(token);
+    const targetDate = new Date(Date.now() + 365 * 24 * HOUR).toISOString().slice(0, 10);
+
+    await request(app)
+      .post('/budgets/')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ categoryId, monthlyLimit: 500 })
+      .expect(201);
+    await request(app)
+      .post('/goals/')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ title: 'Reserva', targetAmount: 1200, targetDate })
+      .expect(201);
+
+    const forecast = await getForecast(token);
+    const planner = await request(app)
+      .get('/overview/planner')
+      .set('Authorization', `Bearer ${token}`)
+      .query({ periodId: forecast.period.id })
+      .expect(200);
+
+    const { budgets, goals } = forecast.freeBalance.reserves;
+    expect(budgets).toBe(500);
+    expect(goals).toBeGreaterThan(0);
+    expect(planner.body.data.currentPeriod.id).toBe(forecast.period.id);
+    expect(planner.body.data.freeBalanceImpact).toEqual({
+      budgetReserve: budgets,
+      goalReserve: goals,
+      total: Math.round((budgets + goals) * 100) / 100,
+    });
   });
 });

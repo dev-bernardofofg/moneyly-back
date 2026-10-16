@@ -13,16 +13,19 @@ import { financialPeriodRepository } from '@modules/financial-period/repositorie
 import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
 import { getBudgetProgressUseCase } from '@modules/budget';
 import { getGoalsProgressUseCase } from '@modules/goal';
+import { getForecastUseCase } from '@modules/overview/use-cases/get-forecast.use-case';
 
 jest.mock('@modules/financial-period/repositories/financial-period.repository');
 jest.mock('@modules/transaction/repositories/transaction.repository');
 jest.mock('@modules/budget');
 jest.mock('@modules/goal');
+jest.mock('@modules/overview/use-cases/get-forecast.use-case');
 
 const fpRepo = financialPeriodRepository as jest.Mocked<typeof financialPeriodRepository>;
 const txRepo = transactionRepository as jest.Mocked<typeof transactionRepository>;
 const mockedBudgetProgress = getBudgetProgressUseCase as jest.Mock;
 const mockedGoalsProgress = getGoalsProgressUseCase as jest.Mock;
+const mockedForecast = getForecastUseCase as jest.Mock;
 
 const USER = 'user-123';
 
@@ -121,18 +124,35 @@ describe('calculateAlerts (pure)', () => {
   });
 });
 
-describe('getPlannerOverviewService', () => {
-  it('combines stats + alerts from budget/goal services', async () => {
+describe('getPlannerOverviewUseCase', () => {
+  beforeEach(() => {
+    mockedForecast.mockResolvedValue({
+      period: {
+        id: 'period-1',
+        startDate: new Date('2026-10-01'),
+        endDate: new Date('2026-10-31'),
+      },
+      freeBalance: { reserves: { budgets: 300.1, goals: 150.2 } },
+    });
     mockedBudgetProgress.mockResolvedValue([{ monthlyLimit: '1000' }]);
     mockedGoalsProgress.mockResolvedValue([{ targetAmount: '2000', currentAmount: '0' }]);
+  });
 
-    const r = await getPlannerOverviewUseCase(USER, 5000);
+  it('combines stats + alerts from budget/goal services for the forecast period', async () => {
+    const r = await getPlannerOverviewUseCase(USER, 5000, 'period-1');
 
-    expect(mockedBudgetProgress).toHaveBeenCalledWith(USER);
+    expect(mockedForecast).toHaveBeenCalledWith(USER, 'period-1');
+    expect(mockedBudgetProgress).toHaveBeenCalledWith(USER, 'period-1');
     expect(mockedGoalsProgress).toHaveBeenCalledWith(USER);
-    expect(r).toHaveProperty('stats');
     expect(r).toHaveProperty('alerts');
     expect(r.stats.totalBudgeted).toBe(1000);
+    expect(r.period.id).toBe('period-1');
+  });
+
+  it('exposes the forecast reserves as the free balance impact', async () => {
+    const r = await getPlannerOverviewUseCase(USER, 5000);
+
+    expect(r.freeBalanceImpact).toEqual({ budgetReserve: 300.1, goalReserve: 150.2, total: 450.3 });
   });
 });
 
