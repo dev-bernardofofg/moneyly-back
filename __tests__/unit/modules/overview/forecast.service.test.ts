@@ -4,17 +4,28 @@ import { transactionRepository } from '@modules/transaction/repositories/transac
 import { recurringTransactionRepository } from '@modules/recurring-transaction/repositories/recurring-transaction.repository';
 import { requireUser } from '@modules/user/validations/user.validation';
 import { HttpError } from '@core/errors/http-error';
+import { getBudgetProgressUseCase } from '@modules/budget/use-cases/get-budget-progress.use-case';
+import { listGoalsUseCase } from '@modules/goal/use-cases/list-goals.use-case';
+import { overtimeRepository } from '@modules/overtime/repositories/overtime.repository';
 
 jest.mock('@modules/financial-period');
 jest.mock('@modules/transaction/repositories/transaction.repository');
 jest.mock('@modules/recurring-transaction/repositories/recurring-transaction.repository');
 jest.mock('@modules/user/validations/user.validation');
+jest.mock('@modules/budget/use-cases/get-budget-progress.use-case');
+jest.mock('@modules/goal/use-cases/list-goals.use-case');
+jest.mock('@modules/overtime/repositories/overtime.repository');
 
 const mockedPeriodSvc = financialPeriodService as jest.Mocked<typeof financialPeriodService>;
 const mockedTxRepo = transactionRepository as jest.Mocked<typeof transactionRepository>;
 const mockedRecRepo = recurringTransactionRepository as jest.Mocked<
   typeof recurringTransactionRepository
 >;
+const mockedBudgetProgress = getBudgetProgressUseCase as jest.MockedFunction<
+  typeof getBudgetProgressUseCase
+>;
+const mockedListGoals = listGoalsUseCase as jest.MockedFunction<typeof listGoalsUseCase>;
+const mockedOvertimeRepo = overtimeRepository as jest.Mocked<typeof overtimeRepository>;
 
 const USER = '11111111-1111-1111-1111-111111111111';
 const day = 86400000;
@@ -34,6 +45,9 @@ function periodAround(now: Date) {
 beforeEach(() => {
   jest.clearAllMocks();
   (requireUser as jest.Mock).mockResolvedValue({ id: USER });
+  mockedBudgetProgress.mockResolvedValue([]);
+  mockedListGoals.mockResolvedValue([]);
+  mockedOvertimeRepo.findByUserIdInDateRange.mockResolvedValue([]);
 });
 
 describe('getForecastUseCase', () => {
@@ -53,6 +67,12 @@ describe('getForecastUseCase', () => {
     expect(r.projected.recurringExpense).toBe(0);
     expect(r.projected.occurrences).toHaveLength(0);
     expect(r.projectedEndBalance).toBe(700);
+    expect(r.freeBalance.total).toBe(700);
+    expect(r.freeBalance.income).toEqual({
+      fixed: 1000,
+      variable: 0,
+      pendingVariable: 0,
+    });
   });
 
   it('counts a future recurrence within the period window', async () => {
@@ -79,6 +99,7 @@ describe('getForecastUseCase', () => {
     expect(r.projected.occurrences).toHaveLength(1);
     expect(r.projected.recurringExpense).toBe(200);
     expect(r.projectedEndBalance).toBe(1000 - 200);
+    expect(r.freeBalance.commitments.recurringExpenses).toBe(200);
   });
 
   it('ignores a recurrence with exhausted installments', async () => {
@@ -103,6 +124,72 @@ describe('getForecastUseCase', () => {
     const r = await getForecastUseCase(USER);
     expect(r.projected.occurrences).toHaveLength(0);
     expect(r.projectedEndBalance).toBe(0);
+  });
+
+  it('subtracts reserves and includes overtime not yet materialized', async () => {
+    const now = new Date();
+    mockedPeriodSvc.ensureCurrentPeriodExists.mockResolvedValue(periodAround(now) as never);
+    mockedTxRepo.findByPeriodId.mockResolvedValue([
+      { type: 'income', amount: '1000', overtimeRecordId: null },
+    ] as never);
+    mockedRecRepo.findByUserId.mockResolvedValue([]);
+    mockedBudgetProgress.mockResolvedValue([
+      { remaining: 200, category: { id: '55555555-5555-5555-5555-555555555555' } },
+    ] as never);
+    mockedListGoals.mockResolvedValue([
+      {
+        targetDate: new Date(now.getTime() + 10 * day),
+        progress: { remaining: 100 },
+      },
+    ] as never);
+    mockedOvertimeRepo.findByUserIdInDateRange.mockResolvedValue([
+      {
+        id: '66666666-6666-6666-6666-666666666666',
+        amount: '300',
+        transactionId: null,
+      },
+    ] as never);
+
+    const r = await getForecastUseCase(USER);
+
+    expect(r.freeBalance.components.pendingVariableIncome).toBe(300);
+    expect(r.freeBalance.reserves).toEqual({ budgets: 200, goals: 100 });
+    expect(r.freeBalance.total).toBe(1000);
+  });
+
+  it('does not double count a recurrence already materialized on the same date', async () => {
+    const now = new Date();
+    const executionDate = new Date(now.getTime() + day);
+    const recurringId = '77777777-7777-7777-7777-777777777777';
+    mockedPeriodSvc.ensureCurrentPeriodExists.mockResolvedValue(periodAround(now) as never);
+    mockedTxRepo.findByPeriodId.mockResolvedValue([
+      {
+        type: 'expense',
+        amount: '200',
+        recurringTransactionId: recurringId,
+        date: executionDate,
+      },
+    ] as never);
+    mockedRecRepo.findByUserId.mockResolvedValue([
+      {
+        id: recurringId,
+        title: 'Aluguel',
+        type: 'expense',
+        amount: '200',
+        categoryId: '88888888-8888-8888-8888-888888888888',
+        frequency: 'monthly',
+        dayOfMonth: null,
+        dayOfWeek: null,
+        nextExecution: executionDate,
+        totalInstallments: null,
+        executedInstallments: 0,
+      },
+    ] as never);
+
+    const r = await getForecastUseCase(USER);
+
+    expect(r.projected.occurrences).toHaveLength(0);
+    expect(r.projectedEndBalance).toBe(-200);
   });
 
   it('invalid periodId → HttpError 404', async () => {

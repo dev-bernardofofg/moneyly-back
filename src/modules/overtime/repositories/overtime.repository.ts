@@ -1,4 +1,4 @@
-import { and, count, desc, eq, sql } from 'drizzle-orm';
+import { and, count, desc, eq, gte, lte, sql } from 'drizzle-orm';
 import { db } from '@infra/db';
 import {
   companies,
@@ -67,6 +67,25 @@ export const overtimeRepository = {
       .from(overtimeRecords)
       .innerJoin(companies, eq(overtimeRecords.companyId, companies.id))
       .where(and(...conditions))
+      .orderBy(desc(overtimeRecords.startTime));
+  },
+
+  async findByUserIdInDateRange(
+    userId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<OvertimeWithCompany[]> {
+    return db
+      .select(BASE_SELECT)
+      .from(overtimeRecords)
+      .innerJoin(companies, eq(overtimeRecords.companyId, companies.id))
+      .where(
+        and(
+          eq(overtimeRecords.userId, userId),
+          gte(overtimeRecords.startTime, startDate),
+          lte(overtimeRecords.startTime, endDate)
+        )
+      )
       .orderBy(desc(overtimeRecords.startTime));
   },
 

@@ -51,7 +51,7 @@ route({
   method: 'get',
   path: '/overview/forecast',
   tag: 'Overview',
-  summary: 'Saldo projetado (cash-flow forecast)',
+  summary: 'Saldo Livre e projeção do período',
   query: z.object({ periodId: z.string().uuid().optional() }),
   ok: ok(wrapSuccess(ForecastResponseSchema)),
 });

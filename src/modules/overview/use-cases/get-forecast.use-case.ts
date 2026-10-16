@@ -8,6 +8,16 @@ import type { RecurringFrequency } from '@modules/recurring-transaction/recurrin
 import { requireUser } from '@modules/user';
 import { HttpError } from '@core/errors/http-error';
 import { financialPeriodService } from '@modules/financial-period';
+import { getBudgetProgressUseCase } from '@modules/budget/use-cases/get-budget-progress.use-case';
+import { listGoalsUseCase } from '@modules/goal/use-cases/list-goals.use-case';
+import { overtimeRepository } from '@modules/overtime/repositories/overtime.repository';
+import {
+  calculateBudgetReserve,
+  calculateDaysRemaining,
+  calculateGoalReserve,
+  getForecastConfidence,
+  toMoney,
+} from '../helpers/free-balance';
 
 const MAX_OCCURRENCE_ITERATIONS = 400;
 
@@ -17,7 +27,11 @@ export interface ForecastOccurrence {
   type: 'income' | 'expense';
   amount: number;
   date: string;
+  categoryId: string;
 }
+
+const getOccurrenceKey = (recurringTransactionId: string, date: Date | string) =>
+  `${recurringTransactionId}:${new Date(date).toISOString().slice(0, 10)}`;
 
 export const getForecastUseCase = async (userId: string, periodId?: string) => {
   await requireUser(userId);
@@ -39,7 +53,18 @@ export const getForecastUseCase = async (userId: string, periodId?: string) => {
 
   const now = getCurrentSaoPauloDate();
 
-  const recurrences = await recurringTransactionRepository.findByUserId(userId);
+  const [recurrences, budgets, goals, overtimeRecords] = await Promise.all([
+    recurringTransactionRepository.findByUserId(userId),
+    getBudgetProgressUseCase(userId, period.id),
+    listGoalsUseCase(userId),
+    overtimeRepository.findByUserIdInDateRange(userId, startDate, endDate),
+  ]);
+
+  const materializedRecurrences = new Set(
+    transactions
+      .filter((transaction) => transaction.recurringTransactionId)
+      .map((transaction) => getOccurrenceKey(transaction.recurringTransactionId!, transaction.date))
+  );
 
   const occurrences: ForecastOccurrence[] = [];
 
@@ -60,14 +85,19 @@ export const getForecastUseCase = async (userId: string, periodId?: string) => {
     ) {
       iterations++;
 
-      if (cursor.getTime() >= startDate.getTime()) {
-        occurrences.push({
+      if (cursor.getTime() > now.getTime() && cursor.getTime() >= startDate.getTime()) {
+        const occurrence = {
           recurringTransactionId: rec.id,
           title: rec.title,
           type: rec.type as 'income' | 'expense',
           amount: Number(rec.amount),
           date: cursor.toISOString(),
-        });
+          categoryId: rec.categoryId,
+        };
+
+        if (!materializedRecurrences.has(getOccurrenceKey(rec.id, cursor))) {
+          occurrences.push(occurrence);
+        }
         remaining--;
       }
 
@@ -82,6 +112,32 @@ export const getForecastUseCase = async (userId: string, periodId?: string) => {
 
   const recurringIncome = sumAmounts(occurrences.filter((o) => o.type === 'income'));
   const recurringExpense = sumAmounts(occurrences.filter((o) => o.type === 'expense'));
+  const realizedOvertimeIds = new Set(
+    transactions
+      .map((transaction) => transaction.overtimeRecordId)
+      .filter((id): id is string => Boolean(id))
+  );
+  const realizedVariableIncome = sumAmounts(
+    transactions.filter(
+      (transaction) => transaction.type === 'income' && transaction.overtimeRecordId
+    )
+  );
+  const pendingVariableIncome = overtimeRecords
+    .filter((record) => !realizedOvertimeIds.has(record.id))
+    .reduce((total, record) => total + Number(record.amount), 0);
+  const budgetReserve = calculateBudgetReserve(
+    budgets,
+    occurrences
+      .filter((occurrence) => occurrence.type === 'expense')
+      .map(({ amount, categoryId }) => ({ amount, categoryId }))
+  );
+  const goalReserve = calculateGoalReserve(goals, startDate, endDate, now);
+  const expectedFixedIncome = toMoney(realizedIncome - realizedVariableIncome + recurringIncome);
+  const expectedVariableIncome = toMoney(realizedVariableIncome + pendingVariableIncome);
+  const projectedEndBalance = toMoney(
+    realizedBalance + recurringIncome - recurringExpense + pendingVariableIncome
+  );
+  const freeBalanceTotal = toMoney(projectedEndBalance - budgetReserve - goalReserve);
 
   return {
     period: {
@@ -100,7 +156,32 @@ export const getForecastUseCase = async (userId: string, periodId?: string) => {
       recurringExpense,
       occurrences,
     },
-    projectedEndBalance: realizedBalance + recurringIncome - recurringExpense,
+    projectedEndBalance,
+    freeBalance: {
+      total: freeBalanceTotal,
+      daysRemaining: calculateDaysRemaining(now, endDate),
+      confidence: getForecastConfidence(expectedFixedIncome, realizedIncome, budgets.length > 0),
+      income: {
+        fixed: expectedFixedIncome,
+        variable: expectedVariableIncome,
+        pendingVariable: toMoney(pendingVariableIncome),
+      },
+      commitments: {
+        recurringExpenses: toMoney(recurringExpense),
+      },
+      reserves: {
+        budgets: budgetReserve,
+        goals: goalReserve,
+      },
+      components: {
+        realizedBalance: toMoney(realizedBalance),
+        futureRecurringIncome: toMoney(recurringIncome),
+        futureRecurringExpense: toMoney(recurringExpense),
+        pendingVariableIncome: toMoney(pendingVariableIncome),
+        budgetReserve,
+        goalReserve,
+      },
+    },
     asOf: now.toISOString(),
   };
 };

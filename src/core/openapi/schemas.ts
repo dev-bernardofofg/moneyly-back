@@ -479,10 +479,36 @@ export const ForecastResponseSchema = registry.register(
           type: z.enum(['income', 'expense']),
           amount: z.number(),
           date: isoDate,
+          categoryId: z.string().uuid(),
         })
       ),
     }),
     projectedEndBalance: z.number(),
+    freeBalance: z.object({
+      total: z.number(),
+      daysRemaining: z.number().int().nonnegative(),
+      confidence: z.enum(['low', 'medium', 'high']),
+      income: z.object({
+        fixed: z.number(),
+        variable: z.number(),
+        pendingVariable: z.number(),
+      }),
+      commitments: z.object({
+        recurringExpenses: z.number(),
+      }),
+      reserves: z.object({
+        budgets: z.number(),
+        goals: z.number(),
+      }),
+      components: z.object({
+        realizedBalance: z.number(),
+        futureRecurringIncome: z.number(),
+        futureRecurringExpense: z.number(),
+        pendingVariableIncome: z.number(),
+        budgetReserve: z.number(),
+        goalReserve: z.number(),
+      }),
+    }),
     asOf: isoDate,
   })
 );

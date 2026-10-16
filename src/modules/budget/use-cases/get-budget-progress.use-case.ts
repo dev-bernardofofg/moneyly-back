@@ -6,15 +6,20 @@ import type { BudgetProgress } from '../budget.types';
 import { getBudgetStatus } from '../helpers/budget-status';
 import { budgetRepository } from '../repositories/budget.repository';
 
-export const getBudgetProgressUseCase = async (userId: string): Promise<BudgetProgress[]> => {
+export const getBudgetProgressUseCase = async (
+  userId: string,
+  periodId?: string
+): Promise<BudgetProgress[]> => {
   await requireUser(userId);
 
-  const [budgets, currentPeriod] = await Promise.all([
+  const [budgets, period] = await Promise.all([
     budgetRepository.getBudgetWithCategory(userId),
-    financialPeriodService.ensureCurrentPeriodExists(userId),
+    periodId
+      ? financialPeriodService.getPeriodById(periodId, userId)
+      : financialPeriodService.ensureCurrentPeriodExists(userId),
   ]);
 
-  const transactions = await transactionRepository.findByPeriodId(userId, currentPeriod.id);
+  const transactions = period ? await transactionRepository.findByPeriodId(userId, period.id) : [];
 
   return budgets.map((budget) => {
     const categoryExpenses = sumAmounts(

@@ -27,6 +27,11 @@ export interface IOvertimeRepository {
     userId: string,
     filters?: { month?: number; year?: number; companyId?: string }
   ): Promise<OvertimeWithCompany[]>;
+  findByUserIdInDateRange(
+    userId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<OvertimeWithCompany[]>;
   findByUserIdPaginated(
     userId: string,
     filters: { month?: number; year?: number; companyId?: string },
