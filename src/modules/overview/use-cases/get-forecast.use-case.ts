@@ -85,7 +85,14 @@ export const getForecastUseCase = async (userId: string, periodId?: string) => {
     ) {
       iterations++;
 
-      if (cursor.getTime() > now.getTime() && cursor.getTime() >= startDate.getTime()) {
+      // nextExecution vencido = ocorrência que o scheduler (cron diário) ainda não lançou:
+      // conta 1x, como o scheduler fará, em vez de sumir do realizado e do projetado.
+      const isPendingExecution = iterations === 1;
+
+      if (
+        (cursor.getTime() > now.getTime() || isPendingExecution) &&
+        cursor.getTime() >= startDate.getTime()
+      ) {
         const occurrence = {
           recurringTransactionId: rec.id,
           title: rec.title,
