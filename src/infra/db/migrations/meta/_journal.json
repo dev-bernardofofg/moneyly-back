@@ -64,6 +64,13 @@
       "when": 1786406400000,
       "tag": "0008_device_registrations",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792176623279,
+      "tag": "0009_transaction_external_id",
+      "breakpoints": true
     }
   ]
 }

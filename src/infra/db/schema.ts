@@ -28,28 +28,34 @@ export const users = pgTable('users', {
 });
 
 // Tabela de transações
-export const transactions = pgTable('transactions', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  type: text('type', { enum: ['income', 'expense'] }).notNull(),
-  title: text('title').notNull(),
-  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
-  categoryId: uuid('category_id')
-    .notNull()
-    .references(() => categories.id, { onDelete: 'cascade' }),
-  // ← NOVO CAMPO
-  periodId: uuid('period_id').references(() => financialPeriods.id, {
-    onDelete: 'cascade',
-  }),
-  recurringTransactionId: uuid('recurring_transaction_id'),
-  overtimeRecordId: uuid('overtime_record_id'),
-  description: text('description'),
-  date: timestamp('date').defaultNow().notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+export const transactions = pgTable(
+  'transactions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    type: text('type', { enum: ['income', 'expense'] }).notNull(),
+    title: text('title').notNull(),
+    amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+    categoryId: uuid('category_id')
+      .notNull()
+      .references(() => categories.id, { onDelete: 'cascade' }),
+    // ← NOVO CAMPO
+    periodId: uuid('period_id').references(() => financialPeriods.id, {
+      onDelete: 'cascade',
+    }),
+    recurringTransactionId: uuid('recurring_transaction_id'),
+    overtimeRecordId: uuid('overtime_record_id'),
+    // Identificador do extrato importado (banco:conta:FITID); nulo em lançamento manual.
+    externalId: text('external_id'),
+    description: text('description'),
+    date: timestamp('date').defaultNow().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => [unique('transactions_user_external_id_unique').on(table.userId, table.externalId)]
+);
 
 export const categories = pgTable('categories', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -333,16 +339,16 @@ export const notifications = pgTable('notifications', {
   userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-    type: text('type', {
-      enum: [
-        'budget_alert',
-        'bill_reminder',
-        'goal_milestone',
-        'spending_alert',
-        'transaction_income',
-        'transaction_expense',
-      ],
-    }).notNull(),
+  type: text('type', {
+    enum: [
+      'budget_alert',
+      'bill_reminder',
+      'goal_milestone',
+      'spending_alert',
+      'transaction_income',
+      'transaction_expense',
+    ],
+  }).notNull(),
   severity: text('severity', { enum: ['info', 'warning', 'danger'] }).notNull(),
   title: text('title').notNull(),
   message: text('message').notNull(),
