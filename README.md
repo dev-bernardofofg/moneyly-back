@@ -1,6 +1,18 @@
-# 💰 Moneyly API
+# Moneyly API — salário sob controle
 
-API REST para gerenciamento financeiro pessoal com TypeScript, Express e PostgreSQL.
+API REST do copiloto financeiro Moneyly, voltado a pessoas com salário fixo e renda
+variável. O núcleo calcula quanto está livre para gastar em cada período financeiro depois
+de considerar movimentações realizadas, recorrências, orçamento, metas e horas extras.
+
+## Conceito central
+
+`GET /overview/forecast` retorna, além do saldo projetado, o **Saldo Livre**:
+
+`saldo realizado + entradas futuras - contas futuras - reservas do ciclo`
+
+O detalhamento informa renda fixa e variável, compromissos, reservas, dias restantes e
+confiança da projeção. Horas extras continuam sendo registradas pelo módulo próprio, mas
+são tratadas como uma fonte de renda variável integrada às transações.
 
 ## 🚀 Stack Tecnológica
 

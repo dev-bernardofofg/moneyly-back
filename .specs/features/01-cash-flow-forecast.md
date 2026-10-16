@@ -1,4 +1,4 @@
-# F1 — Saldo Projetado / Cash-Flow Forecast
+# F1 — Saldo Projetado e Saldo Livre
 
 **Tipo:** feature (read-only). **Status:** spec. **Esforço:** baixo. **Schema novo:** nenhum.
 **Por quê:** tendência 2026 #1 (forecast preditivo). Reusa `recurring_transactions` + `financial_periods` + `transactions`. Responde "quanto vou ter no fim do período" sem o usuário simular na mão.
@@ -6,6 +6,7 @@
 ## Objetivo
 
 Endpoint que projeta o saldo até o fim do período financeiro selecionado (ou atual), combinando:
+
 - saldo realizado: transações já existentes no período;
 - entradas/saídas futuras: ocorrências de `recurring_transactions` ativas com `nextExecution` dentro da janela `[hoje, period.endDate]`;
 - renda mensal (`users.monthlyIncome`) ainda não materializada, se aplicável.
@@ -15,12 +16,14 @@ Sem persistir nada. Cálculo determinístico em São Paulo (helpers de `financia
 ## Endpoint
 
 `GET /overview/forecast?periodId=<uuid?>`
+
 - Auth: bearer. Router: `overview.router.ts` (já tem `authenticateUser` + `ensurePeriodExists`).
 - `periodId` opcional (ausente = período atual via `financialPeriodService.ensureCurrentPeriodExists`).
 
 ### Response (envelope `wrapSuccess`)
 
 `data: ForecastResponse`
+
 ```
 {
   period: { id, startDate, endDate, label },
@@ -40,10 +43,27 @@ Sem persistir nada. Cálculo determinístico em São Paulo (helpers de `financia
       date: string             // ISO, ocorrência prevista
     }>
   },
-  projectedEndBalance: number, // realized.balance + recurringIncome - recurringExpense
+  projectedEndBalance: number, // inclui renda variável pendente
+  freeBalance: {
+    total: number,             // disponível após compromissos e reservas
+    daysRemaining: number,
+    confidence: "low" | "medium" | "high",
+    income: { fixed, variable, pendingVariable },
+    commitments: { recurringExpenses },
+    reserves: { budgets, goals },
+    components: {
+      realizedBalance,
+      futureRecurringIncome,
+      futureRecurringExpense,
+      pendingVariableIncome,
+      budgetReserve,
+      goalReserve
+    }
+  },
   asOf: string                 // ISO, agora (São Paulo)
 }
 ```
+
 > Dinheiro derivado = `number` (consistente com stats/insights existentes; ver `02-conventions.md`).
 
 ## Camadas (seguir `04-feature-playbook.md`)
@@ -69,6 +89,11 @@ Sem persistir nada. Cálculo determinístico em São Paulo (helpers de `financia
 - Recorrente com `totalInstallments` esgotando no meio do período → projetar só as parcelas restantes.
 - Período no passado (histórico) → `projected` vazio (nada futuro); `realized` = fechamento real.
 - `monthlyIncome`: decidir se entra na projeção (renda fixa não-lançada). **Decisão:** v1 NÃO injeta `monthlyIncome` automático (evita dupla contagem com recorrente income). Documentar; reavaliar em F4.
+- Recorrências já materializadas no mesmo dia não entram novamente na projeção.
+- Horas extras com transação vinculada já pertencem ao realizado; registros sem transação
+  entram como renda variável pendente.
+- A reserva de orçamento exclui contas recorrentes da mesma categoria para evitar dupla
+  contagem. A reserva de metas é proporcional aos ciclos restantes até a data-alvo.
 
 ## Testes
 
