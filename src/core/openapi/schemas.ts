@@ -30,6 +30,7 @@ export const TransactionSchema = registry.register(
     date: isoDate,
     periodId: z.string().uuid().nullable(),
     recurringTransactionId: z.string().uuid().nullable(),
+    accountId: z.string().uuid(),
     createdAt: isoDate,
     updatedAt: isoDate,
     category: TransactionCategorySchema,
@@ -552,6 +553,22 @@ export const TransactionListSummarySchema = registry.register(
     monthlyIncome: z.union([z.string(), z.number()]),
     percentUsed: z.number().nullable(),
     alert: z.string().nullable(),
+  })
+);
+
+export const AccountSchema = registry.register(
+  'Account',
+  z.object({
+    id: z.string().uuid(),
+    userId: z.string().uuid(),
+    name: z.string(),
+    type: z.enum(['checking', 'credit_card']),
+    closingDay: z.number().int().nullable(),
+    dueDay: z.number().int().nullable(),
+    isDefault: z.boolean(),
+    isActive: z.boolean(),
+    createdAt: isoDate,
+    updatedAt: isoDate,
   })
 );
 
