@@ -52,6 +52,14 @@ Pontos iniciais para a Fase 1:
   antes da validação prática.
 - Tratar horas extras como uma fonte de renda variável, não como a identidade do produto.
 
+### Decisão de escopo (2026-10-16)
+
+Importação de extrato **OFX** (`POST /transactions/import/preview` + `POST /transactions/import`)
+entrou antes da validação, por decisão do produto. Não é integração bancária: o usuário baixa o
+arquivo no banco e envia; não há credencial, agregador nem Open Finance. Na validação, registrar
+se o dado ausente veio de algo que a importação teria trazido. Integração automática (Pluggy,
+Belvo, Open Finance) continua bloqueada até a evidência.
+
 ## Fase 1 — Estabilizar banco e testes integrados
 
 ### Problema atual

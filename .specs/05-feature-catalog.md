@@ -21,6 +21,7 @@ Cada módulo segue camadas: `routes/<x>.router.ts` → `controllers/<x>.controll
 - `POST /transactions/create` criar · `GET /transactions/` listar (paginado) · `PUT /transactions/:id` · `DELETE /transactions/:id` · `GET /transactions/summary` resumo · `GET /transactions/summary-current-period` resumo período atual.
 - `GET /transactions/` aceita query params: `category` (uuid), `periodId` (uuid), `type` (`income|expense`), `startDate`, `endDate`, `page`, `limit`. Quando `periodId` é passado, filtra diretamente pela coluna — mais preciso que range de data.
 - `GET /transactions/export` CSV aceita os mesmos filtros (sem paginação): `periodId`, `type`, `startDate`, `endDate`.
+- `POST /transactions/import/preview` (F11) recebe OFX em base64url (`file`; UTF-8 ou windows-1252), devolve itens `new`/`imported`/`possible_duplicate` (manual com mesmo tipo, valor e dia SP) + categoria sugerida pelo histórico (fallback global "Outros"). `POST /transactions/import` cria os confirmados; idempotente por `transactions.external_id` (`banco:conta:FITID`, único por usuário). Sem push por linha; alerta de gasto reavaliado 1x por período. Parser puro: `helpers/ofx-parser.ts`.
 - Filtros reutilizáveis em `src/schemas/filter.schema.ts` (`baseFilterSchema` + primitivos `dateRange/period/type/category`). Novos módulos compõem via `.merge()`.
 - `transaction.*`. Paginação via `helpers/pagination.ts` + `schemas/pagination.schema.ts`. Vincula `periodId` (período financeiro).
 
