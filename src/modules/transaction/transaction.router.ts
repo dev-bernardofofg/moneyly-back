@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import {
+  confirmTransactionImport,
   createTransaction,
   deleteTransaction,
   exportTransactionsCsv,
@@ -8,6 +9,7 @@ import {
   getSubscriptions,
   getTransactions,
   getTransactionSummary,
+  previewTransactionImport,
   updateTransaction,
 } from './transaction.controller';
 import { authenticateUser } from '@modules/auth/middlewares/auth';
@@ -16,6 +18,7 @@ import { validate } from '@core/middlewares/validate';
 import { idParamSchema } from '@core/schemas/id-param.schema';
 import { transactionListQuerySchema } from '@core/schemas/pagination.schema';
 import { transactionSchema, transactionUpdateSchema } from './schemas/transaction.schema';
+import { confirmImportSchema, previewImportSchema } from './schemas/transaction-import.schema';
 
 const TransactionsRouter: Router = Router();
 
@@ -43,5 +46,17 @@ TransactionsRouter.get('/summary-current-period', getCurrentFinancialPeriodSumma
 TransactionsRouter.get('/export', exportTransactionsCsv);
 
 TransactionsRouter.get('/subscriptions', getSubscriptions);
+
+TransactionsRouter.post(
+  '/import/preview',
+  validate({ body: previewImportSchema }),
+  previewTransactionImport
+);
+
+TransactionsRouter.post(
+  '/import',
+  validate({ body: confirmImportSchema }),
+  confirmTransactionImport
+);
 
 export default TransactionsRouter;

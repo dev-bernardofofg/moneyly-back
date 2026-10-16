@@ -8,6 +8,8 @@ import {
   CurrentPeriodSummarySchema,
   MonthlySummaryItemSchema,
   SubscriptionCandidateSchema,
+  TransactionImportPreviewSchema,
+  TransactionImportResultSchema,
   TransactionListSummarySchema,
   TransactionSchema,
   TransactionSummarySchema,
@@ -15,6 +17,7 @@ import {
 import { created, nullData, ok, route } from '@core/openapi/route';
 import { idParamSchema } from '@core/schemas/id-param.schema';
 import { transactionSchema, transactionUpdateSchema } from './schemas/transaction.schema';
+import { confirmImportSchema, previewImportSchema } from './schemas/transaction-import.schema';
 
 const intQuery = z.coerce.number().int().positive().optional();
 const dateQuery = z.string().optional();
@@ -104,4 +107,20 @@ route({
   tag: 'Transactions',
   summary: 'Detectar assinaturas (heurística)',
   ok: ok(wrapSuccess(z.array(SubscriptionCandidateSchema))),
+});
+route({
+  method: 'post',
+  path: '/transactions/import/preview',
+  tag: 'Transactions',
+  summary: 'Prévia de importação de extrato OFX',
+  body: previewImportSchema,
+  ok: ok(wrapSuccess(TransactionImportPreviewSchema)),
+});
+route({
+  method: 'post',
+  path: '/transactions/import',
+  tag: 'Transactions',
+  summary: 'Importar transações confirmadas do extrato',
+  body: confirmImportSchema,
+  ok: created(wrapSuccess(TransactionImportResultSchema)),
 });

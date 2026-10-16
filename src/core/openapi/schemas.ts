@@ -405,6 +405,30 @@ export const SubscriptionCandidateSchema = registry.register(
   })
 );
 
+export const TransactionImportPreviewSchema = registry.register(
+  'TransactionImportPreview',
+  z.object({
+    accountKey: z.string(),
+    items: z.array(
+      z.object({
+        externalId: z.string(),
+        type: z.enum(['income', 'expense']),
+        amount: z.number(),
+        date: isoDate,
+        title: z.string(),
+        status: z.enum(['new', 'imported', 'possible_duplicate']),
+        duplicateOf: z.string().uuid().nullable(),
+        suggestedCategoryId: z.string().uuid().nullable(),
+      })
+    ),
+  })
+);
+
+export const TransactionImportResultSchema = registry.register(
+  'TransactionImportResult',
+  z.object({ created: z.number().int(), skipped: z.number().int() })
+);
+
 export const NotificationSchema = registry.register(
   'Notification',
   z.object({

@@ -39,4 +39,17 @@ export interface ITransactionRepository {
     recurringTransactionId: string,
     userId: string
   ): Promise<TransactionWithCategory[]>;
+  findImportedExternalIds(userId: string, externalIds: string[]): Promise<string[]>;
+  findManualInRange(
+    userId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<ManualTransactionMatch[]>;
+  findRecentTitleCategories(userId: string, limit: number): Promise<TitleCategory[]>;
+  createManyImported(
+    rows: Omit<NewTransaction, 'id' | 'createdAt' | 'updatedAt'>[]
+  ): Promise<Transaction[]>;
 }
+
+export type ManualTransactionMatch = Pick<Transaction, 'id' | 'type' | 'amount' | 'date'>;
+export type TitleCategory = Pick<Transaction, 'title' | 'categoryId'>;

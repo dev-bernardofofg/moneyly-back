@@ -14,6 +14,10 @@ import { listTransactionsPaginatedUseCase } from './use-cases/list-transactions-
 import { updateTransactionUseCase } from './use-cases/update-transaction.use-case';
 import { validatePagination } from '@core/validations/pagination.validation';
 import { detectSubscriptionsUseCase } from '@modules/subscription';
+import {
+  confirmTransactionImportUseCase,
+  previewTransactionImportUseCase,
+} from './use-cases/import-transactions.use-case';
 
 export const createTransaction = asyncHandler<AuthRequest>(async (req, res) => {
   const { type, title, amount, category, description, date } = req.body;
@@ -164,4 +168,14 @@ export const getCurrentFinancialPeriodSummary = asyncHandler<AuthRequest>(async 
     summary,
     'Resumo do período financeiro atual gerado com sucesso'
   );
+});
+
+export const previewTransactionImport = asyncHandler<AuthRequest>(async (req, res) => {
+  const preview = await previewTransactionImportUseCase(req.user.id, req.body.file);
+  return ResponseHandler.success(res, preview, 'Prévia do extrato gerada com sucesso');
+});
+
+export const confirmTransactionImport = asyncHandler<AuthRequest>(async (req, res) => {
+  const result = await confirmTransactionImportUseCase(req.user.id, req.body);
+  return ResponseHandler.created(res, result, 'Extrato importado com sucesso');
 });

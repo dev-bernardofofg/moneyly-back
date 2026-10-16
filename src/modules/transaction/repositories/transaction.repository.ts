@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, lte } from 'drizzle-orm';
+import { and, count, desc, eq, gte, inArray, isNull, lte } from 'drizzle-orm';
 import { db } from '@infra/db';
 import { categories, transactions, type NewTransaction, type Transaction } from '@infra/db/schema';
 import {
@@ -6,9 +6,14 @@ import {
   type PaginationQuery,
   type PaginationResult,
 } from '@core/helpers/pagination';
-import type { ITransactionRepository, TransactionQueryFilters } from './ITransactionRepository';
+import type {
+  ITransactionRepository,
+  ManualTransactionMatch,
+  TitleCategory,
+  TransactionQueryFilters,
+} from './ITransactionRepository';
 
-export type TransactionWithCategory = Omit<Transaction, 'categoryId' | 'userId'> & {
+export type TransactionWithCategory = Omit<Transaction, 'categoryId' | 'userId' | 'externalId'> & {
   category: { id: string; name: string };
 };
 
@@ -155,6 +160,58 @@ export const transactionRepository = {
     if (periodId) return transactionRepository.findByPeriodId(userId, periodId);
     if (dateRange) return transactionRepository.findByUserId(userId, dateRange);
     return transactionRepository.findAllByUserId(userId);
+  },
+
+  async findImportedExternalIds(userId: string, externalIds: string[]): Promise<string[]> {
+    if (externalIds.length === 0) return [];
+    const rows = await db
+      .select({ externalId: transactions.externalId })
+      .from(transactions)
+      .where(and(eq(transactions.userId, userId), inArray(transactions.externalId, externalIds)));
+    return rows.map((row) => row.externalId!);
+  },
+
+  async findManualInRange(
+    userId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<ManualTransactionMatch[]> {
+    return db
+      .select({
+        id: transactions.id,
+        type: transactions.type,
+        amount: transactions.amount,
+        date: transactions.date,
+      })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.userId, userId),
+          isNull(transactions.externalId),
+          gte(transactions.date, startDate),
+          lte(transactions.date, endDate)
+        )
+      );
+  },
+
+  async findRecentTitleCategories(userId: string, limit: number): Promise<TitleCategory[]> {
+    return db
+      .select({ title: transactions.title, categoryId: transactions.categoryId })
+      .from(transactions)
+      .where(eq(transactions.userId, userId))
+      .orderBy(desc(transactions.date))
+      .limit(limit);
+  },
+
+  async createManyImported(
+    rows: Omit<NewTransaction, 'id' | 'createdAt' | 'updatedAt'>[]
+  ): Promise<Transaction[]> {
+    if (rows.length === 0) return [];
+    return db
+      .insert(transactions)
+      .values(rows)
+      .onConflictDoNothing({ target: [transactions.userId, transactions.externalId] })
+      .returning();
   },
 } satisfies ITransactionRepository;
 
