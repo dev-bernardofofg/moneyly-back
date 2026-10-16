@@ -14,7 +14,9 @@ export const previewImportSchema = z.object({
 });
 
 export const confirmImportSchema = z.object({
-  accountId: z.string().uuid('O ID da conta deve ser um UUID válido.').optional(),
+  accountId: z
+    .string({ required_error: 'Escolha a conta ou o cartão do extrato.' })
+    .uuid('O ID da conta deve ser um UUID válido.'),
   items: z
     .array(
       z.object({

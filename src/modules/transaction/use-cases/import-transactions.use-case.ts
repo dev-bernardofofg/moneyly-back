@@ -6,10 +6,7 @@ import { billingDateFor } from '@modules/account/helpers/billing-date';
 import { resolveAccount } from '@modules/account/use-cases/account.use-cases';
 import { financialPeriodService } from '@modules/financial-period';
 import { processUserSpendingAlert } from '@modules/notification';
-import {
-  buildImportCategorySuggester,
-  isCardBillPayment,
-} from '../helpers/import-category-suggester';
+import { buildImportCategorySuggester, isBillPayment } from '../helpers/import-category-suggester';
 import { decodeOfxFile, parseOfx } from '../helpers/ofx-parser';
 import { transactionRepository } from '../repositories/transaction.repository';
 import type { ConfirmImportInput } from '../schemas/transaction-import.schema';
@@ -65,7 +62,7 @@ export const previewTransactionImportUseCase = async (userId: string, fileBase64
       );
       const status: ImportItemStatus = importedIds.has(transaction.externalId)
         ? 'imported'
-        : isCardBillPayment(transaction.title, transaction.type)
+        : isBillPayment(transaction.title, transaction.type)
           ? 'bill_payment'
           : duplicateOf
             ? 'possible_duplicate'
