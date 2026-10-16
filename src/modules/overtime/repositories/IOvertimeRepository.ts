@@ -40,4 +40,5 @@ export interface IOvertimeRepository {
   delete(id: string, userId: string): Promise<OvertimeRecord | null>;
   getSummary(userId: string, month: number, year: number): Promise<OvertimeSummary>;
   setTransactionId(id: string, transactionId: string): Promise<void>;
+  clearTransactionId(id: string, userId: string): Promise<void>;
 }

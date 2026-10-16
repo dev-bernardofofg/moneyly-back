@@ -159,6 +159,13 @@ export const overtimeRepository = {
       .set({ transactionId, updatedAt: new Date() })
       .where(eq(overtimeRecords.id, id));
   },
+
+  async clearTransactionId(id: string, userId: string): Promise<void> {
+    await db
+      .update(overtimeRecords)
+      .set({ transactionId: null, updatedAt: new Date() })
+      .where(and(eq(overtimeRecords.id, id), eq(overtimeRecords.userId, userId)));
+  },
 } satisfies IOvertimeRepository;
 
 export type { IOvertimeRepository };
