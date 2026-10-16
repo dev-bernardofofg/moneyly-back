@@ -4,6 +4,7 @@
 
 import request from 'supertest';
 import { app } from '../../src/server';
+import { currentPeriodAnchor, plusHours } from '../setup/period-anchor';
 
 const HOUR = 60 * 60 * 1000;
 
@@ -160,6 +161,7 @@ describe('GET /overview/forecast', () => {
 
   it('counts overtime as realized variable income', async () => {
     const token = await signUp('overtime');
+    const anchor = await currentPeriodAnchor(app, token);
     const company = await request(app)
       .post('/companies')
       .set('Authorization', `Bearer ${token}`)
@@ -170,8 +172,8 @@ describe('GET /overview/forecast', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({
         companyId: company.body.data.id,
-        startTime: new Date(Date.now() - 2 * HOUR).toISOString(),
-        endTime: new Date(Date.now() - HOUR).toISOString(),
+        startTime: anchor.toISOString(),
+        endTime: plusHours(anchor, 1),
       })
       .expect(201);
 

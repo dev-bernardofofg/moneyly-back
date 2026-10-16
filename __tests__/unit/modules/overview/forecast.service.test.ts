@@ -102,6 +102,55 @@ describe('getForecastUseCase', () => {
     expect(r.freeBalance.commitments.recurringExpenses).toBe(200);
   });
 
+  it('counts an overdue execution not yet materialized once', async () => {
+    const now = new Date();
+    mockedPeriodSvc.ensureCurrentPeriodExists.mockResolvedValue(periodAround(now) as never);
+    mockedTxRepo.findByPeriodId.mockResolvedValue([] as never);
+    mockedRecRepo.findByUserId.mockResolvedValue([
+      {
+        id: '55555555-5555-5555-5555-555555555555',
+        title: 'Internet',
+        type: 'expense',
+        amount: '100',
+        frequency: 'monthly',
+        dayOfMonth: null,
+        dayOfWeek: null,
+        nextExecution: new Date(now.getTime() - 2 * day),
+        totalInstallments: null,
+        executedInstallments: 0,
+      },
+    ] as never);
+
+    const r = await getForecastUseCase(USER);
+
+    expect(r.projected.occurrences).toHaveLength(1);
+    expect(r.projected.recurringExpense).toBe(100);
+  });
+
+  it('ignores an overdue execution from a previous period', async () => {
+    const now = new Date();
+    mockedPeriodSvc.ensureCurrentPeriodExists.mockResolvedValue(periodAround(now) as never);
+    mockedTxRepo.findByPeriodId.mockResolvedValue([] as never);
+    mockedRecRepo.findByUserId.mockResolvedValue([
+      {
+        id: '66666666-6666-6666-6666-666666666666',
+        title: 'Academia',
+        type: 'expense',
+        amount: '80',
+        frequency: 'monthly',
+        dayOfMonth: null,
+        dayOfWeek: null,
+        nextExecution: new Date(now.getTime() - 15 * day),
+        totalInstallments: null,
+        executedInstallments: 0,
+      },
+    ] as never);
+
+    const r = await getForecastUseCase(USER);
+
+    expect(r.projected.occurrences).toHaveLength(0);
+  });
+
   it('ignores a recurrence with exhausted installments', async () => {
     const now = new Date();
     mockedPeriodSvc.ensureCurrentPeriodExists.mockResolvedValue(periodAround(now) as never);

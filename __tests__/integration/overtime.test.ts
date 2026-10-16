@@ -4,8 +4,7 @@
 
 import request from 'supertest';
 import { app } from '../../src/server';
-
-const HOUR = 60 * 60 * 1000;
+import { currentPeriodAnchor, plusHours } from '../setup/period-anchor';
 
 async function signUp(label: string) {
   const res = await request(app)
@@ -16,10 +15,6 @@ async function signUp(label: string) {
       password: 'password123',
     });
   return res.body.data.accessToken as string;
-}
-
-function hoursAgo(hours: number) {
-  return new Date(Date.now() - hours * HOUR).toISOString();
 }
 
 async function listTransactions(token: string) {
@@ -125,9 +120,11 @@ describe('Overtime Endpoints', () => {
   let token: string;
   let otherToken: string;
   let companyId: string;
+  let anchor: Date;
 
   beforeAll(async () => {
     token = await signUp('records');
+    anchor = await currentPeriodAnchor(app, token);
     otherToken = await signUp('records-other');
 
     const company = await request(app)
@@ -137,11 +134,11 @@ describe('Overtime Endpoints', () => {
     companyId = company.body.data.id;
   });
 
-  async function createOvertime(startHoursAgo: number, endHoursAgo: number) {
+  async function createOvertime(hours: number) {
     const res = await request(app)
       .post('/overtime')
       .set('Authorization', `Bearer ${token}`)
-      .send({ companyId, startTime: hoursAgo(startHoursAgo), endTime: hoursAgo(endHoursAgo) })
+      .send({ companyId, startTime: anchor.toISOString(), endTime: plusHours(anchor, hours) })
       .expect(201);
     return res.body.data as { id: string; transactionId: string; amount: string };
   }
@@ -155,12 +152,12 @@ describe('Overtime Endpoints', () => {
     await request(app)
       .post('/overtime')
       .set('Authorization', `Bearer ${token}`)
-      .send({ companyId, startTime: hoursAgo(-2), endTime: hoursAgo(-3) })
+      .send({ companyId, startTime: plusHours(new Date(), 2), endTime: plusHours(new Date(), 3) })
       .expect(400);
   });
 
   it('creates a record and a linked income transaction', async () => {
-    const record = await createOvertime(2, 1);
+    const record = await createOvertime(1);
 
     expect(Number(record.amount)).toBe(50);
     expect(record.transactionId).toEqual(expect.any(String));
@@ -180,12 +177,12 @@ describe('Overtime Endpoints', () => {
   });
 
   it('syncs the linked transaction when the record is updated', async () => {
-    const record = await createOvertime(3, 2);
+    const record = await createOvertime(1);
 
     const res = await request(app)
       .put(`/overtime/${record.id}`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ endTime: hoursAgo(1) })
+      .send({ endTime: plusHours(anchor, 2) })
       .expect(200);
     expect(Number(res.body.data.amount)).toBe(100);
 
@@ -194,7 +191,7 @@ describe('Overtime Endpoints', () => {
   });
 
   it('does not let another user update or delete the record', async () => {
-    const record = await createOvertime(2, 1);
+    const record = await createOvertime(1);
 
     await request(app)
       .put(`/overtime/${record.id}`)
@@ -208,7 +205,7 @@ describe('Overtime Endpoints', () => {
   });
 
   it('removes the linked transaction when the record is deleted', async () => {
-    const record = await createOvertime(2, 1);
+    const record = await createOvertime(1);
 
     await request(app)
       .delete(`/overtime/${record.id}`)
@@ -221,7 +218,7 @@ describe('Overtime Endpoints', () => {
   });
 
   it('unlinks the record when its transaction is deleted directly', async () => {
-    const record = await createOvertime(2, 1);
+    const record = await createOvertime(1);
 
     await request(app)
       .delete(`/transactions/${record.transactionId}`)
