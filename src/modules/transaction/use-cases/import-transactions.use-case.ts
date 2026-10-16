@@ -69,11 +69,13 @@ export const previewTransactionImportUseCase = async (userId: string, fileBase64
             ? 'possible_duplicate'
             : 'new';
 
+      const suggestion = suggester.suggest(transaction.title, transaction.type);
       return {
         ...transaction,
         status,
         duplicateOf: status === 'possible_duplicate' ? duplicateOf! : null,
-        suggestedCategoryId: suggester.suggest(transaction.title, transaction.type),
+        suggestedCategoryId: suggestion.categoryId,
+        suggestionSource: suggestion.source,
       };
     }),
   };

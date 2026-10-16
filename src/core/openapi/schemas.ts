@@ -419,6 +419,7 @@ export const TransactionImportPreviewSchema = registry.register(
         status: z.enum(['new', 'imported', 'possible_duplicate', 'bill_payment']),
         duplicateOf: z.string().uuid().nullable(),
         suggestedCategoryId: z.string().uuid().nullable(),
+        suggestionSource: z.enum(['history', 'rule', 'fallback']),
       })
     ),
   })

@@ -293,8 +293,16 @@ const BILL_PAYMENT = /\b(pagamento|pagto|pgto)\b.*\b(on ?line|fatura|efetuado|re
 export const isCardBillPayment = (title: string, type: TransactionType): boolean =>
   type === 'income' && BILL_PAYMENT.test(normalize(title));
 
+// "fallback" = nada identificou a compra; o front avisa para o usuário escolher.
+export type SuggestionSource = 'history' | 'rule' | 'fallback';
+
+export interface CategorySuggestion {
+  categoryId: string | null;
+  source: SuggestionSource;
+}
+
 export interface ImportCategorySuggester {
-  suggest(title: string, type: TransactionType): string | null;
+  suggest(title: string, type: TransactionType): CategorySuggestion;
 }
 
 /**
@@ -333,23 +341,23 @@ export function buildImportCategorySuggester(
       const tokens = significantTokens(title);
       const key = tokens.join(' ');
       const exact = byKey.get(key);
-      if (exact) return exact;
+      if (exact) return { categoryId: exact, source: 'history' };
 
       const text = ruleText(title);
       for (const rule of RULES) {
         if (rule.type !== type) continue;
         if (rule.keywords.some((keyword) => ` ${text} `.includes(` ${keyword} `))) {
           const id = categoryId(rule.category);
-          if (id) return id;
+          if (id) return { categoryId: id, source: 'rule' };
         }
       }
 
       for (const token of tokens) {
         const fromHistory = byToken.get(token);
-        if (fromHistory) return fromHistory;
+        if (fromHistory) return { categoryId: fromHistory, source: 'history' };
       }
 
-      return fallback;
+      return { categoryId: fallback, source: 'fallback' };
     },
   };
 }
