@@ -1,6 +1,6 @@
 # F12 — Contas e cartões (multi-carteira)
 
-**Status:** spec (aguardando aprovação). **Esforço:** alto. **Schema novo:** `accounts` +
+**Status:** Done (back + front). **Esforço:** alto. **Schema novo:** `accounts` +
 `transactions.account_id`.
 
 ## Objetivo

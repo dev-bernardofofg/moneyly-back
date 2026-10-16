@@ -60,6 +60,13 @@ arquivo no banco e envia; não há credencial, agregador nem Open Finance. Na va
 se o dado ausente veio de algo que a importação teria trazido. Integração automática (Pluggy,
 Belvo, Open Finance) continua bloqueada até a evidência.
 
+### Decisão de escopo (2026-10-16): multi-carteira
+
+Contas e cartões (F12, `.specs/features/12-accounts-and-cards.md`) entraram antes da validação,
+por decisão do produto. Compra no cartão conta no período em que a fatura vence; o pagamento da
+fatura não é despesa. Isso muda **quando** gastos de cartão pesam no Saldo Livre: na validação,
+registrar se o valor por período ficou mais próximo do que o usuário esperava.
+
 ## Fase 1 — Estabilizar banco e testes integrados
 
 ### Problema atual
