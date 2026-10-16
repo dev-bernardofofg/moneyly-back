@@ -27,10 +27,8 @@ async function setupTestDatabase() {
 
   console.log('\n✅ Configuração válida!');
   console.log('\n📝 Próximos passos:');
-  console.log('   1. Execute: pnpm test:db:push');
-  console.log('      (Para criar as tabelas no banco de teste)');
-  console.log('\n   2. Execute: pnpm test:integration');
-  console.log('      (Para rodar os testes de integração)');
+  console.log('   Execute: pnpm test:integration');
+  console.log('   (Recria o schema e aplica as migrations antes de rodar)');
   console.log('\n💡 Dica: Os testes unitários NÃO usam banco de dados (só mocks)');
   console.log('         Os testes de integração USAM o banco de teste configurado');
   console.log('         Os testes E2E precisam do servidor rodando (pnpm dev)\n');

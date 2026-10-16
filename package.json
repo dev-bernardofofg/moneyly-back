@@ -27,7 +27,6 @@
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:report": "playwright show-report",
     "test:db:setup": "node -r dotenv/config -r ts-node/register __tests__/setup/test-db-setup.ts",
-    "test:db:push": "dotenv -e .env.test -- drizzle-kit push",
     "test:db:check": "ts-node __tests__/setup/check-db-config.ts",
     "prepare": "husky"
   },

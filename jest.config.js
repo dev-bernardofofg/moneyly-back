@@ -33,7 +33,6 @@ module.exports = {
       testMatch: ['<rootDir>/__tests__/integration/**/*.test.ts'],
       setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
       globalSetup: '<rootDir>/jest.global-setup.ts',
-      globalTeardown: '<rootDir>/jest.global-teardown.ts',
     },
   ],
 };
