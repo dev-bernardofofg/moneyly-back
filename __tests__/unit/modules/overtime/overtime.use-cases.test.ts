@@ -17,6 +17,9 @@ import { financialPeriodService } from '@modules/financial-period';
 import { categoryRepository } from '@modules/category';
 import { notifyTransactionCreated } from '@modules/notification';
 
+jest.mock('@modules/account/use-cases/account.use-cases', () => ({
+  resolveAccountId: jest.fn().mockResolvedValue('account-1'),
+}));
 jest.mock('@modules/overtime/repositories/overtime.repository');
 jest.mock('@modules/overtime/validations/company.validation');
 jest.mock('@modules/overtime/validations/overtime.validation');

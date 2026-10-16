@@ -9,6 +9,9 @@ import { validateCategoryExistsForUser } from '@modules/transaction/validations/
 import { notifyTransactionCreated, processUserSpendingAlert } from '@modules/notification';
 
 // Mock dos módulos
+jest.mock('@modules/account/use-cases/account.use-cases', () => ({
+  resolveAccountId: jest.fn().mockResolvedValue('account-1'),
+}));
 jest.mock('@modules/transaction/repositories/transaction.repository');
 jest.mock('@modules/transaction/validations/transaction.validation');
 jest.mock('@modules/notification');

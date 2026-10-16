@@ -1,0 +1,155 @@
+/**
+ * Integration tests for accounts and cards (F12, step 1)
+ */
+
+import request from 'supertest';
+import { app } from '../../src/server';
+
+async function signUp(label: string) {
+  const res = await request(app)
+    .post('/auth/sign-up')
+    .send({
+      name: `Accounts ${label}`,
+      email: `accounts-${label}-${Date.now()}@test.com`,
+      password: 'password123',
+    });
+  return res.body.data.accessToken as string;
+}
+
+describe('Accounts', () => {
+  let token: string;
+  let otherToken: string;
+  let categoryId: string;
+  let defaultAccountId: string;
+  let cardId: string;
+
+  const auth = () => ({ Authorization: `Bearer ${token}` });
+
+  beforeAll(async () => {
+    token = await signUp('owner');
+    otherToken = await signUp('other');
+    const category = await request(app)
+      .post('/categories/create')
+      .set(auth())
+      .send({ name: `Accounts Category ${Date.now()}` });
+    categoryId = category.body.data.id;
+  });
+
+  it('requires authentication', async () => {
+    await request(app).get('/accounts').expect(401);
+  });
+
+  it('creates the default account on first listing', async () => {
+    const res = await request(app).get('/accounts').set(auth()).expect(200);
+
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0]).toMatchObject({
+      name: 'Conta principal',
+      type: 'checking',
+      isDefault: true,
+    });
+    defaultAccountId = res.body.data[0].id;
+  });
+
+  it('creates a credit card with closing and due days', async () => {
+    const res = await request(app)
+      .post('/accounts')
+      .set(auth())
+      .send({ type: 'credit_card', name: 'Cartão Inter', closingDay: 25, dueDay: 5 })
+      .expect(201);
+
+    expect(res.body.data).toMatchObject({ type: 'credit_card', closingDay: 25, dueDay: 5 });
+    cardId = res.body.data.id;
+  });
+
+  it('requires closing and due days for a credit card', async () => {
+    await request(app)
+      .post('/accounts')
+      .set(auth())
+      .send({ type: 'credit_card', name: 'Sem datas' })
+      .expect(400);
+  });
+
+  it('rejects a duplicate name ignoring case', async () => {
+    await request(app)
+      .post('/accounts')
+      .set(auth())
+      .send({ type: 'checking', name: 'cartão inter' })
+      .expect(409);
+  });
+
+  it('rejects closing and due days on a checking account', async () => {
+    await request(app)
+      .put(`/accounts/${defaultAccountId}`)
+      .set(auth())
+      .send({ closingDay: 10 })
+      .expect(400);
+  });
+
+  it('does not let another user see or change the card', async () => {
+    const other = await request(app)
+      .get('/accounts')
+      .set('Authorization', `Bearer ${otherToken}`)
+      .expect(200);
+    expect(other.body.data.map((account: { id: string }) => account.id)).not.toContain(cardId);
+
+    await request(app)
+      .put(`/accounts/${cardId}`)
+      .set('Authorization', `Bearer ${otherToken}`)
+      .send({ name: 'Hijack' })
+      .expect(404);
+  });
+
+  it('puts transactions without account in the default account', async () => {
+    const res = await request(app)
+      .post('/transactions/create')
+      .set(auth())
+      .send({ type: 'expense', title: 'Padaria', amount: 10, category: categoryId })
+      .expect(201);
+
+    expect(res.body.data.accountId).toBe(defaultAccountId);
+  });
+
+  it('creates a transaction in the chosen card and filters by account', async () => {
+    await request(app)
+      .post('/transactions/create')
+      .set(auth())
+      .send({ type: 'expense', title: 'Uber', amount: 25, category: categoryId, accountId: cardId })
+      .expect(201);
+
+    const res = await request(app)
+      .get('/transactions/')
+      .set(auth())
+      .query({ page: 1, limit: 50, accountId: cardId })
+      .expect(200);
+
+    expect(res.body.data.map((transaction: { title: string }) => transaction.title)).toEqual([
+      'Uber',
+    ]);
+  });
+
+  it('rejects an account that belongs to another user', async () => {
+    await request(app)
+      .post('/transactions/create')
+      .set('Authorization', `Bearer ${otherToken}`)
+      .send({
+        type: 'expense',
+        title: 'Invasão',
+        amount: 5,
+        category: categoryId,
+        accountId: cardId,
+      })
+      .expect(404);
+  });
+
+  it('refuses to delete the default account', async () => {
+    await request(app).delete(`/accounts/${defaultAccountId}`).set(auth()).expect(400);
+  });
+
+  it('soft deletes a card and hides it from the list', async () => {
+    await request(app).delete(`/accounts/${cardId}`).set(auth()).expect(200);
+
+    const res = await request(app).get('/accounts').set(auth()).expect(200);
+    expect(res.body.data.map((account: { id: string }) => account.id)).not.toContain(cardId);
+  });
+});
