@@ -7,9 +7,14 @@ import { errorHandler } from '@core/middlewares/error-handler';
 import { sanitizeData } from '@core/middlewares/sanitize';
 import { securityMiddleware } from '@core/middlewares/security';
 import router from './routes';
+import { CronRouter } from './jobs/cron.router';
 import { runScheduledJobs } from './jobs/scheduled-jobs';
 
 export const app: Application = express();
+
+// Antes do CORS: o Vercel Cron chama servidor-a-servidor, sem header Origin, e o CORS
+// de produção recusa requisição sem Origin. A rota é protegida pelo CRON_SECRET.
+app.use('/internal/cron', CronRouter);
 
 securityMiddleware(app);
 
