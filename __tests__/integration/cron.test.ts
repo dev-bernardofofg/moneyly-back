@@ -25,4 +25,12 @@ describe('GET /internal/cron/daily', () => {
 
     expect(res.body.message).toBe('Jobs agendados executados');
   });
+
+  it('is not subject to the browser CORS policy', async () => {
+    await request(app)
+      .get('/internal/cron/daily')
+      .set('Origin', 'https://not-allowed.example')
+      .set('Authorization', 'Bearer test-cron-secret')
+      .expect(200);
+  });
 });
