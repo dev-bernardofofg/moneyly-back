@@ -71,6 +71,13 @@
       "when": 1792176623279,
       "tag": "0009_transaction_external_id",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792186492711,
+      "tag": "0010_accounts",
+      "breakpoints": true
     }
   ]
 }

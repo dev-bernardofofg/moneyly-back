@@ -1,4 +1,4 @@
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
   boolean,
   decimal,
@@ -8,6 +8,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
 
@@ -47,6 +48,10 @@ export const transactions = pgTable(
     }),
     recurringTransactionId: uuid('recurring_transaction_id'),
     overtimeRecordId: uuid('overtime_record_id'),
+    // De onde o dinheiro saiu (conta corrente ou cartão). Ver specs/features/12-accounts-and-cards.md.
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => accounts.id),
     // Identificador do extrato importado (banco:conta:FITID); nulo em lançamento manual.
     externalId: text('external_id'),
     description: text('description'),
@@ -54,7 +59,34 @@ export const transactions = pgTable(
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
-  (table) => [unique('transactions_user_external_id_unique').on(table.userId, table.externalId)]
+  (table) => [
+    unique('transactions_user_external_id_unique').on(table.userId, table.externalId),
+    index('transactions_account_id_idx').on(table.accountId),
+  ]
+);
+
+// Contas e cartões (F12). closingDay/dueDay só existem em credit_card.
+export const accounts = pgTable(
+  'accounts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    type: text('type', { enum: ['checking', 'credit_card'] }).notNull(),
+    closingDay: integer('closing_day'),
+    dueDay: integer('due_day'),
+    isDefault: boolean('is_default').default(false).notNull(),
+    isActive: boolean('is_active').default(true).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('accounts_user_default_unique')
+      .on(table.userId)
+      .where(sql`${table.isDefault}`),
+  ]
 );
 
 export const categories = pgTable('categories', {
@@ -438,6 +470,8 @@ export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
 export type DeviceRegistration = typeof deviceRegistrations.$inferSelect;
 export type NewDeviceRegistration = typeof deviceRegistrations.$inferInsert;
+export type Account = typeof accounts.$inferSelect;
+export type NewAccount = typeof accounts.$inferInsert;
 export type Company = typeof companies.$inferSelect;
 export type NewCompany = typeof companies.$inferInsert;
 export type OvertimeRecord = typeof overtimeRecords.$inferSelect;
