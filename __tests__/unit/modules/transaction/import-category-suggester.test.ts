@@ -1,5 +1,6 @@
 import {
   buildImportCategorySuggester,
+  isCardBillPayment,
   significantTokens,
 } from '@modules/transaction/helpers/import-category-suggester';
 
@@ -76,5 +77,36 @@ describe('buildImportCategorySuggester', () => {
 
     expect(suggester.suggest('PIX ENVIADO CORPO LIVRE FITNESS', 'expense')).toBe('pessoal');
     expect(suggester.suggest('PIX ENVIADO FULANO DE TAL', 'expense')).toBe('outros');
+  });
+});
+
+describe('credit card statement descriptions', () => {
+  const suggester = buildImportCategorySuggester([], CATEGORIES);
+
+  it.each([
+    ['DL*UberRides', 'transporte'],
+    ['Uber UBER *TRIP HELP.U', 'transporte'],
+    ['VersadoCafes', 'alimentacao'],
+    ['99Food *12345678 Fulano', 'alimentacao'],
+    ['CRIS BURGUER', 'alimentacao'],
+    ['ABREU E LIMA PIZZA', 'alimentacao'],
+    ['KdinhomeMercado', 'alimentacao'],
+    ['MLP *KaBuM-KaBuM (Parcela 03 de 04)', 'compras'],
+    ['IOF INTERNACIONAL', 'contas'],
+    ['JUROS PIX CREDITO', 'contas'],
+  ])('categorizes "%s"', (title, expected) => {
+    expect(suggester.suggest(title, 'expense')).toBe(expected);
+  });
+});
+
+describe('isCardBillPayment', () => {
+  it('flags the previous bill payment credited on a card statement', () => {
+    expect(isCardBillPayment('PAGAMENTO ON LINE', 'income')).toBe(true);
+    expect(isCardBillPayment('PAGTO FATURA CARTAO', 'income')).toBe(true);
+  });
+
+  it('does not flag regular income or expenses', () => {
+    expect(isCardBillPayment('PIX RECEBIDO FULANO', 'income')).toBe(false);
+    expect(isCardBillPayment('PAGAMENTO ON LINE', 'expense')).toBe(false);
   });
 });
