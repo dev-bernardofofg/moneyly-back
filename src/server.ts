@@ -21,12 +21,12 @@ app.use(router);
 
 app.use(errorHandler);
 
-if (process.env.NODE_ENV !== 'test') {
-  connectDB();
-}
-
-// Na Vercel (serverless) não há processo vivo: jobs rodam pelo Vercel Cron (vercel.json).
+// Na Vercel (serverless) não há processo vivo: jobs rodam pelo Vercel Cron (vercel.json)
+// e a conexão abre na primeira query. connectDB no import deixava um connect pendente
+// que estourava CONNECT_TIMEOUT após o freeze e derrubava a instância (process.exit).
 if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
+  connectDB().catch(() => process.exit(1));
+
   app.listen(env.PORT, () => {
     logger.info(`Servidor rodando na porta ${env.PORT}`);
   });
