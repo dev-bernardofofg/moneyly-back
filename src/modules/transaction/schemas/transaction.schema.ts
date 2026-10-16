@@ -33,6 +33,7 @@ export const transactionSchema = z.object({
     .uuid('O ID da categoria deve ser um UUID válido.')
     .min(1, 'Selecione uma categoria para a transação.'),
   periodId: z.string().uuid('O ID do período deve ser um UUID válido.').optional(),
+  accountId: z.string().uuid('O ID da conta deve ser um UUID válido.').optional(),
   description: z.string().max(500, 'A descrição pode ter no máximo 500 caracteres.').optional(),
   date: z
     .string()

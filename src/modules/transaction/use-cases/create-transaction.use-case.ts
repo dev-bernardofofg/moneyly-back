@@ -1,5 +1,6 @@
 import { parseTransactionDate } from '@core/helpers/dates';
 import { logger } from '@core/lib/logger';
+import { resolveAccountId } from '@modules/account/use-cases/account.use-cases';
 import { financialPeriodService } from '@modules/financial-period';
 import { notifyTransactionCreated, processUserSpendingAlert } from '@modules/notification';
 import { transactionRepository } from '../repositories/transaction.repository';
@@ -12,7 +13,10 @@ export const createTransactionUseCase = async (userId: string, transaction: ITra
   // Contrato: dia-semântica → instante canônico (meia-noite SP).
   const transactionDate = parseTransactionDate(transaction.date);
 
-  const periodId = await financialPeriodService.findOrCreatePeriodForDate(userId, transactionDate);
+  const [periodId, accountId] = await Promise.all([
+    financialPeriodService.findOrCreatePeriodForDate(userId, transactionDate),
+    resolveAccountId(userId, transaction.accountId),
+  ]);
 
   const newTransaction = await transactionRepository.create({
     userId,
@@ -24,6 +28,7 @@ export const createTransactionUseCase = async (userId: string, transaction: ITra
     date: transactionDate,
     periodId,
     recurringTransactionId: transaction.recurringTransactionId ?? null,
+    accountId,
   });
 
   try {

@@ -20,7 +20,7 @@ import {
 } from './use-cases/import-transactions.use-case';
 
 export const createTransaction = asyncHandler<AuthRequest>(async (req, res) => {
-  const { type, title, amount, category, description, date } = req.body;
+  const { type, title, amount, category, description, date, accountId } = req.body;
 
   const newTransaction = await createTransactionUseCase(req.user.id, {
     type,
@@ -29,6 +29,7 @@ export const createTransaction = asyncHandler<AuthRequest>(async (req, res) => {
     category,
     description,
     date,
+    accountId,
   });
   return ResponseHandler.created(res, newTransaction, 'Transação criada com sucesso');
 });
@@ -84,7 +85,7 @@ export const updateTransaction = asyncHandler<AuthRequest>(async (req, res) => {
   const { id } = req.params;
   if (!id) throw new BadRequestError('ID da transação não fornecido');
 
-  const { type, title, amount, category, description, date } = req.body;
+  const { type, title, amount, category, description, date, accountId } = req.body;
 
   const updateData: Partial<{
     type: 'income' | 'expense';
@@ -93,12 +94,14 @@ export const updateTransaction = asyncHandler<AuthRequest>(async (req, res) => {
     categoryId: string;
     description: string | null;
     date: Date;
+    accountId: string;
   }> = {};
   if (date) updateData.date = new Date(date);
   if (type) updateData.type = type;
   if (title) updateData.title = title;
   if (amount) updateData.amount = amount;
   if (category) updateData.categoryId = category;
+  if (accountId) updateData.accountId = accountId;
   // string vazia é intenção de limpar a descrição — só `undefined` significa "não mexer"
   if (description !== undefined) updateData.description = description || null;
 

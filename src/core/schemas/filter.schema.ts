@@ -23,9 +23,14 @@ export const categoryFilterSchema = z.object({
   category: z.string().optional(),
 });
 
+export const accountFilterSchema = z.object({
+  accountId: z.string().uuid('accountId deve ser um UUID válido').optional(),
+});
+
 export const baseFilterSchema = dateRangeFilterSchema
   .merge(periodFilterSchema)
   .merge(typeFilterSchema)
-  .merge(categoryFilterSchema);
+  .merge(categoryFilterSchema)
+  .merge(accountFilterSchema);
 
 export type BaseFilters = z.infer<typeof baseFilterSchema>;

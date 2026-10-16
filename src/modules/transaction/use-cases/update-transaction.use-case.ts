@@ -1,5 +1,6 @@
 import { parseTransactionDate } from '@core/helpers/dates';
 import { HttpError } from '@core/errors/http-error';
+import { resolveAccountId } from '@modules/account/use-cases/account.use-cases';
 import { financialPeriodService } from '@modules/financial-period';
 import { transactionRepository } from '../repositories/transaction.repository';
 import { validateCategoryExistsForUser } from '../validations/transaction.validation';
@@ -15,10 +16,15 @@ export const updateTransactionUseCase = async (
     description: string | null;
     date: Date;
     periodId: string;
+    accountId: string;
   }>
 ) => {
   if (updateData.categoryId) {
     await validateCategoryExistsForUser(updateData.categoryId, userId);
+  }
+
+  if (updateData.accountId) {
+    updateData.accountId = await resolveAccountId(userId, updateData.accountId);
   }
 
   if (updateData.date) {

@@ -2,6 +2,7 @@ import { toSaoPauloTimezone } from '@core/helpers/dates';
 import { logger } from '@core/lib/logger';
 import { notifyTransactionCreated } from '@modules/notification';
 import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
+import { resolveAccountId } from '@modules/account/use-cases/account.use-cases';
 import { financialPeriodService } from '@modules/financial-period';
 import { calcHours } from '../helpers/calc-hours';
 import { overtimeRepository } from '../repositories/overtime.repository';
@@ -26,7 +27,10 @@ export const createOvertimeUseCase = async (userId: string, data: CreateOvertime
   const year = startTimeSP.getFullYear();
   const categoryId = await resolveCategory(data.categoryId, userId);
 
-  const periodId = await financialPeriodService.findOrCreatePeriodForDate(userId, startTime);
+  const [periodId, accountId] = await Promise.all([
+    financialPeriodService.findOrCreatePeriodForDate(userId, startTime),
+    resolveAccountId(userId),
+  ]);
 
   const record = await overtimeRepository.create({
     userId,
@@ -53,6 +57,7 @@ export const createOvertimeUseCase = async (userId: string, data: CreateOvertime
     periodId,
     recurringTransactionId: null,
     overtimeRecordId: record.id,
+    accountId,
   });
 
   await overtimeRepository.setTransactionId(record.id, transaction.id);

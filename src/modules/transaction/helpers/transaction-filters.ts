@@ -4,6 +4,7 @@ export interface TransactionFiltersQuery {
   endDate?: string;
   periodId?: string;
   type?: 'income' | 'expense';
+  accountId?: string;
 }
 
 export interface BuiltTransactionFilters {
@@ -12,6 +13,7 @@ export interface BuiltTransactionFilters {
   endDate?: Date;
   periodId?: string;
   type?: 'income' | 'expense';
+  accountId?: string;
 }
 
 export const buildTransactionFilters = (
@@ -21,6 +23,7 @@ export const buildTransactionFilters = (
   if (query.category) filters.category = query.category;
   if (query.periodId) filters.periodId = query.periodId;
   if (query.type) filters.type = query.type;
+  if (query.accountId) filters.accountId = query.accountId;
   if (query.startDate) filters.startDate = new Date(query.startDate);
   if (query.endDate) filters.endDate = new Date(query.endDate);
   return filters;

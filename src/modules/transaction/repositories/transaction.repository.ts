@@ -22,6 +22,7 @@ const buildConditions = (userId: string, filters?: TransactionQueryFilters) => {
   if (filters?.category) conditions.push(eq(transactions.categoryId, filters.category));
   if (filters?.periodId) conditions.push(eq(transactions.periodId, filters.periodId));
   if (filters?.type) conditions.push(eq(transactions.type, filters.type));
+  if (filters?.accountId) conditions.push(eq(transactions.accountId, filters.accountId));
   if (filters?.startDate) conditions.push(gte(transactions.date, filters.startDate));
   if (filters?.endDate) conditions.push(lte(transactions.date, filters.endDate));
   return conditions;
@@ -32,6 +33,7 @@ const BASE_SELECT = {
   periodId: transactions.periodId,
   recurringTransactionId: transactions.recurringTransactionId,
   overtimeRecordId: transactions.overtimeRecordId,
+  accountId: transactions.accountId,
   type: transactions.type,
   title: transactions.title,
   amount: transactions.amount,

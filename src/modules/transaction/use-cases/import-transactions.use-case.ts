@@ -2,6 +2,7 @@ import { spDayString, spEndOfDay } from '@core/helpers/dates';
 import { BadRequestError } from '@core/errors';
 import { logger } from '@core/lib/logger';
 import { categoryRepository } from '@modules/category/repositories/category.repository';
+import { resolveAccountId } from '@modules/account/use-cases/account.use-cases';
 import { financialPeriodService } from '@modules/financial-period';
 import { processUserSpendingAlert } from '@modules/notification';
 import {
@@ -83,8 +84,9 @@ export const previewTransactionImportUseCase = async (userId: string, fileBase64
 
 export const confirmTransactionImportUseCase = async (
   userId: string,
-  { items }: ConfirmImportInput
+  { items, accountId: requestedAccountId }: ConfirmImportInput
 ) => {
+  const accountId = await resolveAccountId(userId, requestedAccountId);
   const categoryIds = [...new Set(items.map((item) => item.categoryId))];
   for (const categoryId of categoryIds) await validateCategoryExistsForUser(categoryId, userId);
 
@@ -109,6 +111,7 @@ export const confirmTransactionImportUseCase = async (
       periodId,
       recurringTransactionId: null,
       externalId: item.externalId,
+      accountId,
     });
   }
 

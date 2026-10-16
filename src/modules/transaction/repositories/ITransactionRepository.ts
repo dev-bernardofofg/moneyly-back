@@ -8,6 +8,7 @@ export interface TransactionQueryFilters {
   endDate?: Date;
   periodId?: string;
   type?: 'income' | 'expense';
+  accountId?: string;
 }
 
 export interface ITransactionRepository {

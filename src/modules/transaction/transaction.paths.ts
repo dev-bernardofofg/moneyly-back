@@ -28,6 +28,7 @@ const exportQuery = z.object({
   endDate: dateQuery,
   periodId: z.string().uuid().optional(),
   type: transactionTypeQuery,
+  accountId: z.string().uuid().optional(),
 });
 const transactionsListQuery = z.object({
   category: z.string().optional(),
@@ -35,6 +36,7 @@ const transactionsListQuery = z.object({
   endDate: dateQuery,
   periodId: z.string().uuid().optional(),
   type: transactionTypeQuery,
+  accountId: z.string().uuid().optional(),
   page: intQuery,
   limit: intQuery,
 });

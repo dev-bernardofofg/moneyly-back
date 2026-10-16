@@ -10,6 +10,7 @@ export interface ITransaction {
   description: string;
   date: Date;
   recurringTransactionId?: string;
+  accountId?: string;
 }
 
 export interface TransactionFilters {
@@ -18,6 +19,7 @@ export interface TransactionFilters {
   endDate?: Date;
   periodId?: string;
   type?: 'income' | 'expense';
+  accountId?: string;
 }
 
 export interface TransactionSummary {
