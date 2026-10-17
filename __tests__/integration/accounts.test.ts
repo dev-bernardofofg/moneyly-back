@@ -224,3 +224,63 @@ describe('Credit card billing period', () => {
     expect(res.body.data.periodId).toBe(await periodOf('2026-10-05'));
   });
 });
+
+describe('GET /overview/card-bills', () => {
+  let token: string;
+  const auth = () => ({ Authorization: `Bearer ${token}` });
+
+  it('groups the bill due in the period by card and category', async () => {
+    token = await signUp('bills');
+    const food = await request(app)
+      .post('/categories/create')
+      .set(auth())
+      .send({ name: `Comida ${Date.now()}` });
+    const ride = await request(app)
+      .post('/categories/create')
+      .set(auth())
+      .send({ name: `Corrida ${Date.now()}` });
+    const card = await request(app)
+      .post('/accounts')
+      .set(auth())
+      .send({ type: 'credit_card', name: 'Cartão Bills', closingDay: 25, dueDay: 5 })
+      .expect(201);
+    const cardId = card.body.data.id;
+
+    const spend = (category: string, amount: number, date: string, accountId?: string) =>
+      request(app)
+        .post('/transactions/create')
+        .set(auth())
+        .send({ type: 'expense', title: 'Compra', amount, category, date, accountId })
+        .expect(201);
+
+    // Compras de setembro (antes do fechamento 25) vencem em 05/10.
+    await spend(food.body.data.id, 40, '2026-09-10', cardId);
+    await spend(food.body.data.id, 10, '2026-09-11', cardId);
+    await spend(ride.body.data.id, 25, '2026-09-12', cardId);
+    // Conta corrente não entra nas faturas.
+    const reference = await spend(food.body.data.id, 99, '2026-10-05');
+
+    const res = await request(app)
+      .get('/overview/card-bills')
+      .set(auth())
+      .query({ periodId: reference.body.data.periodId })
+      .expect(200);
+
+    expect(res.body.data.total).toBe(75);
+    expect(res.body.data.bills).toEqual([
+      expect.objectContaining({
+        accountId: cardId,
+        name: 'Cartão Bills',
+        total: 75,
+        categories: [
+          expect.objectContaining({ categoryId: food.body.data.id, amount: 50 }),
+          expect.objectContaining({ categoryId: ride.body.data.id, amount: 25 }),
+        ],
+      }),
+    ]);
+  });
+
+  it('requires authentication', async () => {
+    await request(app).get('/overview/card-bills').expect(401);
+  });
+});
