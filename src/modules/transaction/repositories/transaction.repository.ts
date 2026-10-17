@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, inArray, isNull, lte } from 'drizzle-orm';
+import { and, count, desc, eq, gte, inArray, isNull, lte, sum } from 'drizzle-orm';
 import { db } from '@infra/db';
 import { categories, transactions, type NewTransaction, type Transaction } from '@infra/db/schema';
 import {
@@ -7,6 +7,7 @@ import {
   type PaginationResult,
 } from '@core/helpers/pagination';
 import type {
+  AccountCategoryTotal,
   ITransactionRepository,
   ManualTransactionMatch,
   TitleCategory,
@@ -203,6 +204,33 @@ export const transactionRepository = {
       .where(eq(transactions.userId, userId))
       .orderBy(desc(transactions.date))
       .limit(limit);
+  },
+
+  async sumExpensesByAccountAndCategory(
+    userId: string,
+    periodId: string,
+    accountIds: string[]
+  ): Promise<AccountCategoryTotal[]> {
+    if (accountIds.length === 0) return [];
+    const rows = await db
+      .select({
+        accountId: transactions.accountId,
+        categoryId: categories.id,
+        categoryName: categories.name,
+        total: sum(transactions.amount),
+      })
+      .from(transactions)
+      .innerJoin(categories, eq(transactions.categoryId, categories.id))
+      .where(
+        and(
+          eq(transactions.userId, userId),
+          eq(transactions.periodId, periodId),
+          eq(transactions.type, 'expense'),
+          inArray(transactions.accountId, accountIds)
+        )
+      )
+      .groupBy(transactions.accountId, categories.id, categories.name);
+    return rows.map((row) => ({ ...row, total: Number(row.total ?? 0) }));
   },
 
   async findDatesByAccountId(

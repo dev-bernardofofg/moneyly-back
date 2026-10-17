@@ -487,6 +487,26 @@ export const CurrentPeriodSummarySchema = registry.register(
   })
 );
 
+export const CardBillsSchema = registry.register(
+  'CardBills',
+  z.object({
+    periodId: z.string().uuid(),
+    total: z.number(),
+    bills: z.array(
+      z.object({
+        accountId: z.string().uuid(),
+        name: z.string(),
+        closingDay: z.number().int(),
+        dueDay: z.number().int(),
+        total: z.number(),
+        categories: z.array(
+          z.object({ categoryId: z.string().uuid(), name: z.string(), amount: z.number() })
+        ),
+      })
+    ),
+  })
+);
+
 export const ForecastResponseSchema = registry.register(
   'ForecastResponse',
   z.object({

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   getAvailablePeriods,
+  getCardBills,
   getComparativeInsights,
   getDashboardOverview,
   getFinancialInsights,
@@ -40,6 +41,8 @@ OverviewRouter.get('/planner', validate({ query: plannerQuerySchema }), getPlann
 OverviewRouter.get('/insights', getFinancialInsights);
 
 OverviewRouter.get('/forecast', validate({ query: forecastQuerySchema }), getForecast);
+
+OverviewRouter.get('/card-bills', validate({ query: forecastQuerySchema }), getCardBills);
 
 OverviewRouter.get(
   '/insights/comparison',

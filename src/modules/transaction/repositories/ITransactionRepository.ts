@@ -47,6 +47,11 @@ export interface ITransactionRepository {
     endDate: Date
   ): Promise<ManualTransactionMatch[]>;
   findRecentTitleCategories(userId: string, limit: number): Promise<TitleCategory[]>;
+  sumExpensesByAccountAndCategory(
+    userId: string,
+    periodId: string,
+    accountIds: string[]
+  ): Promise<AccountCategoryTotal[]>;
   findDatesByAccountId(
     userId: string,
     accountId: string
@@ -59,3 +64,9 @@ export interface ITransactionRepository {
 
 export type ManualTransactionMatch = Pick<Transaction, 'id' | 'type' | 'amount' | 'date'>;
 export type TitleCategory = Pick<Transaction, 'title' | 'categoryId'>;
+export type AccountCategoryTotal = {
+  accountId: string;
+  categoryId: string;
+  categoryName: string;
+  total: number;
+};

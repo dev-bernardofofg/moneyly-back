@@ -9,6 +9,7 @@ import {
   FinancialPeriodSummarySchema,
   FinancialInsightsSchema,
   ForecastResponseSchema,
+  CardBillsSchema,
   PlannerOverviewSchema,
 } from '@core/openapi/schemas';
 import { ok, route } from '@core/openapi/route';
@@ -64,4 +65,12 @@ route({
   summary: 'Insights comparativos (período atual vs média)',
   query: z.object({ periodsBack: z.coerce.number().int().min(1).max(12).optional() }),
   ok: ok(wrapSuccess(ComparativeInsightsSchema)),
+});
+route({
+  method: 'get',
+  path: '/overview/card-bills',
+  tag: 'Overview',
+  summary: 'Faturas de cartão que vencem no período, por categoria',
+  query: z.object({ periodId: z.string().uuid().optional() }),
+  ok: ok(wrapSuccess(CardBillsSchema)),
 });

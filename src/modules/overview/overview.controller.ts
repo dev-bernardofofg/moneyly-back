@@ -4,6 +4,7 @@ import { asyncHandler } from '@core/middlewares/async-handler';
 import type { AuthRequest } from '@modules/auth/middlewares/auth';
 import type { GetDashboardOverviewQuery } from './schemas/overview.schema';
 import { getAvailablePeriodsUseCase } from './use-cases/get-available-periods.use-case';
+import { getCardBillsUseCase } from './use-cases/get-card-bills.use-case';
 import { getComparativeInsightsUseCase } from './use-cases/get-comparative-insights.use-case';
 import { getDashboardOverviewUseCase } from './use-cases/get-dashboard-overview.use-case';
 import { getDashboardPreviewsUseCase } from './use-cases/get-dashboard-previews.use-case';
@@ -116,4 +117,10 @@ export const getPlannerOverview = asyncHandler<AuthRequest>(async (req, res) => 
     },
     'Stats do planejamento recuperados com sucesso'
   );
+});
+
+export const getCardBills = asyncHandler<AuthRequest>(async (req, res) => {
+  const { periodId } = req.query as { periodId?: string };
+  const bills = await getCardBillsUseCase(req.user.id, periodId);
+  return ResponseHandler.success(res, bills, 'Faturas do período recuperadas com sucesso');
 });
