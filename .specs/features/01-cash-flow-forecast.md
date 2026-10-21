@@ -100,7 +100,8 @@ Sem persistir nada. Cálculo determinístico em São Paulo (helpers de `financia
 Implementação: `get-forecast.use-case.ts` + helpers puros em `overview/helpers/free-balance.ts`.
 
 ```
-total = realizedBalance
+total = carryOverBalance
+      + realizedBalance
       + futureRecurringIncome
       + pendingVariableIncome
       − futureRecurringExpense
@@ -108,8 +109,12 @@ total = realizedBalance
       − goalReserve
 ```
 
+- `carryOverBalance`: saldos iniciais das contas correntes com data ≤ `period.endDate` + fluxos
+  de períodos anteriores feitos a partir da data do saldo (`overview/helpers/carry-over.ts`).
+  Sem saldo inicial = 0 e nada muda. Lançamento anterior ao corte já está no saldo: sai também
+  do `realizedBalance`. Corte por conta; cartões e contas sem saldo usam o corte mais antigo.
 - `realizedBalance`: receitas − despesas das transações do período (inclui recorrências
-  materializadas e horas extras com transação vinculada).
+  materializadas e horas extras com transação vinculada), sem as anteriores ao corte.
 - `futureRecurring*`: ocorrências com data > agora e ≤ `period.endDate`, sem as já materializadas e
   limitadas às parcelas restantes.
 - `pendingVariableIncome`: horas extras do período sem transação vinculada.

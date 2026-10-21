@@ -92,10 +92,17 @@ Para conta corrente nada muda: `periodId` = período da `date`.
 Rollback: remover a FK e a coluna, depois a tabela. Nenhum dado de transação é alterado além
 da coluna nova.
 
+## Saldo inicial (conta corrente)
+
+- `openingBalance` + `openingBalanceDate` (migration `0011`): saldo real da conta numa data, não
+  futura. Cartão recusa (400). Valor sem data na primeira vez → 400 "Informe a data do saldo".
+- `openingBalanceDate: null` no `PUT` remove o saldo (valor volta a 0).
+- Entra no Saldo Livre como `components.carryOverBalance` (ver `01-cash-flow-forecast.md`).
+
 ## Fora do escopo (v1)
 
 - Limite do cartão, fatura em aberto/paga, juros.
-- Saldo por conta e transferências entre contas.
+- Saldo exibido por conta e transferências entre contas.
 - Recorrência associada a cartão.
 - Detectar a conta automaticamente pelo arquivo importado.
 
