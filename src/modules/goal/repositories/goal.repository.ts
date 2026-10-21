@@ -91,7 +91,7 @@ export const goalRepository: IGoalRepository = {
     const goal = await goalRepository.findById(id);
     if (!goal) return null;
 
-    const newAmount = (Number(goal.currentAmount) ?? 0) + amount;
+    const newAmount = Number(goal.currentAmount || 0) + amount;
     const [updatedGoal] = await db
       .update(goals)
       .set({ currentAmount: newAmount.toString(), updatedAt: new Date() })
