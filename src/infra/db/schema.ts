@@ -92,6 +92,27 @@ export const accounts = pgTable(
   ]
 );
 
+// Fatura paga: uma linha por cartão e vencimento. Ausente = pendente.
+export const cardBillPayments = pgTable(
+  'card_bill_payments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => accounts.id),
+    dueDate: timestamp('due_date').notNull(),
+    source: text('source', { enum: ['manual', 'import'] }).notNull(),
+    paidAt: timestamp('paid_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('card_bill_payments_account_due_unique').on(table.accountId, table.dueDate),
+  ]
+);
+
 export const categories = pgTable('categories', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }), // Tornando opcional para categorias globais
@@ -475,6 +496,7 @@ export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
 export type DeviceRegistration = typeof deviceRegistrations.$inferSelect;
 export type NewDeviceRegistration = typeof deviceRegistrations.$inferInsert;
+export type CardBillPayment = typeof cardBillPayments.$inferSelect;
 export type Account = typeof accounts.$inferSelect;
 export type NewAccount = typeof accounts.$inferInsert;
 export type Company = typeof companies.$inferSelect;

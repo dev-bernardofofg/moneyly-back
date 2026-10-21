@@ -99,6 +99,13 @@
       "when": 1792603673936,
       "tag": "0013_recurring_account",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792607065357,
+      "tag": "0014_card_bill_payments",
+      "breakpoints": true
     }
   ]
 }
