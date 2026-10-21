@@ -1,8 +1,5 @@
 import { Router } from 'express';
-import { readFileSync } from 'fs';
-import { join } from 'path';
 import swaggerUi from 'swagger-ui-express';
-import { logger } from '@core/lib/logger';
 import { AuthRouters } from '@modules/auth';
 import { BudgetRouter } from '@modules/budget';
 import { CategoryRouter } from '@modules/category';
@@ -14,16 +11,9 @@ import { RecurringTransactionRouter } from '@modules/recurring-transaction';
 import transactionRoutes from '@modules/transaction/transaction.router';
 import { UserRouters } from '@modules/user';
 import { AccountRouter } from '@modules/account';
-
-let openApiDocument: Record<string, unknown> = {};
-try {
-  const openApiPath = join(__dirname, '../openapi.json');
-  const openApiContent = readFileSync(openApiPath, 'utf-8');
-  openApiDocument = JSON.parse(openApiContent) as Record<string, unknown>;
-} catch {
-  logger.warn('openapi.json não encontrado. Swagger docs não estarão disponíveis.');
-  openApiDocument = {};
-}
+// Import estático: o tsc copia o JSON para dist/ e o bundle da Vercel o inclui (readFileSync em
+// runtime não era rastreado e /api-docs ficava vazio em produção).
+import openApiDocument from '../openapi.json';
 
 const router: Router = Router();
 
