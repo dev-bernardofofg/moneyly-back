@@ -1,6 +1,7 @@
-import { and, count, eq, gt, lte } from 'drizzle-orm';
+import { and, count, eq, getTableColumns, gt, isNull, lte, ne, or } from 'drizzle-orm';
 import { db } from '@infra/db';
 import {
+  accounts,
   recurringTransactions,
   type NewRecurringTransaction,
   type RecurringTransaction,
@@ -168,12 +169,15 @@ export const recurringTransactionRepository = {
     return db.select().from(recurringTransactions).where(eq(recurringTransactions.isActive, true));
   },
 
+  // Sem as do cartão: o que vence é a fatura, lembrada à parte.
   async findUpcomingExpenses(from: Date, to: Date): Promise<RecurringTransaction[]> {
     return db
-      .select()
+      .select(getTableColumns(recurringTransactions))
       .from(recurringTransactions)
+      .leftJoin(accounts, eq(recurringTransactions.accountId, accounts.id))
       .where(
         and(
+          or(isNull(accounts.id), ne(accounts.type, 'credit_card')),
           eq(recurringTransactions.isActive, true),
           eq(recurringTransactions.type, 'expense'),
           gt(recurringTransactions.nextExecution, from),

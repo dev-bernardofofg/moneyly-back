@@ -4,6 +4,7 @@ export {
   processUserBudgetAlerts,
 } from './use-cases/process-budget-alerts.use-case';
 export { processBillReminders } from './use-cases/process-bill-reminders.use-case';
+export { processCardBillReminders } from './use-cases/process-card-bill-reminders.use-case';
 export {
   processSpendingAlerts,
   processUserSpendingAlert,

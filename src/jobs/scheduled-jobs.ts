@@ -1,6 +1,7 @@
 import { logger } from '@core/lib/logger';
 import {
   processBillReminders,
+  processCardBillReminders,
   processBudgetAlerts,
   processSpendingAlerts,
 } from '@modules/notification';
@@ -10,6 +11,7 @@ const JOBS = [
   { name: 'recurring transactions', run: processRecurringTransactions },
   { name: 'budget alerts', run: processBudgetAlerts },
   { name: 'bill reminders', run: processBillReminders },
+  { name: 'card bill reminders', run: processCardBillReminders },
   { name: 'spending alerts', run: processSpendingAlerts },
 ] as const;
 
