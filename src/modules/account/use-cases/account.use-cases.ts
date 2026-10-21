@@ -3,6 +3,8 @@ import { BadRequestError } from '@core/errors';
 import { financialPeriodService } from '@modules/financial-period';
 import { recurringTransactionRepository } from '@modules/recurring-transaction/repositories/recurring-transaction.repository';
 import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
+import { transferLegs } from '@modules/transfer/helpers/transfer-legs';
+import { transferRepository } from '@modules/transfer/repositories/transfer.repository';
 import type { Account } from '@infra/db/schema';
 import { billingDateFor } from '../helpers/billing-date';
 import { accountRepository } from '../repositories/account.repository';
@@ -14,7 +16,36 @@ import {
 
 export const listAccountsUseCase = async (userId: string) => {
   await accountRepository.ensureDefault(userId);
-  return accountRepository.findActiveByUserId(userId);
+  const accounts = await accountRepository.findActiveByUserId(userId);
+
+  const cutoffs = accounts.flatMap((account) =>
+    account.type === 'checking' && account.openingBalanceDate ? [account.openingBalanceDate] : []
+  );
+  const legs =
+    cutoffs.length > 0
+      ? (
+          await transferRepository.findSince(
+            userId,
+            new Date(Math.min(...cutoffs.map((date) => date.getTime())))
+          )
+        ).flatMap(transferLegs)
+      : [];
+
+  // Saldo atual só com saldo inicial: sem ele não há de onde partir.
+  return Promise.all(
+    accounts.map(async (account) => {
+      const since = account.type === 'checking' ? account.openingBalanceDate : null;
+      if (!since) return { ...account, currentBalance: null };
+      const transactionsNet = await transactionRepository.sumSignedSince(userId, account.id, since);
+      const transfersNet = legs
+        .filter((leg) => leg.accountId === account.id && leg.date.getTime() >= since.getTime())
+        .reduce((total, leg) => total + (leg.type === 'income' ? leg.amount : -leg.amount), 0);
+      return {
+        ...account,
+        currentBalance: account.openingBalance + transactionsNet + transfersNet,
+      };
+    })
+  );
 };
 
 export const createAccountUseCase = async (userId: string, data: CreateAccountInput) => {
