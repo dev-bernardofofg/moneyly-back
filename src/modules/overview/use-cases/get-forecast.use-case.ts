@@ -11,6 +11,7 @@ import { financialPeriodService } from '@modules/financial-period';
 import { getBudgetProgressUseCase } from '@modules/budget/use-cases/get-budget-progress.use-case';
 import { listGoalsUseCase } from '@modules/goal/use-cases/list-goals.use-case';
 import { overtimeRepository } from '@modules/overtime/repositories/overtime.repository';
+import { billingDateFor } from '@modules/account/helpers/billing-date';
 import { accountRepository } from '@modules/account/repositories/account.repository';
 import { buildOpeningBalances } from '../helpers/carry-over';
 import {
@@ -80,8 +81,11 @@ export const getForecastUseCase = async (userId: string, periodId?: string) => {
   );
 
   const occurrences: ForecastOccurrence[] = [];
+  const accountById = new Map(accounts.map((account) => [account.id, account]));
+  const defaultAccount = accounts.find((account) => account.isDefault);
 
   for (const rec of recurrences) {
+    const account = (rec.accountId && accountById.get(rec.accountId)) || defaultAccount;
     const hasLimit = rec.totalInstallments !== null;
     let remaining = hasLimit
       ? rec.totalInstallments! - rec.executedInstallments
@@ -102,9 +106,14 @@ export const getForecastUseCase = async (userId: string, periodId?: string) => {
       // conta 1x, como o scheduler fará, em vez de sumir do realizado e do projetado.
       const isPendingExecution = iterations === 1;
 
+      // Cobrança no cartão pertence ao período da fatura, não ao dia da cobrança.
+      const periodDate = account ? billingDateFor(account, cursor) : cursor;
+      const happens = cursor.getTime() > now.getTime() || isPendingExecution;
+
       if (
-        (cursor.getTime() > now.getTime() || isPendingExecution) &&
-        cursor.getTime() >= startDate.getTime()
+        happens &&
+        periodDate.getTime() >= startDate.getTime() &&
+        periodDate.getTime() <= endDate.getTime()
       ) {
         const occurrence = {
           recurringTransactionId: rec.id,
@@ -118,8 +127,9 @@ export const getForecastUseCase = async (userId: string, periodId?: string) => {
         if (!materializedRecurrences.has(getOccurrenceKey(rec.id, cursor))) {
           occurrences.push(occurrence);
         }
-        remaining--;
       }
+      // Parcela consumida mesmo quando a fatura dela cai em outro período.
+      if (happens) remaining--;
 
       cursor = calculateNextExecution(
         rec.frequency as RecurringFrequency,
