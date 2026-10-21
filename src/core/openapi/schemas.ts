@@ -519,6 +519,8 @@ export const CardBillsSchema = registry.register(
         // Vencimento da fatura dentro do período (null se o período não tiver o dia).
         dueDate: isoDate.nullable(),
         payment: z.object({ paidAt: isoDate, source: z.enum(['manual', 'import']) }).nullable(),
+        // Faturas a vencer e não pagas; null sem limite cadastrado.
+        limit: z.object({ total: z.number(), used: z.number(), available: z.number() }).nullable(),
         total: z.number(),
         categories: z.array(
           z.object({ categoryId: z.string().uuid(), name: z.string(), amount: z.number() })
@@ -608,6 +610,7 @@ export const AccountSchema = registry.register(
     type: z.enum(['checking', 'credit_card']),
     closingDay: z.number().int().nullable(),
     dueDay: z.number().int().nullable(),
+    creditLimit: money.nullable(),
     openingBalance: money,
     openingBalanceDate: isoDate.nullable(),
     isDefault: z.boolean(),

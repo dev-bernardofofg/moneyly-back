@@ -1,3 +1,4 @@
+import { spMidnight } from '@core/helpers/dates';
 import { HttpError } from '@core/errors/http-error';
 import { dueDateInPeriod } from '@modules/account/helpers/billing-date';
 import { accountRepository } from '@modules/account/repositories/account.repository';
@@ -20,12 +21,32 @@ export const getCardBillsUseCase = async (userId: string, periodId?: string) => 
     (account) => account.type === 'credit_card'
   );
   const cardIds = cards.map((card) => card.id);
-  const [totals, payments] = await Promise.all([
+  const today = spMidnight(new Date());
+  const [totals, payments, openPeriods] = await Promise.all([
     transactionRepository.sumExpensesByAccountAndCategory(userId, period.id, cardIds),
     cardBillPaymentRepository.findByAccountIds(userId, cardIds),
+    transactionRepository.sumCardExpensesByPeriod(userId, cardIds, today),
   ]);
+  const isPaid = (accountId: string, dueDate: Date) =>
+    payments.some(
+      (row) => row.accountId === accountId && row.dueDate.getTime() === dueDate.getTime()
+    );
+
+  // Limite usado = faturas que ainda vão vencer (hoje ou depois) e não estão pagas, incluindo
+  // parcelas futuras. Fatura vencida fica de fora: sem marcação, o histórico contaria tudo.
+  const limitUsed = (card: (typeof cards)[number]) =>
+    openPeriods
+      .filter((row) => row.accountId === card.id)
+      .reduce((used, row) => {
+        const due = dueDateInPeriod(card.dueDay!, row.startDate, row.endDate);
+        return due && due.getTime() >= today.getTime() && !isPaid(card.id, due)
+          ? used + row.total
+          : used;
+      }, 0);
   const start = new Date(period.startDate);
   const end = new Date(period.endDate);
+
+  const limitOf = (total: number, used: number) => ({ total, used, available: total - used });
 
   const bills = cards
     .map((card) => {
@@ -50,6 +71,7 @@ export const getCardBillsUseCase = async (userId: string, periodId?: string) => 
         dueDay: card.dueDay!,
         dueDate,
         payment: payment ? { paidAt: payment.paidAt, source: payment.source } : null,
+        limit: card.creditLimit ? limitOf(card.creditLimit, limitUsed(card)) : null,
         total: toMoney(categories.reduce((sum, category) => sum + category.amount, 0)),
         categories,
       };

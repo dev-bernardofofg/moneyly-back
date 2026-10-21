@@ -29,6 +29,12 @@ const openingBalanceDate = z
   )
   .transform((value) => spMidnight(value));
 
+const creditLimit = z
+  .number({ invalid_type_error: 'O limite deve ser um número.' })
+  .int('O limite deve ser em centavos (inteiro).')
+  .positive('O limite deve ser maior que zero.')
+  .max(999999999, 'O limite não pode ser maior que R$ 9.999.999,99.');
+
 export const createAccountSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('checking'),
@@ -41,6 +47,7 @@ export const createAccountSchema = z.discriminatedUnion('type', [
     name,
     closingDay: dayOfMonth('fechamento'),
     dueDay: dayOfMonth('vencimento'),
+    creditLimit: creditLimit.optional(),
   }),
 ]);
 
@@ -50,6 +57,8 @@ export const updateAccountSchema = z
     name: name.optional(),
     closingDay: dayOfMonth('fechamento').optional(),
     dueDay: dayOfMonth('vencimento').optional(),
+    // null remove o limite.
+    creditLimit: creditLimit.nullable().optional(),
     openingBalance: openingBalance.optional(),
     // null remove o saldo inicial.
     openingBalanceDate: openingBalanceDate.nullable().optional(),

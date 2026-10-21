@@ -25,6 +25,7 @@ export const createAccountUseCase = async (userId: string, data: CreateAccountIn
     type: data.type,
     closingDay: data.type === 'credit_card' ? data.closingDay : null,
     dueDay: data.type === 'credit_card' ? data.dueDay : null,
+    creditLimit: data.type === 'credit_card' ? (data.creditLimit ?? null) : null,
     ...(data.type === 'checking' && data.openingBalanceDate
       ? {
           openingBalance: data.openingBalance ?? 0,
@@ -44,6 +45,9 @@ export const updateAccountUseCase = async (
   const account = await validateActiveAccount(id, userId);
   if (account.type === 'checking' && (data.closingDay !== undefined || data.dueDay !== undefined)) {
     throw new BadRequestError('Conta corrente não tem fechamento nem vencimento');
+  }
+  if (account.type === 'checking' && data.creditLimit !== undefined) {
+    throw new BadRequestError('Conta corrente não tem limite');
   }
   if (
     account.type === 'credit_card' &&

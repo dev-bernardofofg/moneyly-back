@@ -15,6 +15,7 @@ import {
 import type {
   AccountCategoryTotal,
   AccountFlow,
+  CardPeriodTotal,
   ITransactionRepository,
   ManualTransactionMatch,
   TitleCategory,
@@ -237,6 +238,33 @@ export const transactionRepository = {
         )
       )
       .groupBy(transactions.accountId, categories.id, categories.name);
+    return rows.map((row) => ({ ...row, total: Number(row.total ?? 0) }));
+  },
+
+  async sumCardExpensesByPeriod(
+    userId: string,
+    accountIds: string[],
+    periodsEndingFrom: Date
+  ): Promise<CardPeriodTotal[]> {
+    if (accountIds.length === 0) return [];
+    const rows = await db
+      .select({
+        accountId: transactions.accountId,
+        startDate: financialPeriods.startDate,
+        endDate: financialPeriods.endDate,
+        total: sum(transactions.amount),
+      })
+      .from(transactions)
+      .innerJoin(financialPeriods, eq(transactions.periodId, financialPeriods.id))
+      .where(
+        and(
+          eq(transactions.userId, userId),
+          eq(transactions.type, 'expense'),
+          inArray(transactions.accountId, accountIds),
+          gte(financialPeriods.endDate, periodsEndingFrom)
+        )
+      )
+      .groupBy(transactions.accountId, financialPeriods.startDate, financialPeriods.endDate);
     return rows.map((row) => ({ ...row, total: Number(row.total ?? 0) }));
   },
 

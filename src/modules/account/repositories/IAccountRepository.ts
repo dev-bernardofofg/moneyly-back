@@ -3,7 +3,13 @@ import type { Account, NewAccount } from '@infra/db/schema';
 export type AccountUpdate = Partial<
   Pick<
     NewAccount,
-    'name' | 'closingDay' | 'dueDay' | 'isActive' | 'openingBalance' | 'openingBalanceDate'
+    | 'name'
+    | 'closingDay'
+    | 'dueDay'
+    | 'creditLimit'
+    | 'isActive'
+    | 'openingBalance'
+    | 'openingBalanceDate'
   >
 >;
 
