@@ -553,6 +553,8 @@ export const ForecastResponseSchema = registry.register(
         goals: z.number(),
       }),
       components: z.object({
+        // Saldo trazido de antes do período (saldos iniciais das contas + sobras anteriores).
+        carryOverBalance: z.number(),
         realizedBalance: z.number(),
         futureRecurringIncome: z.number(),
         futureRecurringExpense: z.number(),

@@ -11,6 +11,8 @@ import { financialPeriodService } from '@modules/financial-period';
 import { getBudgetProgressUseCase } from '@modules/budget/use-cases/get-budget-progress.use-case';
 import { listGoalsUseCase } from '@modules/goal/use-cases/list-goals.use-case';
 import { overtimeRepository } from '@modules/overtime/repositories/overtime.repository';
+import { accountRepository } from '@modules/account/repositories/account.repository';
+import { buildOpeningBalances } from '../helpers/carry-over';
 import {
   calculateBudgetReserve,
   calculateDaysRemaining,
@@ -45,10 +47,21 @@ export const getForecastUseCase = async (userId: string, periodId?: string) => {
   const startDate = new Date(period.startDate);
   const endDate = new Date(period.endDate);
 
-  const transactions = await transactionRepository.findByPeriodId(userId, period.id);
+  const [transactions, accounts] = await Promise.all([
+    transactionRepository.findByPeriodId(userId, period.id),
+    accountRepository.findAllByUserId(userId),
+  ]);
 
-  const realizedIncome = sumAmounts(transactions.filter((tx) => tx.type === 'income'));
-  const realizedExpense = sumAmounts(transactions.filter((tx) => tx.type === 'expense'));
+  // Com saldo inicial informado, o que veio antes dele já está no saldo e não entra de novo.
+  const balances = buildOpeningBalances(accounts, endDate);
+  const counted = transactions.filter(balances.counts);
+  const previousFlows = balances.since
+    ? await transactionRepository.findFlowsBeforePeriod(userId, startDate, balances.since)
+    : [];
+  const carryOverBalance = toMoney(balances.carryOver(previousFlows));
+
+  const realizedIncome = sumAmounts(counted.filter((tx) => tx.type === 'income'));
+  const realizedExpense = sumAmounts(counted.filter((tx) => tx.type === 'expense'));
   const realizedBalance = realizedIncome - realizedExpense;
 
   const now = getCurrentSaoPauloDate();
@@ -125,9 +138,7 @@ export const getForecastUseCase = async (userId: string, periodId?: string) => {
       .filter((id): id is string => Boolean(id))
   );
   const realizedVariableIncome = sumAmounts(
-    transactions.filter(
-      (transaction) => transaction.type === 'income' && transaction.overtimeRecordId
-    )
+    counted.filter((transaction) => transaction.type === 'income' && transaction.overtimeRecordId)
   );
   const pendingVariableIncome = overtimeRecords
     .filter((record) => !realizedOvertimeIds.has(record.id))
@@ -142,7 +153,7 @@ export const getForecastUseCase = async (userId: string, periodId?: string) => {
   const expectedFixedIncome = toMoney(realizedIncome - realizedVariableIncome + recurringIncome);
   const expectedVariableIncome = toMoney(realizedVariableIncome + pendingVariableIncome);
   const projectedEndBalance = toMoney(
-    realizedBalance + recurringIncome - recurringExpense + pendingVariableIncome
+    carryOverBalance + realizedBalance + recurringIncome - recurringExpense + pendingVariableIncome
   );
   const freeBalanceTotal = toMoney(projectedEndBalance - budgetReserve - goalReserve);
 
@@ -181,6 +192,7 @@ export const getForecastUseCase = async (userId: string, periodId?: string) => {
         goals: goalReserve,
       },
       components: {
+        carryOverBalance,
         realizedBalance: toMoney(realizedBalance),
         futureRecurringIncome: toMoney(recurringIncome),
         futureRecurringExpense: toMoney(recurringExpense),
