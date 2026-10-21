@@ -300,6 +300,8 @@ export const recurringTransactions = pgTable('recurring_transactions', {
   frequency: text('frequency', {
     enum: ['daily', 'weekly', 'monthly', 'yearly'],
   }).notNull(),
+  // Null = conta padrão do usuário. Cartão: cada cobrança cai no período da fatura.
+  accountId: uuid('account_id').references(() => accounts.id),
   dayOfMonth: integer('day_of_month'), // Para frequência monthly (1-31)
   dayOfWeek: integer('day_of_week'), // Para frequência weekly (0-6, domingo = 0)
   startDate: timestamp('start_date'),

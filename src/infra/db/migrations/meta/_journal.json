@@ -92,6 +92,13 @@
       "when": 1792599623979,
       "tag": "0012_money_in_cents",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792603673936,
+      "tag": "0013_recurring_account",
+      "breakpoints": true
     }
   ]
 }
