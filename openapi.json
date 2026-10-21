@@ -470,6 +470,11 @@
             "type": "string",
             "format": "uuid"
           },
+          "accountId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
           "frequency": {
             "type": "string",
             "enum": [
@@ -526,6 +531,7 @@
           "title",
           "amount",
           "categoryId",
+          "accountId",
           "frequency",
           "dayOfMonth",
           "dayOfWeek",
@@ -7301,6 +7307,11 @@
                       "yearly"
                     ]
                   },
+                  "accountId": {
+                    "type": "string",
+                    "nullable": true,
+                    "format": "uuid"
+                  },
                   "dayOfMonth": {
                     "type": "integer",
                     "minimum": 1,
@@ -7779,6 +7790,11 @@
                       "monthly",
                       "yearly"
                     ]
+                  },
+                  "accountId": {
+                    "type": "string",
+                    "nullable": true,
+                    "format": "uuid"
                   },
                   "dayOfMonth": {
                     "type": "integer",
