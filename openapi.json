@@ -1392,13 +1392,32 @@
                     "new",
                     "imported",
                     "possible_duplicate",
-                    "bill_payment"
+                    "bill_payment",
+                    "transfer"
                   ]
                 },
                 "duplicateOf": {
                   "type": "string",
                   "nullable": true,
                   "format": "uuid"
+                },
+                "transferOf": {
+                  "type": "object",
+                  "nullable": true,
+                  "properties": {
+                    "transactionId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "accountId": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
+                  "required": [
+                    "transactionId",
+                    "accountId"
+                  ]
                 },
                 "suggestedCategoryId": {
                   "type": "string",
@@ -1422,6 +1441,7 @@
                 "title",
                 "status",
                 "duplicateOf",
+                "transferOf",
                 "suggestedCategoryId",
                 "suggestionSource"
               ]
@@ -1444,12 +1464,16 @@
           },
           "billsPaid": {
             "type": "integer"
+          },
+          "transfers": {
+            "type": "integer"
           }
         },
         "required": [
           "created",
           "skipped",
-          "billsPaid"
+          "billsPaid",
+          "transfers"
         ]
       },
       "Notification": {
@@ -1627,6 +1651,64 @@
           "byCategory",
           "alert",
           "transactionsCount"
+        ]
+      },
+      "Transfer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fromAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "toAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "type": "integer",
+            "description": "Valor em centavos",
+            "example": 123450
+          },
+          "date": {
+            "type": "string",
+            "example": "2026-05-17T00:00:00.000Z"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "fromExternalId": {
+            "type": "string",
+            "nullable": true
+          },
+          "toExternalId": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-05-17T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "fromAccountId",
+          "toAccountId",
+          "amount",
+          "date",
+          "description",
+          "fromExternalId",
+          "toExternalId",
+          "createdAt"
         ]
       },
       "CardBillPayment": {
@@ -2095,6 +2177,12 @@
           },
           "openingBalance": {
             "type": "integer",
+            "description": "Valor em centavos",
+            "example": 123450
+          },
+          "currentBalance": {
+            "type": "integer",
+            "nullable": true,
             "description": "Valor em centavos",
             "example": 123450
           },
@@ -9768,6 +9856,10 @@
                     "minLength": 1,
                     "maxLength": 7000000,
                     "pattern": "^[A-Za-z0-9_-]+$"
+                  },
+                  "accountId": {
+                    "type": "string",
+                    "format": "uuid"
                   }
                 },
                 "required": [
@@ -9914,6 +10006,10 @@
                         "categoryId": {
                           "type": "string",
                           "format": "uuid"
+                        },
+                        "transferOf": {
+                          "type": "string",
+                          "format": "uuid"
                         }
                       },
                       "required": [
@@ -9921,8 +10017,7 @@
                         "type",
                         "title",
                         "amount",
-                        "date",
-                        "categoryId"
+                        "date"
                       ]
                     },
                     "maxItems": 500
@@ -11510,6 +11605,372 @@
             },
             "required": true,
             "name": "dueDate",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "nullable": true
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisição inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transfers/": {
+      "get": {
+        "tags": [
+          "Transfers"
+        ],
+        "summary": "Listar transferências do período (padrão: período atual)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "periodId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Transfer"
+                      }
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisição inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Transfers"
+        ],
+        "summary": "Registrar transferência entre contas correntes",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fromAccountId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "toAccountId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "amount": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "maximum": 999999999
+                  },
+                  "date": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "fromAccountId",
+                  "toAccountId",
+                  "amount",
+                  "date"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Transfer"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisição inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transfers/{id}": {
+      "delete": {
+        "tags": [
+          "Transfers"
+        ],
+        "summary": "Remover transferência",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
             "in": "path"
           }
         ],
