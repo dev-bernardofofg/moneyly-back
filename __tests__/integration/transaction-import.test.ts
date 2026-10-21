@@ -107,7 +107,7 @@ describe('Transaction import', () => {
     expect(items[0]).toMatchObject({ type: 'expense', amount: 2500, title: 'Padaria Central' });
 
     const res = await confirm(items).expect(201);
-    expect(res.body.data).toEqual({ created: 2, skipped: 0 });
+    expect(res.body.data).toEqual({ created: 2, skipped: 0, billsPaid: 0 });
 
     const again = await preview(content);
     expect(again.map((item) => item.status)).toEqual(['imported', 'imported']);
@@ -121,7 +121,7 @@ describe('Transaction import', () => {
     await confirm(items).expect(201);
     const res = await confirm(items).expect(201);
 
-    expect(res.body.data).toEqual({ created: 0, skipped: 1 });
+    expect(res.body.data).toEqual({ created: 0, skipped: 1, billsPaid: 0 });
   });
 
   it('flags a manual transaction with same type, amount and day as possible duplicate', async () => {

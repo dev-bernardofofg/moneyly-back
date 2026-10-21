@@ -1,5 +1,11 @@
 import { spMidnight } from '@core/helpers/dates';
-import { billingDateFor, invoiceDueDate } from '@modules/account/helpers/billing-date';
+import {
+  billingDateFor,
+  dueDateInPeriod,
+  invoiceDueDate,
+  nearestDueDate,
+  nextDueDate,
+} from '@modules/account/helpers/billing-date';
 
 describe('invoiceDueDate', () => {
   it('bills a purchase before closing in the same cycle (due next month)', () => {
@@ -30,5 +36,28 @@ describe('billingDateFor', () => {
   it('keeps the transaction date for checking accounts', () => {
     const date = spMidnight('2026-09-10');
     expect(billingDateFor({ type: 'checking', closingDay: null, dueDay: null }, date)).toBe(date);
+  });
+});
+
+describe('bill due dates', () => {
+  it('finds the due date inside a period that crosses the month', () => {
+    expect(dueDateInPeriod(5, spMidnight('2026-09-20'), spMidnight('2026-10-19'))).toEqual(
+      spMidnight('2026-10-05')
+    );
+    expect(dueDateInPeriod(25, spMidnight('2026-09-20'), spMidnight('2026-10-19'))).toEqual(
+      spMidnight('2026-09-25')
+    );
+  });
+
+  it('pairs a payment with the closest due date, before or after it', () => {
+    expect(nearestDueDate(5, spMidnight('2026-10-03'))).toEqual(spMidnight('2026-10-05'));
+    expect(nearestDueDate(5, spMidnight('2026-10-08'))).toEqual(spMidnight('2026-10-05'));
+    expect(nearestDueDate(30, spMidnight('2026-10-02'))).toEqual(spMidnight('2026-09-30'));
+  });
+
+  it('returns the next due date, counting today', () => {
+    expect(nextDueDate(21, spMidnight('2026-10-21'))).toEqual(spMidnight('2026-10-21'));
+    expect(nextDueDate(5, spMidnight('2026-10-21'))).toEqual(spMidnight('2026-11-05'));
+    expect(nextDueDate(31, spMidnight('2027-02-10'))).toEqual(spMidnight('2027-02-28'));
   });
 });
