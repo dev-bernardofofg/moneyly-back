@@ -121,9 +121,16 @@ da coluna nova.
 - Lembrete diário (`processCardBillReminders`): fatura com valor, não paga, vencendo em até 3 dias.
   Recorrência no cartão não gera lembrete próprio: o que vence é a fatura.
 
+## Limite do cartão
+
+- `accounts.credit_limit` (migration `0015`), centavos, só cartão (conta corrente recusa); `null` remove.
+- `GET /overview/card-bills` traz `limit: { total, used, available }` por cartão com limite.
+- `used` = faturas com vencimento hoje ou depois e não pagas, inclusive parcelas futuras. Fatura já
+  vencida não conta: sem marcação, todo o histórico ocuparia o limite. Só despesas (estorno não abate).
+
 ## Fora do escopo (v1)
 
-- Limite do cartão, juros.
+- Juros.
 - Saldo exibido por conta e transferências entre contas.
 - Detectar a conta automaticamente pelo arquivo importado.
 
