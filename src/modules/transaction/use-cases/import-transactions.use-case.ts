@@ -7,6 +7,11 @@ import { resolveAccount } from '@modules/account/use-cases/account.use-cases';
 import { registerImportedBillPayments } from '@modules/account/use-cases/card-bill-payment.use-cases';
 import { financialPeriodService } from '@modules/financial-period';
 import { processUserSpendingAlert } from '@modules/notification';
+import { transferRepository } from '@modules/transfer/repositories/transfer.repository';
+import {
+  convertToTransfer,
+  findTransferMatches,
+} from '@modules/transfer/use-cases/import-transfers.use-case';
 import { buildImportCategorySuggester, isBillPayment } from '../helpers/import-category-suggester';
 import { decodeOfxFile, parseOfx } from '../helpers/ofx-parser';
 import { transactionRepository } from '../repositories/transaction.repository';
@@ -15,12 +20,21 @@ import { validateCategoryExistsForUser } from '../validations/transaction.valida
 
 const TITLE_HISTORY_LIMIT = 2000;
 
-export type ImportItemStatus = 'new' | 'imported' | 'possible_duplicate' | 'bill_payment';
+export type ImportItemStatus =
+  | 'new'
+  | 'imported'
+  | 'possible_duplicate'
+  | 'bill_payment'
+  | 'transfer';
 
 const dayKey = (type: string, amount: number, date: Date) =>
   `${type}:${amount}:${spDayString(date)}`;
 
-export const previewTransactionImportUseCase = async (userId: string, fileBase64Url: string) => {
+export const previewTransactionImportUseCase = async (
+  userId: string,
+  fileBase64Url: string,
+  accountId?: string
+) => {
   let statement;
   try {
     statement = parseOfx(decodeOfxFile(Buffer.from(fileBase64Url, 'base64url')));
@@ -32,11 +46,11 @@ export const previewTransactionImportUseCase = async (userId: string, fileBase64
   }
 
   const times = statement.transactions.map((transaction) => transaction.date.getTime());
-  const [imported, manual, history, categories] = await Promise.all([
-    transactionRepository.findImportedExternalIds(
-      userId,
-      statement.transactions.map((transaction) => transaction.externalId)
-    ),
+  const externalIds = statement.transactions.map((transaction) => transaction.externalId);
+  const account = accountId ? await resolveAccount(userId, accountId) : null;
+  const [imported, importedAsTransfer, manual, history, categories] = await Promise.all([
+    transactionRepository.findImportedExternalIds(userId, externalIds),
+    transferRepository.findExternalIds(userId, externalIds),
     transactionRepository.findManualInRange(
       userId,
       new Date(Math.min(...times)),
@@ -46,7 +60,16 @@ export const previewTransactionImportUseCase = async (userId: string, fileBase64
     categoryRepository.findByUserId(userId),
   ]);
 
-  const importedIds = new Set(imported);
+  const importedIds = new Set([...imported, ...importedAsTransfer]);
+  const transferMatches = await findTransferMatches(
+    userId,
+    account,
+    statement.transactions.filter(
+      (transaction) =>
+        !importedIds.has(transaction.externalId) &&
+        !isBillPayment(transaction.title, transaction.type)
+    )
+  );
   const manualByDay = new Map(
     manual.map((transaction) => [
       dayKey(transaction.type, Number(transaction.amount), transaction.date),
@@ -61,19 +84,23 @@ export const previewTransactionImportUseCase = async (userId: string, fileBase64
       const duplicateOf = manualByDay.get(
         dayKey(transaction.type, transaction.amount, transaction.date)
       );
+      const transferOf = transferMatches.get(transaction.externalId) ?? null;
       const status: ImportItemStatus = importedIds.has(transaction.externalId)
         ? 'imported'
         : isBillPayment(transaction.title, transaction.type)
           ? 'bill_payment'
-          : duplicateOf
-            ? 'possible_duplicate'
-            : 'new';
+          : transferOf
+            ? 'transfer'
+            : duplicateOf
+              ? 'possible_duplicate'
+              : 'new';
 
       const suggestion = suggester.suggest(transaction.title, transaction.type);
       return {
         ...transaction,
         status,
         duplicateOf: status === 'possible_duplicate' ? duplicateOf! : null,
+        transferOf: status === 'transfer' ? transferOf : null,
         suggestedCategoryId: suggestion.categoryId,
         suggestionSource: suggestion.source,
       };
@@ -86,14 +113,16 @@ export const confirmTransactionImportUseCase = async (
   { items, billPayments, accountId: requestedAccountId }: ConfirmImportInput
 ) => {
   const account = await resolveAccount(userId, requestedAccountId);
-  const categoryIds = [...new Set(items.map((item) => item.categoryId))];
+  const transferItems = items.filter((item) => item.transferOf);
+  const transactionItems = items.filter((item) => !item.transferOf);
+  const categoryIds = [...new Set(transactionItems.map((item) => item.categoryId!))];
   for (const categoryId of categoryIds) await validateCategoryExistsForUser(categoryId, userId);
 
   // Um período por dia de cobrança, não por linha: extratos têm dezenas de lançamentos no
   // mesmo dia (e numa fatura todas as compras vencem no mesmo dia).
   const periodByDay = new Map<string, string>();
   const rows = [];
-  for (const item of items) {
+  for (const item of transactionItems) {
     const billingDate = billingDateFor(account, item.date);
     const day = spDayString(billingDate);
     let periodId = periodByDay.get(day);
@@ -106,7 +135,7 @@ export const confirmTransactionImportUseCase = async (
       type: item.type,
       title: item.title,
       amount: item.amount,
-      categoryId: item.categoryId,
+      categoryId: item.categoryId!,
       description: null,
       date: item.date,
       periodId,
@@ -133,5 +162,14 @@ export const confirmTransactionImportUseCase = async (
 
   const billsPaid = await registerImportedBillPayments(userId, account, billPayments);
 
-  return { created: created.length, skipped: items.length - created.length, billsPaid };
+  for (const item of transferItems) {
+    await convertToTransfer(userId, account, { ...item, transferOf: item.transferOf! });
+  }
+
+  return {
+    created: created.length,
+    skipped: transactionItems.length - created.length,
+    billsPaid,
+    transfers: transferItems.length,
+  };
 };

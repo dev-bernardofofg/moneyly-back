@@ -175,7 +175,11 @@ export const getCurrentFinancialPeriodSummary = asyncHandler<AuthRequest>(async 
 });
 
 export const previewTransactionImport = asyncHandler<AuthRequest>(async (req, res) => {
-  const preview = await previewTransactionImportUseCase(req.user.id, req.body.file);
+  const preview = await previewTransactionImportUseCase(
+    req.user.id,
+    req.body.file,
+    req.body.accountId
+  );
   return ResponseHandler.success(res, preview, 'Prévia do extrato gerada com sucesso');
 });
 

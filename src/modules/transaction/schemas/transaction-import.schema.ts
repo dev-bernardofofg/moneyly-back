@@ -11,6 +11,8 @@ export const previewImportSchema = z.object({
     .min(1, 'O arquivo OFX está vazio.')
     .max(7_000_000, 'O arquivo OFX pode ter no máximo 5 MB.')
     .regex(/^[A-Za-z0-9_-]+$/, 'O arquivo deve ser enviado em base64url sem padding.'),
+  // Conta do extrato: permite casar transferência com a outra ponta já lançada.
+  accountId: z.string().uuid('O ID da conta deve ser um UUID válido.').optional(),
 });
 
 const isoDay = z
@@ -25,18 +27,25 @@ export const confirmImportSchema = z
       .uuid('O ID da conta deve ser um UUID válido.'),
     items: z
       .array(
-        z.object({
-          externalId: z.string().min(1).max(200),
-          type: z.enum(['income', 'expense']),
-          title: z.string().min(1).max(100),
-          amount: z.number().int().positive().max(999999999),
-          // Contrato: dia-semântica → meia-noite SP.
-          date: z
-            .string()
-            .datetime({ message: 'A data deve estar no formato ISO 8601.' })
-            .transform((value) => spMidnight(new Date(value))),
-          categoryId: z.string().uuid('O ID da categoria deve ser um UUID válido.'),
-        })
+        z
+          .object({
+            externalId: z.string().min(1).max(200),
+            type: z.enum(['income', 'expense']),
+            title: z.string().min(1).max(100),
+            amount: z.number().int().positive().max(999999999),
+            // Contrato: dia-semântica → meia-noite SP.
+            date: z
+              .string()
+              .datetime({ message: 'A data deve estar no formato ISO 8601.' })
+              .transform((value) => spMidnight(new Date(value))),
+            categoryId: z.string().uuid('O ID da categoria deve ser um UUID válido.').optional(),
+            // Transação da outra conta que é a outra ponta: as duas viram uma transferência.
+            transferOf: z.string().uuid('O ID da transação deve ser um UUID válido.').optional(),
+          })
+          .refine((item) => item.transferOf || item.categoryId, {
+            message: 'Escolha a categoria da transação.',
+            path: ['categoryId'],
+          })
       )
       .max(MAX_IMPORT_ITEMS, `Importe no máximo ${MAX_IMPORT_ITEMS} transações por vez.`),
     // Linhas "pagamento de fatura" do extrato: marcam a fatura como paga, importadas ou não.

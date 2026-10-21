@@ -1,6 +1,7 @@
-import { and, count, desc, eq, gte, inArray, isNull, lt, lte, or, sum } from 'drizzle-orm';
+import { and, count, desc, eq, gte, inArray, isNull, lt, lte, ne, or, sql, sum } from 'drizzle-orm';
 import { db } from '@infra/db';
 import {
+  accounts,
   categories,
   financialPeriods,
   transactions,
@@ -17,6 +18,7 @@ import type {
   AccountFlow,
   CardPeriodTotal,
   ITransactionRepository,
+  TransferCandidate,
   ManualTransactionMatch,
   TitleCategory,
   TransactionQueryFilters,
@@ -239,6 +241,71 @@ export const transactionRepository = {
       )
       .groupBy(transactions.accountId, categories.id, categories.name);
     return rows.map((row) => ({ ...row, total: Number(row.total ?? 0) }));
+  },
+
+  async findTransferCandidates(
+    userId: string,
+    excludeAccountId: string,
+    start: Date,
+    end: Date
+  ): Promise<TransferCandidate[]> {
+    return db
+      .select({
+        id: transactions.id,
+        accountId: transactions.accountId,
+        type: transactions.type,
+        amount: transactions.amount,
+        date: transactions.date,
+        externalId: transactions.externalId,
+      })
+      .from(transactions)
+      .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+      .where(
+        and(
+          eq(transactions.userId, userId),
+          eq(accounts.type, 'checking'),
+          ne(transactions.accountId, excludeAccountId),
+          isNull(transactions.recurringTransactionId),
+          gte(transactions.date, start),
+          lte(transactions.date, end)
+        )
+      );
+  },
+
+  async findTransferCandidateById(
+    id: string,
+    userId: string
+  ): Promise<(TransferCandidate & { accountType: string }) | null> {
+    const [row] = await db
+      .select({
+        id: transactions.id,
+        accountId: transactions.accountId,
+        type: transactions.type,
+        amount: transactions.amount,
+        date: transactions.date,
+        externalId: transactions.externalId,
+        accountType: accounts.type,
+      })
+      .from(transactions)
+      .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+      .where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
+    return row ?? null;
+  },
+
+  async sumSignedSince(userId: string, accountId: string, since: Date): Promise<number> {
+    const [row] = await db
+      .select({
+        total: sql<string>`coalesce(sum(case when ${transactions.type} = 'income' then ${transactions.amount} else -${transactions.amount} end), 0)`,
+      })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.userId, userId),
+          eq(transactions.accountId, accountId),
+          gte(transactions.date, since)
+        )
+      );
+    return Number(row?.total ?? 0);
   },
 
   async sumCardExpensesByPeriod(
