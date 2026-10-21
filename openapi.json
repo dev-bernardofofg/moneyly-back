@@ -1441,11 +1441,15 @@
           },
           "skipped": {
             "type": "integer"
+          },
+          "billsPaid": {
+            "type": "integer"
           }
         },
         "required": [
           "created",
-          "skipped"
+          "skipped",
+          "billsPaid"
         ]
       },
       "Notification": {
@@ -1625,6 +1629,51 @@
           "transactionsCount"
         ]
       },
+      "CardBillPayment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dueDate": {
+            "type": "string",
+            "example": "2026-05-17T00:00:00.000Z"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "import"
+            ]
+          },
+          "paidAt": {
+            "type": "string",
+            "example": "2026-05-17T00:00:00.000Z"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-05-17T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "accountId",
+          "dueDate",
+          "source",
+          "paidAt",
+          "createdAt"
+        ]
+      },
       "CardBills": {
         "type": "object",
         "properties": {
@@ -1652,6 +1701,32 @@
                 },
                 "dueDay": {
                   "type": "integer"
+                },
+                "dueDate": {
+                  "type": "string",
+                  "nullable": true,
+                  "example": "2026-05-17T00:00:00.000Z"
+                },
+                "payment": {
+                  "type": "object",
+                  "nullable": true,
+                  "properties": {
+                    "paidAt": {
+                      "type": "string",
+                      "example": "2026-05-17T00:00:00.000Z"
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "manual",
+                        "import"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "paidAt",
+                    "source"
+                  ]
                 },
                 "total": {
                   "type": "number"
@@ -1685,6 +1760,8 @@
                 "name",
                 "closingDay",
                 "dueDay",
+                "dueDate",
+                "payment",
                 "total",
                 "categories"
               ]
@@ -9820,8 +9897,39 @@
                         "categoryId"
                       ]
                     },
-                    "minItems": 1,
                     "maxItems": 500
+                  },
+                  "billPayments": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "income",
+                            "expense"
+                          ]
+                        },
+                        "amount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "exclusiveMinimum": true,
+                          "maximum": 999999999
+                        },
+                        "date": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "amount",
+                        "date"
+                      ]
+                    },
+                    "maxItems": 500,
+                    "default": []
                   }
                 },
                 "required": [
@@ -11072,6 +11180,295 @@
             },
             "required": true,
             "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "nullable": true
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisição inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{id}/bill-payment": {
+      "post": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Marcar como paga a fatura do cartão que vence na data",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dueDate": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  }
+                },
+                "required": [
+                  "dueDate"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CardBillPayment"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisição inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{id}/bill-payment/{dueDate}": {
+      "delete": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Voltar a fatura do cartão para pendente",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "required": true,
+            "name": "dueDate",
             "in": "path"
           }
         ],
