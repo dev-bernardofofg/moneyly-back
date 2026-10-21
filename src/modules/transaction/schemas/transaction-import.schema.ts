@@ -41,8 +41,10 @@ export const confirmImportSchema = z
             categoryId: z.string().uuid('O ID da categoria deve ser um UUID válido.').optional(),
             // Transação da outra conta que é a outra ponta: as duas viram uma transferência.
             transferOf: z.string().uuid('O ID da transação deve ser um UUID válido.').optional(),
+            // Lançamento já existente nesta conta: confirmar liga a linha a ele em vez de criar.
+            duplicateOf: z.string().uuid('O ID da transação deve ser um UUID válido.').optional(),
           })
-          .refine((item) => item.transferOf || item.categoryId, {
+          .refine((item) => item.transferOf || item.duplicateOf || item.categoryId, {
             message: 'Escolha a categoria da transação.',
             path: ['categoryId'],
           })

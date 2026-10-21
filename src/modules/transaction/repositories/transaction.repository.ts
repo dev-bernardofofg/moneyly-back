@@ -19,7 +19,7 @@ import type {
   CardPeriodTotal,
   ITransactionRepository,
   TransferCandidate,
-  ManualTransactionMatch,
+  ReconcileCandidateRow,
   TitleCategory,
   TransactionQueryFilters,
 } from './ITransactionRepository';
@@ -184,27 +184,49 @@ export const transactionRepository = {
     return rows.map((row) => row.externalId!);
   },
 
-  async findManualInRange(
+  async findReconcileCandidates(
     userId: string,
-    startDate: Date,
-    endDate: Date
-  ): Promise<ManualTransactionMatch[]> {
+    accountId: string,
+    scope: { periodId: string } | { start: Date; end: Date }
+  ): Promise<ReconcileCandidateRow[]> {
     return db
       .select({
         id: transactions.id,
         type: transactions.type,
         amount: transactions.amount,
         date: transactions.date,
+        externalId: transactions.externalId,
+        recurringTransactionId: transactions.recurringTransactionId,
       })
       .from(transactions)
       .where(
         and(
           eq(transactions.userId, userId),
-          isNull(transactions.externalId),
-          gte(transactions.date, startDate),
-          lte(transactions.date, endDate)
+          eq(transactions.accountId, accountId),
+          ...('periodId' in scope
+            ? [eq(transactions.periodId, scope.periodId)]
+            : [gte(transactions.date, scope.start), lte(transactions.date, scope.end)])
         )
       );
+  },
+
+  async linkImported(
+    id: string,
+    userId: string,
+    data: { externalId: string; amount: number }
+  ): Promise<boolean> {
+    const rows = await db
+      .update(transactions)
+      .set({ ...data, updatedAt: new Date() })
+      .where(
+        and(
+          eq(transactions.id, id),
+          eq(transactions.userId, userId),
+          isNull(transactions.externalId)
+        )
+      )
+      .returning({ id: transactions.id });
+    return rows.length > 0;
   },
 
   async findRecentTitleCategories(userId: string, limit: number): Promise<TitleCategory[]> {

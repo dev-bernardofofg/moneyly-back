@@ -440,6 +440,8 @@ export const TransactionImportResultSchema = registry.register(
     skipped: z.number().int(),
     billsPaid: z.number().int(),
     transfers: z.number().int(),
+    // Linhas que confirmaram um lançamento que já estava no app.
+    linked: z.number().int(),
   })
 );
 

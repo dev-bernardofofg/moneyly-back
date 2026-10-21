@@ -15,6 +15,7 @@ import {
 import { buildImportCategorySuggester, isBillPayment } from '../helpers/import-category-suggester';
 import { parseInterBill, type BillStatement } from '../helpers/inter-bill-parser';
 import { decodeOfxFile, parseOfx, type OfxStatement } from '../helpers/ofx-parser';
+import { reconcile } from '../helpers/reconcile';
 import { extractPdfText, isPdf } from '../helpers/pdf-text';
 import { transactionRepository } from '../repositories/transaction.repository';
 import type { ConfirmImportInput } from '../schemas/transaction-import.schema';
@@ -29,8 +30,7 @@ export type ImportItemStatus =
   | 'bill_payment'
   | 'transfer';
 
-const dayKey = (type: string, amount: number, date: Date) =>
-  `${type}:${amount}:${spDayString(date)}`;
+const RECONCILE_MARGIN_MS = 3 * 24 * 60 * 60 * 1000;
 
 export const previewTransactionImportUseCase = async (
   userId: string,
@@ -63,34 +63,43 @@ export const previewTransactionImportUseCase = async (
 
   const times = statement.transactions.map((transaction) => transaction.date.getTime());
   const externalIds = statement.transactions.map((transaction) => transaction.externalId);
-  const account = accountId ? await resolveAccount(userId, accountId) : null;
-  const [imported, importedAsTransfer, manual, history, categories] = await Promise.all([
+  const account = await resolveAccount(userId, accountId);
+  const billDueDate = 'dueDate' in statement ? statement.dueDate : null;
+  // Fatura no cartão: o que já existe no período dela é candidato, venha de onde vier a data.
+  const scope =
+    billDueDate && account.type === 'credit_card'
+      ? { periodId: await financialPeriodService.findOrCreatePeriodForDate(userId, billDueDate) }
+      : {
+          start: new Date(Math.min(...times) - RECONCILE_MARGIN_MS),
+          end: spEndOfDay(new Date(Math.max(...times) + RECONCILE_MARGIN_MS)),
+        };
+  const [imported, importedAsTransfer, candidates, history, categories] = await Promise.all([
     transactionRepository.findImportedExternalIds(userId, externalIds),
     transferRepository.findExternalIds(userId, externalIds),
-    transactionRepository.findManualInRange(
-      userId,
-      new Date(Math.min(...times)),
-      spEndOfDay(new Date(Math.max(...times)))
-    ),
+    transactionRepository.findReconcileCandidates(userId, account.id, scope),
     transactionRepository.findRecentTitleCategories(userId, TITLE_HISTORY_LIMIT),
     categoryRepository.findByUserId(userId),
   ]);
 
   const importedIds = new Set([...imported, ...importedAsTransfer]);
+  const pendingRows = statement.transactions.filter(
+    (transaction) =>
+      !importedIds.has(transaction.externalId) &&
+      !isBillPayment(transaction.title, transaction.type)
+  );
+  // A linha que já foi importada por id não pode "gastar" um candidato de outra linha.
+  const linkedIds = new Set(
+    candidates.flatMap((c) => (c.externalId && importedIds.has(c.externalId) ? [c.id] : []))
+  );
+  const matches = reconcile(
+    pendingRows,
+    candidates.filter((candidate) => !linkedIds.has(candidate.id)),
+    { samePeriod: 'periodId' in scope }
+  );
   const transferMatches = await findTransferMatches(
     userId,
     account,
-    statement.transactions.filter(
-      (transaction) =>
-        !importedIds.has(transaction.externalId) &&
-        !isBillPayment(transaction.title, transaction.type)
-    )
-  );
-  const manualByDay = new Map(
-    manual.map((transaction) => [
-      dayKey(transaction.type, Number(transaction.amount), transaction.date),
-      transaction.id,
-    ])
+    pendingRows.filter((transaction) => !matches.has(transaction.externalId))
   );
   const suggester = buildImportCategorySuggester(history, categories);
 
@@ -102,25 +111,25 @@ export const previewTransactionImportUseCase = async (
     accountKey: statement.accountKey,
     bill,
     items: statement.transactions.map((transaction) => {
-      const duplicateOf = manualByDay.get(
-        dayKey(transaction.type, transaction.amount, transaction.date)
-      );
+      const match = matches.get(transaction.externalId);
+      const duplicateOf = match?.kind === 'existing' ? match.transactionId : null;
       const transferOf = transferMatches.get(transaction.externalId) ?? null;
-      const status: ImportItemStatus = importedIds.has(transaction.externalId)
-        ? 'imported'
-        : isBillPayment(transaction.title, transaction.type)
-          ? 'bill_payment'
-          : transferOf
-            ? 'transfer'
-            : duplicateOf
-              ? 'possible_duplicate'
-              : 'new';
+      const status: ImportItemStatus =
+        importedIds.has(transaction.externalId) || match?.kind === 'imported'
+          ? 'imported'
+          : isBillPayment(transaction.title, transaction.type)
+            ? 'bill_payment'
+            : transferOf
+              ? 'transfer'
+              : duplicateOf
+                ? 'possible_duplicate'
+                : 'new';
 
       const suggestion = suggester.suggest(transaction.title, transaction.type);
       return {
         ...transaction,
         status,
-        duplicateOf: status === 'possible_duplicate' ? duplicateOf! : null,
+        duplicateOf: status === 'possible_duplicate' ? duplicateOf : null,
         transferOf: status === 'transfer' ? transferOf : null,
         suggestedCategoryId: suggestion.categoryId,
         suggestionSource: suggestion.source,
@@ -135,7 +144,8 @@ export const confirmTransactionImportUseCase = async (
 ) => {
   const account = await resolveAccount(userId, requestedAccountId);
   const transferItems = items.filter((item) => item.transferOf);
-  const transactionItems = items.filter((item) => !item.transferOf);
+  const linkItems = items.filter((item) => !item.transferOf && item.duplicateOf);
+  const transactionItems = items.filter((item) => !item.transferOf && !item.duplicateOf);
   const categoryIds = [...new Set(transactionItems.map((item) => item.categoryId!))];
   for (const categoryId of categoryIds) await validateCategoryExistsForUser(categoryId, userId);
 
@@ -190,10 +200,28 @@ export const confirmTransactionImportUseCase = async (
     await convertToTransfer(userId, account, { ...item, transferOf: item.transferOf! });
   }
 
+  // Já lançada no app: a linha confirma o lançamento (id do arquivo + valor real), sem duplicar.
+  let linked = 0;
+  for (const item of linkItems) {
+    const existing = await transactionRepository.findByIdAndUserId(item.duplicateOf!, userId);
+    if (!existing || existing.accountId !== account.id || existing.type !== item.type) {
+      throw new BadRequestError('O lançamento indicado não pertence a esta conta');
+    }
+    if (
+      await transactionRepository.linkImported(existing.id, userId, {
+        externalId: item.externalId,
+        amount: item.amount,
+      })
+    ) {
+      linked++;
+    }
+  }
+
   return {
     created: created.length,
     skipped: transactionItems.length - created.length,
     billsPaid,
     transfers: transferItems.length,
+    linked,
   };
 };

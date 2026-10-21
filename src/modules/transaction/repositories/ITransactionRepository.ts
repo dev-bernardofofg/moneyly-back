@@ -41,11 +41,16 @@ export interface ITransactionRepository {
     userId: string
   ): Promise<TransactionWithCategory[]>;
   findImportedExternalIds(userId: string, externalIds: string[]): Promise<string[]>;
-  findManualInRange(
+  findReconcileCandidates(
     userId: string,
-    startDate: Date,
-    endDate: Date
-  ): Promise<ManualTransactionMatch[]>;
+    accountId: string,
+    scope: { periodId: string } | { start: Date; end: Date }
+  ): Promise<ReconcileCandidateRow[]>;
+  linkImported(
+    id: string,
+    userId: string,
+    data: { externalId: string; amount: number }
+  ): Promise<boolean>;
   findRecentTitleCategories(userId: string, limit: number): Promise<TitleCategory[]>;
   sumExpensesByAccountAndCategory(
     userId: string,
@@ -79,7 +84,10 @@ export interface ITransactionRepository {
   ): Promise<Transaction[]>;
 }
 
-export type ManualTransactionMatch = Pick<Transaction, 'id' | 'type' | 'amount' | 'date'>;
+export type ReconcileCandidateRow = Pick<
+  Transaction,
+  'id' | 'type' | 'amount' | 'date' | 'externalId' | 'recurringTransactionId'
+>;
 export type TitleCategory = Pick<Transaction, 'title' | 'categoryId'>;
 export type TransferCandidate = Pick<
   Transaction,
