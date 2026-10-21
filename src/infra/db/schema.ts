@@ -93,6 +93,35 @@ export const accounts = pgTable(
   ]
 );
 
+// Dinheiro movido entre contas correntes do usuário: não é receita nem despesa.
+// external_id de cada ponta impede reimportar a linha do extrato como transação.
+export const transfers = pgTable(
+  'transfers',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    fromAccountId: uuid('from_account_id')
+      .notNull()
+      .references(() => accounts.id),
+    toAccountId: uuid('to_account_id')
+      .notNull()
+      .references(() => accounts.id),
+    amount: integer('amount').notNull(), // centavos
+    date: timestamp('date').notNull(),
+    description: text('description'),
+    fromExternalId: text('from_external_id'),
+    toExternalId: text('to_external_id'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('transfers_user_date_idx').on(table.userId, table.date),
+    uniqueIndex('transfers_user_from_external_unique').on(table.userId, table.fromExternalId),
+    uniqueIndex('transfers_user_to_external_unique').on(table.userId, table.toExternalId),
+  ]
+);
+
 // Fatura paga: uma linha por cartão e vencimento. Ausente = pendente.
 export const cardBillPayments = pgTable(
   'card_bill_payments',
@@ -497,6 +526,8 @@ export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
 export type DeviceRegistration = typeof deviceRegistrations.$inferSelect;
 export type NewDeviceRegistration = typeof deviceRegistrations.$inferInsert;
+export type Transfer = typeof transfers.$inferSelect;
+export type NewTransfer = typeof transfers.$inferInsert;
 export type CardBillPayment = typeof cardBillPayments.$inferSelect;
 export type Account = typeof accounts.$inferSelect;
 export type NewAccount = typeof accounts.$inferInsert;
