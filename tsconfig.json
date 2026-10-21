@@ -1,7 +1,5 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "display": "Node 20",
-  "_version": "20.1.0",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
@@ -9,7 +7,7 @@
       "@modules/*": ["src/modules/*"],
       "@infra/*": ["src/infra/*"]
     },
-    "lib": ["es2023", "dom"],
+    "lib": ["es2023"],
     "module": "nodenext",
     "target": "es2022",
     "strict": true,
@@ -33,11 +31,5 @@
     "noUnusedParameters": true
   },
   "include": ["src/**/*"],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "src/scripts/**",
-    "src/generated/**",
-    "src/core/lib/axios-instance.ts"
-  ]
+  "exclude": ["node_modules", "dist"]
 }
