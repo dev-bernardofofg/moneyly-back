@@ -284,3 +284,80 @@ describe('GET /overview/card-bills', () => {
     await request(app).get('/overview/card-bills').expect(401);
   });
 });
+
+describe('Opening balance', () => {
+  let token: string;
+  let categoryId: string;
+  let defaultId: string;
+  const auth = () => ({ Authorization: `Bearer ${token}` });
+
+  const spend = (amount: number, date: string) =>
+    request(app)
+      .post('/transactions/create')
+      .set(auth())
+      .send({ type: 'expense', title: 'Gasto', amount, category: categoryId, date })
+      .expect(201);
+
+  beforeAll(async () => {
+    token = await signUp('opening');
+    const category = await request(app)
+      .post('/categories/create')
+      .set(auth())
+      .send({ name: `Opening ${Date.now()}` });
+    categoryId = category.body.data.id;
+    defaultId = (await request(app).get('/accounts').set(auth())).body.data[0].id;
+  });
+
+  it('rejects an opening balance on a card and a future date', async () => {
+    const card = await request(app)
+      .post('/accounts')
+      .set(auth())
+      .send({ type: 'credit_card', name: 'Cartão Saldo', closingDay: 25, dueDay: 5 })
+      .expect(201);
+
+    await request(app)
+      .put(`/accounts/${card.body.data.id}`)
+      .set(auth())
+      .send({ openingBalance: 100, openingBalanceDate: '2026-09-01' })
+      .expect(400);
+    await request(app)
+      .put(`/accounts/${defaultId}`)
+      .set(auth())
+      .send({ openingBalance: 100, openingBalanceDate: '2999-01-01' })
+      .expect(400);
+  });
+
+  it('carries the balance and later flows into the free balance', async () => {
+    await spend(50, '2026-08-20'); // antes do saldo: já está nele
+    await spend(30, '2026-09-10'); // período anterior, depois do saldo
+    const current = await spend(100, new Date().toISOString().slice(0, 10));
+
+    const account = await request(app)
+      .put(`/accounts/${defaultId}`)
+      .set(auth())
+      .send({ openingBalance: 1000, openingBalanceDate: '2026-09-01' })
+      .expect(200);
+    expect(account.body.data).toMatchObject({ openingBalance: '1000' });
+
+    const res = await request(app)
+      .get('/overview/forecast')
+      .set(auth())
+      .query({ periodId: current.body.data.periodId })
+      .expect(200);
+
+    expect(res.body.data.freeBalance.components.carryOverBalance).toBe(970);
+    expect(res.body.data.realized.balance).toBe(-100);
+    expect(res.body.data.freeBalance.total).toBe(870);
+  });
+
+  it('removes the opening balance when the date is cleared', async () => {
+    await request(app)
+      .put(`/accounts/${defaultId}`)
+      .set(auth())
+      .send({ openingBalanceDate: null })
+      .expect(200);
+
+    const res = await request(app).get('/overview/forecast').set(auth()).expect(200);
+    expect(res.body.data.freeBalance.components.carryOverBalance).toBe(0);
+  });
+});

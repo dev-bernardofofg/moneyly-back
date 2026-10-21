@@ -72,6 +72,7 @@ describe('GET /overview/forecast', () => {
         commitments: { recurringExpenses: 0 },
         reserves: { budgets: 0, goals: 0 },
         components: {
+          carryOverBalance: 0,
           realizedBalance: 0,
           futureRecurringIncome: 0,
           futureRecurringExpense: 0,

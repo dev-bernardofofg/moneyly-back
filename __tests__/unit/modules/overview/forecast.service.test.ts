@@ -15,6 +15,9 @@ jest.mock('@modules/user/validations/user.validation');
 jest.mock('@modules/budget/use-cases/get-budget-progress.use-case');
 jest.mock('@modules/goal/use-cases/list-goals.use-case');
 jest.mock('@modules/overtime/repositories/overtime.repository');
+jest.mock('@modules/account/repositories/account.repository', () => ({
+  accountRepository: { findAllByUserId: jest.fn().mockResolvedValue([]) },
+}));
 
 const mockedPeriodSvc = financialPeriodService as jest.Mocked<typeof financialPeriodService>;
 const mockedTxRepo = transactionRepository as jest.Mocked<typeof transactionRepository>;
