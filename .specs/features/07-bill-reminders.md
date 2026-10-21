@@ -1,6 +1,6 @@
 # F8 — Lembrete de Contas a Vencer
 
-**Tipo:** feature (scheduler, sem endpoint novo). **Status:** spec. **Esforço:** baixo. **Schema novo:** nenhum (extensão de enum TS).
+**Tipo:** feature (scheduler, sem endpoint novo). **Status:** Done. **Esforço:** baixo. **Schema novo:** nenhum (extensão de enum TS).
 **Por quê:** o scheduler horário já processa `recurring_transactions` e `notifications` já tem `dedupeKey` idempotente. Falta avisar o usuário ANTES da cobrança — o alerta mais pedido em apps de finanças. Só liga fios entre módulos existentes.
 
 ## Objetivo

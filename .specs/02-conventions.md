@@ -86,7 +86,7 @@ Princípio: **UTC no core, São Paulo nas bordas.** Helpers em `src/helpers/date
 
 - Schema histórico foi aplicado via `db:push`; tracking `drizzle.__drizzle_migrations` ficava vazio → `db:migrate` colidia ("relation already exists").
 - **Resolvido:** `pnpm db:baseline` (`src/scripts/baseline-migrations.ts`) registra migrations do journal já existentes (hash sha256 idêntico ao drizzle + `created_at=journal.when`). Idempotente.
-- Fluxo agora: `db:generate` → revisar `.sql` → `db:migrate` (limpo, idempotente). `db:push` ainda ok p/ dev rápido, mas migrate é a fonte rastreável.
+- Fluxo: `db:generate` → revisar `.sql` → `db:migrate`. `db:push` foi removido dos scripts: aplica schema sem registrar migration e desalinha os ambientes.
 - Se um ambiente novo acusar desync push/migrate, rodar `pnpm db:baseline` 1x antes do `db:migrate`.
 
 ## Idioma & commits

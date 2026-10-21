@@ -1,168 +1,54 @@
-# 🧪 Testes Automatizados
+# Testes
 
-## 🎯 Início Rápido
-
-**Primeira vez aqui?** Veja o [Guia Rápido](./QUICK_TEST_GUIDE.md)!
+## Início rápido
 
 ```bash
-# 1. Subir Postgres de teste (primeira vez)
-docker run -d --name moneyly-test-db -e POSTGRES_USER=test -e POSTGRES_PASSWORD=test -e POSTGRES_DB=moneyly_test -p 5433:5432 postgres:16-alpine
+# 1. Postgres de teste (primeira vez; depois `docker start moneyly-test-db`)
+docker run -d --name moneyly-test-db --restart unless-stopped \
+  -e POSTGRES_USER=test -e POSTGRES_PASSWORD=test -e POSTGRES_DB=moneyly_test \
+  -p 5433:5432 postgres:16-alpine
 
-# 2. Rodar testes
-pnpm test:unit              # Unitários (rápido, sem banco)
-pnpm test:integration       # Integração: recria o schema e aplica as migrations
-pnpm test:coverage          # Com relatório de cobertura
+# 2. Rodar
+pnpm test:unit          # unitários, sem banco
+pnpm test:integration   # HTTP real contra o banco de teste
+pnpm test               # os dois
+pnpm test:coverage      # com relatório em coverage/
 ```
 
-**✅ `TEST_DATABASE_URL` só é aceita em localhost ou em banco com nome terminado em `_test`.** O setup apaga o schema `public` antes de cada execução.
+`.env.test` aponta `TEST_DATABASE_URL` para `localhost:5433/moneyly_test`. O setup global
+(`jest.global-setup.ts`) **apaga e recria o schema** e aplica as migrations de
+`src/infra/db/migrations/` antes de cada execução. Só aceita URL em `localhost` ou banco com
+nome terminado em `_test` (`setup/assert-test-database.ts`): nunca alcança dev ou produção.
 
----
-
-## 📁 Estrutura
+## Estrutura
 
 ```
 __tests__/
-├── setup/              # Configurações e helpers de teste
-│   └── test-helpers.ts
-├── unit/              # Testes unitários
-│   ├── helpers/
-│   ├── services/
-│   └── repositories/
-└── integration/       # Testes de integração
-    ├── auth.test.ts
-    └── ...
+├── setup/
+│   ├── assert-test-database.ts   # trava contra banco errado
+│   ├── period-anchor.ts          # datas dentro do período atual (horas extras)
+│   └── test-helpers.ts           # usuário/token fake p/ unit
+├── unit/
+│   ├── helpers/                  # helpers de core
+│   ├── modules/<modulo>/         # espelha src/modules/<modulo>/ (use-cases, helpers)
+│   └── openapi/                  # router ↔ openapi.json (regressão)
+└── integration/                  # supertest contra `app`, 1 arquivo por domínio
 ```
 
-## 🚀 Comandos
+Projetos Jest: `unit` (`jest.unit-setup.ts`, `DATABASE_URL` falsa: query acidental falha) e
+`integration` (`jest.setup.ts` + `jest.global-setup.ts`).
+
+## Convenções
+
+- Títulos de `describe`/`it` em inglês; descrevem comportamento, não implementação.
+- Unit: mockar repositórios/use-cases de outros módulos com `jest.mock`; sem banco.
+- Integration: criar usuário via `POST /auth/sign-up` no `beforeAll` (limite de 10 sign-ups
+  por processo pelo rate limit — reaproveitar usuários sem estado quando possível).
+- Datas: contrato de São Paulo (ver `.specs/02-conventions.md`); horas extras usam
+  `currentPeriodAnchor` para não cair no período anterior perto da meia-noite.
+
+## Debug
 
 ```bash
-# Rodar todos os testes
-pnpm test
-
-# Rodar testes em modo watch
-pnpm test:watch
-
-# Gerar relatório de cobertura
-pnpm test:coverage
-
-# Rodar apenas testes unitários
-pnpm test:unit
-
-# Rodar apenas testes de integração
-pnpm test:integration
+node --inspect-brk node_modules/.bin/jest --selectProjects unit --runInBand <arquivo>
 ```
-
-## 📝 Convenções
-
-### Nomenclatura de Arquivos
-
-- `*.test.ts` - Testes unitários
-- `*.spec.ts` - Testes de integração
-- `*.mock.ts` - Mocks reutilizáveis
-
-### Estrutura de Testes
-
-```typescript
-describe('NomeDaFuncionalidade', () => {
-  beforeEach(() => {
-    // Setup antes de cada teste
-  });
-
-  afterEach(() => {
-    // Cleanup após cada teste
-  });
-
-  describe('métodoEspecífico', () => {
-    it('deve fazer X quando Y', () => {
-      // Arrange (preparar)
-      // Act (executar)
-      // Assert (verificar)
-    });
-
-    it('deve lançar erro quando Z', () => {
-      // Teste de erro
-    });
-  });
-});
-```
-
-## 🎯 Tipos de Testes
-
-### Testes Unitários
-
-Testam funções e métodos isolados, com mocks de dependências.
-
-**Exemplo:**
-
-```typescript
-// __tests__/unit/services/user.service.test.ts
-import { createUserService } from '../../../src/services/user.service';
-import { UserRepository } from '../../../src/repositories/user.repository';
-
-jest.mock('../../../src/repositories/user.repository');
-
-describe('UserService', () => {
-  it('deve criar usuário', async () => {
-    (UserRepository.create as jest.Mock).mockResolvedValue(mockUser);
-    const result = await createUserService(userData);
-    expect(result).toBeDefined();
-  });
-});
-```
-
-### Testes de Integração
-
-Testam fluxos completos, incluindo rotas e banco de dados.
-
-**Exemplo:**
-
-```typescript
-// __tests__/integration/auth.test.ts
-import request from 'supertest';
-import { app } from '../../src/server';
-
-describe('Auth', () => {
-  it('POST /auth/sign-up deve criar usuário', async () => {
-    const response = await request(app).post('/auth/sign-up').send(userData).expect(201);
-
-    expect(response.body.success).toBe(true);
-  });
-});
-```
-
-## 🔧 Configuração
-
-### Banco de Dados de Teste
-
-Configure uma variável de ambiente separada:
-
-```env
-TEST_DATABASE_URL=postgresql://test:test@localhost:5433/moneyly_test
-```
-
-### Mocks Globais
-
-Mocks comuns estão em `__tests__/setup/test-helpers.ts`.
-
-## 📊 Cobertura
-
-Meta de cobertura:
-
-- **Statements**: > 80%
-- **Branches**: > 75%
-- **Functions**: > 80%
-- **Lines**: > 80%
-
-## 🐛 Debugging
-
-Para debugar um teste específico:
-
-```bash
-node --inspect-brk node_modules/.bin/jest --runInBand specific.test.ts
-```
-
-## 📚 Recursos
-
-- [Jest Documentation](https://jestjs.io/docs/getting-started)
-- [Supertest Documentation](https://github.com/visionmedia/supertest)
-- [Testing Best Practices](https://testingjavascript.com/)

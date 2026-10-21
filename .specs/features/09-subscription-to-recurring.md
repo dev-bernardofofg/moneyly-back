@@ -1,6 +1,6 @@
 # F10 — Converter Assinatura Detectada em Recorrente
 
-**Tipo:** feature (write, 1 endpoint). **Status:** spec. **Esforço:** baixo. **Schema novo:** nenhum.
+**Tipo:** feature (write, 1 endpoint). **Status:** Done. **Esforço:** baixo. **Schema novo:** nenhum.
 **Por quê:** F3 (`GET /transactions/subscriptions`) detecta candidatos mas não tem ação — o usuário vê "Netflix R$ 55/mês" e precisa recriar a recorrente na mão. Este endpoint fecha o loop: 1 clique no front converte o candidato.
 
 ## Endpoint

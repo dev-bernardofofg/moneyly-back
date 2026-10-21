@@ -1,6 +1,6 @@
 # F11 — Notificação de transação criada + payload rico no push
 
-**Tipo:** feature (gatilho em request, sem endpoint novo). **Status:** feito. **Schema novo:** nenhum (enum TS).
+**Tipo:** feature (gatilho em request, sem endpoint novo). **Status:** Done. **Schema novo:** nenhum (enum TS).
 **Por quê:** o usuário precisa de feedback imediato ao lançar entrada/saída, e o push precisa carregar rota, ícone e `relatedId` para o SW do front.
 
 ## Objetivo

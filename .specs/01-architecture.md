@@ -11,10 +11,10 @@
 - **DB:** PostgreSQL via **Drizzle ORM** (`postgres` driver)
 - **Validação:** Zod 3
 - **Auth:** JWT (access + refresh token), Google OAuth opcional
-- **Testes:** Jest (unit + integração), Playwright (e2e)
+- **Testes:** Jest (unit + integração contra Postgres em Docker)
 - **Docs:** OpenAPI/Swagger em `/api-docs` (lê `openapi.json` da raiz)
-- **Geração front:** Kubb (tipos TS + Zod) + Orval (hooks React Query) via `pnpm api:generate`
-- **Deploy:** Vercel (`api/index.ts` é o entrypoint serverless; `src/server.ts` é o entrypoint local)
+- **Contrato:** `pnpm openapi:gen` gera `openapi.json`; o front gera tipos/hooks a partir dele (ver `../../.specs/04-sync-protocol.md`)
+- **Deploy:** Vercel (`api/index.js` requer `dist/src/server`; `src/server.ts` é o entrypoint local). Jobs via Vercel Cron (`vercel.json` → `GET /internal/cron/daily`)
 - **Package manager:** pnpm
 
 ## Camadas (fluxo de um request)
@@ -44,7 +44,7 @@ Erro de domínio: lança `HttpError` (`src/core/errors/http-error.ts`; subclasse
 
 ## Infraestrutura
 
-- **Entrypoints:** `src/server.ts` (local, `app.listen` + scheduler) | `api/index.ts` (Vercel).
+- **Entrypoints:** `src/server.ts` (local, `app.listen` + scheduler) | `api/index.js` (Vercel, sem listen; jobs pelo cron).
 - **Middlewares globais** (`src/server.ts`): `securityMiddleware` (helmet/cors/rate-limit/slow-down), `express.json({limit:"10mb"})`, `sanitizeData`, router, `errorHandler` (último).
 - **Scheduler:** `processRecurringTransactions()` + `processBudgetAlerts()` + `processBillReminders()` rodam a cada 1h + 1x no startup (só fora de `NODE_ENV=test`) — importados via `index.ts` dos módulos.
 - **DB connect:** `connectDB()` em `src/infra/db/index.ts`, exporta `db`.

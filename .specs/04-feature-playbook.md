@@ -14,7 +14,7 @@ Ordem canônica, camada por camada (bottom-up). Feature vive em `src/modules/<x>
 
 - Editar `src/infra/db/schema.ts` (legado: `src/db/schema.ts`): `pgTable`, FKs `onDelete:"cascade"`, timestamps `defaultNow().notNull()`, decimais `decimal(_,{precision:10,scale:2})`.
 - Adicionar `relations(...)` e exports `Entidade`/`NewEntidade`.
-- `pnpm db:generate` → revisar migration → `pnpm db:migrate` (ou `db:push` em dev).
+- `pnpm db:generate` → revisar migration → `pnpm db:migrate` (nunca `db:push`: desalinha o histórico de migrations).
 
 ## 2. Repositório (interface + implementação)
 
@@ -56,12 +56,11 @@ Ordem canônica, camada por camada (bottom-up). Feature vive em `src/modules/<x>
 
 - Unit: `__tests__/unit/modules/<x>/use-cases/*.test.ts` (mock repositório) e `__tests__/unit/modules/<x>/helpers/*.test.ts` (puro, sem mock).
 - Integração: `__tests__/integration/<x>.test.ts` (supertest + test DB).
-- E2E (Playwright) se for fluxo de usuário relevante.
 - `pnpm test:unit` / `pnpm test:integration`.
 
 ## 10. Docs & geração front
 
-- `pnpm api:generate` regenera tipos/Zod/hooks p/ frontend.
+- `pnpm openapi:gen` regenera `openapi.json`; no front, `pnpm generate-hooks`.
 - Atualizar `.specs/05-feature-catalog.md` e `03-domain-model.md`; spec da feature em `.specs/features/`.
 - `client/requests/x.http` opcional para testes manuais.
 

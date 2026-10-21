@@ -1,6 +1,6 @@
 # F9 — Alertas de Milestone de Meta
 
-**Tipo:** feature (gatilho em request, sem endpoint novo). **Status:** spec. **Esforço:** baixo. **Schema novo:** nenhum.
+**Tipo:** feature (gatilho em request, sem endpoint novo). **Status:** Done. **Esforço:** baixo. **Schema novo:** nenhum.
 **Por quê:** `goal_milestones` já marca `isReached`/`reachedAt` (em `checkMilestones`, goal.repository), mas nada avisa o usuário. Fechar o loop: cruzou 25/50/75/100% → notificação.
 
 ## Objetivo

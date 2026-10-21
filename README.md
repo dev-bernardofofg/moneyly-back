@@ -22,11 +22,8 @@ são tratadas como uma fonte de renda variável integrada às transações.
 - **Drizzle ORM** - ORM TypeScript-first
 - **Zod** - Validação de schemas
 - **JWT** - Autenticação
-- **Jest** - Testes unitários e integração
-- **Playwright** - Testes E2E
-- **Swagger/OpenAPI** - Documentação da API
-- **Kubb** - Geração automática de tipos TypeScript e Zod
-- **Orval** - Geração automática de hooks React Query
+- **Jest** - Testes unitários e integração (Postgres em Docker)
+- **OpenAPI** - `openapi.json` gerado do código (zod-to-openapi); Swagger UI em `/api-docs`
 
 ## 📦 Instalação
 
@@ -37,8 +34,8 @@ pnpm install
 # Configurar variáveis de ambiente
 cp .env.example .env
 
-# Criar e migrar banco de dados
-pnpm db:push
+# Aplicar migrations
+pnpm db:migrate
 
 # Restaurar categorias padrão
 pnpm restore:categories
@@ -62,16 +59,16 @@ pnpm start              # Inicia servidor em produção
 ```bash
 pnpm db:generate        # Gera migrations
 pnpm db:migrate         # Executa migrations
-pnpm db:push            # Push schema para o banco
+pnpm db:baseline        # Marca migrations já aplicadas (1x em banco criado via push)
 pnpm db:studio          # Abre Drizzle Studio
 pnpm restore:categories # Restaura categorias padrão
 ```
 
-### API & Geração de Código
+### API
 
 ```bash
-pnpm api:generate       # Gera tipos TS, Zod e hooks React Query
-pnpm dev                # Inicia servidor + Swagger UI em /api-docs
+pnpm openapi:gen        # Regenera openapi.json a partir dos schemas Zod
+pnpm typecheck          # tsc --noEmit
 ```
 
 ### Testes
@@ -80,7 +77,6 @@ pnpm dev                # Inicia servidor + Swagger UI em /api-docs
 pnpm test               # Roda todos os testes
 pnpm test:unit          # Testes unitários
 pnpm test:integration   # Testes de integração
-pnpm test:e2e           # Testes E2E com Playwright
 pnpm test:coverage      # Cobertura de código
 pnpm test:watch         # Testes em modo watch
 ```
@@ -95,52 +91,28 @@ Acesse a documentação interativa da API:
 http://localhost:5000/api-docs
 ```
 
-### Geração Automática para Frontend
+### Contrato para o frontend
 
-Gera **tipos**, **validações** e **hooks** automaticamente:
-
-```bash
-pnpm api:generate
-```
-
-Gerado em `src/generated/`:
-
-- **TypeScript Types** (`types/`) - Kubb
-- **Zod Schemas** (`zod/`) - Kubb
-- **React Query Hooks** (`hooks/`) - Orval
-
-**Frontend usa direto:**
-
-```typescript
-import { usePostTransactionsCreate } from '@/generated/hooks/transactions/transactions';
-
-const { mutate } = usePostTransactionsCreate();
-// Pronto! Hook com tipagem e validação automática!
-```
+O `moneyly-front` gera tipos (Kubb) e hooks React Query (Orval) lendo
+`../moneyly-back/openapi.json`. Mudou endpoint ou payload: `pnpm openapi:gen` aqui e
+`pnpm generate-hooks` lá. Protocolo em `../.specs/04-sync-protocol.md`.
 
 ## 🏗️ Arquitetura
 
+Module-first (detalhes em `.specs/06-project-structure.md`):
+
 ```
 src/
-├── controllers/      # Controladores HTTP
-├── services/         # Lógica de negócio
-├── repositories/     # Acesso a dados
-├── middlewares/      # Middlewares Express
-├── schemas/          # Schemas Zod
-├── validations/      # Validações customizadas
-├── routes/           # Definição de rotas
-├── helpers/          # Funções auxiliares
-├── db/               # Configuração do banco
-├── lib/              # Utilitários
-└── generated/        # ⚡ Gerado automaticamente
-    ├── types/        #   ├─ Tipos TS (Kubb)
-    ├── zod/          #   ├─ Schemas Zod (Kubb)
-    └── hooks/        #   └─ Hooks React Query (Orval)
-
-openapi.json          # Especificação OpenAPI
-kubb.config.ts        # Config do Kubb
-orval.config.ts       # Config do Orval
+├── core/            # transversal: config, middlewares, helpers, errors, openapi (nunca importa modules/)
+├── infra/db/        # schema Drizzle, migrations, conexão
+├── modules/<x>/     # router → controller → use-cases → repositories; schemas Zod; <x>.paths.ts (openapi)
+├── jobs/            # jobs agendados (Vercel Cron em produção, setInterval local)
+├── routes.ts        # agrega os routers
+└── server.ts        # entrypoint local
+api/index.js         # entrypoint Vercel (requer dist/)
 ```
+
+Fluxo de um request: `Router → authenticateUser → ensurePeriodExists → validate → Controller → Use-case → Repository`.
 
 ## 🔐 Variáveis de Ambiente
 
@@ -159,6 +131,9 @@ JWT_SECRET=your-secret-key
 # Google OAuth (opcional)
 GOOGLE_CLIENT_ID=your-google-client-id
 
+# Vercel Cron — protege GET /internal/cron/daily (gerar com: openssl rand -hex 32)
+CRON_SECRET=
+
 # Firebase Admin — push notifications (opcional).
 # Sem essas variáveis a API sobe normal: as notificações continuam sendo
 # criadas no banco, só não saem como push.
@@ -169,31 +144,20 @@ FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY----
 
 ## 🧪 Testes
 
-### Cobertura de Testes
-
-- ✅ **195 testes unitários** - Services e Helpers
-- ✅ **86 testes de integração** - Endpoints da API
-- ✅ **31 testes E2E** - Fluxos completos com Playwright
-
-### Executar Testes
+Unitários (use-cases e helpers, sem banco) e de integração (HTTP real contra um Postgres de
+teste em Docker, schema recriado a cada execução).
 
 ```bash
-# Todos os testes
-pnpm test
+docker run -d --name moneyly-test-db --restart unless-stopped \
+  -e POSTGRES_USER=test -e POSTGRES_PASSWORD=test -e POSTGRES_DB=moneyly_test \
+  -p 5433:5432 postgres:16-alpine
 
-# Por tipo
-pnpm test:unit           # Unitários
-pnpm test:integration    # Integração
-pnpm test:e2e           # E2E com Playwright
-
-# Com cobertura
+pnpm test:unit
+pnpm test:integration
 pnpm test:coverage
-
-# Em modo watch
-pnpm test:watch
 ```
 
-Consulte `__tests__/README.md` para mais informações sobre os testes.
+Detalhes e convenções em `__tests__/README.md`.
 
 ## 📊 Endpoints Principais
 
