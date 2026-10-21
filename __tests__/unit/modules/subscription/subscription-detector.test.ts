@@ -10,7 +10,7 @@ const tx = (over: Partial<Tx>): Tx =>
     id: 't',
     type: 'expense',
     title: 'Spotify',
-    amount: '19.90',
+    amount: 1990,
     description: null,
     date: new Date('2026-01-10'),
     periodId: null,
@@ -38,7 +38,7 @@ describe('groupSubscriptionCandidates', () => {
     expect(r).toHaveLength(1);
     expect(r[0]!.cadence).toBe('monthly');
     expect(r[0]!.occurrences).toBe(3);
-    expect(r[0]!.monthlyCost).toBeCloseTo(19.9);
+    expect(r[0]!.monthlyCost).toBe(1990);
   });
 
   it('<3 occurrences → empty', () => {
@@ -60,9 +60,9 @@ describe('groupSubscriptionCandidates', () => {
 
   it('inconsistent amount (>10%) → does not group', () => {
     const r = groupSubscriptionCandidates([
-      tx({ date: new Date('2026-01-10'), amount: '10' }),
-      tx({ date: new Date('2026-02-10'), amount: '100' }),
-      tx({ date: new Date('2026-03-10'), amount: '10' }),
+      tx({ date: new Date('2026-01-10'), amount: 10 }),
+      tx({ date: new Date('2026-02-10'), amount: 100 }),
+      tx({ date: new Date('2026-03-10'), amount: 10 }),
     ]);
     expect(r).toEqual([]);
   });

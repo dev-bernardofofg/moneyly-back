@@ -40,7 +40,7 @@ describe('Goal Endpoints', () => {
       expect(response.body.data).toHaveProperty('id');
       expect(response.body.data.title).toBe(goalData.title);
       expect(response.body.data.description).toBe(goalData.description);
-      expect(response.body.data.targetAmount).toBe(goalData.targetAmount.toString());
+      expect(response.body.data.targetAmount).toBe(goalData.targetAmount);
 
       goalId = response.body.data.id;
     });
@@ -116,10 +116,10 @@ describe('Goal Endpoints', () => {
       expect(response.body).toHaveProperty('error');
     });
 
-    it('accepts decimal values for targetAmount', async () => {
+    it('accepts amounts with cents for targetAmount', async () => {
       const goalData = {
         title: 'Decimal Goal',
-        targetAmount: 7500.75,
+        targetAmount: 750075,
         targetDate: '2025-09-30',
       };
 
@@ -129,7 +129,7 @@ describe('Goal Endpoints', () => {
         .send(goalData)
         .expect(201);
 
-      expect(response.body.data.targetAmount).toBe('7500.75');
+      expect(response.body.data.targetAmount).toBe(750075);
     });
   });
 
@@ -251,7 +251,7 @@ describe('Goal Endpoints', () => {
 
       expect(response.body).toHaveProperty('data');
       expect(response.body.data.title).toBe(updateData.title);
-      expect(response.body.data.targetAmount).toBe(updateData.targetAmount.toString());
+      expect(response.body.data.targetAmount).toBe(updateData.targetAmount);
     });
 
     it('allows partial update', async () => {
@@ -347,11 +347,11 @@ describe('Goal Endpoints', () => {
       expect(Number(response.body.data.currentAmount)).toBeGreaterThanOrEqual(500);
     });
 
-    it('accepts decimal values', async () => {
+    it('accepts amounts with cents', async () => {
       const response = await request(app)
         .post(`/goals/${goalId}/add-amount`)
         .set('Authorization', `Bearer ${authToken}`)
-        .send({ amount: 250.75 })
+        .send({ amount: 25075 })
         .expect(200);
 
       expect(response.body).toHaveProperty('data');

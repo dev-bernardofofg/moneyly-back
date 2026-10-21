@@ -337,7 +337,7 @@ describe('Opening balance', () => {
       .set(auth())
       .send({ openingBalance: 1000, openingBalanceDate: '2026-09-01' })
       .expect(200);
-    expect(account.body.data).toMatchObject({ openingBalance: '1000' });
+    expect(account.body.data).toMatchObject({ openingBalance: 1000 });
 
     const res = await request(app)
       .get('/overview/forecast')

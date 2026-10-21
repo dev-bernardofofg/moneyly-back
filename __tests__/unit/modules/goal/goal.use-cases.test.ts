@@ -51,8 +51,8 @@ describe('GoalService', () => {
       userId: mockUserId,
       title: 'Viagem para Europa',
       description: 'Férias de verão',
-      targetAmount: '10000',
-      currentAmount: '0',
+      targetAmount: 10000,
+      currentAmount: 0,
       targetDate: new Date('2024-12-31'),
       isActive: true,
       createdAt: new Date(),
@@ -68,7 +68,7 @@ describe('GoalService', () => {
         userId: mockUserId,
         title: mockGoalData.title,
         description: mockGoalData.description,
-        targetAmount: mockGoalData.targetAmount.toString(),
+        targetAmount: mockGoalData.targetAmount,
         targetDate: new Date(mockGoalData.targetDate),
       });
       expect(result).toEqual(mockCreatedGoal);
@@ -105,7 +105,7 @@ describe('GoalService', () => {
 
       expect(goalRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          targetAmount: '15000.5',
+          targetAmount: 15000.5,
         })
       );
     });
@@ -130,14 +130,14 @@ describe('GoalService', () => {
         id: 'goal-1',
         userId: mockUserId,
         title: 'Meta 1',
-        targetAmount: '5000',
+        targetAmount: 5000,
         isActive: true,
       },
       {
         id: 'goal-2',
         userId: mockUserId,
         title: 'Meta 2',
-        targetAmount: '10000',
+        targetAmount: 10000,
         isActive: true,
       },
     ];
@@ -205,7 +205,7 @@ describe('GoalService', () => {
       id: mockGoalId,
       userId: mockUserId,
       title: 'Meta Específica',
-      targetAmount: '5000',
+      targetAmount: 5000,
     };
 
     it("returns the user's specific goal", async () => {
@@ -245,13 +245,13 @@ describe('GoalService', () => {
       id: mockGoalId,
       userId: mockUserId,
       title: 'Meta Original',
-      targetAmount: '5000',
+      targetAmount: 5000,
     };
 
     const mockUpdatedGoalWithMilestones = {
       id: mockGoalId,
       title: 'Meta Atualizada',
-      targetAmount: '7500',
+      targetAmount: 7500,
       progress: { percentage: 60, daysRemaining: 45 },
       milestones: [],
     };
@@ -277,7 +277,7 @@ describe('GoalService', () => {
         mockGoalId,
         expect.objectContaining({
           title: 'Meta Atualizada',
-          targetAmount: '7500',
+          targetAmount: 7500,
         })
       );
       expect(result).toEqual(mockUpdatedGoalWithMilestones);
@@ -380,12 +380,12 @@ describe('GoalService', () => {
     const mockGoal = {
       id: mockGoalId,
       userId: mockUserId,
-      currentAmount: '1000',
+      currentAmount: 1000,
     };
 
     const mockUpdatedGoalWithMilestones = {
       id: mockGoalId,
-      currentAmount: '1500',
+      currentAmount: 1500,
       progress: { percentage: 30, daysRemaining: 60 },
       milestones: [],
     };
@@ -396,7 +396,7 @@ describe('GoalService', () => {
       (goalRepository.findMilestonesByGoalId as jest.Mock).mockResolvedValue([]);
       (goalRepository.addAmount as jest.Mock).mockResolvedValue({
         ...mockGoal,
-        currentAmount: '1500',
+        currentAmount: 1500,
       });
       (validateUpdateGoal as jest.Mock).mockReturnValue(undefined);
       (goalRepository.getGoalWithMilestones as jest.Mock).mockResolvedValue(
@@ -433,7 +433,7 @@ describe('GoalService', () => {
         { id: 'm50', percentage: 50, isReached: true },
         { id: 'm75', percentage: 75, isReached: true },
       ];
-      const updatedGoal = { ...mockGoal, currentAmount: '4000' };
+      const updatedGoal = { ...mockGoal, currentAmount: 4000 };
 
       (goalRepository.findByIdAndUserId as jest.Mock).mockResolvedValue(mockGoal);
       (validateGoal as jest.Mock).mockReturnValue(undefined);
@@ -505,8 +505,8 @@ describe('GoalService', () => {
         currentAmount: 5000,
         progress: { percentage: 80, daysRemaining: 30 },
         milestones: [
-          { id: 'm1', percentage: 50, amount: '3000', isReached: true },
-          { id: 'm2', percentage: 100, amount: '6000', isReached: false },
+          { id: 'm1', percentage: 50, amount: 3000, isReached: true },
+          { id: 'm2', percentage: 100, amount: 6000, isReached: false },
         ],
       },
       {

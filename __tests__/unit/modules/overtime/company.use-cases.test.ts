@@ -29,7 +29,7 @@ describe('company use-cases', () => {
       expect(companyRepository.create).toHaveBeenCalledWith({
         userId: USER,
         name: 'ACME',
-        hourlyRate: '62.5',
+        hourlyRate: 62.5,
         isActive: true,
       });
       expect(result).toEqual({ id: 'comp-1' });
@@ -56,7 +56,7 @@ describe('company use-cases', () => {
 
       expect(validateActiveCompany).toHaveBeenCalledWith('comp-1', USER);
       expect(companyRepository.update).toHaveBeenCalledWith('comp-1', USER, {
-        hourlyRate: '80',
+        hourlyRate: 80,
       });
       expect(result).toEqual({ id: 'comp-1' });
     });

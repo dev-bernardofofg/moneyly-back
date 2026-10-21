@@ -19,7 +19,7 @@ const USER = 'user-123';
 
 type Tx = Awaited<ReturnType<typeof transactionRepository.findAllByUserId>>[number];
 
-const expense = (date: Date, title = 'Spotify', amount = '19.90'): Tx =>
+const expense = (date: Date, title = 'Spotify', amount = 1990): Tx =>
   ({
     id: 't' + Math.random(),
     type: 'expense',

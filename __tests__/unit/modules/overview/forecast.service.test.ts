@@ -58,8 +58,8 @@ describe('getForecastUseCase', () => {
     const now = new Date();
     mockedPeriodSvc.ensureCurrentPeriodExists.mockResolvedValue(periodAround(now) as never);
     mockedTxRepo.findByPeriodId.mockResolvedValue([
-      { type: 'income', amount: '1000' },
-      { type: 'expense', amount: '300' },
+      { type: 'income', amount: 1000 },
+      { type: 'expense', amount: 300 },
     ] as never);
     mockedRecRepo.findByUserId.mockResolvedValue([]);
 
@@ -81,13 +81,13 @@ describe('getForecastUseCase', () => {
   it('counts a future recurrence within the period window', async () => {
     const now = new Date();
     mockedPeriodSvc.ensureCurrentPeriodExists.mockResolvedValue(periodAround(now) as never);
-    mockedTxRepo.findByPeriodId.mockResolvedValue([{ type: 'income', amount: '1000' }] as never);
+    mockedTxRepo.findByPeriodId.mockResolvedValue([{ type: 'income', amount: 1000 }] as never);
     mockedRecRepo.findByUserId.mockResolvedValue([
       {
         id: '33333333-3333-3333-3333-333333333333',
         title: 'Aluguel',
         type: 'expense',
-        amount: '200',
+        amount: 200,
         frequency: 'monthly',
         dayOfMonth: null,
         dayOfWeek: null,
@@ -114,7 +114,7 @@ describe('getForecastUseCase', () => {
         id: '55555555-5555-5555-5555-555555555555',
         title: 'Internet',
         type: 'expense',
-        amount: '100',
+        amount: 100,
         frequency: 'monthly',
         dayOfMonth: null,
         dayOfWeek: null,
@@ -139,7 +139,7 @@ describe('getForecastUseCase', () => {
         id: '66666666-6666-6666-6666-666666666666',
         title: 'Academia',
         type: 'expense',
-        amount: '80',
+        amount: 80,
         frequency: 'monthly',
         dayOfMonth: null,
         dayOfWeek: null,
@@ -163,7 +163,7 @@ describe('getForecastUseCase', () => {
         id: '44444444-4444-4444-4444-444444444444',
         title: 'Parcelado',
         type: 'expense',
-        amount: '50',
+        amount: 50,
         frequency: 'monthly',
         dayOfMonth: null,
         dayOfWeek: null,
@@ -182,7 +182,7 @@ describe('getForecastUseCase', () => {
     const now = new Date();
     mockedPeriodSvc.ensureCurrentPeriodExists.mockResolvedValue(periodAround(now) as never);
     mockedTxRepo.findByPeriodId.mockResolvedValue([
-      { type: 'income', amount: '1000', overtimeRecordId: null },
+      { type: 'income', amount: 1000, overtimeRecordId: null },
     ] as never);
     mockedRecRepo.findByUserId.mockResolvedValue([]);
     mockedBudgetProgress.mockResolvedValue([
@@ -197,7 +197,7 @@ describe('getForecastUseCase', () => {
     mockedOvertimeRepo.findByUserIdInDateRange.mockResolvedValue([
       {
         id: '66666666-6666-6666-6666-666666666666',
-        amount: '300',
+        amount: 300,
         transactionId: null,
       },
     ] as never);
@@ -217,7 +217,7 @@ describe('getForecastUseCase', () => {
     mockedTxRepo.findByPeriodId.mockResolvedValue([
       {
         type: 'expense',
-        amount: '200',
+        amount: 200,
         recurringTransactionId: recurringId,
         date: executionDate,
       },
@@ -227,7 +227,7 @@ describe('getForecastUseCase', () => {
         id: recurringId,
         title: 'Aluguel',
         type: 'expense',
-        amount: '200',
+        amount: 200,
         categoryId: '88888888-8888-8888-8888-888888888888',
         frequency: 'monthly',
         dayOfMonth: null,

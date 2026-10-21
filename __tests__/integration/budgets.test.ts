@@ -45,7 +45,7 @@ describe('Budget Endpoints', () => {
       expect(response.body).toHaveProperty('data');
       expect(response.body.data).toHaveProperty('id');
       expect(response.body.data.categoryId).toBe(categoryId);
-      expect(response.body.data.monthlyLimit).toBe(budgetData.monthlyLimit.toString());
+      expect(response.body.data.monthlyLimit).toBe(budgetData.monthlyLimit);
 
       // Salvar ID para testes posteriores
       budgetId = response.body.data.id;
@@ -102,7 +102,7 @@ describe('Budget Endpoints', () => {
       expect(response.body).toHaveProperty('success', false);
     });
 
-    it('accepts decimal values for monthlyLimit', async () => {
+    it('accepts amounts with cents for monthlyLimit', async () => {
       // Criar outra categoria para este teste
       const categoryResponse = await request(app)
         .post('/categories/create')
@@ -113,7 +113,7 @@ describe('Budget Endpoints', () => {
 
       const budgetData = {
         categoryId: newCategoryId,
-        monthlyLimit: 1500.75,
+        monthlyLimit: 150075,
       };
 
       const response = await request(app)
@@ -122,7 +122,7 @@ describe('Budget Endpoints', () => {
         .send(budgetData)
         .expect(201);
 
-      expect(response.body.data.monthlyLimit).toBe('1500.75');
+      expect(response.body.data.monthlyLimit).toBe(150075);
     });
   });
 
@@ -190,7 +190,7 @@ describe('Budget Endpoints', () => {
         .expect(200);
 
       expect(response.body).toHaveProperty('data');
-      expect(response.body.data.monthlyLimit).toBe(updateData.monthlyLimit.toString());
+      expect(response.body.data.monthlyLimit).toBe(updateData.monthlyLimit);
     });
 
     it('rejects update with negative value', async () => {
@@ -252,9 +252,9 @@ describe('Budget Endpoints', () => {
       expect(response.body).toHaveProperty('success', false);
     });
 
-    it('accepts decimal values on update', async () => {
+    it('accepts amounts with cents on update', async () => {
       const updateData = {
-        monthlyLimit: 2750.5,
+        monthlyLimit: 275050,
       };
 
       const response = await request(app)
@@ -263,7 +263,7 @@ describe('Budget Endpoints', () => {
         .send(updateData)
         .expect(200);
 
-      expect(response.body.data.monthlyLimit).toBe('2750.5');
+      expect(response.body.data.monthlyLimit).toBe(275050);
     });
   });
 

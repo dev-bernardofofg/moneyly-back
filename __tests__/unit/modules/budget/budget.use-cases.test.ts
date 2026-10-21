@@ -37,7 +37,7 @@ const USER = 'user-123';
 
 const budgetWithCat = (over: Record<string, unknown> = {}) => ({
   id: 'budget-1',
-  monthlyLimit: '1000',
+  monthlyLimit: 1000,
   category: { id: 'cat-1', name: 'Alimentação' },
   ...over,
 });
@@ -68,7 +68,7 @@ describe('createBudgetUseCase', () => {
     expect(budgetRepo.create).toHaveBeenCalledWith({
       userId: USER,
       categoryId: 'cat-1',
-      monthlyLimit: '1500.5',
+      monthlyLimit: 1500.5,
     });
     expect(r).toEqual({ id: 'b1' });
   });
@@ -124,7 +124,7 @@ describe('updateBudgetUseCase', () => {
 
     expect(mockedValidateBudgetExists).toHaveBeenCalledWith('b1', USER);
     expect(budgetRepo.update).toHaveBeenCalledWith('b1', {
-      monthlyLimit: '2000',
+      monthlyLimit: 2000,
     });
     expect(r).toEqual({ id: 'b1' });
   });
@@ -189,7 +189,7 @@ describe('getBudgetProgressByCategory', () => {
 
   it('with budget computes percentage/status', async () => {
     budgetRepo.findByCategoryId.mockResolvedValue({
-      monthlyLimit: '1000',
+      monthlyLimit: 1000,
     } as never);
     txRepo.findByPeriodId.mockResolvedValue([expense('950')] as never);
 

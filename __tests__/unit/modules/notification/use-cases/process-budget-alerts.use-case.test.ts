@@ -16,7 +16,7 @@ const PERIOD = { id: '22222222-2222-2222-2222-222222222222' };
 
 const budget = (status: string, id = 'b1') => ({
   id,
-  monthlyLimit: '100',
+  monthlyLimit: 100,
   category: { id: 'c1', name: 'Comida' },
   spent: 0,
   remaining: 0,

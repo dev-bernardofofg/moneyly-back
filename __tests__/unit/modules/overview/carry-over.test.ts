@@ -4,19 +4,19 @@ import { buildOpeningBalances } from '@modules/overview/helpers/carry-over';
 const checking = (id: string, balance: number, date: string | null) => ({
   id,
   type: 'checking' as const,
-  openingBalance: balance.toFixed(2),
+  openingBalance: balance,
   openingBalanceDate: date ? spMidnight(date) : null,
 });
 const card = {
   id: 'card',
   type: 'credit_card' as const,
-  openingBalance: '0',
+  openingBalance: 0,
   openingBalanceDate: null,
 };
 const flow = (accountId: string, type: 'income' | 'expense', amount: number, date: string) => ({
   accountId,
   type,
-  amount: amount.toFixed(2),
+  amount,
   date: spMidnight(date),
 });
 

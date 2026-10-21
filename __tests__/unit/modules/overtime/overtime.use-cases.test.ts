@@ -49,7 +49,7 @@ const mockedValidateOwnership = validateOvertimeOwnership as jest.Mock;
 
 const USER = 'user-123';
 
-const company = { id: 'comp-1', name: 'ACME', hourlyRate: '50', isActive: true };
+const company = { id: 'comp-1', name: 'ACME', hourlyRate: 50, isActive: true };
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -83,8 +83,8 @@ describe('overtime use-cases', () => {
           startTime: new Date('2026-03-10T18:00:00.000Z'),
           endTime: new Date('2026-03-10T20:00:00.000Z'),
           hoursWorked: '2',
-          hourlyRateSnapshot: '50',
-          amount: '100',
+          hourlyRateSnapshot: 50,
+          amount: 100,
           month: 3,
           year: 2026,
         })
@@ -97,7 +97,7 @@ describe('overtime use-cases', () => {
         expect.objectContaining({
           type: 'income',
           title: 'Hora extra — ACME',
-          amount: '100',
+          amount: 100,
           categoryId: 'cat-sal',
           date: new Date('2026-03-10T18:00:00.000Z'),
           overtimeRecordId: 'ot-1',
@@ -156,8 +156,8 @@ describe('overtime use-cases', () => {
           startTime: new Date('2026-03-10T18:00:00.000Z'),
           endTime: new Date('2026-03-10T21:00:00.000Z'),
           hoursWorked: '3',
-          hourlyRateSnapshot: '50',
-          amount: '150',
+          hourlyRateSnapshot: 50,
+          amount: 150,
           month: 3,
           year: 2026,
         })
@@ -166,7 +166,7 @@ describe('overtime use-cases', () => {
         'tx-1',
         USER,
         expect.objectContaining({
-          amount: '150',
+          amount: 150,
           date: new Date('2026-03-10T18:00:00.000Z'),
           periodId: 'p1',
           title: 'Hora extra — ACME',

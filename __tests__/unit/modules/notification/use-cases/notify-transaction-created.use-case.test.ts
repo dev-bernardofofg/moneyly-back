@@ -16,7 +16,7 @@ const baseTx = {
   id: TX_ID,
   userId: USER,
   title: 'Salário',
-  amount: '3500.50',
+  amount: 350050,
   date: new Date('2026-08-13T03:00:00.000Z'),
   periodId: 'p1',
 } as Transaction;

@@ -16,7 +16,7 @@ export function createTestUser(overrides?: Partial<User>): User {
     password: '$2a$10$test.hash.password',
     googleId: null,
     avatar: null,
-    monthlyIncome: '5000.00',
+    monthlyIncome: 500000,
     financialDayStart: 1,
     financialDayEnd: 31,
     firstAccess: false,

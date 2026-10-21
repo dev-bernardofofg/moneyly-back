@@ -39,7 +39,7 @@ describe('TransactionService', () => {
     const mockTransactionData = {
       type: 'expense' as const,
       title: 'Almoço',
-      amount: '45.50',
+      amount: 45.5,
       category: 'cat-123',
       description: 'Restaurante X',
       date: new Date('2024-01-15'),
@@ -50,7 +50,7 @@ describe('TransactionService', () => {
       userId: mockUserId,
       type: 'expense',
       title: 'Almoço',
-      amount: '45.50',
+      amount: 45.5,
       categoryId: 'cat-123',
       description: 'Restaurante X',
       date: new Date('2024-01-15'),
@@ -158,7 +158,7 @@ describe('TransactionService', () => {
       userId: mockUserId,
       type: 'expense' as const,
       title: 'Jantar Atualizado',
-      amount: '80.00',
+      amount: 80.0,
       categoryId: 'cat-456',
       description: 'Restaurante Y',
       date: new Date('2024-01-20'),
@@ -170,7 +170,7 @@ describe('TransactionService', () => {
     it('updates a transaction successfully', async () => {
       const updateData = {
         title: 'Jantar Atualizado',
-        amount: '80.00',
+        amount: 80.0,
         categoryId: 'cat-456',
       };
 
@@ -191,7 +191,7 @@ describe('TransactionService', () => {
     it('updates a transaction without validating the category when it is unchanged', async () => {
       const updateData = {
         title: 'Título Atualizado',
-        amount: '100.00',
+        amount: 100.0,
       };
 
       (transactionRepository.findByIdAndUserId as jest.Mock).mockResolvedValue({

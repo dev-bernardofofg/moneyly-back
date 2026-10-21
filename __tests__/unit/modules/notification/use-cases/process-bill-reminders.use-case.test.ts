@@ -18,7 +18,7 @@ const recurring = (daysAhead: number, overrides: Record<string, unknown> = {}) =
   userId: USER,
   type: 'expense',
   title: 'Netflix',
-  amount: '55.90',
+  amount: 5590,
   categoryId: 'cat-1',
   frequency: 'monthly',
   nextExecution: new Date(Date.now() + daysAhead * DAY_MS),

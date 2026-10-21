@@ -34,7 +34,7 @@ describe('Transaction Endpoints', () => {
       const transactionData = {
         type: 'expense',
         title: 'Almoço no restaurante',
-        amount: 45.5,
+        amount: 4550,
         category: categoryId,
         description: 'Almoço de domingo',
         date: new Date().toISOString(),
@@ -73,7 +73,7 @@ describe('Transaction Endpoints', () => {
 
       expect(response.body).toHaveProperty('data');
       expect(response.body.data.type).toBe('income');
-      expect(response.body.data.amount).toBe('5000');
+      expect(response.body.data.amount).toBe(5000);
     });
 
     it('rejects transaction without authentication', async () => {
@@ -201,7 +201,7 @@ describe('Transaction Endpoints', () => {
 
       expect(response.body).toHaveProperty('data');
       expect(response.body.data.title).toBe(updateData.title);
-      expect(response.body.data.amount).toBe(updateData.amount.toString());
+      expect(response.body.data.amount).toBe(updateData.amount);
     });
 
     it('allows partial update', async () => {

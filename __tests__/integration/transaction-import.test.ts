@@ -104,7 +104,7 @@ describe('Transaction import', () => {
 
     const items = await preview(content);
     expect(items.map((item) => item.status)).toEqual(['new', 'new']);
-    expect(items[0]).toMatchObject({ type: 'expense', amount: 25, title: 'Padaria Central' });
+    expect(items[0]).toMatchObject({ type: 'expense', amount: 2500, title: 'Padaria Central' });
 
     const res = await confirm(items).expect(201);
     expect(res.body.data).toEqual({ created: 2, skipped: 0 });
@@ -131,7 +131,7 @@ describe('Transaction import', () => {
       .send({
         type: 'expense',
         title: 'Farmácia',
-        amount: 37.5,
+        amount: 3750,
         category: categoryId,
         date: '2026-09-10',
       })
@@ -151,7 +151,7 @@ describe('Transaction import', () => {
       .send({
         type: 'expense',
         title: 'Supermercado Bom Preço',
-        amount: 80,
+        amount: 8000,
         category: categoryId,
         date: '2026-08-01',
       })

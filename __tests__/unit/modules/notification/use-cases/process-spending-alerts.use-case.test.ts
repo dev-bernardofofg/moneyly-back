@@ -31,7 +31,7 @@ const key = (status: string) => `spending:${USER}:${PERIOD.id}:${status}`;
 beforeEach(() => {
   jest.clearAllMocks();
   mockedPeriod.ensureCurrentPeriodExists.mockResolvedValue(PERIOD as never);
-  mockedUser.findById.mockResolvedValue({ id: USER, monthlyIncome: '2000' } as never);
+  mockedUser.findById.mockResolvedValue({ id: USER, monthlyIncome: 2000 } as never);
   mockedRepo.findByDedupeKey.mockResolvedValue(null);
   mockedRepo.create.mockResolvedValue({} as never);
   mockedRepo.deleteByDedupeKeys.mockResolvedValue(0);
@@ -100,7 +100,7 @@ describe('processUserSpendingAlert', () => {
   });
 
   it('skips when monthlyIncome is 0', async () => {
-    mockedUser.findById.mockResolvedValue({ id: USER, monthlyIncome: '0' } as never);
+    mockedUser.findById.mockResolvedValue({ id: USER, monthlyIncome: 0 } as never);
 
     await processUserSpendingAlert(USER);
 
@@ -145,7 +145,7 @@ describe('processUserSpendingAlert', () => {
   it('ignores income transactions when computing percentage', async () => {
     mockedTx.findByPeriodId.mockResolvedValue([
       expense('1800'),
-      { type: 'income', amount: '5000' } as never,
+      { type: 'income', amount: 5000 } as never,
     ]);
 
     await processUserSpendingAlert(USER);

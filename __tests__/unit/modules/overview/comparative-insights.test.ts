@@ -10,7 +10,7 @@ const tx = (over: Partial<Tx>): Tx =>
     id: 't',
     type: 'expense',
     title: 'x',
-    amount: '100',
+    amount: 100,
     description: null,
     date: new Date('2026-03-15'),
     periodId: null,
@@ -31,9 +31,9 @@ describe('buildComparison', () => {
   it('category increase → signal up + deltaPct', () => {
     const r = buildComparison(
       [
-        tx({ date: new Date('2026-03-15'), amount: '140' }), // current
-        tx({ date: new Date('2026-02-15'), amount: '100' }), // prev
-        tx({ date: new Date('2026-01-15'), amount: '100' }), // prev
+        tx({ date: new Date('2026-03-15'), amount: 140 }), // current
+        tx({ date: new Date('2026-02-15'), amount: 100 }), // prev
+        tx({ date: new Date('2026-01-15'), amount: 100 }), // prev
       ],
       periods
     );
@@ -46,7 +46,7 @@ describe('buildComparison', () => {
   });
 
   it('new category (no history) → deltaPct null', () => {
-    const r = buildComparison([tx({ date: new Date('2026-03-10'), amount: '50' })], periods);
+    const r = buildComparison([tx({ date: new Date('2026-03-10'), amount: 50 })], periods);
     expect(r.byCategory[0]!.deltaPct).toBeNull();
     expect(r.byCategory[0]!.signal).toBe('stable');
     expect(r.byCategory[0]!.message).toContain('Novo gasto');
@@ -55,9 +55,9 @@ describe('buildComparison', () => {
   it('variation <10% → stable', () => {
     const r = buildComparison(
       [
-        tx({ date: new Date('2026-03-15'), amount: '105' }),
-        tx({ date: new Date('2026-02-15'), amount: '100' }),
-        tx({ date: new Date('2026-01-15'), amount: '100' }),
+        tx({ date: new Date('2026-03-15'), amount: 105 }),
+        tx({ date: new Date('2026-02-15'), amount: 100 }),
+        tx({ date: new Date('2026-01-15'), amount: 100 }),
       ],
       periods
     );

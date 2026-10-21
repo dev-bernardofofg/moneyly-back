@@ -35,7 +35,7 @@ const baseRecurring = {
   userId: 'user-1',
   type: 'expense',
   title: 'Assinatura',
-  amount: '29.90',
+  amount: 29.9,
   categoryId: 'cat-1',
   frequency: 'monthly',
   dayOfMonth: 10,
@@ -65,7 +65,7 @@ describe('recurring transaction use-cases', () => {
       const result = await createRecurringTransactionUseCase('user-1', {
         type: 'expense',
         title: 'Parcelado',
-        amount: '100.00',
+        amount: 100.0,
         categoryId: 'cat-1',
         frequency: 'monthly',
         totalInstallments: 3,
@@ -96,7 +96,7 @@ describe('recurring transaction use-cases', () => {
       const result = await createRecurringTransactionUseCase('user-1', {
         type: 'expense',
         title: 'Assinatura',
-        amount: '29.90',
+        amount: 29.9,
         categoryId: 'cat-1',
         frequency: 'monthly',
         startDate: past,
@@ -124,7 +124,7 @@ describe('recurring transaction use-cases', () => {
       const result = await createRecurringTransactionUseCase('user-1', {
         type: 'expense',
         title: 'Assinatura',
-        amount: '29.90',
+        amount: 29.9,
         categoryId: 'cat-1',
         frequency: 'monthly',
         startDate: future,

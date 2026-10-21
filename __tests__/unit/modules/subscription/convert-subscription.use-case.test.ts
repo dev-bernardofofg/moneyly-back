@@ -18,7 +18,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 const baseInput = {
   title: 'Netflix',
-  amount: '55.90',
+  amount: 5590,
   categoryId: '33333333-3333-3333-3333-333333333333',
   cadence: 'monthly' as const,
   nextEstimatedDate: new Date(Date.now() + 10 * DAY_MS),
@@ -40,7 +40,7 @@ describe('convertSubscriptionToRecurringService', () => {
     expect(userId).toBe(USER);
     expect(data.type).toBe('expense');
     expect(data.title).toBe('Netflix');
-    expect(data.amount).toBe('55.90');
+    expect(data.amount).toBe(5590);
     expect(data.frequency).toBe('monthly');
   });
 

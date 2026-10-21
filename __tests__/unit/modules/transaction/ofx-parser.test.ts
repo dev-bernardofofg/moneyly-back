@@ -61,14 +61,14 @@ describe('parseOfx', () => {
       {
         externalId: '0260:12345-6:abc-1',
         type: 'expense',
-        amount: 45.9,
+        amount: 4590,
         date: spMidnight('2026-10-05'),
         title: 'Padaria Pão & Cia',
       },
       {
         externalId: '0260:12345-6:abc-2',
         type: 'income',
-        amount: 1234.56,
+        amount: 123456,
         date: spMidnight('2026-10-06'),
         title: 'Salário',
       },
@@ -82,7 +82,7 @@ describe('parseOfx', () => {
     expect(transactions[0]).toMatchObject({
       externalId: 'card:9999:cc-1',
       type: 'expense',
-      amount: 99,
+      amount: 9900,
       title: 'Streaming',
     });
   });

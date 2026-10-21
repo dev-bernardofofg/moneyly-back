@@ -10,8 +10,8 @@ const USER = '11111111-1111-1111-1111-111111111111';
 const goal = {
   id: 'g1',
   title: 'Viagem',
-  targetAmount: '10000.00',
-  currentAmount: '5000.00',
+  targetAmount: 10000.0,
+  currentAmount: 5000.0,
 };
 
 beforeEach(() => {

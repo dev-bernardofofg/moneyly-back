@@ -74,8 +74,8 @@ describe('getDashboardOverviewService', () => {
 
 describe('calculatePlanningStats (pure)', () => {
   it('aggregates budgeted/savings and percentages', () => {
-    const budgetProgress = [{ monthlyLimit: '1000' }, { monthlyLimit: '500' }] as never;
-    const goalsProgress = [{ targetAmount: '2000', currentAmount: '500' }] as never;
+    const budgetProgress = [{ monthlyLimit: 1000 }, { monthlyLimit: 500 }] as never;
+    const goalsProgress = [{ targetAmount: 2000, currentAmount: 500 }] as never;
 
     const r = calculatePlanningStats(budgetProgress, goalsProgress, 4000);
 
@@ -132,10 +132,10 @@ describe('getPlannerOverviewUseCase', () => {
         startDate: new Date('2026-10-01'),
         endDate: new Date('2026-10-31'),
       },
-      freeBalance: { reserves: { budgets: 300.1, goals: 150.2 } },
+      freeBalance: { reserves: { budgets: 30010, goals: 15020 } },
     });
-    mockedBudgetProgress.mockResolvedValue([{ monthlyLimit: '1000' }]);
-    mockedGoalsProgress.mockResolvedValue([{ targetAmount: '2000', currentAmount: '0' }]);
+    mockedBudgetProgress.mockResolvedValue([{ monthlyLimit: 1000 }]);
+    mockedGoalsProgress.mockResolvedValue([{ targetAmount: 2000, currentAmount: 0 }]);
   });
 
   it('combines stats + alerts from budget/goal services for the forecast period', async () => {
@@ -152,7 +152,7 @@ describe('getPlannerOverviewUseCase', () => {
   it('exposes the forecast reserves as the free balance impact', async () => {
     const r = await getPlannerOverviewUseCase(USER, 5000);
 
-    expect(r.freeBalanceImpact).toEqual({ budgetReserve: 300.1, goalReserve: 150.2, total: 450.3 });
+    expect(r.freeBalanceImpact).toEqual({ budgetReserve: 30010, goalReserve: 15020, total: 45030 });
   });
 });
 
