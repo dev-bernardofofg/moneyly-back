@@ -108,9 +108,22 @@ da coluna nova.
   conta como consumida mesmo quando a fatura cai em outro período.
 - Remover a conta move as recorrências dela para a conta padrão.
 
+## Fatura paga ou pendente
+
+- `card_bill_payments` (migration `0014`): uma linha por cartão e vencimento; ausente = pendente.
+  `source` `manual` | `import`.
+- `POST /accounts/:id/bill-payment {dueDate}` marca; `DELETE /accounts/:id/bill-payment/:dueDate`
+  volta para pendente. A data vira o vencimento real mais próximo do cartão.
+- `GET /overview/card-bills` traz `dueDate` (vencimento dentro do período) e `payment`.
+- Import: o front manda as linhas `bill_payment` do preview em `billPayments` (importadas ou não).
+  Extrato do cartão (crédito) quita a fatura do próprio cartão; extrato da conta (débito) só marca
+  com um cartão ativo ou com valor igual ao total de uma fatura. Sem certeza, não marca.
+- Lembrete diário (`processCardBillReminders`): fatura com valor, não paga, vencendo em até 3 dias.
+  Recorrência no cartão não gera lembrete próprio: o que vence é a fatura.
+
 ## Fora do escopo (v1)
 
-- Limite do cartão, fatura em aberto/paga, juros.
+- Limite do cartão, juros.
 - Saldo exibido por conta e transferências entre contas.
 - Detectar a conta automaticamente pelo arquivo importado.
 
