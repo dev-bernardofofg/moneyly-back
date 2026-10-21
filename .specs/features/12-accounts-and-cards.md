@@ -99,11 +99,19 @@ da coluna nova.
 - `openingBalanceDate: null` no `PUT` remove o saldo (valor volta a 0).
 - Entra no Saldo Livre como `components.carryOverBalance` (ver `01-cash-flow-forecast.md`).
 
+## Recorrência no cartão
+
+- `recurring_transactions.account_id` (migration `0013`), null = conta padrão. Create/update aceitam
+  `accountId` (null volta para a padrão); vale para as próximas cobranças.
+- Cada cobrança vira transação na conta da recorrência: no cartão, período da fatura.
+- Forecast projeta a ocorrência no período de `billingDateFor(conta, data da cobrança)`; a parcela
+  conta como consumida mesmo quando a fatura cai em outro período.
+- Remover a conta move as recorrências dela para a conta padrão.
+
 ## Fora do escopo (v1)
 
 - Limite do cartão, fatura em aberto/paga, juros.
 - Saldo exibido por conta e transferências entre contas.
-- Recorrência associada a cartão.
 - Detectar a conta automaticamente pelo arquivo importado.
 
 ## Testes

@@ -115,7 +115,8 @@ total = carryOverBalance
   do `realizedBalance`. Corte por conta; cartões e contas sem saldo usam o corte mais antigo.
 - `realizedBalance`: receitas − despesas das transações do período (inclui recorrências
   materializadas e horas extras com transação vinculada), sem as anteriores ao corte.
-- `futureRecurring*`: ocorrências com data > agora e ≤ `period.endDate`, sem as já materializadas e
+- `futureRecurring*`: ocorrências com data > agora cujo período (no cartão, o do vencimento da
+  fatura) é este, sem as já materializadas e
   limitadas às parcelas restantes.
 - `pendingVariableIncome`: horas extras do período sem transação vinculada.
 - `budgetReserve`: por orçamento, `max(0, restante − contas futuras previstas na categoria)`.
