@@ -21,6 +21,8 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # openapi.json é versionado: falha se alguém mudou schema/rota sem regenerar.
+      - run: pnpm openapi:gen && git diff --exit-code -- openapi.json
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test:unit
