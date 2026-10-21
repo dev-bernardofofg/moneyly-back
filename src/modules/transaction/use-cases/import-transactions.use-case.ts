@@ -13,7 +13,9 @@ import {
   findTransferMatches,
 } from '@modules/transfer/use-cases/import-transfers.use-case';
 import { buildImportCategorySuggester, isBillPayment } from '../helpers/import-category-suggester';
-import { decodeOfxFile, parseOfx } from '../helpers/ofx-parser';
+import { parseInterBill, type BillStatement } from '../helpers/inter-bill-parser';
+import { decodeOfxFile, parseOfx, type OfxStatement } from '../helpers/ofx-parser';
+import { extractPdfText, isPdf } from '../helpers/pdf-text';
 import { transactionRepository } from '../repositories/transaction.repository';
 import type { ConfirmImportInput } from '../schemas/transaction-import.schema';
 import { validateCategoryExistsForUser } from '../validations/transaction.validation';
@@ -35,11 +37,25 @@ export const previewTransactionImportUseCase = async (
   fileBase64Url: string,
   accountId?: string
 ) => {
-  let statement;
-  try {
-    statement = parseOfx(decodeOfxFile(Buffer.from(fileBase64Url, 'base64url')));
-  } catch {
-    throw new BadRequestError('Arquivo não é um extrato OFX válido');
+  const bytes = Buffer.from(fileBase64Url, 'base64url');
+  let statement: OfxStatement | BillStatement;
+  if (isPdf(bytes)) {
+    let bill: BillStatement | null = null;
+    try {
+      bill = parseInterBill(await extractPdfText(bytes));
+    } catch (error) {
+      logger.warn(`[transactions] PDF text extraction failed: ${(error as Error).message}`);
+    }
+    if (!bill) {
+      throw new BadRequestError('PDF não reconhecido. Por enquanto só a fatura do cartão Inter.');
+    }
+    statement = bill;
+  } else {
+    try {
+      statement = parseOfx(decodeOfxFile(bytes));
+    } catch {
+      throw new BadRequestError('Arquivo não é um extrato OFX válido');
+    }
   }
   if (statement.transactions.length === 0) {
     throw new BadRequestError('Nenhuma transação encontrada no extrato');
@@ -78,8 +94,13 @@ export const previewTransactionImportUseCase = async (
   );
   const suggester = buildImportCategorySuggester(history, categories);
 
+  // Fatura em PDF: toda linha pertence a esta fatura, até parcela de compra antiga.
+  const bill =
+    'dueDate' in statement ? { dueDate: statement.dueDate, total: statement.total } : null;
+
   return {
     accountKey: statement.accountKey,
+    bill,
     items: statement.transactions.map((transaction) => {
       const duplicateOf = manualByDay.get(
         dayKey(transaction.type, transaction.amount, transaction.date)
@@ -110,7 +131,7 @@ export const previewTransactionImportUseCase = async (
 
 export const confirmTransactionImportUseCase = async (
   userId: string,
-  { items, billPayments, accountId: requestedAccountId }: ConfirmImportInput
+  { items, billPayments, billDueDate, accountId: requestedAccountId }: ConfirmImportInput
 ) => {
   const account = await resolveAccount(userId, requestedAccountId);
   const transferItems = items.filter((item) => item.transferOf);
@@ -123,7 +144,10 @@ export const confirmTransactionImportUseCase = async (
   const periodByDay = new Map<string, string>();
   const rows = [];
   for (const item of transactionItems) {
-    const billingDate = billingDateFor(account, item.date);
+    const billingDate =
+      billDueDate && account.type === 'credit_card'
+        ? billDueDate
+        : billingDateFor(account, item.date);
     const day = spDayString(billingDate);
     let periodId = periodByDay.get(day);
     if (!periodId) {

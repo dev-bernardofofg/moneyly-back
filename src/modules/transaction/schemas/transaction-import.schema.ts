@@ -48,6 +48,8 @@ export const confirmImportSchema = z
           })
       )
       .max(MAX_IMPORT_ITEMS, `Importe no máximo ${MAX_IMPORT_ITEMS} transações por vez.`),
+    // Fatura em PDF: vencimento lido do arquivo; no cartão, todas as linhas vão para ele.
+    billDueDate: isoDay.optional(),
     // Linhas "pagamento de fatura" do extrato: marcam a fatura como paga, importadas ou não.
     billPayments: z
       .array(

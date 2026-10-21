@@ -411,6 +411,8 @@ export const TransactionImportPreviewSchema = registry.register(
   'TransactionImportPreview',
   z.object({
     accountKey: z.string(),
+    // Só na fatura em PDF: vencimento e total impressos nela.
+    bill: z.object({ dueDate: isoDate, total: z.number().nullable() }).nullable(),
     items: z.array(
       z.object({
         externalId: z.string(),
