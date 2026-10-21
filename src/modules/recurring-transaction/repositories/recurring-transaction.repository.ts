@@ -113,6 +113,18 @@ export const recurringTransactionRepository = {
     return updated ?? null;
   },
 
+  async moveToDefaultAccount(userId: string, accountId: string): Promise<void> {
+    await db
+      .update(recurringTransactions)
+      .set({ accountId: null, updatedAt: new Date() })
+      .where(
+        and(
+          eq(recurringTransactions.userId, userId),
+          eq(recurringTransactions.accountId, accountId)
+        )
+      );
+  },
+
   async deactivateById(id: string): Promise<boolean> {
     const result = await db
       .update(recurringTransactions)

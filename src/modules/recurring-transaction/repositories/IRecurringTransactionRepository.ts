@@ -20,6 +20,7 @@ export interface IRecurringTransactionRepository {
   ): Promise<RecurringTransaction | null>;
   updateNextExecution(id: string, nextExecution: Date): Promise<boolean>;
   incrementExecutedInstallments(id: string): Promise<RecurringTransaction | null>;
+  moveToDefaultAccount(userId: string, accountId: string): Promise<void>;
   deactivateById(id: string): Promise<boolean>;
   reactivate(id: string, userId: string, nextExecution: Date): Promise<RecurringTransaction | null>;
   deactivate(id: string, userId: string): Promise<boolean>;

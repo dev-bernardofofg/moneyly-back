@@ -164,6 +164,7 @@ export const RecurringTransactionSchema = registry.register(
     title: z.string(),
     amount: money,
     categoryId: z.string().uuid(),
+    accountId: z.string().uuid().nullable(),
     frequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']),
     dayOfMonth: z.number().int().nullable(),
     dayOfWeek: z.number().int().nullable(),

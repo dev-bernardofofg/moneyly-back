@@ -1,5 +1,6 @@
 import type { RecurringTransaction } from '@infra/db/schema';
 import { ConflictError } from '@core/errors';
+import { resolveAccountId } from '@modules/account/use-cases/account.use-cases';
 import { calculateFirstExecution } from '../helpers/execution-dates';
 import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
 import type { UpdateRecurringTransactionInput } from '../recurring-transaction.types';
@@ -22,6 +23,9 @@ export const updateRecurringTransactionUseCase = async (
       'Recorrência parcelada já concluída não pode ser editada. Edite as transações geradas ou crie uma nova recorrência.'
     );
   }
+
+  // Vale para as próximas cobranças; as já lançadas ficam na conta em que caíram.
+  if (data.accountId) await resolveAccountId(userId, data.accountId);
 
   const frequencyChanged = data.frequency && data.frequency !== existing.frequency;
   const dayChanged = data.dayOfMonth !== undefined || data.dayOfWeek !== undefined;

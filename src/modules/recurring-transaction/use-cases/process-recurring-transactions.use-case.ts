@@ -43,6 +43,7 @@ export const processRecurringTransactions = async (): Promise<void> => {
         description: recurring.description ?? '',
         date: recurring.nextExecution,
         recurringTransactionId: recurring.id,
+        accountId: recurring.accountId ?? undefined,
       });
 
       const updated = await recurringTransactionRepository.incrementExecutedInstallments(

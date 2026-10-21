@@ -5,6 +5,7 @@ export interface CreateRecurringTransactionInput {
   title: string;
   amount: number;
   categoryId: string;
+  accountId?: string | null;
   frequency: RecurringFrequency;
   dayOfMonth?: number;
   dayOfWeek?: number;
@@ -17,6 +18,7 @@ export interface UpdateRecurringTransactionInput {
   title?: string;
   amount?: number;
   categoryId?: string;
+  accountId?: string | null;
   frequency?: RecurringFrequency;
   dayOfMonth?: number;
   dayOfWeek?: number;

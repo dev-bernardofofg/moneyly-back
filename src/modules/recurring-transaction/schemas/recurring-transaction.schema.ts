@@ -29,6 +29,8 @@ const recurringTransactionBaseSchema = z.object({
   frequency: z.enum(['daily', 'weekly', 'monthly', 'yearly'], {
     required_error: 'A frequência é obrigatória.',
   }),
+  // Ausente/null = conta padrão.
+  accountId: z.string().uuid('O ID da conta deve ser um UUID válido.').nullable().optional(),
   dayOfMonth: z
     .number()
     .int()

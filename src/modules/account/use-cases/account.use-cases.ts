@@ -1,6 +1,7 @@
 import { spDayString } from '@core/helpers/dates';
 import { BadRequestError } from '@core/errors';
 import { financialPeriodService } from '@modules/financial-period';
+import { recurringTransactionRepository } from '@modules/recurring-transaction/repositories/recurring-transaction.repository';
 import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
 import type { Account } from '@infra/db/schema';
 import { billingDateFor } from '../helpers/billing-date';
@@ -95,7 +96,9 @@ const reassignBillingPeriods = async (userId: string, account: Account) => {
 export const deleteAccountUseCase = async (id: string, userId: string) => {
   const account = await validateActiveAccount(id, userId);
   if (account.isDefault) throw new BadRequestError('A conta padrão não pode ser removida');
-  // Soft delete: transações antigas continuam apontando para a conta.
+  // Soft delete: transações antigas continuam apontando para a conta. Recorrências
+  // seguem cobrando na conta padrão; senão cada execução falharia com conta inativa.
+  await recurringTransactionRepository.moveToDefaultAccount(userId, id);
   return (await accountRepository.update(id, userId, { isActive: false }))!;
 };
 

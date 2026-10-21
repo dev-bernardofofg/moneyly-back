@@ -1,5 +1,6 @@
 import type { RecurringTransaction } from '@infra/db/schema';
 import { spMidnight, spParts } from '@core/helpers/dates';
+import { resolveAccountId } from '@modules/account/use-cases/account.use-cases';
 import { createTransactionUseCase } from '@modules/transaction';
 import { financialPeriodService } from '@modules/financial-period';
 import { calculateNextExecution } from '../helpers/execution-dates';
@@ -20,6 +21,9 @@ export const createRecurringTransactionUseCase = async (
   const dayOfMonth = data.dayOfMonth ?? (data.frequency === 'monthly' ? startParts.day : null);
   const dayOfWeek = data.dayOfWeek ?? (data.frequency === 'weekly' ? startParts.weekday : null);
 
+  if (data.accountId) await resolveAccountId(userId, data.accountId);
+  const accountId = data.accountId ?? null;
+
   const months = calcMonthsNeeded(data.frequency, data.totalInstallments);
   const [recurring] = await Promise.all([
     recurringTransactionRepository.create({
@@ -28,6 +32,7 @@ export const createRecurringTransactionUseCase = async (
       title: data.title,
       amount: data.amount,
       categoryId: data.categoryId,
+      accountId,
       frequency: data.frequency,
       dayOfMonth,
       dayOfWeek,
@@ -61,6 +66,7 @@ export const createRecurringTransactionUseCase = async (
         description: data.description ?? '',
         date,
         recurringTransactionId: recurring.id,
+        accountId: accountId ?? undefined,
       });
     }
 
@@ -84,6 +90,7 @@ export const createRecurringTransactionUseCase = async (
       description: data.description ?? '',
       date: startDate,
       recurringTransactionId: recurring.id,
+      accountId: accountId ?? undefined,
     });
 
     const nextExecution = calculateNextExecution(data.frequency, dayOfMonth, dayOfWeek, startDate);
