@@ -1486,13 +1486,17 @@
           },
           "transfers": {
             "type": "integer"
+          },
+          "linked": {
+            "type": "integer"
           }
         },
         "required": [
           "created",
           "skipped",
           "billsPaid",
-          "transfers"
+          "transfers",
+          "linked"
         ]
       },
       "Notification": {
@@ -10027,6 +10031,10 @@
                           "format": "uuid"
                         },
                         "transferOf": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "duplicateOf": {
                           "type": "string",
                           "format": "uuid"
                         }
