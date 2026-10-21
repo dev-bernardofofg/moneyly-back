@@ -24,6 +24,12 @@ export const createAccountUseCase = async (userId: string, data: CreateAccountIn
     type: data.type,
     closingDay: data.type === 'credit_card' ? data.closingDay : null,
     dueDay: data.type === 'credit_card' ? data.dueDay : null,
+    ...(data.type === 'checking' && data.openingBalanceDate
+      ? {
+          openingBalance: (data.openingBalance ?? 0).toString(),
+          openingBalanceDate: data.openingBalanceDate,
+        }
+      : {}),
     isDefault: false,
     isActive: true,
   });
@@ -38,9 +44,30 @@ export const updateAccountUseCase = async (
   if (account.type === 'checking' && (data.closingDay !== undefined || data.dueDay !== undefined)) {
     throw new BadRequestError('Conta corrente não tem fechamento nem vencimento');
   }
+  if (
+    account.type === 'credit_card' &&
+    (data.openingBalance !== undefined || data.openingBalanceDate !== undefined)
+  ) {
+    throw new BadRequestError('Cartão não tem saldo inicial');
+  }
+  if (
+    data.openingBalance !== undefined &&
+    !data.openingBalanceDate &&
+    !account.openingBalanceDate
+  ) {
+    throw new BadRequestError('Informe a data do saldo');
+  }
   if (data.name !== undefined) await validateUniqueAccountName(userId, data.name, id);
 
-  const updated = (await accountRepository.update(id, userId, data))!;
+  const { openingBalance, openingBalanceDate, ...rest } = data;
+  const updated = (await accountRepository.update(id, userId, {
+    ...rest,
+    ...(openingBalance !== undefined && { openingBalance: openingBalance.toString() }),
+    ...(openingBalanceDate !== undefined && {
+      openingBalanceDate,
+      ...(openingBalanceDate === null && { openingBalance: '0' }),
+    }),
+  }))!;
   const billingChanged =
     (data.closingDay !== undefined && data.closingDay !== account.closingDay) ||
     (data.dueDay !== undefined && data.dueDay !== account.dueDay);

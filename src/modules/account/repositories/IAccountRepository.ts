@@ -1,12 +1,16 @@
 import type { Account, NewAccount } from '@infra/db/schema';
 
 export type AccountUpdate = Partial<
-  Pick<NewAccount, 'name' | 'closingDay' | 'dueDay' | 'isActive'>
+  Pick<
+    NewAccount,
+    'name' | 'closingDay' | 'dueDay' | 'isActive' | 'openingBalance' | 'openingBalanceDate'
+  >
 >;
 
 export interface IAccountRepository {
   create(data: Omit<NewAccount, 'id' | 'createdAt' | 'updatedAt'>): Promise<Account>;
   findActiveByUserId(userId: string): Promise<Account[]>;
+  findAllByUserId(userId: string): Promise<Account[]>;
   findByIdAndUserId(id: string, userId: string): Promise<Account | null>;
   findActiveByName(userId: string, name: string): Promise<Account | null>;
   findDefault(userId: string): Promise<Account | null>;

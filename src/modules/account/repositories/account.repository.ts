@@ -20,6 +20,10 @@ export const accountRepository = {
       .orderBy(desc(accounts.isDefault), asc(accounts.name));
   },
 
+  async findAllByUserId(userId: string): Promise<Account[]> {
+    return db.select().from(accounts).where(eq(accounts.userId, userId));
+  },
+
   async findByIdAndUserId(id: string, userId: string): Promise<Account | null> {
     const [account] = await db
       .select()

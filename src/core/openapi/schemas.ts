@@ -585,6 +585,8 @@ export const AccountSchema = registry.register(
     type: z.enum(['checking', 'credit_card']),
     closingDay: z.number().int().nullable(),
     dueDay: z.number().int().nullable(),
+    openingBalance: money,
+    openingBalanceDate: isoDate.nullable(),
     isDefault: z.boolean(),
     isActive: z.boolean(),
     createdAt: isoDate,

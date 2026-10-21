@@ -1,3 +1,4 @@
+import { spMidnight } from '@core/helpers/dates';
 import { z } from 'zod';
 
 const dayOfMonth = (label: string) =>
@@ -13,8 +14,27 @@ const name = z
   .min(1, 'O nome é obrigatório.')
   .max(60, 'O nome pode ter no máximo 60 caracteres.');
 
+// Saldo da conta corrente numa data: as transações anteriores a ela já estão no saldo.
+const openingBalance = z
+  .number({ invalid_type_error: 'O saldo deve ser um número.' })
+  .min(-999999999)
+  .max(999999999);
+const openingBalanceDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'A data do saldo deve estar no formato AAAA-MM-DD.')
+  .refine(
+    (value) => spMidnight(value) <= spMidnight(new Date()),
+    'A data do saldo não pode ser futura.'
+  )
+  .transform((value) => spMidnight(value));
+
 export const createAccountSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('checking'), name }),
+  z.object({
+    type: z.literal('checking'),
+    name,
+    openingBalance: openingBalance.optional(),
+    openingBalanceDate: openingBalanceDate.optional(),
+  }),
   z.object({
     type: z.literal('credit_card'),
     name,
@@ -29,6 +49,9 @@ export const updateAccountSchema = z
     name: name.optional(),
     closingDay: dayOfMonth('fechamento').optional(),
     dueDay: dayOfMonth('vencimento').optional(),
+    openingBalance: openingBalance.optional(),
+    // null remove o saldo inicial.
+    openingBalanceDate: openingBalanceDate.nullable().optional(),
   })
   .refine((data) => Object.keys(data).length > 0, 'Informe ao menos um campo para atualizar.');
 
