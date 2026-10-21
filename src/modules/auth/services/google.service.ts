@@ -35,7 +35,7 @@ export const authenticateWithGoogle = async (idToken: string) => {
     }
 
     return user;
-  } catch (error) {
+  } catch {
     throw new HttpError(401, 'Falha na autenticação com Google');
   }
 };

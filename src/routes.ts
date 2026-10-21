@@ -20,7 +20,7 @@ try {
   const openApiPath = join(__dirname, '../openapi.json');
   const openApiContent = readFileSync(openApiPath, 'utf-8');
   openApiDocument = JSON.parse(openApiContent) as Record<string, unknown>;
-} catch (error) {
+} catch {
   logger.warn('openapi.json não encontrado. Swagger docs não estarão disponíveis.');
   openApiDocument = {};
 }

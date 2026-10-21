@@ -29,7 +29,7 @@ export const verifyGoogleToken = async (idToken: string): Promise<GoogleUserInfo
       email: payload.email || '',
       picture: payload.picture || '',
     };
-  } catch (error) {
+  } catch {
     throw new HttpError(401, 'Falha na verificação do token Google');
   }
 };
