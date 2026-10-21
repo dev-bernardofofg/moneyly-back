@@ -77,6 +77,7 @@ export const accounts = pgTable(
     type: text('type', { enum: ['checking', 'credit_card'] }).notNull(),
     closingDay: integer('closing_day'),
     dueDay: integer('due_day'),
+    creditLimit: integer('credit_limit'), // Centavos; só cartão. Null = não informado.
     // Centavos. Saldo da conta corrente na data informada; transações anteriores já estão nele.
     openingBalance: integer('opening_balance').default(0).notNull(),
     openingBalanceDate: timestamp('opening_balance_date'),
