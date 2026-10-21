@@ -5,6 +5,7 @@
   "main": "api/index.js",
   "scripts": {
     "dev": "ts-node-dev -r tsconfig-paths/register --respawn src/server.ts",
+    "prebuild": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "build": "tsc && tsc-alias",
     "start": "node dist/src/server.js",
     "db:generate": "drizzle-kit generate",
@@ -18,7 +19,8 @@
     "test:coverage": "jest --coverage",
     "test:unit": "jest --selectProjects unit",
     "test:integration": "jest --selectProjects integration",
-    "prepare": "husky"
+    "prepare": "husky",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
@@ -73,5 +75,8 @@
   "lint-staged": {
     "*.{ts,js,json,md}": "prettier --write"
   },
-  "packageManager": "pnpm@10.32.0"
+  "packageManager": "pnpm@10.32.0",
+  "engines": {
+    "node": ">=22"
+  }
 }
