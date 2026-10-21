@@ -361,3 +361,80 @@ describe('Opening balance', () => {
     expect(res.body.data.freeBalance.components.carryOverBalance).toBe(0);
   });
 });
+
+describe('Card recurrences', () => {
+  let token: string;
+  let categoryId: string;
+  let cardId: string;
+  const auth = () => ({ Authorization: `Bearer ${token}` });
+
+  beforeAll(async () => {
+    token = await signUp('card-recurring');
+    const category = await request(app)
+      .post('/categories/create')
+      .set(auth())
+      .send({ name: `Card Recurring ${Date.now()}` });
+    categoryId = category.body.data.id;
+    const card = await request(app)
+      .post('/accounts')
+      .set(auth())
+      .send({ type: 'credit_card', name: 'Cartão Assinaturas', closingDay: 25, dueDay: 5 })
+      .expect(201);
+    cardId = card.body.data.id;
+  });
+
+  it('charges the card and lands in the period of the invoice due date', async () => {
+    const recurring = await request(app)
+      .post('/recurring-transactions')
+      .set(auth())
+      .send({
+        type: 'expense',
+        title: 'Streaming',
+        amount: 5590,
+        categoryId,
+        accountId: cardId,
+        frequency: 'monthly',
+        totalInstallments: 1,
+        startDate: '2026-09-10T03:00:00.000Z',
+      })
+      .expect(201);
+    expect(recurring.body.data.accountId).toBe(cardId);
+
+    const history = await request(app)
+      .get(`/recurring-transactions/${recurring.body.data.id}/transactions`)
+      .set(auth())
+      .expect(200);
+    const reference = await request(app)
+      .post('/transactions/create')
+      .set(auth())
+      .send({ type: 'expense', title: 'Ref', amount: 1, category: categoryId, date: '2026-10-05' })
+      .expect(201);
+
+    expect(history.body.data[0]).toMatchObject({
+      accountId: cardId,
+      periodId: reference.body.data.periodId,
+    });
+  });
+
+  it('moves recurrences to the default account when the card is removed', async () => {
+    const recurring = await request(app)
+      .post('/recurring-transactions')
+      .set(auth())
+      .send({
+        type: 'expense',
+        title: 'Academia',
+        amount: 10700,
+        categoryId,
+        accountId: cardId,
+        frequency: 'monthly',
+        startDate: '2099-01-10T03:00:00.000Z',
+      })
+      .expect(201);
+
+    await request(app).delete(`/accounts/${cardId}`).set(auth()).expect(200);
+
+    const list = await request(app).get('/recurring-transactions').set(auth()).expect(200);
+    const moved = list.body.data.find((item: { id: string }) => item.id === recurring.body.data.id);
+    expect(moved.accountId).toBeNull();
+  });
+});

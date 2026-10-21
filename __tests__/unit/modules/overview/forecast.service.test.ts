@@ -7,6 +7,7 @@ import { HttpError } from '@core/errors/http-error';
 import { getBudgetProgressUseCase } from '@modules/budget/use-cases/get-budget-progress.use-case';
 import { listGoalsUseCase } from '@modules/goal/use-cases/list-goals.use-case';
 import { overtimeRepository } from '@modules/overtime/repositories/overtime.repository';
+import { accountRepository } from '@modules/account/repositories/account.repository';
 
 jest.mock('@modules/financial-period');
 jest.mock('@modules/transaction/repositories/transaction.repository');
@@ -242,6 +243,48 @@ describe('getForecastUseCase', () => {
 
     expect(r.projected.occurrences).toHaveLength(0);
     expect(r.projectedEndBalance).toBe(-200);
+  });
+
+  it('projects a card recurrence into the period of its invoice due date', async () => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'] });
+    jest.setSystemTime(new Date('2026-10-10T15:00:00.000Z'));
+    const now = new Date();
+    const card = {
+      id: '99999999-9999-9999-9999-999999999999',
+      type: 'credit_card',
+      isDefault: false,
+      closingDay: 15,
+      dueDay: 18,
+      openingBalance: 0,
+      openingBalanceDate: null,
+    };
+    (accountRepository.findAllByUserId as jest.Mock).mockResolvedValueOnce([card]);
+    mockedPeriodSvc.ensureCurrentPeriodExists.mockResolvedValue(periodAround(now) as never);
+    mockedTxRepo.findByPeriodId.mockResolvedValue([] as never);
+    const recurrence = (id: string, date: string) => ({
+      id,
+      title: id,
+      type: 'expense',
+      amount: 1000,
+      accountId: card.id,
+      frequency: 'yearly',
+      dayOfMonth: null,
+      dayOfWeek: null,
+      nextExecution: new Date(date),
+      totalInstallments: null,
+      executedInstallments: 0,
+    });
+    mockedRecRepo.findByUserId.mockResolvedValue([
+      recurrence('before-closing', '2026-10-12T03:00:00.000Z'), // fatura vence 18/10
+      recurrence('after-closing', '2026-10-16T03:00:00.000Z'), // fatura vence 18/11
+    ] as never);
+
+    const r = await getForecastUseCase(USER);
+    jest.useRealTimers();
+
+    expect(r.projected.occurrences.map((o) => o.recurringTransactionId)).toEqual([
+      'before-closing',
+    ]);
   });
 
   it('invalid periodId → HttpError 404', async () => {
