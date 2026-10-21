@@ -16,6 +16,12 @@ jest.mock('@modules/user/validations/user.validation');
 jest.mock('@modules/budget/use-cases/get-budget-progress.use-case');
 jest.mock('@modules/goal/use-cases/list-goals.use-case');
 jest.mock('@modules/overtime/repositories/overtime.repository');
+jest.mock('@modules/transfer/repositories/transfer.repository', () => ({
+  transferRepository: {
+    findInRange: jest.fn().mockResolvedValue([]),
+    findSince: jest.fn().mockResolvedValue([]),
+  },
+}));
 jest.mock('@modules/account/repositories/account.repository', () => ({
   accountRepository: { findAllByUserId: jest.fn().mockResolvedValue([]) },
 }));
