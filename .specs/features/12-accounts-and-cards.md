@@ -128,10 +128,24 @@ da coluna nova.
 - `used` = faturas com vencimento hoje ou depois e não pagas, inclusive parcelas futuras. Fatura já
   vencida não conta: sem marcação, todo o histórico ocuparia o limite. Só despesas (estorno não abate).
 
+## Saldo por conta e transferências
+
+- `GET /accounts` traz `currentBalance` na conta corrente com saldo inicial: saldo + transações
+  da conta desde a data dele + pontas de transferência. Sem saldo inicial = `null`.
+- `transfers` (migration `0016`, módulo `transfer`): `from`/`to` só conta corrente, valor em centavos,
+  data não futura. Não é transação: não entra em receita, despesa, orçamento, insights nem alerta.
+  `GET/POST /transfers`, `DELETE /transfers/:id`.
+- Forecast: pontas entram no `carryOverBalance` (antes do período) e no `realizedBalance` só quando
+  uma ponta caiu antes do saldo inicial da conta (normalmente somam zero).
+- Import: preview recebe `accountId`; linha de conta corrente com tipo oposto, mesmo valor e até
+  1 dia de diferença de uma transação (não recorrente) noutra conta corrente vira `status: transfer`
+  com `transferOf`. Confirmar com `transferOf` cria a transferência, apaga a transação da outra
+  conta e guarda os dois `external_id` (reimportar qualquer extrato marca `imported`).
+- Pagamento de fatura não é transferência: as compras do cartão já contaram.
+
 ## Fora do escopo (v1)
 
 - Juros.
-- Saldo exibido por conta e transferências entre contas.
 - Detectar a conta automaticamente pelo arquivo importado.
 
 ## Testes
