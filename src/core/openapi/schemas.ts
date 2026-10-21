@@ -429,7 +429,11 @@ export const TransactionImportPreviewSchema = registry.register(
 
 export const TransactionImportResultSchema = registry.register(
   'TransactionImportResult',
-  z.object({ created: z.number().int(), skipped: z.number().int() })
+  z.object({
+    created: z.number().int(),
+    skipped: z.number().int(),
+    billsPaid: z.number().int(),
+  })
 );
 
 export const NotificationSchema = registry.register(
@@ -488,6 +492,19 @@ export const CurrentPeriodSummarySchema = registry.register(
   })
 );
 
+export const CardBillPaymentSchema = registry.register(
+  'CardBillPayment',
+  z.object({
+    id: z.string().uuid(),
+    userId: z.string().uuid(),
+    accountId: z.string().uuid(),
+    dueDate: isoDate,
+    source: z.enum(['manual', 'import']),
+    paidAt: isoDate,
+    createdAt: isoDate,
+  })
+);
+
 export const CardBillsSchema = registry.register(
   'CardBills',
   z.object({
@@ -499,6 +516,9 @@ export const CardBillsSchema = registry.register(
         name: z.string(),
         closingDay: z.number().int(),
         dueDay: z.number().int(),
+        // Vencimento da fatura dentro do período (null se o período não tiver o dia).
+        dueDate: isoDate.nullable(),
+        payment: z.object({ paidAt: isoDate, source: z.enum(['manual', 'import']) }).nullable(),
         total: z.number(),
         categories: z.array(
           z.object({ categoryId: z.string().uuid(), name: z.string(), amount: z.number() })

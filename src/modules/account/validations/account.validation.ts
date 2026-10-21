@@ -1,10 +1,16 @@
-import { ConflictError, NotFoundError } from '@core/errors';
+import { BadRequestError, ConflictError, NotFoundError } from '@core/errors';
 import type { Account } from '@infra/db/schema';
 import { accountRepository } from '../repositories/account.repository';
 
 export async function validateActiveAccount(id: string, userId: string): Promise<Account> {
   const account = await accountRepository.findByIdAndUserId(id, userId);
   if (!account || !account.isActive) throw new NotFoundError('Conta não encontrada');
+  return account;
+}
+
+export async function validateActiveCard(id: string, userId: string): Promise<Account> {
+  const account = await validateActiveAccount(id, userId);
+  if (account.type !== 'credit_card') throw new BadRequestError('Só cartão tem fatura');
   return account;
 }
 

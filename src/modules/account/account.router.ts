@@ -4,7 +4,16 @@ import { asyncHandler } from '@core/middlewares/async-handler';
 import { validateBody, validateParams } from '@core/middlewares/validate';
 import { idParamSchema } from '@core/schemas/id-param.schema';
 import { authenticateUser, type AuthRequest } from '@modules/auth/middlewares/auth';
-import { createAccountSchema, updateAccountSchema } from './schemas/account.schema';
+import {
+  billPaymentParamsSchema,
+  createAccountSchema,
+  markBillPaidSchema,
+  updateAccountSchema,
+} from './schemas/account.schema';
+import {
+  markBillPaidUseCase,
+  unmarkBillPaidUseCase,
+} from './use-cases/card-bill-payment.use-cases';
 import {
   createAccountUseCase,
   deleteAccountUseCase,
@@ -50,6 +59,28 @@ AccountRouter.delete(
   asyncHandler<AuthRequest>(async (req, res) => {
     await deleteAccountUseCase(req.params.id!, req.user.id);
     return ResponseHandler.success(res, null, 'Conta removida');
+  })
+);
+
+AccountRouter.post(
+  '/:id/bill-payment',
+  validateParams(idParamSchema),
+  validateBody(markBillPaidSchema),
+  asyncHandler<AuthRequest>(async (req, res) =>
+    ResponseHandler.success(
+      res,
+      await markBillPaidUseCase(req.user.id, req.params.id!, req.body.dueDate),
+      'Fatura marcada como paga'
+    )
+  )
+);
+
+AccountRouter.delete(
+  '/:id/bill-payment/:dueDate',
+  validateParams(billPaymentParamsSchema),
+  asyncHandler<AuthRequest>(async (req, res) => {
+    await unmarkBillPaidUseCase(req.user.id, req.params.id!, req.params.dueDate!);
+    return ResponseHandler.success(res, null, 'Fatura voltou para pendente');
   })
 );
 

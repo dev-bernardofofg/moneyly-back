@@ -58,3 +58,14 @@ export const updateAccountSchema = z
 
 export type CreateAccountInput = z.infer<typeof createAccountSchema>;
 export type UpdateAccountInput = z.infer<typeof updateAccountSchema>;
+
+const billDueDate = z
+  .string({ required_error: 'Informe o vencimento da fatura.' })
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'O vencimento deve estar no formato AAAA-MM-DD.');
+
+export const markBillPaidSchema = z.object({ dueDate: billDueDate });
+
+export const billPaymentParamsSchema = z.object({
+  id: z.string().uuid('O ID deve ser um UUID válido.'),
+  dueDate: billDueDate,
+});

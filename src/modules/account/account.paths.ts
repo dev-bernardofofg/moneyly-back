@@ -3,10 +3,15 @@
  */
 import { z } from '@core/openapi/registry';
 import { wrapSuccess } from '@core/openapi/envelopes';
-import { AccountSchema } from '@core/openapi/schemas';
+import { AccountSchema, CardBillPaymentSchema } from '@core/openapi/schemas';
 import { created, nullData, ok, route } from '@core/openapi/route';
 import { idParamSchema } from '@core/schemas/id-param.schema';
-import { createAccountSchema, updateAccountSchema } from './schemas/account.schema';
+import {
+  billPaymentParamsSchema,
+  createAccountSchema,
+  markBillPaidSchema,
+  updateAccountSchema,
+} from './schemas/account.schema';
 
 route({
   method: 'get',
@@ -38,5 +43,22 @@ route({
   tag: 'Accounts',
   summary: 'Remover conta ou cartão (soft delete; a padrão não pode)',
   params: idParamSchema,
+  ok: ok(nullData),
+});
+route({
+  method: 'post',
+  path: '/accounts/{id}/bill-payment',
+  tag: 'Accounts',
+  summary: 'Marcar como paga a fatura do cartão que vence na data',
+  params: idParamSchema,
+  body: markBillPaidSchema,
+  ok: ok(wrapSuccess(CardBillPaymentSchema)),
+});
+route({
+  method: 'delete',
+  path: '/accounts/{id}/bill-payment/{dueDate}',
+  tag: 'Accounts',
+  summary: 'Voltar a fatura do cartão para pendente',
+  params: billPaymentParamsSchema,
   ok: ok(nullData),
 });

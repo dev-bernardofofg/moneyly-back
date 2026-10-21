@@ -10,6 +10,7 @@ export type AccountUpdate = Partial<
 export interface IAccountRepository {
   create(data: Omit<NewAccount, 'id' | 'createdAt' | 'updatedAt'>): Promise<Account>;
   findActiveByUserId(userId: string): Promise<Account[]>;
+  findActiveCards(): Promise<Account[]>;
   findAllByUserId(userId: string): Promise<Account[]>;
   findByIdAndUserId(id: string, userId: string): Promise<Account | null>;
   findActiveByName(userId: string, name: string): Promise<Account | null>;
