@@ -142,7 +142,6 @@ dist
 # Generated files
 src/generated/
 !src/generated/.gitkeep
-openapi.json
 
 # Public folder
 public/
