@@ -15,6 +15,7 @@ import '../../modules/recurring-transaction/recurring-transaction.paths';
 import '../../modules/transaction/transaction.paths';
 import '../../modules/overview/overview.paths';
 import '../../modules/account/account.paths';
+import '../../modules/transfer/transfer.paths';
 
 /**
  * zod-to-openapi v7 emite ref-nullable como `{ allOf: [ {$ref}, {nullable:true} ] }`.

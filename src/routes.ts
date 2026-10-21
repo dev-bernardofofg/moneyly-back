@@ -11,6 +11,7 @@ import { RecurringTransactionRouter } from '@modules/recurring-transaction';
 import transactionRoutes from '@modules/transaction/transaction.router';
 import { UserRouters } from '@modules/user';
 import { AccountRouter } from '@modules/account';
+import { TransferRouter } from '@modules/transfer';
 // Import estático: o tsc copia o JSON para dist/ e o bundle da Vercel o inclui (readFileSync em
 // runtime não era rastreado e /api-docs ficava vazio em produção).
 import openApiDocument from '../openapi.json';
@@ -52,5 +53,6 @@ router.use('/notifications', NotificationRouter);
 router.use('/companies', CompanyRouter);
 router.use('/overtime', OvertimeRouter);
 router.use('/accounts', AccountRouter);
+router.use('/transfers', TransferRouter);
 
 export default router;

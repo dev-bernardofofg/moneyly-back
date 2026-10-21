@@ -418,8 +418,12 @@ export const TransactionImportPreviewSchema = registry.register(
         amount: z.number(),
         date: isoDate,
         title: z.string(),
-        status: z.enum(['new', 'imported', 'possible_duplicate', 'bill_payment']),
+        status: z.enum(['new', 'imported', 'possible_duplicate', 'bill_payment', 'transfer']),
         duplicateOf: z.string().uuid().nullable(),
+        // Outra ponta já lançada noutra conta corrente: confirmar com transferOf vira transferência.
+        transferOf: z
+          .object({ transactionId: z.string().uuid(), accountId: z.string().uuid() })
+          .nullable(),
         suggestedCategoryId: z.string().uuid().nullable(),
         suggestionSource: z.enum(['history', 'rule', 'fallback']),
       })
@@ -433,6 +437,7 @@ export const TransactionImportResultSchema = registry.register(
     created: z.number().int(),
     skipped: z.number().int(),
     billsPaid: z.number().int(),
+    transfers: z.number().int(),
   })
 );
 
@@ -489,6 +494,22 @@ export const CurrentPeriodSummarySchema = registry.register(
     byCategory: z.record(z.string(), z.number()),
     alert: z.string().nullable(),
     transactionsCount: z.number().int(),
+  })
+);
+
+export const TransferSchema = registry.register(
+  'Transfer',
+  z.object({
+    id: z.string().uuid(),
+    userId: z.string().uuid(),
+    fromAccountId: z.string().uuid(),
+    toAccountId: z.string().uuid(),
+    amount: money,
+    date: isoDate,
+    description: z.string().nullable(),
+    fromExternalId: z.string().nullable(),
+    toExternalId: z.string().nullable(),
+    createdAt: isoDate,
   })
 );
 
@@ -612,6 +633,8 @@ export const AccountSchema = registry.register(
     dueDay: z.number().int().nullable(),
     creditLimit: money.nullable(),
     openingBalance: money,
+    // Só em GET /accounts: saldo inicial + movimentos desde a data dele; null sem saldo inicial.
+    currentBalance: money.nullable().optional(),
     openingBalanceDate: isoDate.nullable(),
     isDefault: z.boolean(),
     isActive: z.boolean(),
