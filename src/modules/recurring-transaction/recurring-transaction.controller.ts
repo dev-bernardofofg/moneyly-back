@@ -27,7 +27,7 @@ export const createRecurringTransaction = asyncHandler<AuthRequest>(async (req, 
   const recurring = await createRecurringTransactionUseCase(req.user.id, {
     type,
     title,
-    amount: String(amount),
+    amount,
     categoryId,
     frequency,
     dayOfMonth,
@@ -43,7 +43,7 @@ export const createRecurringFromSubscription = asyncHandler<AuthRequest>(async (
   const { title, amount, categoryId, cadence, nextEstimatedDate, description } = req.body;
   const recurring = await convertSubscriptionToRecurringUseCase(req.user.id, {
     title,
-    amount: String(amount),
+    amount,
     categoryId,
     cadence,
     nextEstimatedDate,

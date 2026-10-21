@@ -1,14 +1,14 @@
 interface BalanceAccount {
   id: string;
   type: 'checking' | 'credit_card';
-  openingBalance: string | number;
+  openingBalance: number;
   openingBalanceDate: Date | null;
 }
 
 interface Flow {
   accountId: string;
   type: 'income' | 'expense';
-  amount: string | number;
+  amount: number;
   date: Date;
 }
 

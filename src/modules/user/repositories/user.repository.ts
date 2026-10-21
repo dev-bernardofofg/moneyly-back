@@ -64,7 +64,7 @@ export const userRepository = {
   async updateMonthlyIncome(id: string, monthlyIncome: number): Promise<User | null> {
     const [user] = await db
       .update(users)
-      .set({ monthlyIncome: monthlyIncome.toString(), firstAccess: false, updatedAt: new Date() })
+      .set({ monthlyIncome, firstAccess: false, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
     return user ?? null;
@@ -92,7 +92,7 @@ export const userRepository = {
     const [user] = await db
       .update(users)
       .set({
-        monthlyIncome: monthlyIncome.toString(),
+        monthlyIncome,
         financialDayStart,
         financialDayEnd,
         firstAccess: false,

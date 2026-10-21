@@ -1,3 +1,4 @@
+import { formatCents } from '@core/helpers/amount';
 import {
   formatBrazilianDate,
   formatIsoDateSaoPaulo,
@@ -8,10 +9,6 @@ import { dispatchNotification } from './dispatch-notification.use-case';
 
 const REMINDER_WINDOW_DAYS = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-function formatAmount(amount: string): string {
-  return Number(amount).toFixed(2).replace('.', ',');
-}
 
 /**
  * Gera lembretes de contas a vencer: despesas recorrentes ativas com
@@ -39,7 +36,7 @@ export const processBillReminders = async (): Promise<void> => {
       type: 'bill_reminder',
       severity: 'info',
       title: `Conta a vencer: ${recurring.title}`,
-      message: `${recurring.title} de R$ ${formatAmount(recurring.amount)} vence em ${daysUntil} ${dayLabel} (${formatBrazilianDate(recurring.nextExecution)}).`,
+      message: `${recurring.title} de R$ ${formatCents(recurring.amount)} vence em ${daysUntil} ${dayLabel} (${formatBrazilianDate(recurring.nextExecution)}).`,
       relatedId: recurring.id,
       periodId: null,
       dedupeKey,

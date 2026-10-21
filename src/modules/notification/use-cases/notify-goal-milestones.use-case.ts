@@ -1,13 +1,9 @@
+import { formatCents } from '@core/helpers/amount';
 import { dispatchNotification } from './dispatch-notification.use-case';
 
 interface ReachedMilestone {
   percentage: number;
 }
-
-const formatAmount = (amount: string | null): string =>
-  Number(amount ?? 0)
-    .toFixed(2)
-    .replace('.', ',');
 
 /**
  * Gera notificações para milestones recém-atingidos de uma meta (F9).
@@ -15,7 +11,7 @@ const formatAmount = (amount: string | null): string =>
  */
 export const notifyGoalMilestones = async (
   userId: string,
-  goal: { id: string; title: string; targetAmount: string; currentAmount: string | null },
+  goal: { id: string; title: string; targetAmount: number; currentAmount: number | null },
   reachedMilestones: ReachedMilestone[]
 ): Promise<void> => {
   for (const milestone of reachedMilestones) {
@@ -30,8 +26,8 @@ export const notifyGoalMilestones = async (
         ? `Meta concluída: ${goal.title}`
         : `Meta ${goal.title}: ${milestone.percentage}% atingido`,
       message: completed
-        ? `Parabéns! Você atingiu os R$ ${formatAmount(goal.targetAmount)} da meta "${goal.title}".`
-        : `Você já poupou R$ ${formatAmount(goal.currentAmount)} dos R$ ${formatAmount(goal.targetAmount)} da meta "${goal.title}".`,
+        ? `Parabéns! Você atingiu os R$ ${formatCents(goal.targetAmount)} da meta "${goal.title}".`
+        : `Você já poupou R$ ${formatCents(goal.currentAmount)} dos R$ ${formatCents(goal.targetAmount)} da meta "${goal.title}".`,
       relatedId: goal.id,
       periodId: null,
       dedupeKey,

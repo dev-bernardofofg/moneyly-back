@@ -76,7 +76,8 @@ export const updateMonthlyIncomeSchema = z.object({
       invalid_type_error: 'O rendimento deve ser um número.',
     })
     .positive('O rendimento mensal deve ser um valor positivo.')
-    .max(999999999, 'O rendimento não pode ser maior que 999.999.999.'),
+    .int('O valor deve ser em centavos (inteiro).')
+    .max(999999999, 'O valor não pode ser maior que R$ 9.999.999,99.'),
 });
 
 export const updateFinancialPeriodSchema = z
@@ -113,7 +114,8 @@ export const updateIncomeAndPeriodSchema = z
     monthlyIncome: z
       .number()
       .positive('Rendimento deve ser positivo')
-      .max(999999999, 'Rendimento muito alto'),
+      .int('O valor deve ser em centavos (inteiro).')
+      .max(999999999, 'O valor não pode ser maior que R$ 9.999.999,99.'),
     financialDayStart: z
       .number()
       .min(1, 'Dia de início deve ser entre 1 e 31')

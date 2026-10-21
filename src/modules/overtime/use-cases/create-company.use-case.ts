@@ -5,7 +5,7 @@ export const createCompanyUseCase = async (userId: string, data: CreateCompanyIn
   return companyRepository.create({
     userId,
     name: data.name,
-    hourlyRate: data.hourlyRate.toString(),
+    hourlyRate: data.hourlyRate,
     isActive: true,
   });
 };

@@ -28,14 +28,14 @@ const getNextMilestone = (
   milestones: Array<{
     id: string;
     percentage: number;
-    amount: string;
+    amount: number;
     isReached: boolean | null;
   }>
 ):
   | {
       id: string;
       percentage: number;
-      amount: string;
+      amount: number;
       isReached: boolean | null;
     }
   | undefined => {

@@ -21,20 +21,20 @@ export const updateGoalUseCase = async (
   const updateData: Partial<{
     title: string;
     description: string | null;
-    targetAmount: string;
+    targetAmount: number;
     targetDate: Date;
-    currentAmount: string;
+    currentAmount: number;
     isActive: boolean;
   }> = {};
   if (data.title !== undefined) updateData.title = data.title;
   if (data.description !== undefined) updateData.description = data.description;
-  if (data.targetAmount !== undefined) updateData.targetAmount = data.targetAmount.toString();
+  if (data.targetAmount !== undefined) updateData.targetAmount = data.targetAmount;
   if (data.targetDate !== undefined) {
     const newTargetDate = new Date(data.targetDate);
     updateData.targetDate = newTargetDate;
     await financialPeriodService.createNextPeriods(userId, monthsUntilDate(newTargetDate));
   }
-  if (data.currentAmount !== undefined) updateData.currentAmount = data.currentAmount.toString();
+  if (data.currentAmount !== undefined) updateData.currentAmount = data.currentAmount;
   if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
   const updatedGoal = await goalRepository.update(goalId, updateData);

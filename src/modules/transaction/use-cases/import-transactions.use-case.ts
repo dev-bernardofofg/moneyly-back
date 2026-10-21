@@ -17,7 +17,7 @@ const TITLE_HISTORY_LIMIT = 2000;
 export type ImportItemStatus = 'new' | 'imported' | 'possible_duplicate' | 'bill_payment';
 
 const dayKey = (type: string, amount: number, date: Date) =>
-  `${type}:${amount.toFixed(2)}:${spDayString(date)}`;
+  `${type}:${amount}:${spDayString(date)}`;
 
 export const previewTransactionImportUseCase = async (userId: string, fileBase64Url: string) => {
   let statement;
@@ -104,7 +104,7 @@ export const confirmTransactionImportUseCase = async (
       userId,
       type: item.type,
       title: item.title,
-      amount: item.amount.toString(),
+      amount: item.amount,
       categoryId: item.categoryId,
       description: null,
       date: item.date,

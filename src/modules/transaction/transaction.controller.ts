@@ -1,3 +1,4 @@
+import { formatCents } from '@core/helpers/amount';
 import { formatBrazilianDate, formatIsoDateSaoPaulo } from '@core/helpers/dates';
 import { ResponseHandler } from '@core/helpers/response-handler';
 import { buildTransactionFilters } from './helpers/transaction-filters';
@@ -90,7 +91,7 @@ export const updateTransaction = asyncHandler<AuthRequest>(async (req, res) => {
   const updateData: Partial<{
     type: 'income' | 'expense';
     title: string;
-    amount: string;
+    amount: number;
     categoryId: string;
     description: string | null;
     date: Date;
@@ -143,7 +144,7 @@ export const exportTransactionsCsv = asyncHandler<AuthRequest>(async (req, res) 
     tx.id,
     tx.type === 'income' ? 'Receita' : 'Despesa',
     tx.title,
-    Number(tx.amount).toFixed(2).replace('.', ','),
+    formatCents(tx.amount),
     tx.category.name,
     tx.description ?? '',
     formatBrazilianDate(tx.date),

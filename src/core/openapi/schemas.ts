@@ -3,13 +3,13 @@
  *
  * Fonte: shapes reais devolvidos pelos controllers/services/handlers.
  * Invariantes (ver moneyly/.specs/02-shared-domain.md):
- *  - dinheiro = STRING decimal (Drizzle decimal → string; ResponseHandler.normalizeDecimals mantém string)
+ *  - dinheiro = INTEIRO em centavos (R$ 10,50 → 1050), persistido e calculado assim
  *  - datas = STRING (Date serializa p/ ISO no JSON; algumas já vêm formatadas dd/MM/yyyy)
  *  - valores derivados/calculados em runtime = number
  */
 import { registry, z } from './registry';
 
-const money = z.string().openapi({ example: '1234.50', description: 'Valor decimal como string' });
+const money = z.number().int().openapi({ example: 123450, description: 'Valor em centavos' });
 const isoDate = z.string().openapi({ example: '2026-05-17T00:00:00.000Z' });
 
 /* ───────── entidades base ───────── */
@@ -57,7 +57,7 @@ export const UserSchema = registry.register(
     email: z.string().email(),
     googleId: z.string().nullable().optional(),
     avatar: z.string().nullable().optional(),
-    monthlyIncome: z.union([z.string(), z.number()]),
+    monthlyIncome: money.nullable(),
     financialDayStart: z.number().int(),
     financialDayEnd: z.number().int(),
     firstAccess: z.boolean().nullable(),
@@ -89,7 +89,7 @@ export const AuthRefreshSchema = registry.register(
 export const IncomeUpdateSchema = registry.register(
   'IncomeUpdate',
   z.object({
-    monthlyIncome: z.union([z.string(), z.number()]),
+    monthlyIncome: money.nullable(),
     firstAccess: z.boolean(),
   })
 );
@@ -106,7 +106,7 @@ export const FinancialPeriodUpdateSchema = registry.register(
 export const IncomeAndPeriodUpdateSchema = registry.register(
   'IncomeAndPeriodUpdate',
   z.object({
-    monthlyIncome: z.union([z.string(), z.number()]),
+    monthlyIncome: money.nullable(),
     financialDayStart: z.number().int(),
     financialDayEnd: z.number().int(),
     firstAccess: z.boolean(),
@@ -572,7 +572,7 @@ export const TransactionListSummarySchema = registry.register(
   z.object({
     totalExpense: z.number(),
     totalIncome: z.number(),
-    monthlyIncome: z.union([z.string(), z.number()]),
+    monthlyIncome: money.nullable(),
     percentUsed: z.number().nullable(),
     alert: z.string().nullable(),
   })
@@ -618,7 +618,7 @@ export const OvertimeRecordSchema = registry.register(
     description: z.string().nullable(),
     startTime: isoDate,
     endTime: isoDate,
-    hoursWorked: money,
+    hoursWorked: z.string().openapi({ example: '8.5', description: 'Horas (decimal)' }),
     hourlyRateSnapshot: money,
     amount: money,
     month: z.number().int(),

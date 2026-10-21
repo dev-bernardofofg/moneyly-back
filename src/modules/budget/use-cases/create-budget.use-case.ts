@@ -17,7 +17,7 @@ export const createBudgetUseCase = async (
   const budget = await budgetRepository.create({
     userId,
     categoryId: data.categoryId,
-    monthlyLimit: data.monthlyLimit.toString(),
+    monthlyLimit: data.monthlyLimit,
   });
   return budget;
 };

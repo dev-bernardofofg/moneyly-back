@@ -2,7 +2,7 @@ import type { CategoryBudget, NewCategoryBudget } from '@infra/db/schema';
 
 export type BudgetWithCategory = {
   id: string;
-  monthlyLimit: string | null;
+  monthlyLimit: number | null;
   category: { id: string; name: string };
 };
 

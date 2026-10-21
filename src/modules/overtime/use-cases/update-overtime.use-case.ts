@@ -42,7 +42,7 @@ export const updateOvertimeUseCase = async (
     const hoursWorked = calcHours(startTime, endTime);
     const companyFull = await validateActiveCompany(company.id, userId);
     const hourlyRateSnapshot = Number(companyFull.hourlyRate);
-    const amount = hoursWorked * hourlyRateSnapshot;
+    const amount = Math.round(hoursWorked * hourlyRateSnapshot);
     const startTimeSP = toSaoPauloTimezone(startTime);
     const month = startTimeSP.getMonth() + 1;
     const year = startTimeSP.getFullYear();
@@ -52,14 +52,14 @@ export const updateOvertimeUseCase = async (
       startTime,
       endTime,
       hoursWorked: hoursWorked.toString(),
-      hourlyRateSnapshot: hourlyRateSnapshot.toString(),
-      amount: amount.toString(),
+      hourlyRateSnapshot,
+      amount,
       month,
       year,
     });
 
     transactionUpdate = {
-      amount: amount.toString(),
+      amount,
       date: startTime,
       periodId,
       title: `Hora extra — ${company.name}`,

@@ -13,7 +13,7 @@ export const updateTransactionUseCase = async (
   updateData: Partial<{
     type: 'income' | 'expense';
     title: string;
-    amount: string;
+    amount: number;
     categoryId: string;
     description: string | null;
     date: Date;

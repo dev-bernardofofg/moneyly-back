@@ -1,8 +1,7 @@
+import { formatCents } from '@core/helpers/amount';
 import { formatBrazilianDate } from '@core/helpers/dates';
 import type { Transaction } from '@infra/db/schema';
 import { dispatchNotification } from './dispatch-notification.use-case';
-
-const formatAmount = (amount: string): string => Number(amount).toFixed(2).replace('.', ',');
 
 /**
  * Notifica criação de transação (entrada ou saída). Idempotente via
@@ -10,7 +9,7 @@ const formatAmount = (amount: string): string => Number(amount).toFixed(2).repla
  */
 export const notifyTransactionCreated = async (transaction: Transaction): Promise<void> => {
   const isIncome = transaction.type === 'income';
-  const amount = formatAmount(transaction.amount);
+  const amount = formatCents(transaction.amount);
   const dateLabel = formatBrazilianDate(transaction.date);
 
   await dispatchNotification({

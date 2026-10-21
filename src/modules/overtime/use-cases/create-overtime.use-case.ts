@@ -21,7 +21,7 @@ export const createOvertimeUseCase = async (userId: string, data: CreateOvertime
 
   const hoursWorked = calcHours(startTime, endTime);
   const hourlyRateSnapshot = Number(company.hourlyRate);
-  const amount = hoursWorked * hourlyRateSnapshot;
+  const amount = Math.round(hoursWorked * hourlyRateSnapshot);
   const startTimeSP = toSaoPauloTimezone(startTime);
   const month = startTimeSP.getMonth() + 1;
   const year = startTimeSP.getFullYear();
@@ -39,8 +39,8 @@ export const createOvertimeUseCase = async (userId: string, data: CreateOvertime
     startTime,
     endTime,
     hoursWorked: hoursWorked.toString(),
-    hourlyRateSnapshot: hourlyRateSnapshot.toString(),
-    amount: amount.toString(),
+    hourlyRateSnapshot,
+    amount,
     month,
     year,
     transactionId: null,
@@ -50,7 +50,7 @@ export const createOvertimeUseCase = async (userId: string, data: CreateOvertime
     userId,
     type: 'income',
     title: `Hora extra — ${company.name}`,
-    amount: amount.toString(),
+    amount,
     categoryId,
     description: data.description || null,
     date: startTime,

@@ -12,7 +12,7 @@ export const updateCompanyUseCase = async (
 
   const updated = await companyRepository.update(id, userId, {
     ...(data.name !== undefined && { name: data.name }),
-    ...(data.hourlyRate !== undefined && { hourlyRate: data.hourlyRate.toString() }),
+    ...(data.hourlyRate !== undefined && { hourlyRate: data.hourlyRate }),
   });
   if (!updated) throw new HttpError(404, 'Empresa não encontrada');
   return updated;

@@ -19,7 +19,8 @@ export const createSavingsGoalSchema = z.object({
       z
         .number({ invalid_type_error: 'O valor deve ser um número válido.' })
         .positive('O valor alvo deve ser maior que zero.')
-        .max(999999999, 'O valor não pode ser maior que 999.999.999.')
+        .int('O valor deve ser em centavos (inteiro).')
+        .max(999999999, 'O valor não pode ser maior que R$ 9.999.999,99.')
     ),
   targetDate: z
     .string({
@@ -49,7 +50,8 @@ export const updateSavingsGoalSchema = z.object({
       z
         .number()
         .positive('O valor alvo deve ser maior que zero.')
-        .max(999999999, 'O valor não pode ser maior que 999.999.999.')
+        .int('O valor deve ser em centavos (inteiro).')
+        .max(999999999, 'O valor não pode ser maior que R$ 9.999.999,99.')
     )
     .optional(),
   targetDate: z
@@ -65,7 +67,12 @@ export const updateSavingsGoalSchema = z.object({
       const num = typeof val === 'string' ? parseFloat(val) : val;
       return isNaN(num) ? 0 : num;
     })
-    .pipe(z.number().min(0, 'O valor atual não pode ser negativo.'))
+    .pipe(
+      z
+        .number()
+        .int('O valor deve ser em centavos (inteiro).')
+        .min(0, 'O valor atual não pode ser negativo.')
+    )
     .optional(),
   isActive: z
     .boolean({
@@ -85,6 +92,7 @@ export const addAmountToGoalSchema = z.object({
       z
         .number({ invalid_type_error: 'O valor deve ser um número válido.' })
         .positive('O valor deve ser maior que zero.')
-        .max(999999999, 'O valor não pode ser maior que 999.999.999.')
+        .int('O valor deve ser em centavos (inteiro).')
+        .max(999999999, 'O valor não pode ser maior que R$ 9.999.999,99.')
     ),
 });

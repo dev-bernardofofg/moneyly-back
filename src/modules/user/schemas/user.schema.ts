@@ -8,7 +8,11 @@ export const updateMonthlyIncomeSchema = z.object({
       return isNaN(num) ? 0 : num;
     })
     .pipe(
-      z.number().positive('Rendimento deve ser positivo').max(999999999.99, 'Rendimento muito alto')
+      z
+        .number()
+        .positive('Rendimento deve ser positivo')
+        .int('O valor deve ser em centavos (inteiro).')
+        .max(999999999, 'O valor não pode ser maior que R$ 9.999.999,99.')
     ),
 });
 
@@ -54,7 +58,8 @@ export const updateIncomeAndPeriodSchema = z
         z
           .number()
           .positive('Rendimento deve ser positivo')
-          .max(999999999.99, 'Rendimento muito alto')
+          .int('O valor deve ser em centavos (inteiro).')
+          .max(999999999, 'O valor não pode ser maior que R$ 9.999.999,99.')
       ),
     financialDayStart: z
       .number()

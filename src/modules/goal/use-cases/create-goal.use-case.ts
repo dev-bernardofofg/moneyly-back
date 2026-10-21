@@ -18,7 +18,7 @@ export const createGoalUseCase = async (
       userId,
       title: data.title,
       description: data.description,
-      targetAmount: data.targetAmount.toString(),
+      targetAmount: data.targetAmount,
       targetDate,
     }),
     financialPeriodService.createNextPeriods(userId, monthsUntilDate(targetDate)),

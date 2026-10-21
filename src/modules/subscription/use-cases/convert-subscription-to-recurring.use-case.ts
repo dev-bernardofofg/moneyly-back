@@ -13,7 +13,7 @@ import {
 
 export interface ConvertSubscriptionInput {
   title: string;
-  amount: string;
+  amount: number;
   categoryId: string;
   cadence: SubscriptionCadence;
   nextEstimatedDate: Date;

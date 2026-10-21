@@ -10,7 +10,8 @@ const amountField = z
     z
       .number({ invalid_type_error: 'O valor deve ser um número válido.' })
       .positive('O valor deve ser maior que zero.')
-      .max(999999999, 'O valor não pode ser maior que 999.999.999.')
+      .int('O valor deve ser em centavos (inteiro).')
+      .max(999999999, 'O valor não pode ser maior que R$ 9.999.999,99.')
   );
 
 const recurringTransactionBaseSchema = z.object({

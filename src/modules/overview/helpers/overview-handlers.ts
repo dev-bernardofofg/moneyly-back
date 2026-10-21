@@ -78,8 +78,8 @@ export const calculatePeriodChartData = (
 
   const data: CategoryChartItem[] = Object.values(categoryMap).map((vals) => ({
     name: vals.name,
-    income: Number(vals.income.toFixed(2)),
-    expense: Number(vals.expense.toFixed(2)),
+    income: Math.round(vals.income),
+    expense: Math.round(vals.expense),
   }));
 
   const categories: ChartCategory[] = Object.entries(categoryMap).map(([id, vals]) => ({
@@ -112,9 +112,9 @@ export const calculateMonthlyAggregates = (
     .map(([month, data]) => ({
       month,
       label: format(new Date(month + '-01'), 'MMMM yyyy', { locale: ptBR }),
-      income: Number(data.income.toFixed(2)),
-      expense: Number(data.expense.toFixed(2)),
-      balance: Number((data.income - data.expense).toFixed(2)),
+      income: Math.round(data.income),
+      expense: Math.round(data.expense),
+      balance: Math.round(data.income - data.expense),
     }))
     .sort((a, b) => a.month.localeCompare(b.month));
 };

@@ -26,7 +26,7 @@ export const createAccountUseCase = async (userId: string, data: CreateAccountIn
     dueDay: data.type === 'credit_card' ? data.dueDay : null,
     ...(data.type === 'checking' && data.openingBalanceDate
       ? {
-          openingBalance: (data.openingBalance ?? 0).toString(),
+          openingBalance: data.openingBalance ?? 0,
           openingBalanceDate: data.openingBalanceDate,
         }
       : {}),
@@ -62,10 +62,10 @@ export const updateAccountUseCase = async (
   const { openingBalance, openingBalanceDate, ...rest } = data;
   const updated = (await accountRepository.update(id, userId, {
     ...rest,
-    ...(openingBalance !== undefined && { openingBalance: openingBalance.toString() }),
+    ...(openingBalance !== undefined && { openingBalance }),
     ...(openingBalanceDate !== undefined && {
       openingBalanceDate,
-      ...(openingBalanceDate === null && { openingBalance: '0' }),
+      ...(openingBalanceDate === null && { openingBalance: 0 }),
     }),
   }))!;
   const billingChanged =

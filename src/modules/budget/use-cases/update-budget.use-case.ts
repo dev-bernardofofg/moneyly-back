@@ -11,7 +11,7 @@ export const updateBudgetUseCase = async (
   await validateBudgetExists(budgetId, userId);
 
   const budget = await budgetRepository.update(budgetId, {
-    monthlyLimit: data.monthlyLimit.toString(),
+    monthlyLimit: data.monthlyLimit,
   });
 
   return budget;

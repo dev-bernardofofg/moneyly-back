@@ -3,7 +3,7 @@ export type RecurringFrequency = 'daily' | 'weekly' | 'monthly' | 'yearly';
 export interface CreateRecurringTransactionInput {
   type: 'income' | 'expense';
   title: string;
-  amount: string;
+  amount: number;
   categoryId: string;
   frequency: RecurringFrequency;
   dayOfMonth?: number;
@@ -15,7 +15,7 @@ export interface CreateRecurringTransactionInput {
 
 export interface UpdateRecurringTransactionInput {
   title?: string;
-  amount?: string;
+  amount?: number;
   categoryId?: string;
   frequency?: RecurringFrequency;
   dayOfMonth?: number;

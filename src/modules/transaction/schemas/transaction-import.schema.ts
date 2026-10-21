@@ -23,7 +23,7 @@ export const confirmImportSchema = z.object({
         externalId: z.string().min(1).max(200),
         type: z.enum(['income', 'expense']),
         title: z.string().min(1).max(100),
-        amount: z.number().positive().max(999999999),
+        amount: z.number().int().positive().max(999999999),
         // Contrato: dia-semântica → meia-noite SP.
         date: z
           .string()

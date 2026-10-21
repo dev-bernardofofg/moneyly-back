@@ -17,7 +17,7 @@ type FutureExpense = {
   categoryId: string;
 };
 
-const roundMoney = (value: number) => Math.round(value * 100) / 100;
+const roundMoney = (value: number) => Math.round(value);
 
 export const calculateDaysRemaining = (asOf: Date, endDate: Date): number =>
   Math.max(0, Math.ceil((endDate.getTime() - asOf.getTime()) / DAY_IN_MS));

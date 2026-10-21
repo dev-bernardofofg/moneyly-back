@@ -107,13 +107,13 @@ export function groupSubscriptionCandidates(
       title: sample.title,
       categoryId: sample.category.id,
       categoryName: sample.category.name,
-      averageAmount: Number(avgAmount.toFixed(2)),
+      averageAmount: Math.round(avgAmount),
       occurrences: items.length,
       cadence,
       firstDate: first.toISOString(),
       lastDate: last.toISOString(),
       nextEstimatedDate: addCadence(last, cadence).toISOString(),
-      monthlyCost: Number((avgAmount * monthlyFactor(cadence)).toFixed(2)),
+      monthlyCost: Math.round(avgAmount * monthlyFactor(cadence)),
     });
   }
 

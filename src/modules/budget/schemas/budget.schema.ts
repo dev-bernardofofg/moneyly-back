@@ -8,7 +8,13 @@ export const createCategoryBudgetSchema = z.object({
       const num = typeof val === 'string' ? parseFloat(val) : val;
       return isNaN(num) ? 0 : num;
     })
-    .pipe(z.number().positive('Limite mensal deve ser positivo')),
+    .pipe(
+      z
+        .number()
+        .int('O valor deve ser em centavos (inteiro).')
+        .positive('Limite mensal deve ser positivo')
+        .max(999999999)
+    ),
 });
 
 export const updateCategoryBudgetSchema = z.object({
@@ -18,7 +24,13 @@ export const updateCategoryBudgetSchema = z.object({
       const num = typeof val === 'string' ? parseFloat(val) : val;
       return isNaN(num) ? 0 : num;
     })
-    .pipe(z.number().positive('Limite mensal deve ser positivo')),
+    .pipe(
+      z
+        .number()
+        .int('O valor deve ser em centavos (inteiro).')
+        .positive('Limite mensal deve ser positivo')
+        .max(999999999)
+    ),
 });
 
 export const getBudgetsQuerySchema = z.object({

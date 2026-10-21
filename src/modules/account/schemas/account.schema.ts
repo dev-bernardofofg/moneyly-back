@@ -17,6 +17,7 @@ const name = z
 // Saldo da conta corrente numa data: as transações anteriores a ela já estão no saldo.
 const openingBalance = z
   .number({ invalid_type_error: 'O saldo deve ser um número.' })
+  .int('O saldo deve ser em centavos (inteiro).')
   .min(-999999999)
   .max(999999999);
 const openingBalanceDate = z

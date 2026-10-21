@@ -41,7 +41,7 @@ export const goalRepository: IGoalRepository = {
       await goalRepository.createMilestone({
         goalId: goal.id,
         percentage,
-        amount: amount.toString(),
+        amount,
       });
     }
 
@@ -94,7 +94,7 @@ export const goalRepository: IGoalRepository = {
     const newAmount = Number(goal.currentAmount || 0) + amount;
     const [updatedGoal] = await db
       .update(goals)
-      .set({ currentAmount: newAmount.toString(), updatedAt: new Date() })
+      .set({ currentAmount: newAmount, updatedAt: new Date() })
       .where(eq(goals.id, id))
       .returning();
 

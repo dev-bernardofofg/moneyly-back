@@ -34,7 +34,7 @@ export interface ComparativeInsights {
 }
 
 const STABLE_THRESHOLD = 10; // |deltaPct| < 10% = stable
-const MIN_AVG_FOR_HIGHLIGHT = 1;
+const MIN_AVG_FOR_HIGHLIGHT = 100; // centavos
 
 function signalOf(deltaPct: number | null): CompareSignal {
   if (deltaPct === null) return 'stable';
@@ -124,8 +124,8 @@ export function buildComparison(
 
   const byCategory: CategoryComparison[] = [];
   for (const [categoryId, v] of map.entries()) {
-    const averageExpense = Number((v.prevSum / divisor).toFixed(2));
-    const currentExpense = Number(v.current.toFixed(2));
+    const averageExpense = Math.round(v.prevSum / divisor);
+    const currentExpense = Math.round(v.current);
     if (currentExpense === 0 && averageExpense === 0) continue;
     const deltaPct = deltaOf(currentExpense, averageExpense);
     byCategory.push({
@@ -141,8 +141,8 @@ export function buildComparison(
 
   byCategory.sort((a, b) => Math.abs(b.deltaPct ?? 0) - Math.abs(a.deltaPct ?? 0));
 
-  const averageExpense = Number((totalPrevSum / divisor).toFixed(2));
-  const currentExpense = Number(totalCurrent.toFixed(2));
+  const averageExpense = Math.round(totalPrevSum / divisor);
+  const currentExpense = Math.round(totalCurrent);
   const totalsDelta = deltaOf(currentExpense, averageExpense);
 
   const highlights = byCategory

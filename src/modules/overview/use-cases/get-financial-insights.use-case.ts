@@ -35,7 +35,7 @@ export const getFinancialInsightsUseCase = async (userId: string, monthlyIncome:
 
   const currentExpense = sumAmounts(currentPeriodTx.filter((tx) => tx.type === 'expense'));
 
-  const projectedExpense = Number(((currentExpense / daysElapsed) * totalDays).toFixed(2));
+  const projectedExpense = Math.round((currentExpense / daysElapsed) * totalDays);
 
   const lastTwo = monthlyData.slice(-2);
   const prevMonth = lastTwo[0] ?? null;
@@ -53,11 +53,11 @@ export const getFinancialInsightsUseCase = async (userId: string, monthlyIncome:
 
   const totalExpenseAllTime = monthlyData.reduce((s, m) => s + m.expense, 0);
   const avgMonthlyExpense =
-    monthlyData.length > 0 ? Number((totalExpenseAllTime / monthlyData.length).toFixed(2)) : 0;
+    monthlyData.length > 0 ? Math.round(totalExpenseAllTime / monthlyData.length) : 0;
 
   const avgMonthlyIncome =
     monthlyData.length > 0
-      ? Number((monthlyData.reduce((s, m) => s + m.income, 0) / monthlyData.length).toFixed(2))
+      ? Math.round(monthlyData.reduce((s, m) => s + m.income, 0) / monthlyData.length)
       : 0;
 
   const bestMonth = monthlyData.length
@@ -83,7 +83,7 @@ export const getFinancialInsightsUseCase = async (userId: string, monthlyIncome:
     .slice(0, 5)
     .map((c) => ({
       name: c.name,
-      amount: Number(c.amount.toFixed(2)),
+      amount: Math.round(c.amount),
       percentage:
         totalExpenseAllTime > 0 ? Number(((c.amount / totalExpenseAllTime) * 100).toFixed(1)) : 0,
     }));
@@ -93,7 +93,7 @@ export const getFinancialInsightsUseCase = async (userId: string, monthlyIncome:
       daysElapsed,
       totalDays,
       completionPercentage: Math.min(100, Math.round((daysElapsed / totalDays) * 100)),
-      currentExpense: Number(currentExpense.toFixed(2)),
+      currentExpense: Math.round(currentExpense),
       projectedExpense,
       isOnTrack: projectedExpense <= monthlyIncome,
     },

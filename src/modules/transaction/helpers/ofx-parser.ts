@@ -72,7 +72,8 @@ export function parseOfx(content: string): OfxStatement {
     transactions.push({
       externalId: `${accountKey}:${fitId}`,
       type: amount < 0 ? 'expense' : 'income',
-      amount: Math.abs(amount),
+      // OFX traz reais com ponto; a API trabalha em centavos.
+      amount: Math.round(Math.abs(amount) * 100),
       date,
       title: title.slice(0, 100),
     });

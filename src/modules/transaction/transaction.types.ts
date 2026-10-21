@@ -5,7 +5,7 @@ export type TransactionWithCategoryName = TransactionWithCategory;
 export interface ITransaction {
   type: 'income' | 'expense';
   title: string;
-  amount: string;
+  amount: number;
   category: string;
   description: string;
   date: Date;

@@ -1,3 +1,4 @@
+import { formatCents } from '@core/helpers/amount';
 import {
   formatBrazilianDate,
   formatBrazilianTime,
@@ -72,7 +73,7 @@ export const exportOvertimeCsv = asyncHandler<AuthRequest>(async (req, res) => {
     formatBrazilianTime(r.startTime),
     formatBrazilianTime(r.endTime),
     Number(r.hoursWorked).toFixed(2).replace('.', ','),
-    Number(r.amount).toFixed(2).replace('.', ','),
+    formatCents(r.amount),
     r.description ?? '',
   ]);
 

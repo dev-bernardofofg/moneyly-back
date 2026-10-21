@@ -5,7 +5,7 @@ export const updateUserProfileUseCase = async (
     id: string;
     name: string;
     email: string;
-    monthlyIncome: string | null;
+    monthlyIncome: number | null;
     financialDayStart: number | null;
     financialDayEnd: number | null;
     firstAccess: boolean | null;
