@@ -18,7 +18,7 @@ Base: `.cursor/rules/pern-back.mdc`. SOLID + Clean Code + WCAG.
 - `new Date(body.date)` em controller/service para dia-semântica → `parseTransactionDate`/`spMidnight`.
 - `format(date, ...)` do date-fns puro para dia/mês de negócio → usa TZ do servidor; usar `spDayString`/`formatInTimeZone`.
 - Repository sem `satisfies IXRepository`.
-- Persistir decimal como number → `.toString()`; comparar string de decimal → `Number()`.
+- Dinheiro = **inteiro em centavos** (R$ 10,50 → `1050`) no banco, no cálculo e na API. Média, rateio e multiplicação fecham com `Math.round`. Texto em reais (mensagem, CSV) via `formatCents`.
 - Editar `openapi.json` à mão → é gerado por `pnpm openapi:gen` (zod-to-openapi). Ver `.specs/features/00-openapi-generator.md`.
 - Commit sem confirmação do usuário ou com `Co-Authored-By`.
 - **Feature nova fora de `src/modules/<x>/`** → estrutura modular é a regra desde `06-project-structure.md` (código legado layer-first migra por PR, não cresce).

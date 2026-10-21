@@ -8,13 +8,13 @@ Fonte de verdade: `src/infra/db/schema.ts` (Drizzle). Atualizar este doc quando 
 
 ### `users`
 
-`id` uuid PK · `name` · `email` unique · `password` (nullable, OAuth) · `googleId` unique nullable · `avatar` · `monthlyIncome` decimal(10,2) default 0 · `financialDayStart` int default 1 · `financialDayEnd` int default 31 · `firstAccess` bool default true · timestamps.
+`id` uuid PK · `name` · `email` unique · `password` (nullable, OAuth) · `googleId` unique nullable · `avatar` · `monthlyIncome` int centavos default 0 · `financialDayStart` int default 1 · `financialDayEnd` int default 31 · `firstAccess` bool default true · timestamps.
 
 > `financialDayStart/End` definem o período financeiro pessoal (não o mês civil).
 
 ### `transactions`
 
-`id` · `userId`→users (cascade) · `type` enum `income|expense` · `title` · `amount` decimal(10,2) · `categoryId`→categories (cascade) · `periodId`→financial_periods (cascade, nullable) · `recurringTransactionId` uuid nullable · `overtimeRecordId` uuid nullable (FK→overtime_records; transação derivada de horas extras) · `description` · `date` default now · timestamps.
+`id` · `userId`→users (cascade) · `type` enum `income|expense` · `title` · `amount` int centavos · `categoryId`→categories (cascade) · `periodId`→financial_periods (cascade, nullable) · `recurringTransactionId` uuid nullable · `overtimeRecordId` uuid nullable (FK→overtime_records; transação derivada de horas extras) · `description` · `date` default now · timestamps.
 
 ### `categories`
 
@@ -30,18 +30,18 @@ Fonte de verdade: `src/infra/db/schema.ts` (Drizzle). Atualizar este doc quando 
 
 ### `budgets` (orçamento por categoria)
 
-`id` · `userId`→users · `categoryId`→categories · `monthlyLimit` decimal(10,2) · timestamps.
+`id` · `userId`→users · `categoryId`→categories · `monthlyLimit` int centavos · timestamps.
 
 > **Regra:** 1 orçamento por categoria por usuário (service checa `findByUserIdAndCategoryId` → 409 "Já existe um orçamento para esta categoria").
 > Progresso (`spent`/`remaining`/`percentage`/`status`) é calculado em runtime sobre transações do período. `status`: `safe` <75 · `attention` ≥75 · `warning` ≥90 · `exceeded` ≥100.
 
 ### `goals` (metas de poupança)
 
-`id` · `userId`→users · `title` · `description` · `targetAmount` decimal · `currentAmount` decimal default 0 · `targetDate` · `startDate` default now · `isActive` bool default true · timestamps.
+`id` · `userId`→users · `title` · `description` · `targetAmount` int centavos · `currentAmount` int centavos default 0 · `targetDate` · `startDate` default now · `isActive` bool default true · timestamps.
 
 ### `goal_milestones`
 
-`id` · `goalId`→goals (cascade) · `percentage` int (25/50/75/100) · `amount` decimal · `isReached` bool · `reachedAt` · createdAt.
+`id` · `goalId`→goals (cascade) · `percentage` int (25/50/75/100) · `amount` int centavos · `isReached` bool · `reachedAt` · createdAt.
 
 ### `financial_periods`
 
@@ -57,13 +57,13 @@ Fonte de verdade: `src/infra/db/schema.ts` (Drizzle). Atualizar este doc quando 
 
 ### `companies` (F7 — horas extras)
 
-`id` · `userId`→users (cascade) · `name` varchar(100) · `hourlyRate` decimal(10,2) · `isActive` bool default true · timestamps.
+`id` · `userId`→users (cascade) · `name` varchar(100) · `hourlyRate` int centavos · `isActive` bool default true · timestamps.
 
 > Soft-delete via `isActive = false` — preserva histórico de overtime vinculado. Mudança de `hourlyRate` não recalcula registros existentes (taxa congelada em `overtime_records.hourlyRateSnapshot`).
 
 ### `overtime_records` (F7 — horas extras)
 
-`id` · `userId`→users (cascade) · `companyId`→companies (cascade) · `description` varchar(500) nullable · `startTime` timestamp · `endTime` timestamp · `hoursWorked` decimal(10,2) (calculado e armazenado) · `hourlyRateSnapshot` decimal(10,2) (congelado no cadastro) · `amount` decimal(10,2) (`hoursWorked x hourlyRateSnapshot`, armazenado) · `month` int (1-12) · `year` int — mês civil derivado de `startTime` · `transactionId` uuid nullable→transactions · timestamps.
+`id` · `userId`→users (cascade) · `companyId`→companies (cascade) · `description` varchar(500) nullable · `startTime` timestamp · `endTime` timestamp · `hoursWorked` decimal(10,2) (calculado e armazenado) · `hourlyRateSnapshot` int centavos (congelado no cadastro) · `amount` int centavos (`round(hoursWorked x hourlyRateSnapshot)`, armazenado) · `month` int (1-12) · `year` int — mês civil derivado de `startTime` · `transactionId` uuid nullable→transactions · timestamps.
 
 > Usa **mês civil** (não período financeiro) para agrupar/filtrar. Transaction vinculada recebe `periodId` financeiro normal. Criação: gera income transaction. Edição: recalcula e sincroniza transaction. Deleção: deleta transaction vinculada primeiro.
 

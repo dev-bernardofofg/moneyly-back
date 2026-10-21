@@ -12,7 +12,7 @@ Ordem canônica, camada por camada (bottom-up). Feature vive em `src/modules/<x>
 
 ## 1. Schema DB (se nova tabela/coluna)
 
-- Editar `src/infra/db/schema.ts` (legado: `src/db/schema.ts`): `pgTable`, FKs `onDelete:"cascade"`, timestamps `defaultNow().notNull()`, decimais `decimal(_,{precision:10,scale:2})`.
+- Editar `src/infra/db/schema.ts` (legado: `src/db/schema.ts`): `pgTable`, FKs `onDelete:"cascade"`, timestamps `defaultNow().notNull()`, dinheiro `integer` em centavos.
 - Adicionar `relations(...)` e exports `Entidade`/`NewEntidade`.
 - `pnpm db:generate` → revisar migration → `pnpm db:migrate` (nunca `db:push`: desalinha o histórico de migrations).
 
