@@ -109,6 +109,75 @@ describe('Card bill PDF import', () => {
     expect(bills.body.data.bills[0]).toMatchObject({ total: bill.total });
   });
 
+  it('confirms what is already in the app instead of duplicating it', async () => {
+    const { extractPdfText } = jest.requireMock('../../src/modules/transaction/helpers/pdf-text');
+    (extractPdfText as jest.Mock).mockResolvedValueOnce(
+      [
+        'Total da sua fatura',
+        'R$ 105,00',
+        'Data de Vencimento',
+        '07/11/2026',
+        'CARTÃO 5555****1111',
+        '10 de out. 2026 CURSOR AI POWERED IDE \t- \tR$ 105,00',
+      ].join('\n')
+    );
+    // Lançada à mão antes da fatura chegar, com valor estimado e outro dia.
+    const manual = await request(app)
+      .post('/transactions/create')
+      .set(auth())
+      .send({
+        type: 'expense',
+        title: 'Cursor',
+        amount: 10500,
+        category: categoryId,
+        date: '2026-10-05',
+        accountId: cardId,
+      })
+      .expect(201);
+
+    const preview = await request(app)
+      .post('/transactions/import/preview')
+      .set(auth())
+      .send({ file, accountId: cardId })
+      .expect(200);
+    const [item] = preview.body.data.items as Array<PreviewItem & { duplicateOf: string }>;
+    expect(item).toMatchObject({ status: 'possible_duplicate', duplicateOf: manual.body.data.id });
+
+    const confirm = await request(app)
+      .post('/transactions/import')
+      .set(auth())
+      .send({
+        accountId: cardId,
+        billDueDate: preview.body.data.bill.dueDate,
+        items: [
+          {
+            externalId: item!.externalId,
+            type: item!.type,
+            amount: item!.amount,
+            date: item!.date,
+            title: item!.title,
+            duplicateOf: item!.duplicateOf,
+          },
+        ],
+      })
+      .expect(201);
+    expect(confirm.body.data).toMatchObject({ created: 0, linked: 1 });
+
+    (extractPdfText as jest.Mock).mockResolvedValueOnce(
+      [
+        'Data de Vencimento',
+        '07/11/2026',
+        '10 de out. 2026 CURSOR AI POWERED IDE \t- \tR$ 105,00',
+      ].join('\n')
+    );
+    const again = await request(app)
+      .post('/transactions/import/preview')
+      .set(auth())
+      .send({ file, accountId: cardId })
+      .expect(200);
+    expect(again.body.data.items[0].status).toBe('imported');
+  });
+
   it('rejects a PDF that is not an Inter bill', async () => {
     const { extractPdfText } = jest.requireMock('../../src/modules/transaction/helpers/pdf-text');
     (extractPdfText as jest.Mock).mockResolvedValueOnce('Outro documento qualquer');

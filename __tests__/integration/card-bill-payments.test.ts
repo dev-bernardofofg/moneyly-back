@@ -133,6 +133,19 @@ describe('Card bill payments', () => {
     expect((await billOf(cardId, periodId)).payment).toMatchObject({ source: 'import' });
   });
 
+  it('does not mark the bill paid by a partial or advance payment', async () => {
+    const cardId = await createCard('Cartão Parcial');
+    const { periodId } = (await purchase(cardId, 8000)).body.data;
+
+    const billsPaid = await importBillPayments(
+      cardId,
+      ofx([{ fitId: 'p3', date: '20261001', amount: '20.00', memo: 'PAGAMENTO ON LINE' }])
+    );
+
+    expect(billsPaid).toBe(0);
+    expect((await billOf(cardId, periodId)).payment).toBeNull();
+  });
+
   it('detects the payment on the checking statement by the bill amount', async () => {
     const cardId = await createCard('Cartão Valor');
     const { periodId } = (await purchase(cardId, 12345)).body.data;
