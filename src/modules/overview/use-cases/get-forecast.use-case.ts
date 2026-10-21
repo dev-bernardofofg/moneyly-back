@@ -13,6 +13,8 @@ import { listGoalsUseCase } from '@modules/goal/use-cases/list-goals.use-case';
 import { overtimeRepository } from '@modules/overtime/repositories/overtime.repository';
 import { billingDateFor } from '@modules/account/helpers/billing-date';
 import { accountRepository } from '@modules/account/repositories/account.repository';
+import { transferLegs } from '@modules/transfer/helpers/transfer-legs';
+import { transferRepository } from '@modules/transfer/repositories/transfer.repository';
 import { buildOpeningBalances } from '../helpers/carry-over';
 import {
   calculateBudgetReserve,
@@ -48,22 +50,34 @@ export const getForecastUseCase = async (userId: string, periodId?: string) => {
   const startDate = new Date(period.startDate);
   const endDate = new Date(period.endDate);
 
-  const [transactions, accounts] = await Promise.all([
+  const [transactions, accounts, periodTransfers] = await Promise.all([
     transactionRepository.findByPeriodId(userId, period.id),
     accountRepository.findAllByUserId(userId),
+    transferRepository.findInRange(userId, startDate, endDate),
   ]);
 
   // Com saldo inicial informado, o que veio antes dele já está no saldo e não entra de novo.
   const balances = buildOpeningBalances(accounts, endDate);
   const counted = transactions.filter(balances.counts);
   const previousFlows = balances.since
-    ? await transactionRepository.findFlowsBeforePeriod(userId, startDate, balances.since)
+    ? [
+        ...(await transactionRepository.findFlowsBeforePeriod(userId, startDate, balances.since)),
+        ...(await transferRepository.findSince(userId, balances.since, startDate)).flatMap(
+          transferLegs
+        ),
+      ]
     : [];
   const carryOverBalance = toMoney(balances.carryOver(previousFlows));
 
   const realizedIncome = sumAmounts(counted.filter((tx) => tx.type === 'income'));
   const realizedExpense = sumAmounts(counted.filter((tx) => tx.type === 'expense'));
-  const realizedBalance = realizedIncome - realizedExpense;
+  // Transferência não é receita nem despesa; só pesa quando uma ponta caiu antes do saldo
+  // inicial da conta (já estava nele). Normalmente soma zero.
+  const transfersNet = periodTransfers
+    .flatMap(transferLegs)
+    .filter(balances.counts)
+    .reduce((total, leg) => total + (leg.type === 'income' ? leg.amount : -leg.amount), 0);
+  const realizedBalance = realizedIncome - realizedExpense + transfersNet;
 
   const now = getCurrentSaoPauloDate();
 
