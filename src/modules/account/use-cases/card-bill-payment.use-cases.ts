@@ -1,4 +1,4 @@
-import { spMidnight } from '@core/helpers/dates';
+import { spMidnight, spMidnightOf, spParts } from '@core/helpers/dates';
 import { NotFoundError } from '@core/errors';
 import type { Account } from '@infra/db/schema';
 import { financialPeriodService } from '@modules/financial-period';
@@ -46,6 +46,28 @@ interface ImportedBillPayment {
   date: Date;
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Fatura que o pagamento quita: a de total igual ao valor entre os vencimentos vizinhos; senão a
+ * de vencimento mais próximo, desde que o valor cubra o total dela. Valor menor que o total é
+ * pagamento parcial ou antecipação: não marca (null).
+ */
+const settledDueDate = async (userId: string, card: Account, payment: ImportedBillPayment) => {
+  const { year, month } = spParts(payment.date);
+  const dueDates = [-1, 0, 1].map((offset) => spMidnightOf(year, month + offset, card.dueDay!));
+  const totals = await Promise.all(dueDates.map((due) => billTotal(userId, card.id, due)));
+
+  const exact = dueDates.find((_, index) => totals[index] === payment.amount);
+  if (exact) return exact;
+
+  const nearest = nearestDueDate(card.dueDay!, payment.date);
+  const nearestTotal =
+    totals[dueDates.findIndex((due) => due.getTime() === nearest.getTime())] ?? 0;
+  if (Math.abs(nearest.getTime() - payment.date.getTime()) > 20 * DAY_MS) return null;
+  return payment.amount >= nearestTotal ? nearest : null;
+};
+
 /**
  * Pagamentos de fatura vindos de extrato. No extrato do cartão o cartão é o próprio; no da
  * conta corrente só dá para saber com um cartão ativo ou com o valor igual ao total de uma
@@ -68,22 +90,27 @@ export const registerImportedBillPayments = async (
     const expectedType = account.type === 'credit_card' ? 'income' : 'expense';
     if (payment.type !== expectedType || cards.length === 0) continue;
 
-    let card: Account | undefined = cards.length === 1 ? cards[0] : undefined;
-    if (!card) {
+    let card: Account | undefined;
+    let dueDate: Date | null = null;
+    if (cards.length === 1) {
+      card = cards[0];
+      dueDate = await settledDueDate(userId, card!, payment);
+    } else {
       for (const candidate of cards) {
         const due = nearestDueDate(candidate.dueDay!, payment.date);
         if ((await billTotal(userId, candidate.id, due)) === payment.amount) {
           card = candidate;
+          dueDate = due;
           break;
         }
       }
     }
-    if (!card) continue;
+    if (!card || !dueDate) continue;
 
     const marked = await cardBillPaymentRepository.markImported({
       userId,
       accountId: card.id,
-      dueDate: nearestDueDate(card.dueDay!, payment.date),
+      dueDate,
     });
     if (marked) registered++;
   }
