@@ -4,6 +4,7 @@ import { logger } from '@core/lib/logger';
 import { categoryRepository } from '@modules/category/repositories/category.repository';
 import { billingDateFor } from '@modules/account/helpers/billing-date';
 import { resolveAccount } from '@modules/account/use-cases/account.use-cases';
+import { registerImportedBillPayments } from '@modules/account/use-cases/card-bill-payment.use-cases';
 import { financialPeriodService } from '@modules/financial-period';
 import { processUserSpendingAlert } from '@modules/notification';
 import { buildImportCategorySuggester, isBillPayment } from '../helpers/import-category-suggester';
@@ -82,7 +83,7 @@ export const previewTransactionImportUseCase = async (userId: string, fileBase64
 
 export const confirmTransactionImportUseCase = async (
   userId: string,
-  { items, accountId: requestedAccountId }: ConfirmImportInput
+  { items, billPayments, accountId: requestedAccountId }: ConfirmImportInput
 ) => {
   const account = await resolveAccount(userId, requestedAccountId);
   const categoryIds = [...new Set(items.map((item) => item.categoryId))];
@@ -130,5 +131,7 @@ export const confirmTransactionImportUseCase = async (
     }
   }
 
-  return { created: created.length, skipped: items.length - created.length };
+  const billsPaid = await registerImportedBillPayments(userId, account, billPayments);
+
+  return { created: created.length, skipped: items.length - created.length, billsPaid };
 };
