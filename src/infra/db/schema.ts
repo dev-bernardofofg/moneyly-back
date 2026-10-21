@@ -20,7 +20,7 @@ export const users = pgTable('users', {
   password: text('password'), // Tornando opcional para suportar OAuth
   googleId: text('google_id').unique(), // ID único do Google
   avatar: text('avatar'), // URL do avatar do Google
-  monthlyIncome: decimal('monthly_income', { precision: 10, scale: 2 }).default('0'),
+  monthlyIncome: integer('monthly_income').default(0),
   financialDayStart: integer('financial_day_start').default(1), // Dia do mês que inicia o período financeiro
   financialDayEnd: integer('financial_day_end').default(31), // Dia do mês que termina o período financeiro
   firstAccess: boolean('first_access').default(true),
@@ -38,7 +38,7 @@ export const transactions = pgTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     type: text('type', { enum: ['income', 'expense'] }).notNull(),
     title: text('title').notNull(),
-    amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+    amount: integer('amount').notNull(),
     categoryId: uuid('category_id')
       .notNull()
       .references(() => categories.id, { onDelete: 'cascade' }),
@@ -77,8 +77,8 @@ export const accounts = pgTable(
     type: text('type', { enum: ['checking', 'credit_card'] }).notNull(),
     closingDay: integer('closing_day'),
     dueDay: integer('due_day'),
-    // Saldo da conta corrente na data informada; transações anteriores já estão nele.
-    openingBalance: decimal('opening_balance', { precision: 12, scale: 2 }).default('0').notNull(),
+    // Centavos. Saldo da conta corrente na data informada; transações anteriores já estão nele.
+    openingBalance: integer('opening_balance').default(0).notNull(),
     openingBalanceDate: timestamp('opening_balance_date'),
     isDefault: boolean('is_default').default(false).notNull(),
     isActive: boolean('is_active').default(true).notNull(),
@@ -124,7 +124,7 @@ export const budgets = pgTable('budgets', {
   categoryId: uuid('category_id')
     .notNull()
     .references(() => categories.id, { onDelete: 'cascade' }),
-  monthlyLimit: decimal('monthly_limit', { precision: 10, scale: 2 }).notNull(),
+  monthlyLimit: integer('monthly_limit').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -137,8 +137,8 @@ export const goals = pgTable('goals', {
     .references(() => users.id, { onDelete: 'cascade' }),
   title: text('title').notNull(),
   description: text('description'),
-  targetAmount: decimal('target_amount', { precision: 10, scale: 2 }).notNull(),
-  currentAmount: decimal('current_amount', { precision: 10, scale: 2 }).default('0'),
+  targetAmount: integer('target_amount').notNull(),
+  currentAmount: integer('current_amount').default(0),
   targetDate: timestamp('target_date').notNull(),
   startDate: timestamp('start_date').defaultNow().notNull(),
   isActive: boolean('is_active').default(true),
@@ -153,7 +153,7 @@ export const goalMilestones = pgTable('goal_milestones', {
     .notNull()
     .references(() => goals.id, { onDelete: 'cascade' }),
   percentage: integer('percentage').notNull(), // 25, 50, 75, 100
-  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+  amount: integer('amount').notNull(),
   isReached: boolean('is_reached').default(false),
   reachedAt: timestamp('reached_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -293,7 +293,7 @@ export const recurringTransactions = pgTable('recurring_transactions', {
     .references(() => users.id, { onDelete: 'cascade' }),
   type: text('type', { enum: ['income', 'expense'] }).notNull(),
   title: text('title').notNull(),
-  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+  amount: integer('amount').notNull(),
   categoryId: uuid('category_id')
     .notNull()
     .references(() => categories.id, { onDelete: 'cascade' }),
@@ -340,7 +340,7 @@ export const companies = pgTable('companies', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
-  hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }).notNull(),
+  hourlyRate: integer('hourly_rate').notNull(),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -359,8 +359,8 @@ export const overtimeRecords = pgTable('overtime_records', {
   startTime: timestamp('start_time').notNull(),
   endTime: timestamp('end_time').notNull(),
   hoursWorked: decimal('hours_worked', { precision: 10, scale: 2 }).notNull(),
-  hourlyRateSnapshot: decimal('hourly_rate_snapshot', { precision: 10, scale: 2 }).notNull(),
-  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+  hourlyRateSnapshot: integer('hourly_rate_snapshot').notNull(),
+  amount: integer('amount').notNull(),
   month: integer('month').notNull(),
   year: integer('year').notNull(),
   transactionId: uuid('transaction_id'),
