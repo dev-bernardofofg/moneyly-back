@@ -3,6 +3,7 @@ import { notificationRepository } from '@modules/notification/repositories/notif
 import { financialPeriodService } from '@modules/financial-period';
 import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
 import { userRepository } from '@modules/user';
+import { expectedIncomeForPeriod } from '@modules/overview/helpers/expected-income';
 
 jest.mock('@modules/notification/repositories/notification.repository');
 jest.mock('@modules/notification/services/push.service', () => ({
@@ -11,11 +12,15 @@ jest.mock('@modules/notification/services/push.service', () => ({
 jest.mock('@modules/financial-period');
 jest.mock('@modules/transaction/repositories/transaction.repository');
 jest.mock('@modules/user');
+jest.mock('@modules/overview/helpers/expected-income', () => ({
+  expectedIncomeForPeriod: jest.fn(),
+}));
 
 const mockedRepo = notificationRepository as jest.Mocked<typeof notificationRepository>;
 const mockedPeriod = financialPeriodService as jest.Mocked<typeof financialPeriodService>;
 const mockedTx = transactionRepository as jest.Mocked<typeof transactionRepository>;
 const mockedUser = userRepository as jest.Mocked<typeof userRepository>;
+const mockedIncome = expectedIncomeForPeriod as jest.MockedFunction<typeof expectedIncomeForPeriod>;
 
 const USER = '11111111-1111-1111-1111-111111111111';
 const PERIOD = { id: '22222222-2222-2222-2222-222222222222' };
@@ -31,7 +36,9 @@ const key = (status: string) => `spending:${USER}:${PERIOD.id}:${status}`;
 beforeEach(() => {
   jest.clearAllMocks();
   mockedPeriod.ensureCurrentPeriodExists.mockResolvedValue(PERIOD as never);
-  mockedUser.findById.mockResolvedValue({ id: USER, monthlyIncome: 2000 } as never);
+  mockedUser.findById.mockResolvedValue({ id: USER } as never);
+  // Renda do período (entradas realizadas + recorrentes previstas), não mais o perfil.
+  mockedIncome.mockResolvedValue({ periodId: PERIOD.id, income: 2000 });
   mockedRepo.findByDedupeKey.mockResolvedValue(null);
   mockedRepo.create.mockResolvedValue({} as never);
   mockedRepo.deleteByDedupeKeys.mockResolvedValue(0);
@@ -94,13 +101,13 @@ describe('processUserSpendingAlert', () => {
 
     await processUserSpendingAlert(USER, PERIOD.id);
 
-    expect(mockedPeriod.ensureCurrentPeriodExists).not.toHaveBeenCalled();
+    expect(mockedIncome).toHaveBeenCalledWith(USER, PERIOD.id);
     expect(mockedRepo.deleteByDedupeKeys).toHaveBeenCalledWith([key('warning'), key('exceeded')]);
     expect(mockedRepo.create.mock.calls[0]![0].dedupeKey).toBe(key('attention'));
   });
 
-  it('skips when monthlyIncome is 0', async () => {
-    mockedUser.findById.mockResolvedValue({ id: USER, monthlyIncome: 0 } as never);
+  it('skips when the period has no income yet', async () => {
+    mockedIncome.mockResolvedValue({ periodId: PERIOD.id, income: 0 });
 
     await processUserSpendingAlert(USER);
 
@@ -114,7 +121,7 @@ describe('processUserSpendingAlert', () => {
 
     await processUserSpendingAlert(USER);
 
-    expect(mockedPeriod.ensureCurrentPeriodExists).not.toHaveBeenCalled();
+    expect(mockedIncome).not.toHaveBeenCalled();
     expect(mockedRepo.create).not.toHaveBeenCalled();
   });
 

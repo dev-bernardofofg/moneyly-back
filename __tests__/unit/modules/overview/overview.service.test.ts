@@ -47,18 +47,18 @@ beforeEach(() => jest.clearAllMocks());
 
 describe('getStatsOverview (pure via handlers)', () => {
   it('sums income/expense and computes balance/percentUsed', async () => {
-    const r = await getStatsOverview([tx('income', '1000'), tx('expense', '400')] as never, 2000);
+    const r = await getStatsOverview([tx('income', '1000'), tx('expense', '400')] as never);
     expect(r.totalIncome).toBe(1000);
     expect(r.totalExpense).toBe(400);
-    // balance = monthlyIncome + income - expense
-    expect(r.balance).toBe(2000 + 1000 - 400);
-    expect(r.percentUsed).toBe(20); // 400/2000*100
+    // Só o que entrou de fato: sem renda fixa do perfil.
+    expect(r.balance).toBe(1000 - 400);
+    expect(r.percentUsed).toBe(40); // 400/1000*100
   });
 });
 
 describe('getDashboardOverviewService', () => {
   it('returns stats + chart + recentTransactions', async () => {
-    const r = await getDashboardOverviewUseCase(3000, [
+    const r = await getDashboardOverviewUseCase([
       tx('expense', '100', 'c1'),
       tx('income', '500', 'c2'),
     ] as never);
@@ -88,7 +88,7 @@ describe('calculatePlanningStats (pure)', () => {
     expect(r.availableForBudget).toBe(2000); // 4000-2000
   });
 
-  it('monthlyIncome 0 → percentages 0, no division by zero', () => {
+  it('no income in the period → percentages 0, no division by zero', () => {
     const r = calculatePlanningStats([], [], 0);
     expect(r.budgetPercentage).toBe(0);
     expect(r.savingsPercentage).toBe(0);
@@ -132,6 +132,8 @@ describe('getPlannerOverviewUseCase', () => {
         startDate: new Date('2026-10-01'),
         endDate: new Date('2026-10-31'),
       },
+      realized: { income: 400000 },
+      projected: { recurringIncome: 100000 },
       freeBalance: { reserves: { budgets: 30010, goals: 15020 } },
     });
     mockedBudgetProgress.mockResolvedValue([{ monthlyLimit: 1000 }]);
@@ -139,18 +141,20 @@ describe('getPlannerOverviewUseCase', () => {
   });
 
   it('combines stats + alerts from budget/goal services for the forecast period', async () => {
-    const r = await getPlannerOverviewUseCase(USER, 5000, 'period-1');
+    const r = await getPlannerOverviewUseCase(USER, 'period-1');
 
     expect(mockedForecast).toHaveBeenCalledWith(USER, 'period-1');
     expect(mockedBudgetProgress).toHaveBeenCalledWith(USER, 'period-1');
     expect(mockedGoalsProgress).toHaveBeenCalledWith(USER);
     expect(r).toHaveProperty('alerts');
     expect(r.stats.totalBudgeted).toBe(1000);
+    // Renda do período = realizada + recorrente prevista (400000 + 100000).
+    expect(r.stats.budgetPercentage).toBe(0.2);
     expect(r.period.id).toBe('period-1');
   });
 
   it('exposes the forecast reserves as the free balance impact', async () => {
-    const r = await getPlannerOverviewUseCase(USER, 5000);
+    const r = await getPlannerOverviewUseCase(USER);
 
     expect(r.freeBalanceImpact).toEqual({ budgetReserve: 30010, goalReserve: 15020, total: 45030 });
   });
