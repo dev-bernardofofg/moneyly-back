@@ -37,8 +37,6 @@ export const userRepository = {
         email: users.email,
         googleId: users.googleId,
         avatar: users.avatar,
-        // Coluna ainda existe (drop em migration futura); não é mais usada nem exposta.
-        monthlyIncome: users.monthlyIncome,
         financialDayStart: users.financialDayStart,
         financialDayEnd: users.financialDayEnd,
         firstAccess: users.firstAccess,

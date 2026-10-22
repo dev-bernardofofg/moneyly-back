@@ -120,6 +120,13 @@
       "when": 1792609832415,
       "tag": "0016_transfers",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792710937389,
+      "tag": "0017_drop_users_monthly_income",
+      "breakpoints": true
     }
   ]
 }

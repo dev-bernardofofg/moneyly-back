@@ -20,7 +20,6 @@ export const users = pgTable('users', {
   password: text('password'), // Tornando opcional para suportar OAuth
   googleId: text('google_id').unique(), // ID único do Google
   avatar: text('avatar'), // URL do avatar do Google
-  monthlyIncome: integer('monthly_income').default(0),
   financialDayStart: integer('financial_day_start').default(1), // Dia do mês que inicia o período financeiro
   financialDayEnd: integer('financial_day_end').default(31), // Dia do mês que termina o período financeiro
   firstAccess: boolean('first_access').default(true),
