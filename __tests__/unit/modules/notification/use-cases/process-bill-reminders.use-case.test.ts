@@ -67,11 +67,10 @@ describe('processBillReminders', () => {
     expect(mockedNotificationRepo.create).not.toHaveBeenCalled();
   });
 
-  it('scheduler race: create throws pg 23505 → does not propagate', async () => {
+  it('scheduler race: another run already stored the dedupe key → no error', async () => {
     mockedRecurringRepo.findUpcomingExpenses.mockResolvedValue([recurring(2)] as never);
     mockedNotificationRepo.findByDedupeKey.mockResolvedValue(null);
-    const uniqueViolation = Object.assign(new Error('unique violation'), { code: '23505' });
-    mockedNotificationRepo.create.mockRejectedValue(uniqueViolation);
+    mockedNotificationRepo.create.mockResolvedValue(null);
 
     await expect(processBillReminders()).resolves.toBeUndefined();
   });

@@ -66,10 +66,9 @@ describe('notifyGoalMilestones', () => {
     expect(mockedRepo.create).toHaveBeenCalledTimes(3);
   });
 
-  it('race: create throws pg 23505 → does not propagate', async () => {
+  it('race: another run already stored the dedupe key → no push, no error', async () => {
     mockedRepo.findByDedupeKey.mockResolvedValue(null);
-    const uniqueViolation = Object.assign(new Error('unique violation'), { code: '23505' });
-    mockedRepo.create.mockRejectedValue(uniqueViolation);
+    mockedRepo.create.mockResolvedValue(null);
 
     await expect(notifyGoalMilestones(USER, goal, [{ percentage: 25 }])).resolves.toBeUndefined();
   });

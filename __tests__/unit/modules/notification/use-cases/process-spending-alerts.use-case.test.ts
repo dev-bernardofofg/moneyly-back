@@ -127,10 +127,9 @@ describe('processUserSpendingAlert', () => {
     expect(mockedRepo.create).not.toHaveBeenCalled();
   });
 
-  it('scheduler race: create throws pg 23505 → does not propagate', async () => {
+  it('scheduler race: another run already stored the dedupe key → no error', async () => {
     mockedTx.findByPeriodId.mockResolvedValue([expense('1800')]);
-    const uniqueViolation = Object.assign(new Error('unique violation'), { code: '23505' });
-    mockedRepo.create.mockRejectedValue(uniqueViolation);
+    mockedRepo.create.mockResolvedValue(null);
 
     await expect(processUserSpendingAlert(USER)).resolves.toBeUndefined();
   });
