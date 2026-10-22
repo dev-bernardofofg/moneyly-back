@@ -169,12 +169,6 @@
             "type": "string",
             "nullable": true
           },
-          "monthlyIncome": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Valor em centavos",
-            "example": 123450
-          },
           "financialDayStart": {
             "type": "integer"
           },
@@ -194,7 +188,6 @@
           "id",
           "name",
           "email",
-          "monthlyIncome",
           "financialDayStart",
           "financialDayEnd",
           "firstAccess",
@@ -235,24 +228,6 @@
           "accessToken"
         ]
       },
-      "IncomeUpdate": {
-        "type": "object",
-        "properties": {
-          "monthlyIncome": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Valor em centavos",
-            "example": 123450
-          },
-          "firstAccess": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "monthlyIncome",
-          "firstAccess"
-        ]
-      },
       "FinancialPeriodUpdate": {
         "type": "object",
         "properties": {
@@ -275,12 +250,6 @@
       "IncomeAndPeriodUpdate": {
         "type": "object",
         "properties": {
-          "monthlyIncome": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Valor em centavos",
-            "example": 123450
-          },
           "financialDayStart": {
             "type": "integer"
           },
@@ -292,7 +261,6 @@
           }
         },
         "required": [
-          "monthlyIncome",
           "financialDayStart",
           "financialDayEnd",
           "firstAccess"
@@ -1579,9 +1547,6 @@
           "totalExpenses": {
             "type": "number"
           },
-          "monthlyIncome": {
-            "type": "number"
-          },
           "balance": {
             "type": "number"
           },
@@ -1603,7 +1568,6 @@
         "required": [
           "totalIncome",
           "totalExpenses",
-          "monthlyIncome",
           "balance",
           "percentUsed",
           "byCategory",
@@ -1640,9 +1604,6 @@
           "totalExpenses": {
             "type": "number"
           },
-          "monthlyIncome": {
-            "type": "number"
-          },
           "balance": {
             "type": "number"
           },
@@ -1668,7 +1629,6 @@
           "currentPeriod",
           "totalIncome",
           "totalExpenses",
-          "monthlyIncome",
           "balance",
           "percentUsed",
           "byCategory",
@@ -2140,12 +2100,6 @@
           "totalIncome": {
             "type": "number"
           },
-          "monthlyIncome": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Valor em centavos",
-            "example": 123450
-          },
           "percentUsed": {
             "type": "number",
             "nullable": true
@@ -2158,7 +2112,6 @@
         "required": [
           "totalExpense",
           "totalIncome",
-          "monthlyIncome",
           "percentUsed",
           "alert"
         ]
@@ -6884,122 +6837,6 @@
         }
       }
     },
-    "/user/income": {
-      "put": {
-        "tags": [
-          "User"
-        ],
-        "summary": "Atualizar renda mensal",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "monthlyIncome": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "number"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "monthlyIncome"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Sucesso",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "$ref": "#/components/schemas/IncomeUpdate"
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "data"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Requisição inválida",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        false
-                      ]
-                    },
-                    "error": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "nullable": true
-                    }
-                  },
-                  "required": [
-                    "success",
-                    "error"
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Não autenticado",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        false
-                      ]
-                    },
-                    "error": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "nullable": true
-                    }
-                  },
-                  "required": [
-                    "success",
-                    "error"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/user/financial-period": {
       "put": {
         "tags": [
@@ -7122,7 +6959,7 @@
         "tags": [
           "User"
         ],
-        "summary": "Atualizar renda + período",
+        "summary": "Configuração inicial: período financeiro (encerra o firstAccess)",
         "security": [
           {
             "bearerAuth": []
@@ -7134,16 +6971,6 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "monthlyIncome": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "number"
-                      }
-                    ]
-                  },
                   "financialDayStart": {
                     "type": "number",
                     "minimum": 1,
@@ -7156,7 +6983,6 @@
                   }
                 },
                 "required": [
-                  "monthlyIncome",
                   "financialDayStart",
                   "financialDayEnd"
                 ]
