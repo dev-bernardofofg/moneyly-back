@@ -11,7 +11,6 @@ export const getCurrentPeriodSummaryUseCase = async (userId: string) => {
 
   const financialDayStart = user.financialDayStart ?? 1;
   const financialDayEnd = user.financialDayEnd ?? 31;
-  const monthlyIncome = Number(user.monthlyIncome) || 0;
   const currentPeriod = getCurrentFinancialPeriod(financialDayStart, financialDayEnd);
 
   const txns = await transactionRepository.findByUserId(userId, {
@@ -29,11 +28,11 @@ export const getCurrentPeriodSummaryUseCase = async (userId: string) => {
     byCategory[tx.category.id] = (byCategory[tx.category.id] || 0) + Number(tx.amount);
   }
 
-  const balance = monthlyIncome - totalExpense;
+  const balance = realIncome - totalExpense;
   const { percentUsed, alert } = computeSpendingStats(
     totalExpense,
-    monthlyIncome,
-    'Você já usou mais de 80% do seu rendimento mensal no período atual!'
+    realIncome,
+    'Você já usou mais de 80% das entradas do período atual!'
   );
 
   return {
@@ -44,7 +43,6 @@ export const getCurrentPeriodSummaryUseCase = async (userId: string) => {
     },
     totalIncome: realIncome,
     totalExpenses: totalExpense,
-    monthlyIncome,
     balance,
     percentUsed,
     byCategory,

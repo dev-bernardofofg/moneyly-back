@@ -18,7 +18,7 @@ export const getDashboardOverview = asyncHandler<
 >(async (req, res) => {
   const { user } = req;
   const { periodId } = req.query;
-  const { id: userId, financialDayStart, financialDayEnd, monthlyIncome } = user;
+  const { id: userId, financialDayStart, financialDayEnd } = user;
 
   const { transactions, availablePeriods, selectedPeriod } = await getPeriodTransactionsUseCase(
     userId,
@@ -26,10 +26,7 @@ export const getDashboardOverview = asyncHandler<
     periodId
   );
 
-  const { stats, chart, recentTransactions } = await getDashboardOverviewUseCase(
-    Number(monthlyIncome) || 0,
-    transactions
-  );
+  const { stats, chart, recentTransactions } = await getDashboardOverviewUseCase(transactions);
 
   const previews = await getDashboardPreviewsUseCase(
     userId,
@@ -73,10 +70,7 @@ export const getAvailablePeriods = asyncHandler<AuthRequest>(async (req, res) =>
 });
 
 export const getFinancialInsights = asyncHandler<AuthRequest>(async (req, res) => {
-  const insights = await getFinancialInsightsUseCase(
-    req.user.id,
-    Number(req.user.monthlyIncome) || 0
-  );
+  const insights = await getFinancialInsightsUseCase(req.user.id);
   return ResponseHandler.success(res, insights, 'Insights financeiros gerados com sucesso');
 });
 
@@ -94,11 +88,8 @@ export const getComparativeInsights = asyncHandler<AuthRequest>(async (req, res)
 
 export const getPlannerOverview = asyncHandler<AuthRequest>(async (req, res) => {
   const { periodId } = req.query as { periodId?: string };
-  const { id: userId, monthlyIncome } = req.user;
-
   const { stats, alerts, period, freeBalanceImpact } = await getPlannerOverviewUseCase(
-    userId,
-    Number(monthlyIncome) || 0,
+    req.user.id,
     periodId
   );
 

@@ -1,7 +1,7 @@
 import { sumAmounts } from '@core/helpers/amount';
 import { logger } from '@core/lib/logger';
 import { getBudgetStatus } from '@modules/budget';
-import { financialPeriodService } from '@modules/financial-period';
+import { expectedIncomeForPeriod } from '@modules/overview/helpers/expected-income';
 import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
 import { userRepository } from '@modules/user';
 import { notificationRepository } from '../repositories/notification.repository';
@@ -41,12 +41,10 @@ export const processUserSpendingAlert = async (
   const user = await userRepository.findById(userId);
   if (!user) return;
 
-  const monthlyIncome = Number(user.monthlyIncome) || 0;
+  const expected = await expectedIncomeForPeriod(userId, periodId);
+  const period = { id: expected.periodId };
+  const monthlyIncome = expected.income;
   if (monthlyIncome <= 0) return;
-
-  const period = periodId
-    ? { id: periodId }
-    : await financialPeriodService.ensureCurrentPeriodExists(userId);
 
   const transactions = await transactionRepository.findByPeriodId(userId, period.id);
   const totalExpense = sumAmounts(transactions.filter((tx) => tx.type === 'expense'));
@@ -67,7 +65,7 @@ export const processUserSpendingAlert = async (
     type: 'spending_alert',
     severity: map.severity,
     title: 'Gasto do período',
-    message: `Você já usou ${percentage}% da sua renda mensal neste período (${map.label}).`,
+    message: `Você já usou ${percentage}% da renda deste período (${map.label}).`,
     relatedId: null,
     periodId: period.id,
     dedupeKey: spendingDedupeKey(userId, period.id, status),

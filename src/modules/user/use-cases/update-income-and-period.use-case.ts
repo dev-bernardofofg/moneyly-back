@@ -4,13 +4,11 @@ import { userRepository } from '../repositories/user.repository';
 
 export const updateIncomeAndPeriodUseCase = async (
   userId: string,
-  monthlyIncome: number,
   financialDayStart: number,
   financialDayEnd: number
 ) => {
   const user = await userRepository.updateIncomeAndPeriod(
     userId,
-    monthlyIncome,
     financialDayStart,
     financialDayEnd
   );

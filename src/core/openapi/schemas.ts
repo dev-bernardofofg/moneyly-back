@@ -57,7 +57,6 @@ export const UserSchema = registry.register(
     email: z.string().email(),
     googleId: z.string().nullable().optional(),
     avatar: z.string().nullable().optional(),
-    monthlyIncome: money.nullable(),
     financialDayStart: z.number().int(),
     financialDayEnd: z.number().int(),
     firstAccess: z.boolean().nullable(),
@@ -86,14 +85,6 @@ export const AuthRefreshSchema = registry.register(
 
 /* ───────── user settings ───────── */
 
-export const IncomeUpdateSchema = registry.register(
-  'IncomeUpdate',
-  z.object({
-    monthlyIncome: money.nullable(),
-    firstAccess: z.boolean(),
-  })
-);
-
 export const FinancialPeriodUpdateSchema = registry.register(
   'FinancialPeriodUpdate',
   z.object({
@@ -106,7 +97,6 @@ export const FinancialPeriodUpdateSchema = registry.register(
 export const IncomeAndPeriodUpdateSchema = registry.register(
   'IncomeAndPeriodUpdate',
   z.object({
-    monthlyIncome: money.nullable(),
     financialDayStart: z.number().int(),
     financialDayEnd: z.number().int(),
     firstAccess: z.boolean(),
@@ -474,7 +464,6 @@ export const TransactionSummarySchema = registry.register(
   z.object({
     totalIncome: z.number(),
     totalExpenses: z.number(),
-    monthlyIncome: z.number(),
     balance: z.number(),
     percentUsed: z.number().nullable(),
     byCategory: z.record(z.string(), z.number()),
@@ -492,7 +481,6 @@ export const CurrentPeriodSummarySchema = registry.register(
     }),
     totalIncome: z.number(),
     totalExpenses: z.number(),
-    monthlyIncome: z.number(),
     balance: z.number(),
     percentUsed: z.number().nullable(),
     byCategory: z.record(z.string(), z.number()),
@@ -620,7 +608,6 @@ export const TransactionListSummarySchema = registry.register(
   z.object({
     totalExpense: z.number(),
     totalIncome: z.number(),
-    monthlyIncome: money.nullable(),
     percentUsed: z.number().nullable(),
     alert: z.string().nullable(),
   })

@@ -4,11 +4,13 @@ import { NotFoundError } from '@core/errors';
 import { getCurrentFinancialPeriod } from '@modules/financial-period';
 import { transactionRepository } from '@modules/transaction';
 import { userRepository } from '@modules/user';
+import { expectedIncomeForPeriod } from '../helpers/expected-income';
 import { calculateMonthlyAggregates } from '../helpers/overview-handlers';
 
-export const getFinancialInsightsUseCase = async (userId: string, monthlyIncome: number) => {
+export const getFinancialInsightsUseCase = async (userId: string) => {
   const user = await userRepository.findById(userId);
   if (!user) throw new NotFoundError('Usuário não encontrado');
+  const { income: monthlyIncome } = await expectedIncomeForPeriod(userId);
 
   const allTransactions = await transactionRepository.findAllByUserId(userId);
   const monthlyData = calculateMonthlyAggregates(allTransactions);

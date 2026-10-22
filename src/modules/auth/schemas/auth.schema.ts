@@ -69,17 +69,6 @@ export const loginSchema = z.object({
     .max(128, 'A senha pode ter no máximo 128 caracteres.'),
 });
 
-export const updateMonthlyIncomeSchema = z.object({
-  monthlyIncome: z
-    .number({
-      required_error: 'O rendimento mensal é obrigatório.',
-      invalid_type_error: 'O rendimento deve ser um número.',
-    })
-    .positive('O rendimento mensal deve ser um valor positivo.')
-    .int('O valor deve ser em centavos (inteiro).')
-    .max(999999999, 'O valor não pode ser maior que R$ 9.999.999,99.'),
-});
-
 export const updateFinancialPeriodSchema = z
   .object({
     financialDayStart: z
@@ -111,11 +100,6 @@ export const updateFinancialPeriodSchema = z
 
 export const updateIncomeAndPeriodSchema = z
   .object({
-    monthlyIncome: z
-      .number()
-      .positive('Rendimento deve ser positivo')
-      .int('O valor deve ser em centavos (inteiro).')
-      .max(999999999, 'O valor não pode ser maior que R$ 9.999.999,99.'),
     financialDayStart: z
       .number()
       .min(1, 'Dia de início deve ser entre 1 e 31')

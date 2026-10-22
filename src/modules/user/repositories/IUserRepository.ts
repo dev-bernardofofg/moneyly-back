@@ -11,7 +11,6 @@ export interface IUserRepository {
     id: string,
     googleInfo: { googleId: string; avatar?: string }
   ): Promise<User | null>;
-  updateMonthlyIncome(id: string, monthlyIncome: number): Promise<User | null>;
   updateFinancialPeriod(
     id: string,
     financialDayStart: number,
@@ -19,7 +18,6 @@ export interface IUserRepository {
   ): Promise<User | null>;
   updateIncomeAndPeriod(
     id: string,
-    monthlyIncome: number,
     financialDayStart: number,
     financialDayEnd: number
   ): Promise<User | null>;

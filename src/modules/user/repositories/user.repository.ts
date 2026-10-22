@@ -37,6 +37,7 @@ export const userRepository = {
         email: users.email,
         googleId: users.googleId,
         avatar: users.avatar,
+        // Coluna ainda existe (drop em migration futura); não é mais usada nem exposta.
         monthlyIncome: users.monthlyIncome,
         financialDayStart: users.financialDayStart,
         financialDayEnd: users.financialDayEnd,
@@ -61,15 +62,6 @@ export const userRepository = {
     return user ?? null;
   },
 
-  async updateMonthlyIncome(id: string, monthlyIncome: number): Promise<User | null> {
-    const [user] = await db
-      .update(users)
-      .set({ monthlyIncome, firstAccess: false, updatedAt: new Date() })
-      .where(eq(users.id, id))
-      .returning();
-    return user ?? null;
-  },
-
   async updateFinancialPeriod(
     id: string,
     financialDayStart: number,
@@ -85,14 +77,12 @@ export const userRepository = {
 
   async updateIncomeAndPeriod(
     id: string,
-    monthlyIncome: number,
     financialDayStart: number,
     financialDayEnd: number
   ): Promise<User | null> {
     const [user] = await db
       .update(users)
       .set({
-        monthlyIncome,
         financialDayStart,
         financialDayEnd,
         firstAccess: false,

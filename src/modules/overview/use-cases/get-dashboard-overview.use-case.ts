@@ -5,18 +5,14 @@ import {
   getRecentTransactions,
 } from '../helpers/overview-handlers';
 
-export const getStatsOverview = async (
-  transactions: TransactionWithCategory[],
-  monthlyIncome: number
-) => {
-  return calculateStats(transactions, monthlyIncome);
+export const getStatsOverview = async (transactions: TransactionWithCategory[]) => {
+  return calculateStats(transactions);
 };
 
 export const getDashboardOverviewUseCase = async (
-  monthlyIncome: number,
   periodTransactions: TransactionWithCategory[]
 ) => {
-  const stats = await getStatsOverview(periodTransactions, monthlyIncome);
+  const stats = await getStatsOverview(periodTransactions);
   const chart = calculatePeriodChartData(periodTransactions);
   const recentTransactions = getRecentTransactions(periodTransactions);
 

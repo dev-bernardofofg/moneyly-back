@@ -1,21 +1,5 @@
 import { z } from 'zod';
 
-export const updateMonthlyIncomeSchema = z.object({
-  monthlyIncome: z
-    .union([z.string(), z.number()])
-    .transform((val) => {
-      const num = typeof val === 'string' ? parseFloat(val) : val;
-      return isNaN(num) ? 0 : num;
-    })
-    .pipe(
-      z
-        .number()
-        .positive('Rendimento deve ser positivo')
-        .int('O valor deve ser em centavos (inteiro).')
-        .max(999999999, 'O valor não pode ser maior que R$ 9.999.999,99.')
-    ),
-});
-
 export const updateFinancialPeriodSchema = z
   .object({
     financialDayStart: z
@@ -48,19 +32,6 @@ export const updateFinancialPeriodSchema = z
 
 export const updateIncomeAndPeriodSchema = z
   .object({
-    monthlyIncome: z
-      .union([z.string(), z.number()])
-      .transform((val) => {
-        const num = typeof val === 'string' ? parseFloat(val) : val;
-        return isNaN(num) ? 0 : num;
-      })
-      .pipe(
-        z
-          .number()
-          .positive('Rendimento deve ser positivo')
-          .int('O valor deve ser em centavos (inteiro).')
-          .max(999999999, 'O valor não pode ser maior que R$ 9.999.999,99.')
-      ),
     financialDayStart: z
       .number()
       .min(1, 'Dia de início deve ser entre 1 e 31')

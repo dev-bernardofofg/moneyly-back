@@ -49,7 +49,6 @@ export const getTransactions = asyncHandler<AuthRequest>(async (req, res) => {
   const transactionSummary = {
     totalExpense: summary.totalExpense,
     totalIncome: summary.totalIncome,
-    monthlyIncome: summary.monthlyIncome,
     percentUsed: summary.percentUsed,
     alert: summary.alert,
   };

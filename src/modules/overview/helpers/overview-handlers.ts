@@ -2,7 +2,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { TransactionWithCategory } from '@modules/transaction/repositories/transaction.repository';
 
-export const calculateStats = (transactions: TransactionWithCategory[], monthlyIncome: number) => {
+export const calculateStats = (transactions: TransactionWithCategory[]) => {
   const totalIncome = transactions
     .filter((tx) => tx.type === 'income')
     .reduce((sum, tx) => sum + Number(tx.amount), 0);
@@ -11,16 +11,16 @@ export const calculateStats = (transactions: TransactionWithCategory[], monthlyI
     .filter((tx) => tx.type === 'expense')
     .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
-  const balance = monthlyIncome + totalIncome - totalExpense;
+  const balance = totalIncome - totalExpense;
   const percentUsed =
-    monthlyIncome > 0 ? Number(((totalExpense / monthlyIncome) * 100).toFixed(2)) : null;
+    totalIncome > 0 ? Number(((totalExpense / totalIncome) * 100).toFixed(2)) : null;
 
   return {
     totalIncome,
     totalExpense,
     balance,
     percentUsed,
-    remainingBudget: Math.max(0, monthlyIncome - totalExpense),
+    remainingBudget: Math.max(0, totalIncome - totalExpense),
   };
 };
 

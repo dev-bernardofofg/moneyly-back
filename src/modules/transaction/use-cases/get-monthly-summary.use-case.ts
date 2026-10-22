@@ -1,5 +1,4 @@
 import { format } from 'date-fns';
-import { userRepository } from '@modules/user';
 import { computeSpendingStats } from '../helpers/spending-stats';
 import { transactionRepository } from '../repositories/transaction.repository';
 
@@ -7,12 +6,7 @@ export const getMonthlySummaryUseCase = async (
   userId: string,
   filters: { startDate?: Date; endDate?: Date }
 ) => {
-  const [txns, user] = await Promise.all([
-    transactionRepository.findByUserId(userId, filters),
-    userRepository.findById(userId),
-  ]);
-
-  const monthlyIncome = Number(user?.monthlyIncome) || 0;
+  const txns = await transactionRepository.findByUserId(userId, filters);
   const summary: Record<
     string,
     { income: number; expense: number; percentUsed: number | null; alert: string | null }
@@ -30,8 +24,8 @@ export const getMonthlySummaryUseCase = async (
   for (const monthData of Object.values(summary)) {
     const stats = computeSpendingStats(
       monthData.expense,
-      monthlyIncome,
-      'Você já usou mais de 80% do seu rendimento mensal!'
+      monthData.income,
+      'Você já usou mais de 80% das entradas do mês!'
     );
     monthData.percentUsed = stats.percentUsed;
     monthData.alert = stats.alert;

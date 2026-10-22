@@ -5,7 +5,6 @@ import {
   getMe,
   updateFinancialPeriod,
   updateIncomeAndPeriod,
-  updateMonthlyIncome,
 } from './user.controller';
 import { authenticateUser } from '@modules/auth/middlewares/auth';
 import { validateBody, validateParams } from '@core/middlewares/validate';
@@ -13,7 +12,6 @@ import {
   periodIdParamSchema,
   updateFinancialPeriodSchema,
   updateIncomeAndPeriodSchema,
-  updateMonthlyIncomeSchema,
 } from './schemas/user.schema';
 
 const UserRouters: Router = Router();
@@ -22,13 +20,6 @@ const UserRouters: Router = Router();
 UserRouters.get('/me', authenticateUser, getMe);
 
 // Rotas de configuração financeira
-UserRouters.put(
-  '/income',
-  authenticateUser,
-  validateBody(updateMonthlyIncomeSchema),
-  updateMonthlyIncome
-);
-
 UserRouters.put(
   '/financial-period',
   authenticateUser,

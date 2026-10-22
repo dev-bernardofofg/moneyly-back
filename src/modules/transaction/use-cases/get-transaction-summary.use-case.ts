@@ -1,12 +1,8 @@
-import { userRepository } from '@modules/user';
 import { computeSpendingStats } from '../helpers/spending-stats';
 import { transactionRepository } from '../repositories/transaction.repository';
 
 export const getTransactionSummaryUseCase = async (userId: string) => {
-  const [allTxns, user] = await Promise.all([
-    transactionRepository.findAllByUserId(userId),
-    userRepository.findById(userId),
-  ]);
+  const allTxns = await transactionRepository.findAllByUserId(userId);
 
   let realIncome = 0;
   let totalExpense = 0;
@@ -18,18 +14,16 @@ export const getTransactionSummaryUseCase = async (userId: string) => {
     byCategory[tx.category.id] = (byCategory[tx.category.id] || 0) + Number(tx.amount);
   }
 
-  const monthlyIncome = Number(user?.monthlyIncome) || 0;
-  const balance = monthlyIncome - totalExpense;
+  const balance = realIncome - totalExpense;
   const { percentUsed, alert } = computeSpendingStats(
     totalExpense,
-    monthlyIncome,
-    'Você já usou mais de 80% do seu rendimento mensal!'
+    realIncome,
+    'Você já usou mais de 80% das suas entradas!'
   );
 
   return {
     totalIncome: realIncome,
     totalExpenses: totalExpense,
-    monthlyIncome,
     balance,
     percentUsed,
     byCategory,

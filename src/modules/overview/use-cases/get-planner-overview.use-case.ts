@@ -4,13 +4,11 @@ import { calculateAlerts, calculatePlanningStats } from '../helpers/planner-calc
 import { toMoney } from '../helpers/free-balance';
 import { getForecastUseCase } from './get-forecast.use-case';
 
-export const getPlannerOverviewUseCase = async (
-  userId: string,
-  monthlyIncome: number,
-  periodId?: string
-) => {
+export const getPlannerOverviewUseCase = async (userId: string, periodId?: string) => {
   // Reservas vêm do forecast: planner e Saldo Livre nunca divergem no mesmo período.
   const forecast = await getForecastUseCase(userId, periodId);
+  // Renda do período = entradas realizadas + recorrentes previstas (salário como recorrência).
+  const monthlyIncome = forecast.realized.income + forecast.projected.recurringIncome;
 
   const [budgetProgress, goalsProgress] = await Promise.all([
     getBudgetProgressUseCase(userId, forecast.period.id),

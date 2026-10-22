@@ -8,7 +8,6 @@ import {
   FinancialPeriodSummarySchema,
   FinancialPeriodUpdateSchema,
   IncomeAndPeriodUpdateSchema,
-  IncomeUpdateSchema,
   UserSchema,
 } from '@core/openapi/schemas';
 import { ok, route } from '@core/openapi/route';
@@ -16,7 +15,6 @@ import {
   periodIdParamSchema,
   updateFinancialPeriodSchema,
   updateIncomeAndPeriodSchema,
-  updateMonthlyIncomeSchema,
 } from './schemas/user.schema';
 
 route({
@@ -25,14 +23,6 @@ route({
   tag: 'User',
   summary: 'Perfil do usuário autenticado',
   ok: ok(wrapSuccess(UserSchema)),
-});
-route({
-  method: 'put',
-  path: '/user/income',
-  tag: 'User',
-  summary: 'Atualizar renda mensal',
-  body: updateMonthlyIncomeSchema,
-  ok: ok(wrapSuccess(IncomeUpdateSchema)),
 });
 route({
   method: 'put',
@@ -46,7 +36,7 @@ route({
   method: 'put',
   path: '/user/income-and-period',
   tag: 'User',
-  summary: 'Atualizar renda + período',
+  summary: 'Configuração inicial: período financeiro (encerra o firstAccess)',
   body: updateIncomeAndPeriodSchema,
   ok: ok(wrapSuccess(IncomeAndPeriodUpdateSchema)),
 });
