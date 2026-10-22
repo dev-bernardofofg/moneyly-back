@@ -24,7 +24,13 @@ export const createRecurringTransactionUseCase = async (
   if (data.accountId) await resolveAccountId(userId, data.accountId);
   const accountId = data.accountId ?? null;
 
+  // Infinite recurring: create first transaction if startDate is today or past (SP days)
+  const isImmediate = startDate.getTime() <= spMidnight(new Date()).getTime();
+  const runsFirstNow = !data.totalInstallments && isImmediate;
+
   const months = calcMonthsNeeded(data.frequency, data.totalInstallments);
+  // Já grava o estado final (parcelada inativa, primeira execução avançada): o cron diário pode
+  // ler a recorrência a qualquer momento e lançaria de novo uma ocorrência que esta requisição lança.
   const [recurring] = await Promise.all([
     recurringTransactionRepository.create({
       userId,
@@ -37,11 +43,13 @@ export const createRecurringTransactionUseCase = async (
       dayOfMonth,
       dayOfWeek,
       startDate,
-      nextExecution: startDate,
-      isActive: true,
+      nextExecution: runsFirstNow
+        ? calculateNextExecution(data.frequency, dayOfMonth, dayOfWeek, startDate)
+        : startDate,
+      isActive: !data.totalInstallments,
       description: data.description ?? null,
       totalInstallments: data.totalInstallments ?? null,
-      executedInstallments: 0,
+      executedInstallments: data.totalInstallments ?? (runsFirstNow ? 1 : 0),
     }),
     financialPeriodService.createNextPeriods(userId, months),
   ]);
@@ -70,18 +78,10 @@ export const createRecurringTransactionUseCase = async (
       });
     }
 
-    await recurringTransactionRepository.update(recurring.id, userId, {
-      executedInstallments: data.totalInstallments,
-      isActive: false,
-    });
-
-    return { ...recurring, executedInstallments: data.totalInstallments, isActive: false };
+    return recurring;
   }
 
-  // Infinite recurring: create first transaction if startDate is today or past (SP days)
-  const isImmediate = startDate.getTime() <= spMidnight(new Date()).getTime();
-
-  if (isImmediate) {
+  if (runsFirstNow) {
     await createTransactionUseCase(userId, {
       type: data.type,
       title: data.title,
@@ -92,14 +92,6 @@ export const createRecurringTransactionUseCase = async (
       recurringTransactionId: recurring.id,
       accountId: accountId ?? undefined,
     });
-
-    const nextExecution = calculateNextExecution(data.frequency, dayOfMonth, dayOfWeek, startDate);
-    await recurringTransactionRepository.update(recurring.id, userId, {
-      executedInstallments: 1,
-      nextExecution,
-    });
-
-    return { ...recurring, executedInstallments: 1, nextExecution };
   }
 
   return recurring;

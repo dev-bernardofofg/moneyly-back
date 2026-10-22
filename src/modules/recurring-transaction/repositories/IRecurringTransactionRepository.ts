@@ -19,7 +19,16 @@ export interface IRecurringTransactionRepository {
     data: Partial<Omit<NewRecurringTransaction, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>
   ): Promise<RecurringTransaction | null>;
   updateNextExecution(id: string, nextExecution: Date): Promise<boolean>;
-  incrementExecutedInstallments(id: string): Promise<RecurringTransaction | null>;
+  claimExecution(
+    recurring: Pick<
+      RecurringTransaction,
+      'id' | 'nextExecution' | 'executedInstallments' | 'totalInstallments'
+    >,
+    nextExecution: Date
+  ): Promise<boolean>;
+  releaseExecution(
+    recurring: Pick<RecurringTransaction, 'id' | 'nextExecution' | 'executedInstallments'>
+  ): Promise<void>;
   moveToDefaultAccount(userId: string, accountId: string): Promise<void>;
   deactivateById(id: string): Promise<boolean>;
   reactivate(id: string, userId: string, nextExecution: Date): Promise<RecurringTransaction | null>;

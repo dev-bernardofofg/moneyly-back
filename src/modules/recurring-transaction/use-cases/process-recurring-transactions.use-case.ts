@@ -35,36 +35,31 @@ export const processRecurringTransactions = async (): Promise<void> => {
         continue;
       }
 
-      await createTransactionUseCase(recurring.userId, {
-        type: recurring.type as 'income' | 'expense',
-        title: recurring.title,
-        amount: recurring.amount,
-        category: recurring.categoryId,
-        description: recurring.description ?? '',
-        date: recurring.nextExecution,
-        recurringTransactionId: recurring.id,
-        accountId: recurring.accountId ?? undefined,
-      });
-
-      const updated = await recurringTransactionRepository.incrementExecutedInstallments(
-        recurring.id
+      const nextExecution = calculateNextExecution(
+        recurring.frequency,
+        recurring.dayOfMonth,
+        recurring.dayOfWeek,
+        recurring.nextExecution
       );
-      if (!updated) continue;
+      // Outro processo já lançou esta ocorrência: não duplica.
+      if (!(await recurringTransactionRepository.claimExecution(recurring, nextExecution)))
+        continue;
 
-      const hasInstallmentLimit = updated.totalInstallments !== null;
-      const exhausted =
-        hasInstallmentLimit && updated.executedInstallments >= updated.totalInstallments!;
-
-      if (exhausted) {
-        await recurringTransactionRepository.deactivateById(recurring.id);
-      } else {
-        const nextExecution = calculateNextExecution(
-          recurring.frequency,
-          recurring.dayOfMonth,
-          recurring.dayOfWeek,
-          recurring.nextExecution
-        );
-        await recurringTransactionRepository.updateNextExecution(recurring.id, nextExecution);
+      try {
+        await createTransactionUseCase(recurring.userId, {
+          type: recurring.type as 'income' | 'expense',
+          title: recurring.title,
+          amount: recurring.amount,
+          category: recurring.categoryId,
+          description: recurring.description ?? '',
+          date: recurring.nextExecution,
+          recurringTransactionId: recurring.id,
+          accountId: recurring.accountId ?? undefined,
+        });
+      } catch (error) {
+        // Devolve a ocorrência para a próxima execução tentar de novo.
+        await recurringTransactionRepository.releaseExecution(recurring);
+        throw error;
       }
     } catch (error) {
       logger.error(`[recurring] failed to process ${recurring.id}`, error as Error);

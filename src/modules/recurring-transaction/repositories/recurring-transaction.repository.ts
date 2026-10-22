@@ -98,20 +98,51 @@ export const recurringTransactionRepository = {
     return result.length > 0;
   },
 
-  async incrementExecutedInstallments(id: string): Promise<RecurringTransaction | null> {
-    const [current] = await db
-      .select()
-      .from(recurringTransactions)
-      .where(eq(recurringTransactions.id, id))
-      .limit(1);
-    if (!current) return null;
-
-    const [updated] = await db
+  /**
+   * Reserva a execução pendente: só avança se nextExecution ainda é o lido. Duas execuções
+   * concorrentes (cron e criação, ou dois crons) leem o mesmo valor; só uma consegue avançar.
+   */
+  async claimExecution(
+    recurring: Pick<
+      RecurringTransaction,
+      'id' | 'nextExecution' | 'executedInstallments' | 'totalInstallments'
+    >,
+    nextExecution: Date
+  ): Promise<boolean> {
+    const executed = recurring.executedInstallments + 1;
+    const exhausted =
+      recurring.totalInstallments !== null && executed >= recurring.totalInstallments;
+    const rows = await db
       .update(recurringTransactions)
-      .set({ executedInstallments: current.executedInstallments + 1, updatedAt: new Date() })
-      .where(eq(recurringTransactions.id, id))
-      .returning();
-    return updated ?? null;
+      .set({
+        nextExecution,
+        executedInstallments: executed,
+        isActive: !exhausted,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(recurringTransactions.id, recurring.id),
+          eq(recurringTransactions.isActive, true),
+          eq(recurringTransactions.nextExecution, recurring.nextExecution)
+        )
+      )
+      .returning({ id: recurringTransactions.id });
+    return rows.length > 0;
+  },
+
+  async releaseExecution(
+    recurring: Pick<RecurringTransaction, 'id' | 'nextExecution' | 'executedInstallments'>
+  ): Promise<void> {
+    await db
+      .update(recurringTransactions)
+      .set({
+        nextExecution: recurring.nextExecution,
+        executedInstallments: recurring.executedInstallments,
+        isActive: true,
+        updatedAt: new Date(),
+      })
+      .where(eq(recurringTransactions.id, recurring.id));
   },
 
   async moveToDefaultAccount(userId: string, accountId: string): Promise<void> {
