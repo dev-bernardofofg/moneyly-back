@@ -1,4 +1,3 @@
-import { logger } from '@core/lib/logger';
 import type { NewNotification, Notification } from '@infra/db/schema';
 import { notificationRepository } from '../repositories/notification.repository';
 import { sendPushToUser } from '../services/push.service';
@@ -17,19 +16,9 @@ export const dispatchNotification = async (
   const existing = await notificationRepository.findByDedupeKey(data.dedupeKey);
   if (existing) return null;
 
-  let created: Notification;
-  try {
-    created = await notificationRepository.create(data);
-  } catch (error) {
-    // Apenas corrida do scheduler: unique(dedupeKey) violado (pg 23505).
-    // Demais erros precisam propagar.
-    const code = (error as { code?: string } | null)?.code;
-    if (code === '23505') {
-      logger.warn('[notifications] dedupe race skipped', { dedupeKey: data.dedupeKey });
-      return null;
-    }
-    throw error;
-  }
+  // Corrida do scheduler: a outra execução gravou entre a checagem e o insert.
+  const created = await notificationRepository.create(data);
+  if (!created) return null;
 
   const visual = resolvePushVisual(created.type, created.relatedId);
 

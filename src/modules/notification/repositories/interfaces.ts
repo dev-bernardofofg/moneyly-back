@@ -2,7 +2,7 @@ import type { DeviceRegistration, NewNotification, Notification } from '@infra/d
 import type { PaginationQuery, PaginationResult } from '@core/helpers/pagination';
 
 export interface INotificationRepository {
-  create(data: Omit<NewNotification, 'id' | 'createdAt'>): Promise<Notification>;
+  create(data: Omit<NewNotification, 'id' | 'createdAt'>): Promise<Notification | null>;
   findByDedupeKey(dedupeKey: string): Promise<Notification | null>;
   deleteByDedupeKeys(dedupeKeys: string[]): Promise<number>;
   findByUserPaginated(

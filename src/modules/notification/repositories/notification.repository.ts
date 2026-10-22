@@ -9,10 +9,14 @@ import {
 import type { INotificationRepository } from './interfaces';
 
 export const notificationRepository = {
-  async create(data: Omit<NewNotification, 'id' | 'createdAt'>): Promise<Notification> {
-    const [notification] = await db.insert(notifications).values(data).returning();
-    if (!notification) throw new Error('Falha ao criar notificação');
-    return notification;
+  // null = dedupeKey já existia (outra execução do scheduler gravou antes).
+  async create(data: Omit<NewNotification, 'id' | 'createdAt'>): Promise<Notification | null> {
+    const [notification] = await db
+      .insert(notifications)
+      .values(data)
+      .onConflictDoNothing({ target: notifications.dedupeKey })
+      .returning();
+    return notification ?? null;
   },
 
   async findByDedupeKey(dedupeKey: string): Promise<Notification | null> {
