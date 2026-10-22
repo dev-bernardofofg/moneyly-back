@@ -8,7 +8,7 @@ Fonte de verdade: `src/infra/db/schema.ts` (Drizzle). Atualizar este doc quando 
 
 ### `users`
 
-`id` uuid PK · `name` · `email` unique · `password` (nullable, OAuth) · `googleId` unique nullable · `avatar` · `monthlyIncome` int centavos default 0 · `financialDayStart` int default 1 · `financialDayEnd` int default 31 · `firstAccess` bool default true · timestamps.
+`id` uuid PK · `name` · `email` unique · `password` (nullable, OAuth) · `googleId` unique nullable · `avatar` · `monthlyIncome` int (legado, não usado nem exposto; drop pendente) · `financialDayStart` int default 1 · `financialDayEnd` int default 31 · `firstAccess` bool default true · timestamps.
 
 > `financialDayStart/End` definem o período financeiro pessoal (não o mês civil).
 

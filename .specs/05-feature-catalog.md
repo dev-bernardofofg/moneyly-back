@@ -13,7 +13,7 @@ Cada módulo segue camadas: `routes/<x>.router.ts` → `controllers/<x>.controll
 
 ## User (`/user`)
 
-- Perfil, `monthlyIncome`, `financialDayStart/End`, `firstAccess`.
+- Perfil, `financialDayStart/End`, `firstAccess`. Sem renda fixa: a renda do período é entradas realizadas + recorrentes previstas (`overview/helpers/expected-income.ts`); salário entra como recorrência de entrada.
 - `user.controller`/`user.service`/`user.repository`. Schema `user.schema.ts`. `requireUser` em `validations/user.validation.ts`.
 
 ## Transactions (`/transactions`)

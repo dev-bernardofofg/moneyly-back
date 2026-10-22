@@ -9,7 +9,6 @@ Endpoint que projeta o saldo até o fim do período financeiro selecionado (ou a
 
 - saldo realizado: transações já existentes no período;
 - entradas/saídas futuras: ocorrências de `recurring_transactions` ativas com `nextExecution` dentro da janela `[hoje, period.endDate]`;
-- renda mensal (`users.monthlyIncome`) ainda não materializada, se aplicável.
 
 Sem persistir nada. Cálculo determinístico em São Paulo (helpers de `financial-period.ts`/`dates.ts`).
 
@@ -88,7 +87,7 @@ Sem persistir nada. Cálculo determinístico em São Paulo (helpers de `financia
 - `nextExecution` já passou (overdue) mas dentro do período → conta como ocorrência prevista (1x) — alinhar com lógica de `processRecurringTransactions` p/ não divergir.
 - Recorrente com `totalInstallments` esgotando no meio do período → projetar só as parcelas restantes.
 - Período no passado (histórico) → `projected` vazio (nada futuro); `realized` = fechamento real.
-- `monthlyIncome`: decidir se entra na projeção (renda fixa não-lançada). **Decisão:** v1 NÃO injeta `monthlyIncome` automático (evita dupla contagem com recorrente income). Documentar; reavaliar em F4.
+- `monthlyIncome` foi removido do produto (2026-10-22): renda = entradas lançadas + recorrentes previstas. Salário é recorrência de entrada. (Histórico: v1 já NÃO injetava `monthlyIncome` automático; evitava dupla contagem com recorrente income). Documentar; reavaliar em F4.
 - Recorrências já materializadas no mesmo dia não entram novamente na projeção.
 - Horas extras com transação vinculada já pertencem ao realizado; registros sem transação
   entram como renda variável pendente.
