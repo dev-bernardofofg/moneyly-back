@@ -57,9 +57,10 @@ beforeEach(() => {
 
 describe('recurring transaction use-cases', () => {
   describe('createRecurringTransactionUseCase', () => {
-    it('pre-creates all installments and deactivates when totalInstallments is set', async () => {
-      mockedRepo.create.mockResolvedValue({ ...baseRecurring, totalInstallments: 3 } as never);
-      mockedRepo.update.mockResolvedValue(null);
+    it('pre-creates all installments on a recurrence saved already inactive', async () => {
+      mockedRepo.create.mockImplementation(
+        async (data) => ({ ...baseRecurring, ...data }) as never
+      );
       mockedCreateTransaction.mockResolvedValue({});
 
       const result = await createRecurringTransactionUseCase('user-1', {
@@ -78,10 +79,11 @@ describe('recurring transaction use-cases', () => {
         'user-1',
         expect.objectContaining({ recurringTransactionId: 'rec-1' })
       );
-      expect(mockedRepo.update).toHaveBeenCalledWith('rec-1', 'user-1', {
-        executedInstallments: 3,
-        isActive: false,
-      });
+      // Salva já concluída: o cron não pode pegar a recorrência no meio da criação.
+      expect(mockedRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ executedInstallments: 3, isActive: false })
+      );
+      expect(mockedRepo.update).not.toHaveBeenCalled();
       expect(result.executedInstallments).toBe(3);
       expect(result.isActive).toBe(false);
     });
@@ -89,8 +91,9 @@ describe('recurring transaction use-cases', () => {
     it('creates the first transaction immediately for infinite recurring starting today or earlier', async () => {
       const past = new Date();
       past.setDate(past.getDate() - 1);
-      mockedRepo.create.mockResolvedValue(baseRecurring as never);
-      mockedRepo.update.mockResolvedValue(null);
+      mockedRepo.create.mockImplementation(
+        async (data) => ({ ...baseRecurring, ...data }) as never
+      );
       mockedCreateTransaction.mockResolvedValue({});
 
       const result = await createRecurringTransactionUseCase('user-1', {
@@ -108,11 +111,10 @@ describe('recurring transaction use-cases', () => {
         // Contrato: a data persistida é o dia SP canonizado na meia-noite SP.
         expect.objectContaining({ recurringTransactionId: 'rec-1', date: spMidnight(past) })
       );
-      expect(mockedRepo.update).toHaveBeenCalledWith(
-        'rec-1',
-        'user-1',
-        expect.objectContaining({ executedInstallments: 1, nextExecution: expect.any(Date) })
-      );
+      // A primeira execução já sai avançada no insert: o cron não a lança de novo.
+      const saved = mockedRepo.create.mock.calls[0]![0];
+      expect(saved).toMatchObject({ executedInstallments: 1, isActive: true });
+      expect(saved.nextExecution.getTime()).toBeGreaterThan(spMidnight(past).getTime());
       expect(result.executedInstallments).toBe(1);
     });
 
@@ -190,39 +192,29 @@ describe('recurring transaction use-cases', () => {
   });
 
   describe('processRecurringTransactions', () => {
-    it('materializes a due transaction and schedules the next execution', async () => {
+    it('claims the due execution before materializing it', async () => {
       const due = { ...baseRecurring, nextExecution: new Date() };
       mockedRepo.findDueTransactions.mockResolvedValue([due] as never);
+      mockedRepo.claimExecution.mockResolvedValue(true);
       mockedCreateTransaction.mockResolvedValue({});
-      mockedRepo.incrementExecutedInstallments.mockResolvedValue({
-        ...due,
-        totalInstallments: null,
-        executedInstallments: 1,
-      } as never);
 
       await processRecurringTransactions();
 
+      expect(mockedRepo.claimExecution).toHaveBeenCalledWith(due, expect.any(Date));
       expect(mockedCreateTransaction).toHaveBeenCalledWith(
         'user-1',
         expect.objectContaining({ recurringTransactionId: 'rec-1' })
       );
-      expect(mockedRepo.updateNextExecution).toHaveBeenCalledWith('rec-1', expect.any(Date));
-      expect(mockedRepo.deactivateById).not.toHaveBeenCalled();
     });
 
-    it('deactivates the recurring transaction when installments are exhausted', async () => {
-      const due = { ...baseRecurring, nextExecution: new Date(), totalInstallments: 2 };
+    it('skips an execution another run already claimed', async () => {
+      const due = { ...baseRecurring, nextExecution: new Date() };
       mockedRepo.findDueTransactions.mockResolvedValue([due] as never);
-      mockedCreateTransaction.mockResolvedValue({});
-      mockedRepo.incrementExecutedInstallments.mockResolvedValue({
-        ...due,
-        executedInstallments: 2,
-      } as never);
+      mockedRepo.claimExecution.mockResolvedValue(false);
 
       await processRecurringTransactions();
 
-      expect(mockedRepo.deactivateById).toHaveBeenCalledWith('rec-1');
-      expect(mockedRepo.updateNextExecution).not.toHaveBeenCalled();
+      expect(mockedCreateTransaction).not.toHaveBeenCalled();
     });
 
     it('skips overdue executions and only reschedules', async () => {
@@ -234,24 +226,21 @@ describe('recurring transaction use-cases', () => {
       await processRecurringTransactions();
 
       expect(mockedCreateTransaction).not.toHaveBeenCalled();
+      expect(mockedRepo.claimExecution).not.toHaveBeenCalled();
       expect(mockedRepo.updateNextExecution).toHaveBeenCalledWith('rec-1', expect.any(Date));
     });
 
-    it('continues processing the remaining items when one fails', async () => {
+    it('releases the claim and keeps going when materializing fails', async () => {
       const first = { ...baseRecurring, id: 'rec-fail', nextExecution: new Date() };
       const second = { ...baseRecurring, id: 'rec-ok', nextExecution: new Date() };
       mockedRepo.findDueTransactions.mockResolvedValue([first, second] as never);
+      mockedRepo.claimExecution.mockResolvedValue(true);
       mockedCreateTransaction.mockRejectedValueOnce(new Error('boom')).mockResolvedValueOnce({});
-      mockedRepo.incrementExecutedInstallments.mockResolvedValue({
-        ...second,
-        totalInstallments: null,
-        executedInstallments: 1,
-      } as never);
 
       await processRecurringTransactions();
 
+      expect(mockedRepo.releaseExecution).toHaveBeenCalledWith(first);
       expect(mockedCreateTransaction).toHaveBeenCalledTimes(2);
-      expect(mockedRepo.updateNextExecution).toHaveBeenCalledWith('rec-ok', expect.any(Date));
     });
   });
 });

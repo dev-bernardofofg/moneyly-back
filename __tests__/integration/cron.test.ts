@@ -33,4 +33,51 @@ describe('GET /internal/cron/daily', () => {
       .set('Authorization', 'Bearer test-cron-secret')
       .expect(200);
   });
+
+  it('does not materialize twice a recurrence created while the jobs run', async () => {
+    const signUp = await request(app)
+      .post('/auth/sign-up')
+      .send({
+        name: 'Cron Race',
+        email: `cron-race${Date.now()}@test.com`,
+        password: 'password123',
+      });
+    const auth = { Authorization: `Bearer ${signUp.body.data.accessToken}` };
+    const category = await request(app)
+      .post('/categories/create')
+      .set(auth)
+      .send({ name: `Cron Race ${Date.now()}` });
+
+    const [created] = await Promise.all([
+      request(app)
+        .post('/recurring-transactions')
+        .set(auth)
+        .send({
+          type: 'expense',
+          title: 'Diário',
+          amount: 1000,
+          categoryId: category.body.data.id,
+          frequency: 'daily',
+        })
+        .expect(201),
+      request(app)
+        .get('/internal/cron/daily')
+        .set('Authorization', 'Bearer test-cron-secret')
+        .expect(200),
+      request(app)
+        .get('/internal/cron/daily')
+        .set('Authorization', 'Bearer test-cron-secret')
+        .expect(200),
+    ]);
+    await request(app)
+      .get('/internal/cron/daily')
+      .set('Authorization', 'Bearer test-cron-secret')
+      .expect(200);
+
+    const history = await request(app)
+      .get(`/recurring-transactions/${created.body.data.id}/transactions`)
+      .set(auth)
+      .expect(200);
+    expect(history.body.data).toHaveLength(1);
+  });
 });
