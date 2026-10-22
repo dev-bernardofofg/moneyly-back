@@ -50,7 +50,6 @@ describe('UserService', () => {
         password: 'hashed-password',
         googleId: null,
         avatar: null,
-        monthlyIncome: 0,
         financialDayStart: 1,
         financialDayEnd: 31,
         firstAccess: true,
