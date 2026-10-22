@@ -7,6 +7,12 @@ import {
 import { ResponseHandler } from '@core/helpers/response-handler';
 import { asyncHandler } from '@core/middlewares/async-handler';
 import type { AuthRequest } from '@modules/auth/middlewares/auth';
+import {
+  formatHoursDecimal,
+  formatHoursLong,
+  overtimeTotals,
+  periodLabel,
+} from './helpers/export-totals';
 import { overtimeRepository } from './repositories/overtime.repository';
 import { BadRequestError } from '@core/errors';
 import { createOvertimeUseCase } from './use-cases/create-overtime.use-case';
@@ -72,12 +78,33 @@ export const exportOvertimeCsv = asyncHandler<AuthRequest>(async (req, res) => {
     formatBrazilianDate(r.startTime),
     formatBrazilianTime(r.startTime),
     formatBrazilianTime(r.endTime),
-    Number(r.hoursWorked).toFixed(2).replace('.', ','),
+    formatHoursDecimal(Number(r.hoursWorked)),
     formatCents(r.amount),
     r.description ?? '',
   ]);
 
-  const csv = [headers, ...rows]
+  // Resumo depois de uma linha em branco: a tabela continua somável na planilha.
+  const totals = overtimeTotals(records);
+  const summary = [
+    [],
+    ['Resumo', periodLabel(month, year)],
+    ['Registros', String(records.length)],
+    ['Total de horas', formatHoursDecimal(totals.hours), formatHoursLong(totals.hours)],
+    ['Valor total (R$)', formatCents(totals.amount)],
+    ...(totals.byCompany.length > 1
+      ? [
+          [],
+          ['Por empresa', 'Horas', 'Valor (R$)'],
+          ...totals.byCompany.map((company) => [
+            company.name,
+            formatHoursDecimal(company.hours),
+            formatCents(company.amount),
+          ]),
+        ]
+      : []),
+  ];
+
+  const csv = [headers, ...rows, ...summary]
     .map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(';'))
     .join('\r\n');
 
