@@ -229,4 +229,38 @@ describe('Overtime Endpoints', () => {
     expect(stored).toBeDefined();
     expect(stored!.transactionId).toBeNull();
   });
+
+  it('exports the month with total hours and amount described', async () => {
+    await createOvertime(1.5);
+    const month = anchor.getUTCMonth() + 1;
+    const year = anchor.getUTCFullYear();
+
+    const res = await request(app)
+      .get('/overtime/export')
+      .set('Authorization', `Bearer ${token}`)
+      .query({ month, year })
+      .expect(200);
+
+    const lines = (res.text as string).replace(/^\uFEFF/, '').split('\r\n');
+    const cells = (line: string) => line.split(';').map((cell) => cell.replace(/^"|"$/g, ''));
+    const blank = lines.indexOf('');
+    const rows = lines.slice(1, blank).map(cells);
+    const toNumber = (value: string) => Number(value.replace(/\./g, '').replace(',', '.'));
+    const summary = Object.fromEntries(
+      lines
+        .slice(blank + 1)
+        .map(cells)
+        .map((c) => [c[0], c.slice(1)])
+    );
+
+    expect(summary['Resumo']![0]).toMatch(/\/\d{4}$/);
+    expect(Number(summary['Registros']![0])).toBe(rows.length);
+    expect(toNumber(summary['Total de horas']![0]!)).toBeCloseTo(
+      rows.reduce((total, row) => total + toNumber(row[4]!), 0)
+    );
+    expect(summary['Total de horas']![1]).toMatch(/^\d+h( \d{2}min)?$/);
+    expect(toNumber(summary['Valor total (R$)']![0]!)).toBeCloseTo(
+      rows.reduce((total, row) => total + toNumber(row[5]!), 0)
+    );
+  });
 });
