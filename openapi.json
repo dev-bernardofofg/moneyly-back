@@ -862,148 +862,179 @@
       "FinancialInsights": {
         "type": "object",
         "properties": {
-          "currentPeriod": {
+          "period": {
             "type": "object",
             "properties": {
-              "daysElapsed": {
-                "type": "integer"
+              "id": {
+                "type": "string",
+                "format": "uuid"
               },
-              "totalDays": {
-                "type": "integer"
+              "startDate": {
+                "type": "string",
+                "example": "2026-05-17T00:00:00.000Z"
               },
-              "completionPercentage": {
+              "endDate": {
+                "type": "string",
+                "example": "2026-05-17T00:00:00.000Z"
+              },
+              "label": {
+                "type": "string"
+              },
+              "isOpen": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "startDate",
+              "endDate",
+              "label",
+              "isOpen"
+            ]
+          },
+          "spending": {
+            "type": "object",
+            "properties": {
+              "income": {
                 "type": "number"
               },
-              "currentExpense": {
+              "expense": {
+                "type": "number"
+              },
+              "upcomingExpense": {
                 "type": "number"
               },
               "projectedExpense": {
                 "type": "number"
               },
-              "isOnTrack": {
-                "type": "boolean"
+              "averageExpense": {
+                "type": "number",
+                "nullable": true
+              },
+              "deltaPct": {
+                "type": "number",
+                "nullable": true
+              },
+              "signal": {
+                "type": "string",
+                "enum": [
+                  "up",
+                  "down",
+                  "stable"
+                ]
+              },
+              "periodsCompared": {
+                "type": "integer"
               }
             },
             "required": [
-              "daysElapsed",
-              "totalDays",
-              "completionPercentage",
-              "currentExpense",
+              "income",
+              "expense",
+              "upcomingExpense",
               "projectedExpense",
-              "isOnTrack"
+              "averageExpense",
+              "deltaPct",
+              "signal",
+              "periodsCompared"
             ]
           },
-          "trend": {
-            "type": "object",
-            "properties": {
-              "previousMonth": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/MonthlySummaryItem"
-                  }
-                ],
-                "nullable": true
-              },
-              "currentMonth": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/MonthlySummaryItem"
-                  }
-                ],
-                "nullable": true
-              },
-              "expenseChange": {
-                "type": "number",
-                "nullable": true
-              },
-              "incomeChange": {
-                "type": "number",
-                "nullable": true
-              }
-            },
-            "required": [
-              "previousMonth",
-              "currentMonth",
-              "expenseChange",
-              "incomeChange"
-            ]
-          },
-          "allTime": {
-            "type": "object",
-            "properties": {
-              "averageMonthlyExpense": {
-                "type": "number"
-              },
-              "averageMonthlyIncome": {
-                "type": "number"
-              },
-              "bestMonth": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/MonthlySummaryItem"
-                  }
-                ],
-                "nullable": true
-              },
-              "worstMonth": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/MonthlySummaryItem"
-                  }
-                ],
-                "nullable": true
-              },
-              "totalMonths": {
-                "type": "integer"
-              },
-              "totalTransactions": {
-                "type": "integer"
-              }
-            },
-            "required": [
-              "averageMonthlyExpense",
-              "averageMonthlyIncome",
-              "bestMonth",
-              "worstMonth",
-              "totalMonths",
-              "totalTransactions"
-            ]
-          },
-          "topCategories": {
+          "history": {
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
+                "periodId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "startDate": {
+                  "type": "string",
+                  "example": "2026-05-17T00:00:00.000Z"
+                },
+                "endDate": {
+                  "type": "string",
+                  "example": "2026-05-17T00:00:00.000Z"
+                },
+                "income": {
+                  "type": "number"
+                },
+                "expense": {
+                  "type": "number"
+                },
+                "projectedExpense": {
+                  "type": "number"
+                },
+                "isSelected": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "periodId",
+                "label",
+                "startDate",
+                "endDate",
+                "income",
+                "expense",
+                "projectedExpense",
+                "isSelected"
+              ]
+            }
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "categoryId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
                 "name": {
                   "type": "string"
                 },
                 "amount": {
                   "type": "number"
                 },
-                "percentage": {
+                "share": {
                   "type": "number"
+                },
+                "averageAmount": {
+                  "type": "number",
+                  "nullable": true
+                },
+                "deltaPct": {
+                  "type": "number",
+                  "nullable": true
+                },
+                "signal": {
+                  "type": "string",
+                  "enum": [
+                    "up",
+                    "down",
+                    "stable"
+                  ]
                 }
               },
               "required": [
+                "categoryId",
                 "name",
                 "amount",
-                "percentage"
+                "share",
+                "averageAmount",
+                "deltaPct",
+                "signal"
               ]
-            }
-          },
-          "monthlyHistory": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MonthlySummaryItem"
             }
           }
         },
         "required": [
-          "currentPeriod",
-          "trend",
-          "allTime",
-          "topCategories",
-          "monthlyHistory"
+          "period",
+          "spending",
+          "history",
+          "categories"
         ]
       },
       "PlannerOverview": {
@@ -10323,10 +10354,21 @@
         "tags": [
           "Overview"
         ],
-        "summary": "Insights financeiros",
+        "summary": "Gastos do período por categoria e comparados aos períodos anteriores",
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "periodId",
+            "in": "query"
           }
         ],
         "responses": {
