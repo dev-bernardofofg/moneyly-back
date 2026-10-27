@@ -83,6 +83,63 @@ describe('Insights features (F1/F3/F4/F5)', () => {
     });
   });
 
+  describe('GET /overview/insights', () => {
+    const auth = () => ({ Authorization: `Bearer ${token}` });
+
+    it('401 without token', async () => {
+      await request(app).get('/overview/insights').expect(401);
+    });
+
+    it('404 for a period of someone else', async () => {
+      await request(app)
+        .get('/overview/insights')
+        .set(auth())
+        .query({ periodId: '99999999-9999-9999-9999-999999999999' })
+        .expect(404);
+    });
+
+    it('sums the period by category, card purchases in the invoice period', async () => {
+      const category = await request(app)
+        .post('/categories/create')
+        .set(auth())
+        .send({ name: `Insights ${Date.now()}` });
+      const card = await request(app)
+        .post('/accounts')
+        .set(auth())
+        .send({ type: 'credit_card', name: 'Cartão Insights', closingDay: 25, dueDay: 5 })
+        .expect(201);
+      const spend = (body: Record<string, unknown>) =>
+        request(app)
+          .post('/transactions/create')
+          .set(auth())
+          .send({ type: 'expense', title: 'Gasto', category: category.body.data.id, ...body })
+          .expect(201);
+
+      // Compra de 10/09 no cartão vence em 05/10: conta no período de outubro, não no de setembro.
+      const purchase = await spend({
+        amount: 4000,
+        date: '2026-09-10',
+        accountId: card.body.data.id,
+      });
+      await spend({ amount: 1000, date: '2026-10-05' });
+
+      const r = await request(app)
+        .get('/overview/insights')
+        .set(auth())
+        .query({ periodId: purchase.body.data.periodId })
+        .expect(200);
+
+      expect(r.body.data.period.id).toBe(purchase.body.data.periodId);
+      expect(r.body.data.spending).toMatchObject({ expense: 5000 });
+      expect(r.body.data.categories[0]).toMatchObject({
+        categoryId: category.body.data.id,
+        amount: 5000,
+        share: 100,
+      });
+      expect(r.body.data.history.at(-1)).toMatchObject({ isSelected: true, expense: 5000 });
+    });
+  });
+
   describe('GET /overview/dashboard previews (F5)', () => {
     it('additive data.previews present', async () => {
       const r = await request(app)
