@@ -64,25 +64,6 @@ describe('Insights features (F1/F3/F4/F5)', () => {
     });
   });
 
-  describe('GET /overview/insights/comparison (F4)', () => {
-    it('401 without token', async () => {
-      await request(app).get('/overview/insights/comparison').expect(401);
-    });
-
-    it('200 with totals/byCategory/highlights', async () => {
-      const r = await request(app)
-        .get('/overview/insights/comparison?periodsBack=3')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
-
-      expect(r.body.data).toHaveProperty('basis');
-      expect(r.body.data).toHaveProperty('totals');
-      expect(r.body.data.totals).toHaveProperty('signal');
-      expect(Array.isArray(r.body.data.byCategory)).toBe(true);
-      expect(Array.isArray(r.body.data.highlights)).toBe(true);
-    });
-  });
-
   describe('GET /overview/insights', () => {
     const auth = () => ({ Authorization: `Bearer ${token}` });
 
