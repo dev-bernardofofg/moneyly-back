@@ -1,5 +1,7 @@
 # F4 — Insights Comparativos
 
+> **Atualização 2026-10-26:** o endpoint `GET /overview/insights/comparison` foi removido. O comparativo por categoria vs média agora vem em `GET /overview/insights?periodId=` (`categories` e `spending`), agrupado por período financeiro. O helper `buildComparison` continua nas prévias do dashboard (F5).
+
 **Tipo:** feature (read-only). **Status:** spec. **Esforço:** médio. **Schema novo:** nenhum.
 **Por quê:** trend 2026 (insights AI sobre dados). Estende análise: comparativo por categoria vs média histórica + frases acionáveis ("Restaurante +40% vs sua média").
 
@@ -12,7 +14,9 @@ NÃO mexer no `FinancialInsights` existente (`/overview/insights`) — não queb
 Comparar o período atual com a média dos N períodos anteriores (default 3), por categoria e agregado, gerando deltas + sinais (`up`/`down`/`stable`) e mensagens prontas.
 
 ### Response (envelope `wrapSuccess`)
+
 `data: ComparativeInsights`
+
 ```
 {
   basis: { periodsCompared: number, currentPeriod: { startDate, endDate, label } },
@@ -34,6 +38,7 @@ Comparar o período atual com a média dos N períodos anteriores (default 3), p
   highlights: string[]           // top 3 mensagens mais relevantes (maior |deltaPct|)
 }
 ```
+
 `signal`: |deltaPct| < 10 → stable; >0 → up; <0 → down. `up` em despesa = ruim (front colore).
 
 ## Heurística

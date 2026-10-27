@@ -48,7 +48,7 @@ Cada módulo segue camadas: `routes/<x>.router.ts` → `controllers/<x>.controll
 - `overview.*`, `helpers/handlers/overview-handlers.ts`, `helpers/mappers.ts`. Schema `overview.schema.ts`.
 - `GET /overview/forecast?periodId=` (F1) saldo projetado + Saldo Livre (`freeBalance`): `get-forecast.use-case.ts` — reusa recurring + período + transactions + horas extras + orçamentos/metas, projeta ocorrências futuras até `endDate`. Sem schema DB. Read-only.
 - `GET /overview/insights?periodId=` gastos do período selecionado agrupados por `periodId` (cartão no período da fatura): `spending` (gasto, contas recorrentes que ainda caem, previsto, média dos períodos anteriores com movimento, delta/signal), `history` (últimos 6 períodos) e `categories` (valor, % do total, média e delta por categoria). Helper puro `helpers/period-insights.ts`. Substituiu a tendência por mês do calendário, totais de todo o histórico e melhor/pior mês.
-- `GET /overview/insights/comparison?periodsBack=` (F4) comparativo: `comparative-insights.service.ts` + helper puro `helpers/comparative-insights.ts`. Aditivo — não altera `/overview/insights`.
+- Comparativo F4: endpoint `/overview/insights/comparison` removido em 2026-10-26 (absorvido por `/overview/insights`). O helper puro `helpers/comparative-insights.ts` segue em uso nas prévias do dashboard e fornece `signalOf`/`deltaOf`.
 - `GET /transactions/subscriptions` (F3) detector de assinaturas: `subscription.service.ts` + helper puro `helpers/subscription-detector.ts`. Heurística sobre transactions (≥3 ocorrências, valor ±10%, cadência semanal/mensal/anual), exclui já-recorrentes. Read-only.
 
 ## Recurring Transactions (`/recurring-transactions`)
