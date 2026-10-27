@@ -114,6 +114,16 @@ describe('recurrence on the SP calendar', () => {
       expect(spDayString(sameDay)).toBe('2026-07-15');
     });
 
+    it('daily and weekly roll over the end of the month', () => {
+      const lastDay = calculateNextExecution('daily', null, null, spMidnight('2026-10-31'));
+      expect(spDayString(lastDay)).toBe('2026-11-01');
+      // 2026-10-26 is a Monday; next Monday is in November
+      const nextWeek = calculateNextExecution('weekly', null, 1, spMidnight('2026-10-26'));
+      expect(spDayString(nextWeek)).toBe('2026-11-02');
+      const newYear = calculateNextExecution('daily', null, null, spMidnight('2026-12-31'));
+      expect(spDayString(newYear)).toBe('2027-01-01');
+    });
+
     it('monthly with dayOfMonth clamps to short months and restores the anchor', () => {
       const jan31 = spMidnight('2026-01-31');
       const feb = calculateNextExecution('monthly', 31, null, jan31);
