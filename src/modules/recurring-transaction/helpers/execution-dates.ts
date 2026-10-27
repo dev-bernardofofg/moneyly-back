@@ -1,4 +1,4 @@
-import { spMidnightOf, spParts } from '@core/helpers/dates';
+import { spMidnightOf, spMidnightPlusDays, spParts } from '@core/helpers/dates';
 import type { RecurringFrequency } from '../recurring-transaction.types';
 
 /**
@@ -16,12 +16,12 @@ export function calculateNextExecution(
 
   switch (frequency) {
     case 'daily':
-      return spMidnightOf(year, month, day + 1);
+      return spMidnightPlusDays(year, month, day, 1);
 
     case 'weekly': {
       const target = dayOfWeek ?? weekday;
       const daysUntil = (target - weekday + 7) % 7 || 7;
-      return spMidnightOf(year, month, day + daysUntil);
+      return spMidnightPlusDays(year, month, day, daysUntil);
     }
 
     case 'monthly': {
@@ -45,7 +45,7 @@ export function calculateFirstExecution(
 
   switch (frequency) {
     case 'daily':
-      return spMidnightOf(year, month, day + 1);
+      return spMidnightPlusDays(year, month, day, 1);
 
     case 'weekly':
       return calculateNextExecution('weekly', null, dayOfWeek ?? null, now);

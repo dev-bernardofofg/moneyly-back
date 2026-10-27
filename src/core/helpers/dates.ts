@@ -82,6 +82,15 @@ export function spMidnightOf(year: number, month: number, day: number): Date {
   return fromZonedTime(`${y}-${pad(m + 1)}-${pad(d)}T00:00:00`, SAO_PAULO_TIMEZONE);
 }
 
+/**
+ * Meia-noite SP de (year, month 0-11, day) somando `days` com virada de mês/ano. Diferente de
+ * spMidnightOf, que clampa o dia (31 + 1 ficaria 31 em vez de 1º do mês seguinte).
+ */
+export function spMidnightPlusDays(year: number, month: number, day: number, days: number): Date {
+  const rolled = new Date(Date.UTC(year, month, day + days));
+  return spMidnightOf(rolled.getUTCFullYear(), rolled.getUTCMonth(), rolled.getUTCDate());
+}
+
 // ——— Legado (exibição/extração). NÃO persistir nem comparar o retorno. ———
 
 /** @deprecated Wall-clock deslocado. Use spDayString/spParts para calendário e formatBrazilian* para exibição. */
