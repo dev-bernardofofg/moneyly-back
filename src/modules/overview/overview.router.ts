@@ -2,7 +2,6 @@ import { Router } from 'express';
 import {
   getAvailablePeriods,
   getCardBills,
-  getComparativeInsights,
   getDashboardOverview,
   getFinancialInsights,
   getForecast,
@@ -12,7 +11,6 @@ import { authenticateUser } from '@modules/auth/middlewares/auth';
 import { ensurePeriodExists } from '@modules/financial-period';
 import { validate } from '@core/middlewares/validate';
 import {
-  comparativeInsightsQuerySchema,
   forecastQuerySchema,
   plannerQuerySchema,
   getAvailablePeriodsQuerySchema,
@@ -43,11 +41,5 @@ OverviewRouter.get('/insights', validate({ query: forecastQuerySchema }), getFin
 OverviewRouter.get('/forecast', validate({ query: forecastQuerySchema }), getForecast);
 
 OverviewRouter.get('/card-bills', validate({ query: forecastQuerySchema }), getCardBills);
-
-OverviewRouter.get(
-  '/insights/comparison',
-  validate({ query: comparativeInsightsQuerySchema }),
-  getComparativeInsights
-);
 
 export { OverviewRouter };

@@ -362,40 +362,6 @@ export const PlannerOverviewSchema = registry.register(
   })
 );
 
-const compareSignal = z.enum(['up', 'down', 'stable']);
-
-export const ComparativeInsightsSchema = registry.register(
-  'ComparativeInsights',
-  z.object({
-    basis: z.object({
-      periodsCompared: z.number().int(),
-      currentPeriod: z.object({
-        startDate: z.string(),
-        endDate: z.string(),
-        label: z.string(),
-      }),
-    }),
-    totals: z.object({
-      currentExpense: z.number(),
-      averageExpense: z.number(),
-      deltaPct: z.number().nullable(),
-      signal: compareSignal,
-    }),
-    byCategory: z.array(
-      z.object({
-        categoryId: z.string().uuid(),
-        categoryName: z.string(),
-        currentExpense: z.number(),
-        averageExpense: z.number(),
-        deltaPct: z.number().nullable(),
-        signal: compareSignal,
-        message: z.string(),
-      })
-    ),
-    highlights: z.array(z.string()),
-  })
-);
-
 export const SubscriptionCandidateSchema = registry.register(
   'SubscriptionCandidate',
   z.object({

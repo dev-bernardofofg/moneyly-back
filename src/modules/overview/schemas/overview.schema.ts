@@ -28,16 +28,5 @@ export const forecastQuerySchema = z.object({
 
 export const plannerQuerySchema = forecastQuerySchema;
 
-export const comparativeInsightsQuerySchema = z.object({
-  periodsBack: z
-    .string()
-    .optional()
-    .transform((val) => (val ? Number(val) : undefined))
-    .refine(
-      (val) => val === undefined || (val >= 1 && val <= 12),
-      'periodsBack deve estar entre 1 e 12'
-    ),
-});
-
 export type GetDashboardOverviewQuery = z.infer<typeof getDashboardOverviewQuerySchema>;
 export type GetAvailablePeriodsQuery = z.infer<typeof getAvailablePeriodsQuerySchema>;

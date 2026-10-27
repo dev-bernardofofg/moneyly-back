@@ -5,7 +5,6 @@ import type { AuthRequest } from '@modules/auth/middlewares/auth';
 import type { GetDashboardOverviewQuery } from './schemas/overview.schema';
 import { getAvailablePeriodsUseCase } from './use-cases/get-available-periods.use-case';
 import { getCardBillsUseCase } from './use-cases/get-card-bills.use-case';
-import { getComparativeInsightsUseCase } from './use-cases/get-comparative-insights.use-case';
 import { getDashboardOverviewUseCase } from './use-cases/get-dashboard-overview.use-case';
 import { getDashboardPreviewsUseCase } from './use-cases/get-dashboard-previews.use-case';
 import { getFinancialInsightsUseCase } from './use-cases/get-financial-insights.use-case';
@@ -79,12 +78,6 @@ export const getForecast = asyncHandler<AuthRequest>(async (req, res) => {
   const { periodId } = req.query as { periodId?: string };
   const forecast = await getForecastUseCase(req.user.id, periodId);
   return ResponseHandler.success(res, forecast, 'Projeção de saldo gerada com sucesso');
-});
-
-export const getComparativeInsights = asyncHandler<AuthRequest>(async (req, res) => {
-  const { periodsBack } = req.query as { periodsBack?: number };
-  const data = await getComparativeInsightsUseCase(req.user.id, periodsBack);
-  return ResponseHandler.success(res, data, 'Insights comparativos gerados com sucesso');
 });
 
 export const getPlannerOverview = asyncHandler<AuthRequest>(async (req, res) => {

@@ -4,7 +4,6 @@
 import { z } from '@core/openapi/registry';
 import { wrapSuccess } from '@core/openapi/envelopes';
 import {
-  ComparativeInsightsSchema,
   DashboardOverviewSchema,
   FinancialPeriodSummarySchema,
   FinancialInsightsSchema,
@@ -58,14 +57,6 @@ route({
   summary: 'Saldo Livre e projeção do período',
   query: z.object({ periodId: z.string().uuid().optional() }),
   ok: ok(wrapSuccess(ForecastResponseSchema)),
-});
-route({
-  method: 'get',
-  path: '/overview/insights/comparison',
-  tag: 'Overview',
-  summary: 'Insights comparativos (período atual vs média)',
-  query: z.object({ periodsBack: z.coerce.number().int().min(1).max(12).optional() }),
-  ok: ok(wrapSuccess(ComparativeInsightsSchema)),
 });
 route({
   method: 'get',
