@@ -18,6 +18,7 @@ import type {
   AccountFlow,
   CardPeriodTotal,
   ITransactionRepository,
+  PeriodCategoryTotal,
   TransferCandidate,
   ReconcileCandidateRow,
   TitleCategory,
@@ -312,6 +313,26 @@ export const transactionRepository = {
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
       .where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
     return row ?? null;
+  },
+
+  async sumByPeriodAndCategory(
+    userId: string,
+    periodIds: string[]
+  ): Promise<PeriodCategoryTotal[]> {
+    if (periodIds.length === 0) return [];
+    const rows = await db
+      .select({
+        periodId: transactions.periodId,
+        type: transactions.type,
+        categoryId: categories.id,
+        categoryName: categories.name,
+        total: sum(transactions.amount),
+      })
+      .from(transactions)
+      .innerJoin(categories, eq(transactions.categoryId, categories.id))
+      .where(and(eq(transactions.userId, userId), inArray(transactions.periodId, periodIds)))
+      .groupBy(transactions.periodId, transactions.type, categories.id, categories.name);
+    return rows.map((row) => ({ ...row, periodId: row.periodId!, total: Number(row.total ?? 0) }));
   },
 
   async sumSignedSince(userId: string, accountId: string, since: Date): Promise<number> {

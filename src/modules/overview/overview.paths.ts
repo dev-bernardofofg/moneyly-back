@@ -47,7 +47,8 @@ route({
   method: 'get',
   path: '/overview/insights',
   tag: 'Overview',
-  summary: 'Insights financeiros',
+  summary: 'Gastos do período por categoria e comparados aos períodos anteriores',
+  query: z.object({ periodId: z.string().uuid().optional() }),
   ok: ok(wrapSuccess(FinancialInsightsSchema)),
 });
 route({

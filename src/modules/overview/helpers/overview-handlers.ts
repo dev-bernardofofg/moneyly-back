@@ -1,5 +1,4 @@
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import type { TransactionWithCategory } from '@modules/transaction/repositories/transaction.repository';
 
 export const calculateStats = (transactions: TransactionWithCategory[]) => {
@@ -88,33 +87,4 @@ export const calculatePeriodChartData = (
   }));
 
   return { data, categories };
-};
-
-export const calculateMonthlyAggregates = (
-  allTransactions: TransactionWithCategory[]
-): Array<{
-  month: string;
-  label: string;
-  income: number;
-  expense: number;
-  balance: number;
-}> => {
-  const monthMap: Record<string, { income: number; expense: number }> = {};
-
-  allTransactions.forEach((tx) => {
-    const key = format(new Date(tx.date), 'yyyy-MM');
-    if (!monthMap[key]) monthMap[key] = { income: 0, expense: 0 };
-    if (tx.type === 'income') monthMap[key]!.income += Number(tx.amount);
-    else monthMap[key]!.expense += Number(tx.amount);
-  });
-
-  return Object.entries(monthMap)
-    .map(([month, data]) => ({
-      month,
-      label: format(new Date(month + '-01'), 'MMMM yyyy', { locale: ptBR }),
-      income: Math.round(data.income),
-      expense: Math.round(data.expense),
-      balance: Math.round(data.income - data.expense),
-    }))
-    .sort((a, b) => a.month.localeCompare(b.month));
 };

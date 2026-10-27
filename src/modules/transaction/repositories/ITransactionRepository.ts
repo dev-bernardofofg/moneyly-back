@@ -67,6 +67,7 @@ export interface ITransactionRepository {
     id: string,
     userId: string
   ): Promise<(TransferCandidate & { accountType: string }) | null>;
+  sumByPeriodAndCategory(userId: string, periodIds: string[]): Promise<PeriodCategoryTotal[]>;
   sumSignedSince(userId: string, accountId: string, since: Date): Promise<number>;
   sumCardExpensesByPeriod(
     userId: string,
@@ -93,6 +94,13 @@ export type TransferCandidate = Pick<
   Transaction,
   'id' | 'accountId' | 'type' | 'amount' | 'date' | 'externalId'
 >;
+export type PeriodCategoryTotal = {
+  periodId: string;
+  type: 'income' | 'expense';
+  categoryId: string;
+  categoryName: string;
+  total: number;
+};
 export type CardPeriodTotal = { accountId: string; startDate: Date; endDate: Date; total: number };
 export type AccountFlow = Pick<Transaction, 'accountId' | 'type' | 'amount' | 'date'>;
 export type AccountCategoryTotal = {

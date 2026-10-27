@@ -1,119 +1,44 @@
-import { sumAmounts } from '@core/helpers/amount';
-import { getCurrentSaoPauloDate } from '@core/helpers/dates';
-import { NotFoundError } from '@core/errors';
-import { getCurrentFinancialPeriod } from '@modules/financial-period';
-import { transactionRepository } from '@modules/transaction';
-import { userRepository } from '@modules/user';
-import { expectedIncomeForPeriod } from '../helpers/expected-income';
-import { calculateMonthlyAggregates } from '../helpers/overview-handlers';
+import { HttpError } from '@core/errors/http-error';
+import { financialPeriodService, formatPeriodLabel } from '@modules/financial-period';
+import { financialPeriodRepository } from '@modules/financial-period/repositories/financial-period.repository';
+import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
+import { buildPeriodInsights } from '../helpers/period-insights';
+import { getForecastUseCase } from './get-forecast.use-case';
 
-export const getFinancialInsightsUseCase = async (userId: string) => {
-  const user = await userRepository.findById(userId);
-  if (!user) throw new NotFoundError('Usuário não encontrado');
-  const { income: monthlyIncome } = await expectedIncomeForPeriod(userId);
+const HISTORY_SIZE = 6;
 
-  const allTransactions = await transactionRepository.findAllByUserId(userId);
-  const monthlyData = calculateMonthlyAggregates(allTransactions);
+export const getFinancialInsightsUseCase = async (userId: string, periodId?: string) => {
+  const period = periodId
+    ? await financialPeriodService.getPeriodById(periodId, userId)
+    : await financialPeriodService.ensureCurrentPeriodExists(userId);
+  if (!period) throw new HttpError(404, 'Período não encontrado');
 
-  const currentPeriod = getCurrentFinancialPeriod(
-    user.financialDayStart ?? 1,
-    user.financialDayEnd ?? 31
+  const start = new Date(period.startDate);
+  const earlier = (await financialPeriodRepository.findActiveByUser(userId)).filter(
+    (candidate) => candidate.id !== period.id && new Date(candidate.startDate) < start
   );
+  const periods = [...earlier, period].slice(-HISTORY_SIZE).map((item) => ({
+    id: item.id,
+    startDate: new Date(item.startDate),
+    endDate: new Date(item.endDate),
+    label: formatPeriodLabel(new Date(item.startDate), new Date(item.endDate)),
+  }));
 
-  const now = getCurrentSaoPauloDate();
-  const totalDays = Math.max(
-    1,
-    Math.ceil((currentPeriod.endDate.getTime() - currentPeriod.startDate.getTime()) / 86400000)
-  );
-  const daysElapsed = Math.max(
-    1,
-    Math.ceil((now.getTime() - currentPeriod.startDate.getTime()) / 86400000)
-  );
+  // Em andamento: as contas recorrentes que ainda vão cair entram na previsão de gasto.
+  const isOpen = Date.now() <= new Date(period.endDate).getTime();
+  const [totals, forecast] = await Promise.all([
+    transactionRepository.sumByPeriodAndCategory(
+      userId,
+      periods.map((item) => item.id)
+    ),
+    isOpen ? getForecastUseCase(userId, period.id) : null,
+  ]);
 
-  const currentPeriodTx = allTransactions.filter((tx) => {
-    const d = new Date(tx.date);
-    return d >= currentPeriod.startDate && d <= currentPeriod.endDate;
+  return buildPeriodInsights({
+    periods,
+    selectedId: period.id,
+    totals,
+    upcomingExpense: forecast?.projected.recurringExpense ?? 0,
+    isOpen,
   });
-
-  const currentExpense = sumAmounts(currentPeriodTx.filter((tx) => tx.type === 'expense'));
-
-  const projectedExpense = Math.round((currentExpense / daysElapsed) * totalDays);
-
-  const lastTwo = monthlyData.slice(-2);
-  const prevMonth = lastTwo[0] ?? null;
-  const currMonth = lastTwo[1] ?? null;
-
-  const expenseChange =
-    prevMonth && currMonth && prevMonth.expense > 0
-      ? Number((((currMonth.expense - prevMonth.expense) / prevMonth.expense) * 100).toFixed(1))
-      : null;
-
-  const incomeChange =
-    prevMonth && currMonth && prevMonth.income > 0
-      ? Number((((currMonth.income - prevMonth.income) / prevMonth.income) * 100).toFixed(1))
-      : null;
-
-  const totalExpenseAllTime = monthlyData.reduce((s, m) => s + m.expense, 0);
-  const avgMonthlyExpense =
-    monthlyData.length > 0 ? Math.round(totalExpenseAllTime / monthlyData.length) : 0;
-
-  const avgMonthlyIncome =
-    monthlyData.length > 0
-      ? Math.round(monthlyData.reduce((s, m) => s + m.income, 0) / monthlyData.length)
-      : 0;
-
-  const bestMonth = monthlyData.length
-    ? monthlyData.reduce((min, m) => (m.expense < min.expense ? m : min))
-    : null;
-
-  const worstMonth = monthlyData.length
-    ? monthlyData.reduce((max, m) => (m.expense > max.expense ? m : max))
-    : null;
-
-  const categoryMap: Record<string, { name: string; amount: number }> = {};
-  allTransactions
-    .filter((tx) => tx.type === 'expense')
-    .forEach((tx) => {
-      if (!categoryMap[tx.category.id]) {
-        categoryMap[tx.category.id] = { name: tx.category.name, amount: 0 };
-      }
-      categoryMap[tx.category.id]!.amount += Number(tx.amount);
-    });
-
-  const topCategories = Object.values(categoryMap)
-    .sort((a, b) => b.amount - a.amount)
-    .slice(0, 5)
-    .map((c) => ({
-      name: c.name,
-      amount: Math.round(c.amount),
-      percentage:
-        totalExpenseAllTime > 0 ? Number(((c.amount / totalExpenseAllTime) * 100).toFixed(1)) : 0,
-    }));
-
-  return {
-    currentPeriod: {
-      daysElapsed,
-      totalDays,
-      completionPercentage: Math.min(100, Math.round((daysElapsed / totalDays) * 100)),
-      currentExpense: Math.round(currentExpense),
-      projectedExpense,
-      isOnTrack: projectedExpense <= monthlyIncome,
-    },
-    trend: {
-      previousMonth: prevMonth,
-      currentMonth: currMonth,
-      expenseChange,
-      incomeChange,
-    },
-    allTime: {
-      averageMonthlyExpense: avgMonthlyExpense,
-      averageMonthlyIncome: avgMonthlyIncome,
-      bestMonth,
-      worstMonth,
-      totalMonths: monthlyData.length,
-      totalTransactions: allTransactions.length,
-    },
-    topCategories,
-    monthlyHistory: monthlyData,
-  };
 };

@@ -38,7 +38,7 @@ OverviewRouter.get(
 
 OverviewRouter.get('/planner', validate({ query: plannerQuerySchema }), getPlannerOverview);
 
-OverviewRouter.get('/insights', getFinancialInsights);
+OverviewRouter.get('/insights', validate({ query: forecastQuerySchema }), getFinancialInsights);
 
 OverviewRouter.get('/forecast', validate({ query: forecastQuerySchema }), getForecast);
 

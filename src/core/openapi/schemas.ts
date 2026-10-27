@@ -273,39 +273,54 @@ export const DashboardOverviewSchema = registry.register(
   })
 );
 
+const signal = z.enum(['up', 'down', 'stable']);
+
+// Tudo por período financeiro (periodId): compra no cartão conta no período da fatura.
 export const FinancialInsightsSchema = registry.register(
   'FinancialInsights',
   z.object({
-    currentPeriod: z.object({
-      daysElapsed: z.number().int(),
-      totalDays: z.number().int(),
-      completionPercentage: z.number(),
-      currentExpense: z.number(),
+    period: z.object({
+      id: z.string().uuid(),
+      startDate: isoDate,
+      endDate: isoDate,
+      label: z.string(),
+      isOpen: z.boolean(),
+    }),
+    spending: z.object({
+      income: z.number(),
+      expense: z.number(),
+      // Contas recorrentes que ainda vão cair no período (0 se encerrado).
+      upcomingExpense: z.number(),
       projectedExpense: z.number(),
-      isOnTrack: z.boolean(),
+      // Média dos períodos anteriores com movimento; null sem histórico.
+      averageExpense: z.number().nullable(),
+      deltaPct: z.number().nullable(),
+      signal,
+      periodsCompared: z.number().int(),
     }),
-    trend: z.object({
-      previousMonth: MonthlySummaryItemSchema.nullable(),
-      currentMonth: MonthlySummaryItemSchema.nullable(),
-      expenseChange: z.number().nullable(),
-      incomeChange: z.number().nullable(),
-    }),
-    allTime: z.object({
-      averageMonthlyExpense: z.number(),
-      averageMonthlyIncome: z.number(),
-      bestMonth: MonthlySummaryItemSchema.nullable(),
-      worstMonth: MonthlySummaryItemSchema.nullable(),
-      totalMonths: z.number().int(),
-      totalTransactions: z.number().int(),
-    }),
-    topCategories: z.array(
+    history: z.array(
       z.object({
-        name: z.string(),
-        amount: z.number(),
-        percentage: z.number(),
+        periodId: z.string().uuid(),
+        label: z.string(),
+        startDate: isoDate,
+        endDate: isoDate,
+        income: z.number(),
+        expense: z.number(),
+        projectedExpense: z.number(),
+        isSelected: z.boolean(),
       })
     ),
-    monthlyHistory: z.array(MonthlySummaryItemSchema),
+    categories: z.array(
+      z.object({
+        categoryId: z.string().uuid(),
+        name: z.string(),
+        amount: z.number(),
+        share: z.number(),
+        averageAmount: z.number().nullable(),
+        deltaPct: z.number().nullable(),
+        signal,
+      })
+    ),
   })
 );
 

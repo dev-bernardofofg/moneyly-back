@@ -36,13 +36,13 @@ export interface ComparativeInsights {
 const STABLE_THRESHOLD = 10; // |deltaPct| < 10% = stable
 const MIN_AVG_FOR_HIGHLIGHT = 100; // centavos
 
-function signalOf(deltaPct: number | null): CompareSignal {
+export function signalOf(deltaPct: number | null): CompareSignal {
   if (deltaPct === null) return 'stable';
   if (Math.abs(deltaPct) < STABLE_THRESHOLD) return 'stable';
   return deltaPct > 0 ? 'up' : 'down';
 }
 
-function deltaOf(current: number, average: number): number | null {
+export function deltaOf(current: number, average: number): number | null {
   if (average === 0) return null;
   return Number((((current - average) / average) * 100).toFixed(1));
 }

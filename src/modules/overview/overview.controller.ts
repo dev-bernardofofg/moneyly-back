@@ -70,7 +70,8 @@ export const getAvailablePeriods = asyncHandler<AuthRequest>(async (req, res) =>
 });
 
 export const getFinancialInsights = asyncHandler<AuthRequest>(async (req, res) => {
-  const insights = await getFinancialInsightsUseCase(req.user.id);
+  const { periodId } = req.query as { periodId?: string };
+  const insights = await getFinancialInsightsUseCase(req.user.id, periodId);
   return ResponseHandler.success(res, insights, 'Insights financeiros gerados com sucesso');
 });
 
