@@ -182,7 +182,12 @@ describe('Transfers', () => {
       .expect(200);
     expect(again.body.data.items[0].status).toBe('imported');
 
-    const list = await request(app).get('/transfers').set(auth()).expect(200);
+    // Sem periodId a listagem usa o período atual, que muda com o relógio.
+    const list = await request(app)
+      .get('/transfers')
+      .query({ periodId: pix.body.data.periodId })
+      .set(auth())
+      .expect(200);
     expect(list.body.data).toHaveLength(2);
   });
 });
