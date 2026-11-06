@@ -19,7 +19,8 @@ export const processCheckInReminders = async (): Promise<void> => {
 
   const behindByUser = new Map<string, number>();
   for (const account of accounts) {
-    const behind = accountFreshness(account.dataThrough, today) !== 'fresh';
+    const closingDay = account.type === 'credit_card' ? account.closingDay : null;
+    const behind = accountFreshness(account.dataThrough, today, closingDay) !== 'fresh';
     behindByUser.set(account.userId, (behindByUser.get(account.userId) ?? 0) + (behind ? 1 : 0));
   }
 

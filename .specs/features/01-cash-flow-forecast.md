@@ -37,6 +37,9 @@ freeBalance: {
 
 Valores em centavos. `GET /accounts` expõe `dataThrough` e `freshness`: `fresh` até 7 dias depois de
 `data_through`, `stale` depois disso, `empty` quando `data_through` é nulo (`account/helpers/freshness.ts`).
+Cartão usa `closingDay`: com C1 o primeiro fechamento em ou depois de `data_through` e C2 o fechamento do
+mês seguinte (dia limitado ao último do mês), fica `fresh` até C2 + 7 dias, porque a fatura sai uma vez por
+mês. Vale em `GET /accounts`, no lembrete de check-in e, por consequência, na confiança do saldo livre.
 
 ## Fórmula
 

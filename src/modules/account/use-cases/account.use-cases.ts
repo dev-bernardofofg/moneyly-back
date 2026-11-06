@@ -38,7 +38,14 @@ export const listAccountsUseCase = async (userId: string) => {
   // Saldo atual só com saldo inicial: sem ele não há de onde partir.
   return Promise.all(
     accounts.map(async (stored) => {
-      const account = { ...stored, freshness: accountFreshness(stored.dataThrough, today) };
+      const account = {
+        ...stored,
+        freshness: accountFreshness(
+          stored.dataThrough,
+          today,
+          stored.type === 'credit_card' ? stored.closingDay : null
+        ),
+      };
       const since = account.type === 'checking' ? account.openingBalanceDate : null;
       if (!since) return { ...account, currentBalance: null };
       const [transactionsNet, billPayments] = await Promise.all([
