@@ -3,7 +3,8 @@
  * Repositories and cross-module singletons are mocked via jest.mock on aliases.
  */
 
-import { spMidnight } from '@core/helpers/dates';
+import { spMidnightOf } from '@core/helpers/dates';
+import { occurrencesBetween } from '@modules/recurring-transaction/helpers/occurrences';
 import { recurringTransactionRepository } from '@modules/recurring-transaction/repositories/recurring-transaction.repository';
 import { createRecurringTransactionUseCase } from '@modules/recurring-transaction/use-cases/create-recurring-transaction.use-case';
 import { processRecurringTransactions } from '@modules/recurring-transaction/use-cases/process-recurring-transactions.use-case';
@@ -30,12 +31,17 @@ const mockedRepo = recurringTransactionRepository as jest.Mocked<
 const mockedCreateTransaction = createTransactionUseCase as jest.Mock;
 const mockedPeriodService = financialPeriodService as jest.Mocked<typeof financialPeriodService>;
 
+const sp = (iso: string) => {
+  const [y, m, d] = iso.split('-').map(Number) as [number, number, number];
+  return spMidnightOf(y, m - 1, d);
+};
+
 const baseRecurring = {
   id: 'rec-1',
   userId: 'user-1',
   type: 'expense',
   title: 'Assinatura',
-  amount: 29.9,
+  amount: 2990,
   categoryId: 'cat-1',
   frequency: 'monthly',
   dayOfMonth: 10,
@@ -50,91 +56,143 @@ const baseRecurring = {
   updatedAt: new Date(),
 };
 
+const input = {
+  type: 'expense' as const,
+  title: 'Assinatura',
+  amount: 2990,
+  categoryId: 'cat-1',
+  frequency: 'monthly' as const,
+};
+
+const freezeAt = (iso: string) =>
+  jest.useFakeTimers({
+    now: new Date(iso),
+    doNotFake: [
+      'nextTick',
+      'setImmediate',
+      'clearImmediate',
+      'setInterval',
+      'clearInterval',
+      'setTimeout',
+      'clearTimeout',
+      'queueMicrotask',
+      'performance',
+      'hrtime',
+    ],
+  });
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockedPeriodService.createNextPeriods.mockResolvedValue([] as never);
+  mockedRepo.create.mockImplementation(async (data) => ({ ...baseRecurring, ...data }) as never);
+});
+
+afterEach(() => {
+  jest.useRealTimers();
 });
 
 describe('recurring transaction use-cases', () => {
   describe('createRecurringTransactionUseCase', () => {
-    it('pre-creates all installments on a recurrence saved already inactive', async () => {
-      mockedRepo.create.mockImplementation(
-        async (data) => ({ ...baseRecurring, ...data }) as never
-      );
-      mockedCreateTransaction.mockResolvedValue({});
+    it('never creates transactions for an installment recurrence and keeps it active', async () => {
+      freezeAt('2026-11-05T15:00:00Z');
 
       const result = await createRecurringTransactionUseCase('user-1', {
-        type: 'expense',
-        title: 'Parcelado',
-        amount: 100.0,
-        categoryId: 'cat-1',
-        frequency: 'monthly',
+        ...input,
         totalInstallments: 3,
-        startDate: new Date('2024-01-10'),
+        startDate: sp('2026-09-10'),
       });
 
       expect(mockedPeriodService.createNextPeriods).toHaveBeenCalledWith('user-1', 3);
-      expect(mockedCreateTransaction).toHaveBeenCalledTimes(3);
-      expect(mockedCreateTransaction).toHaveBeenCalledWith(
-        'user-1',
-        expect.objectContaining({ recurringTransactionId: 'rec-1' })
-      );
-      // Salva já concluída: o cron não pode pegar a recorrência no meio da criação.
-      expect(mockedRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ executedInstallments: 3, isActive: false })
-      );
-      expect(mockedRepo.update).not.toHaveBeenCalled();
-      expect(result.executedInstallments).toBe(3);
-      expect(result.isActive).toBe(false);
+      expect(mockedCreateTransaction).not.toHaveBeenCalled();
+      // Set e outubro já passaram; a terceira parcela ainda vem.
+      expect(result).toMatchObject({
+        executedInstallments: 2,
+        isActive: true,
+        nextExecution: sp('2026-11-10'),
+      });
     });
 
-    it('creates the first transaction immediately for infinite recurring starting today or earlier', async () => {
-      const past = new Date();
-      past.setDate(past.getDate() - 1);
-      mockedRepo.create.mockImplementation(
-        async (data) => ({ ...baseRecurring, ...data }) as never
-      );
-      mockedCreateTransaction.mockResolvedValue({});
+    it('closes an installment recurrence whose installments all passed', async () => {
+      freezeAt('2026-11-05T15:00:00Z');
 
       const result = await createRecurringTransactionUseCase('user-1', {
-        type: 'expense',
-        title: 'Assinatura',
-        amount: 29.9,
-        categoryId: 'cat-1',
-        frequency: 'monthly',
-        startDate: past,
+        ...input,
+        totalInstallments: 2,
+        startDate: sp('2026-08-10'),
       });
 
-      expect(mockedCreateTransaction).toHaveBeenCalledTimes(1);
-      expect(mockedCreateTransaction).toHaveBeenCalledWith(
-        'user-1',
-        // Contrato: a data persistida é o dia SP canonizado na meia-noite SP.
-        expect.objectContaining({ recurringTransactionId: 'rec-1', date: spMidnight(past) })
-      );
-      // A primeira execução já sai avançada no insert: o cron não a lança de novo.
-      const saved = mockedRepo.create.mock.calls[0]![0];
-      expect(saved).toMatchObject({ executedInstallments: 1, isActive: true });
-      expect(saved.nextExecution.getTime()).toBeGreaterThan(spMidnight(past).getTime());
-      expect(result.executedInstallments).toBe(1);
+      expect(result).toMatchObject({
+        executedInstallments: 2,
+        isActive: false,
+        nextExecution: sp('2026-10-10'),
+      });
     });
 
-    it('does not create a transaction for infinite recurring starting in the future', async () => {
-      const future = new Date();
-      future.setDate(future.getDate() + 10);
-      mockedRepo.create.mockResolvedValue(baseRecurring as never);
+    it('does not create a transaction for infinite recurring starting today or earlier', async () => {
+      freezeAt('2026-11-05T15:00:00Z');
 
       const result = await createRecurringTransactionUseCase('user-1', {
-        type: 'expense',
-        title: 'Assinatura',
-        amount: 29.9,
-        categoryId: 'cat-1',
-        frequency: 'monthly',
-        startDate: future,
+        ...input,
+        startDate: sp('2026-09-10'),
       });
 
       expect(mockedCreateTransaction).not.toHaveBeenCalled();
-      expect(mockedRepo.update).not.toHaveBeenCalled();
-      expect(result).toEqual(baseRecurring);
+      expect(result).toMatchObject({
+        executedInstallments: 2,
+        isActive: true,
+        nextExecution: sp('2026-11-10'),
+      });
+    });
+
+    it('leaves a recurrence starting today for the cron to advance', async () => {
+      freezeAt('2026-11-05T15:00:00Z');
+
+      const result = await createRecurringTransactionUseCase('user-1', {
+        ...input,
+        startDate: sp('2026-11-05'),
+      });
+
+      expect(mockedCreateTransaction).not.toHaveBeenCalled();
+      expect(result).toMatchObject({ executedInstallments: 0, nextExecution: sp('2026-11-05') });
+    });
+
+    it('does not create a transaction for infinite recurring starting in the future', async () => {
+      freezeAt('2026-11-05T15:00:00Z');
+
+      const result = await createRecurringTransactionUseCase('user-1', {
+        ...input,
+        startDate: sp('2026-11-15'),
+      });
+
+      expect(mockedCreateTransaction).not.toHaveBeenCalled();
+      expect(result).toMatchObject({ executedInstallments: 0, nextExecution: sp('2026-11-15') });
+    });
+
+    it('keeps occurrencesBetween and the cron in agreement about installments', async () => {
+      freezeAt('2026-11-05T15:00:00Z');
+      const created = await createRecurringTransactionUseCase('user-1', {
+        ...input,
+        totalInstallments: 3,
+        startDate: sp('2026-09-10'),
+      });
+      const all = [sp('2026-09-10'), sp('2026-10-10'), sp('2026-11-10')];
+      const window = (rec: typeof created) =>
+        occurrencesBetween(rec as never, sp('2026-08-01'), sp('2027-06-01'));
+
+      expect(window(created)).toEqual(all);
+
+      freezeAt('2026-11-10T15:00:00Z');
+      mockedRepo.findDueTransactions.mockResolvedValue([created] as never);
+      mockedRepo.claimExecution.mockResolvedValue(true);
+      await processRecurringTransactions();
+      const [, nextExecution, advanced] = mockedRepo.claimExecution.mock.calls[0]!;
+      const afterCron = {
+        ...created,
+        nextExecution,
+        executedInstallments: created.executedInstallments + (advanced ?? 0),
+      };
+
+      expect(window(afterCron as never)).toEqual(all);
     });
   });
 
@@ -148,7 +206,7 @@ describe('recurring transaction use-cases', () => {
       expect(mockedRepo.update).not.toHaveBeenCalled();
     });
 
-    it('rejects editing an installment recurring already fully materialized', async () => {
+    it('rejects editing an installment recurring already concluded', async () => {
       mockedRepo.findById.mockResolvedValue({
         ...baseRecurring,
         totalInstallments: 3,
@@ -192,55 +250,75 @@ describe('recurring transaction use-cases', () => {
   });
 
   describe('processRecurringTransactions', () => {
-    it('claims the due execution before materializing it', async () => {
-      const due = { ...baseRecurring, nextExecution: new Date() };
+    it('only advances the schedule, without creating transactions', async () => {
+      freezeAt('2026-02-10T15:00:00Z');
+      const due = { ...baseRecurring, nextExecution: sp('2026-02-10') };
       mockedRepo.findDueTransactions.mockResolvedValue([due] as never);
       mockedRepo.claimExecution.mockResolvedValue(true);
-      mockedCreateTransaction.mockResolvedValue({});
 
       await processRecurringTransactions();
 
-      expect(mockedRepo.claimExecution).toHaveBeenCalledWith(due, expect.any(Date));
-      expect(mockedCreateTransaction).toHaveBeenCalledWith(
-        'user-1',
-        expect.objectContaining({ recurringTransactionId: 'rec-1' })
-      );
+      expect(mockedRepo.claimExecution).toHaveBeenCalledWith(due, sp('2026-03-10'), 1);
+      expect(mockedCreateTransaction).not.toHaveBeenCalled();
     });
 
     it('skips an execution another run already claimed', async () => {
-      const due = { ...baseRecurring, nextExecution: new Date() };
+      freezeAt('2026-02-10T15:00:00Z');
+      const due = { ...baseRecurring, nextExecution: sp('2026-02-10') };
       mockedRepo.findDueTransactions.mockResolvedValue([due] as never);
       mockedRepo.claimExecution.mockResolvedValue(false);
 
       await processRecurringTransactions();
 
+      expect(mockedRepo.claimExecution).toHaveBeenCalledTimes(1);
       expect(mockedCreateTransaction).not.toHaveBeenCalled();
     });
 
-    it('skips overdue executions and only reschedules', async () => {
-      const overdueDate = new Date();
-      overdueDate.setDate(overdueDate.getDate() - 90);
-      const due = { ...baseRecurring, nextExecution: overdueDate };
+    it('catches up missed occurrences counting each one as an installment', async () => {
+      freezeAt('2026-04-12T15:00:00Z');
+      const due = {
+        ...baseRecurring,
+        totalInstallments: 6,
+        executedInstallments: 1,
+        nextExecution: sp('2026-02-10'),
+      };
       mockedRepo.findDueTransactions.mockResolvedValue([due] as never);
+      mockedRepo.claimExecution.mockResolvedValue(true);
 
       await processRecurringTransactions();
 
-      expect(mockedCreateTransaction).not.toHaveBeenCalled();
-      expect(mockedRepo.claimExecution).not.toHaveBeenCalled();
-      expect(mockedRepo.updateNextExecution).toHaveBeenCalledWith('rec-1', expect.any(Date));
+      // fev, mar e abr passaram sem o cron rodar.
+      expect(mockedRepo.claimExecution).toHaveBeenCalledWith(due, sp('2026-05-10'), 3);
     });
 
-    it('releases the claim and keeps going when materializing fails', async () => {
-      const first = { ...baseRecurring, id: 'rec-fail', nextExecution: new Date() };
-      const second = { ...baseRecurring, id: 'rec-ok', nextExecution: new Date() };
-      mockedRepo.findDueTransactions.mockResolvedValue([first, second] as never);
+    it('never advances past the last installment', async () => {
+      freezeAt('2026-06-12T15:00:00Z');
+      const due = {
+        ...baseRecurring,
+        totalInstallments: 3,
+        executedInstallments: 1,
+        nextExecution: sp('2026-02-10'),
+      };
+      mockedRepo.findDueTransactions.mockResolvedValue([due] as never);
       mockedRepo.claimExecution.mockResolvedValue(true);
-      mockedCreateTransaction.mockRejectedValueOnce(new Error('boom')).mockResolvedValueOnce({});
 
       await processRecurringTransactions();
 
-      expect(mockedRepo.releaseExecution).toHaveBeenCalledWith(first);
-      expect(mockedCreateTransaction).toHaveBeenCalledTimes(2);
+      expect(mockedRepo.claimExecution).toHaveBeenCalledWith(due, sp('2026-04-10'), 2);
+    });
+
+    it('keeps going when one recurrence fails', async () => {
+      freezeAt('2026-02-10T15:00:00Z');
+      const first = { ...baseRecurring, id: 'rec-fail', nextExecution: sp('2026-02-10') };
+      const second = { ...baseRecurring, id: 'rec-ok', nextExecution: sp('2026-02-10') };
+      mockedRepo.findDueTransactions.mockResolvedValue([first, second] as never);
+      mockedRepo.claimExecution
+        .mockRejectedValueOnce(new Error('boom'))
+        .mockResolvedValueOnce(true);
+
+      await processRecurringTransactions();
+
+      expect(mockedRepo.claimExecution).toHaveBeenCalledTimes(2);
     });
   });
 });

@@ -1,10 +1,9 @@
 import type { RecurringTransaction } from '@infra/db/schema';
 import { spMidnight, spParts } from '@core/helpers/dates';
 import { resolveAccountId } from '@modules/account/use-cases/account.use-cases';
-import { createTransactionUseCase } from '@modules/transaction';
 import { financialPeriodService } from '@modules/financial-period';
-import { calculateNextExecution } from '../helpers/execution-dates';
-import { calcMonthsNeeded, generateExecutionDates } from '../helpers/installments';
+import { calcMonthsNeeded } from '../helpers/installments';
+import { advanceSchedule } from '../helpers/schedule';
 import { recurringTransactionRepository } from '../repositories/recurring-transaction.repository';
 import type { CreateRecurringTransactionInput } from '../recurring-transaction.types';
 
@@ -24,13 +23,24 @@ export const createRecurringTransactionUseCase = async (
   if (data.accountId) await resolveAccountId(userId, data.accountId);
   const accountId = data.accountId ?? null;
 
-  // Infinite recurring: create first transaction if startDate is today or past (SP days)
-  const isImmediate = startDate.getTime() <= spMidnight(new Date()).getTime();
-  const runsFirstNow = !data.totalInstallments && isImmediate;
+  const totalInstallments = data.totalInstallments ?? null;
+
+  // Não cria transação: o dinheiro vem do extrato. Ocorrências de hoje ficam para o cron;
+  // as anteriores já contam como passadas, mantendo nextExecution e parcelas alinhados.
+  const startOfToday = spMidnight(new Date());
+  const { nextExecution, advanced } = advanceSchedule(
+    {
+      frequency: data.frequency,
+      dayOfMonth,
+      dayOfWeek,
+      nextExecution: startDate,
+      totalInstallments,
+      executedInstallments: 0,
+    },
+    new Date(startOfToday.getTime() - 1)
+  );
 
   const months = calcMonthsNeeded(data.frequency, data.totalInstallments);
-  // Já grava o estado final (parcelada inativa, primeira execução avançada): o cron diário pode
-  // ler a recorrência a qualquer momento e lançaria de novo uma ocorrência que esta requisição lança.
   const [recurring] = await Promise.all([
     recurringTransactionRepository.create({
       userId,
@@ -43,56 +53,14 @@ export const createRecurringTransactionUseCase = async (
       dayOfMonth,
       dayOfWeek,
       startDate,
-      nextExecution: runsFirstNow
-        ? calculateNextExecution(data.frequency, dayOfMonth, dayOfWeek, startDate)
-        : startDate,
-      isActive: !data.totalInstallments,
+      nextExecution,
+      isActive: totalInstallments === null || advanced < totalInstallments,
       description: data.description ?? null,
-      totalInstallments: data.totalInstallments ?? null,
-      executedInstallments: data.totalInstallments ?? (runsFirstNow ? 1 : 0),
+      totalInstallments,
+      executedInstallments: advanced,
     }),
     financialPeriodService.createNextPeriods(userId, months),
   ]);
-
-  if (data.totalInstallments) {
-    // Pre-create all installments immediately with their scheduled dates
-    const dates = generateExecutionDates(
-      data.frequency,
-      startDate,
-      data.totalInstallments,
-      dayOfMonth,
-      dayOfWeek
-    );
-
-    // Sequencial para não saturar o pool de conexões em parcelas longas.
-    for (const date of dates) {
-      await createTransactionUseCase(userId, {
-        type: data.type,
-        title: data.title,
-        amount: data.amount,
-        category: data.categoryId,
-        description: data.description ?? '',
-        date,
-        recurringTransactionId: recurring.id,
-        accountId: accountId ?? undefined,
-      });
-    }
-
-    return recurring;
-  }
-
-  if (runsFirstNow) {
-    await createTransactionUseCase(userId, {
-      type: data.type,
-      title: data.title,
-      amount: data.amount,
-      category: data.categoryId,
-      description: data.description ?? '',
-      date: startDate,
-      recurringTransactionId: recurring.id,
-      accountId: accountId ?? undefined,
-    });
-  }
 
   return recurring;
 };

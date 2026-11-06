@@ -34,7 +34,7 @@ describe('GET /internal/cron/daily', () => {
       .expect(200);
   });
 
-  it('does not materialize twice a recurrence created while the jobs run', async () => {
+  it('advances a recurrence created while the jobs run only once, without transactions', async () => {
     const signUp = await request(app)
       .post('/auth/sign-up')
       .send({
@@ -74,10 +74,17 @@ describe('GET /internal/cron/daily', () => {
       .set('Authorization', 'Bearer test-cron-secret')
       .expect(200);
 
-    const history = await request(app)
-      .get(`/recurring-transactions/${created.body.data.id}/transactions`)
+    const list = await request(app).get('/recurring-transactions').set(auth).expect(200);
+    const advanced = list.body.data.find(
+      (item: { id: string }) => item.id === created.body.data.id
+    );
+    expect(advanced.executedInstallments).toBe(1);
+
+    const transactions = await request(app)
+      .get('/transactions/')
       .set(auth)
+      .query({ page: 1, limit: 100 })
       .expect(200);
-    expect(history.body.data).toHaveLength(1);
+    expect(transactions.body.data).toHaveLength(0);
   });
 });

@@ -1,5 +1,4 @@
 import type { RecurringFrequency } from '../recurring-transaction.types';
-import { calculateNextExecution } from './execution-dates';
 
 export function calcMonthsNeeded(
   frequency: RecurringFrequency,
@@ -18,21 +17,4 @@ export function calcMonthsNeeded(
     default:
       return 3;
   }
-}
-
-export function generateExecutionDates(
-  frequency: RecurringFrequency,
-  startDate: Date,
-  totalInstallments: number,
-  dayOfMonth?: number | null,
-  dayOfWeek?: number | null
-): Date[] {
-  const dates: Date[] = [startDate];
-  let prev = startDate;
-  for (let i = 1; i < totalInstallments; i++) {
-    const next = calculateNextExecution(frequency, dayOfMonth, dayOfWeek, prev);
-    dates.push(next);
-    prev = next;
-  }
-  return dates;
 }

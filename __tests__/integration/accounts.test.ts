@@ -378,7 +378,7 @@ describe('Card recurrences', () => {
     cardId = card.body.data.id;
   });
 
-  it('charges the card and lands in the period of the invoice due date', async () => {
+  it('keeps the card on the recurrence without creating transactions', async () => {
     const recurring = await request(app)
       .post('/recurring-transactions')
       .set(auth())
@@ -399,16 +399,7 @@ describe('Card recurrences', () => {
       .get(`/recurring-transactions/${recurring.body.data.id}/transactions`)
       .set(auth())
       .expect(200);
-    const reference = await request(app)
-      .post('/transactions/create')
-      .set(auth())
-      .send({ type: 'expense', title: 'Ref', amount: 1, category: categoryId, date: '2026-10-05' })
-      .expect(201);
-
-    expect(history.body.data[0]).toMatchObject({
-      accountId: cardId,
-      periodId: reference.body.data.periodId,
-    });
+    expect(history.body.data).toHaveLength(0);
   });
 
   it('moves recurrences to the default account when the card is removed', async () => {

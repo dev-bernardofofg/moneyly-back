@@ -13,8 +13,8 @@ export const updateRecurringTransactionUseCase = async (
   const existing = await recurringTransactionRepository.findById(id, userId);
   if (!existing) return null;
 
-  // Parcelada já materializada: as transações foram pré-criadas; editar a
-  // recorrência não realinharia as parcelas → bloquear para não enganar.
+  // Parcelada concluída: o calendário de parcelas já passou por inteiro;
+  // editar a recorrência não o realinharia → bloquear para não enganar.
   const isExhaustedInstallment =
     existing.totalInstallments !== null &&
     existing.executedInstallments >= existing.totalInstallments;

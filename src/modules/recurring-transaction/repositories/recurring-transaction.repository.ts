@@ -89,15 +89,6 @@ export const recurringTransactionRepository = {
     return updated ?? null;
   },
 
-  async updateNextExecution(id: string, nextExecution: Date): Promise<boolean> {
-    const result = await db
-      .update(recurringTransactions)
-      .set({ nextExecution, updatedAt: new Date() })
-      .where(eq(recurringTransactions.id, id))
-      .returning();
-    return result.length > 0;
-  },
-
   /**
    * Reserva a execução pendente: só avança se nextExecution ainda é o lido. Duas execuções
    * concorrentes (cron e criação, ou dois crons) leem o mesmo valor; só uma consegue avançar.
@@ -107,9 +98,10 @@ export const recurringTransactionRepository = {
       RecurringTransaction,
       'id' | 'nextExecution' | 'executedInstallments' | 'totalInstallments'
     >,
-    nextExecution: Date
+    nextExecution: Date,
+    advanced: number
   ): Promise<boolean> {
-    const executed = recurring.executedInstallments + 1;
+    const executed = recurring.executedInstallments + advanced;
     const exhausted =
       recurring.totalInstallments !== null && executed >= recurring.totalInstallments;
     const rows = await db
@@ -129,20 +121,6 @@ export const recurringTransactionRepository = {
       )
       .returning({ id: recurringTransactions.id });
     return rows.length > 0;
-  },
-
-  async releaseExecution(
-    recurring: Pick<RecurringTransaction, 'id' | 'nextExecution' | 'executedInstallments'>
-  ): Promise<void> {
-    await db
-      .update(recurringTransactions)
-      .set({
-        nextExecution: recurring.nextExecution,
-        executedInstallments: recurring.executedInstallments,
-        isActive: true,
-        updatedAt: new Date(),
-      })
-      .where(eq(recurringTransactions.id, recurring.id));
   },
 
   async moveToDefaultAccount(userId: string, accountId: string): Promise<void> {

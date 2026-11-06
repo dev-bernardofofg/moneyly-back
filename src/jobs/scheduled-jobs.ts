@@ -2,20 +2,18 @@ import { logger } from '@core/lib/logger';
 import {
   processBillReminders,
   processCardBillReminders,
-  processBudgetAlerts,
   processSpendingAlerts,
 } from '@modules/notification';
 import { processRecurringTransactions } from '@modules/recurring-transaction';
 
 const JOBS = [
   { name: 'recurring transactions', run: processRecurringTransactions },
-  { name: 'budget alerts', run: processBudgetAlerts },
   { name: 'bill reminders', run: processBillReminders },
   { name: 'card bill reminders', run: processCardBillReminders },
   { name: 'spending alerts', run: processSpendingAlerts },
 ] as const;
 
-// Sequencial: recorrências materializam antes dos alertas que dependem delas.
+// Sequencial: recorrências avançam o calendário antes dos lembretes que leem nextExecution.
 export const runScheduledJobs = async (): Promise<{ failed: string[] }> => {
   const failed: string[] = [];
 
