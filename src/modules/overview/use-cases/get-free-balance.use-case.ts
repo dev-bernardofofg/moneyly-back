@@ -1,5 +1,6 @@
 import { sumAmounts } from '@core/helpers/amount';
 import { spMidnight, spMidnightPlusDays, spParts } from '@core/helpers/dates';
+import type { Account } from '@infra/db/schema';
 import { billingDateFor, dueDateInPeriod } from '@modules/account/helpers/billing-date';
 import { cardBillPaymentRepository } from '@modules/account/repositories/card-bill-payment.repository';
 import { listAccountsUseCase } from '@modules/account/use-cases/account.use-cases';
@@ -36,6 +37,16 @@ export type FreeBalance = {
 const nextDay = (date: Date) => {
   const { year, month, day } = spParts(date);
   return spMidnightPlusDays(year, month, day, 1);
+};
+
+// Saldo informado já contém o que aconteceu até a data dele, mesmo além do extrato importado.
+const predictedAfter = (
+  account: Pick<Account, 'type' | 'dataThrough' | 'openingBalanceDate'> | undefined,
+  today: Date
+) => {
+  const covered = account?.dataThrough ?? today;
+  const opening = account?.type === 'checking' ? account.openingBalanceDate : null;
+  return opening && opening.getTime() > covered.getTime() ? opening : covered;
 };
 
 const getWindow = async (userId: string, salaryDate?: Date) => {
@@ -81,7 +92,7 @@ export const getFreeBalanceUseCase = async (userId: string): Promise<FreeBalance
   const predicted = recurrences.flatMap((rec) => {
     const account = (rec.accountId && accountById.get(rec.accountId)) || defaultAccount;
 
-    return occurrencesBetween(rec, account?.dataThrough ?? today, windowEnd).map((date) => ({
+    return occurrencesBetween(rec, predictedAfter(account, today), windowEnd).map((date) => ({
       type: rec.type,
       amount: rec.amount,
       date,

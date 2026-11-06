@@ -276,6 +276,17 @@ describe('GET /overview/forecast', () => {
     expect(freeBalance.total).toBe(10000);
   });
 
+  it('does not count what the informed balance already contains', async () => {
+    await setOpeningBalance(defaultAccountId, 10000);
+    await setDataThrough(defaultAccountId, dayOffset(-2));
+    await addPassedSalary(dayOffset(-1));
+
+    const freeBalance = await getFreeBalance();
+
+    expect(freeBalance.components.otherIncome).toBe(0);
+    expect(freeBalance.total).toBe(10000);
+  });
+
   it('counts a salary dated today when the statement stops earlier', async () => {
     await setOpeningBalance(defaultAccountId, 10000, dayOffset(-20));
     await setDataThrough(defaultAccountId, dayOffset(-3));
