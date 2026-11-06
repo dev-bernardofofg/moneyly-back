@@ -347,6 +347,8 @@ export const TransactionImportPreviewSchema = registry.register(
     accountId: z.string().uuid().nullable(),
     needsAccount: z.boolean(),
     accountKey: z.string(),
+    // Tipo de conta que o arquivo aceita; null quando vale qualquer uma (OFX).
+    requiredAccountType: z.enum(['checking', 'credit_card']).nullable(),
     // Último dia coberto pelo arquivo; volta na confirmação.
     through: isoDate,
     // Só na fatura em PDF: vencimento e total impressos nela.

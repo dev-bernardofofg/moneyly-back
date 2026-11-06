@@ -1,7 +1,7 @@
 import { spDayString, spEndOfDay, spMidnight } from '@core/helpers/dates';
 import { accountRepository } from '@modules/account/repositories/account.repository';
 import { billPaymentOutflowRepository } from '@modules/account/repositories/bill-payment-outflow.repository';
-import { isWeakStatementKey } from '../helpers/statement-key';
+import { isWeakStatementKey, requiredAccountType } from '../helpers/statement-key';
 import { BadRequestError } from '@core/errors';
 import { logger } from '@core/lib/logger';
 import { categoryRepository } from '@modules/category/repositories/category.repository';
@@ -40,11 +40,36 @@ const isBill = (statement: OfxStatement): statement is BillStatement => 'dueDate
 
 const RECONCILE_MARGIN_MS = 3 * 24 * 60 * 60 * 1000;
 
-const findStatementAccount = async (userId: string, accountKey: string, accountId?: string) => {
-  if (accountId) return resolveAccount(userId, accountId);
+const WRONG_ACCOUNT_TYPE = {
+  checking: 'Extrato de conta só entra em conta corrente. Escolha uma conta corrente.',
+  credit_card: 'Fatura só entra em cartão. Escolha um cartão.',
+};
+
+// Extrato no cartão vira dívida de fatura; fatura na conta tira a compra do saldo.
+const assertAccountType = (
+  account: { type: 'checking' | 'credit_card' },
+  required: ReturnType<typeof requiredAccountType>
+) => {
+  if (required && account.type !== required) {
+    throw new BadRequestError(WRONG_ACCOUNT_TYPE[required]);
+  }
+};
+
+const findStatementAccount = async (
+  userId: string,
+  accountKey: string,
+  required: ReturnType<typeof requiredAccountType>,
+  accountId?: string
+) => {
+  if (accountId) {
+    const account = await resolveAccount(userId, accountId);
+    assertAccountType(account, required);
+    return account;
+  }
   if (isWeakStatementKey(accountKey)) return null;
   const known = await accountRepository.findByStatementKey(userId, accountKey);
-  return known?.isActive ? known : null;
+  // Chave gravada em conta do tipo errado por importação antiga: pede a escolha de novo.
+  return known?.isActive && (!required || known.type === required) ? known : null;
 };
 
 export const previewTransactionImportUseCase = async (
@@ -88,12 +113,14 @@ export const previewTransactionImportUseCase = async (
   // Fatura em PDF: toda linha pertence a esta fatura, até parcela de compra antiga.
   const bill = isBill(statement) ? { dueDate: statement.dueDate, total: statement.total } : null;
 
-  const account = await findStatementAccount(userId, statement.accountKey, accountId);
+  const required = requiredAccountType(statement.accountKey, bill !== null);
+  const account = await findStatementAccount(userId, statement.accountKey, required, accountId);
   if (!account) {
     return {
       accountId: null,
       needsAccount: true,
       accountKey: statement.accountKey,
+      requiredAccountType: required,
       through,
       bill,
       items: [],
@@ -106,6 +133,7 @@ export const previewTransactionImportUseCase = async (
       accountId: account.id,
       needsAccount: false,
       accountKey: statement.accountKey,
+      requiredAccountType: required,
       through,
       bill,
       items: [],
@@ -159,6 +187,7 @@ export const previewTransactionImportUseCase = async (
     accountId: account.id,
     needsAccount: false,
     accountKey: statement.accountKey,
+    requiredAccountType: required,
     through,
     bill,
     items: statement.transactions.map((transaction) => {
@@ -201,6 +230,7 @@ export const confirmTransactionImportUseCase = async (
   }: ConfirmImportInput
 ) => {
   const account = await resolveAccount(userId, requestedAccountId);
+  assertAccountType(account, requiredAccountType(accountKey, Boolean(billDueDate)));
   const transferItems = items.filter((item) => item.transferOf);
   const linkItems = items.filter((item) => !item.transferOf && item.duplicateOf);
   const transactionItems = items.filter((item) => !item.transferOf && !item.duplicateOf);
