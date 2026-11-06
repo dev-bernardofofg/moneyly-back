@@ -640,7 +640,8 @@ describe('GET /overview/forecast', () => {
 
     expect((await getFreeBalance()).confidence).toBe('high');
 
-    await setDataThrough(card.id, dayOffset(-8));
+    // Cartão só fica atrasado depois do fechamento seguinte mais a janela: mais de dois meses.
+    await setDataThrough(card.id, dayOffset(-70));
     expect((await getFreeBalance()).confidence).toBe('medium');
   });
 
