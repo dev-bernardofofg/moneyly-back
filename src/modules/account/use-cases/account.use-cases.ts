@@ -1,4 +1,4 @@
-import { spDayString } from '@core/helpers/dates';
+import { spDayString, spMidnight } from '@core/helpers/dates';
 import { BadRequestError } from '@core/errors';
 import { financialPeriodService } from '@modules/financial-period';
 import { recurringTransactionRepository } from '@modules/recurring-transaction/repositories/recurring-transaction.repository';
@@ -7,6 +7,7 @@ import { transferLegs } from '@modules/transfer/helpers/transfer-legs';
 import { transferRepository } from '@modules/transfer/repositories/transfer.repository';
 import type { Account } from '@infra/db/schema';
 import { billingDateFor } from '../helpers/billing-date';
+import { accountFreshness } from '../helpers/freshness';
 import { accountRepository } from '../repositories/account.repository';
 import type { CreateAccountInput, UpdateAccountInput } from '../schemas/account.schema';
 import {
@@ -31,9 +32,12 @@ export const listAccountsUseCase = async (userId: string) => {
         ).flatMap(transferLegs)
       : [];
 
+  const today = spMidnight(new Date());
+
   // Saldo atual só com saldo inicial: sem ele não há de onde partir.
   return Promise.all(
-    accounts.map(async (account) => {
+    accounts.map(async (stored) => {
+      const account = { ...stored, freshness: accountFreshness(stored.dataThrough, today) };
       const since = account.type === 'checking' ? account.openingBalanceDate : null;
       if (!since) return { ...account, currentBalance: null };
       const transactionsNet = await transactionRepository.sumSignedSince(userId, account.id, since);

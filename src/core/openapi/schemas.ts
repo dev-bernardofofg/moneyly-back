@@ -428,6 +428,7 @@ export const NotificationSchema = registry.register(
       'spending_alert',
       'transaction_income',
       'transaction_expense',
+      'check_in_reminder',
     ]),
     severity: z.enum(['info', 'warning', 'danger']),
     title: z.string(),
@@ -608,6 +609,10 @@ export const AccountSchema = registry.register(
     // Só em GET /accounts: saldo inicial + movimentos desde a data dele; null sem saldo inicial.
     currentBalance: money.nullable().optional(),
     openingBalanceDate: isoDate.nullable(),
+    dataThrough: isoDate.nullable(),
+    statementKey: z.string().nullable(),
+    // Só em GET /accounts: fresh até 7 dias após dataThrough; empty = nunca importou.
+    freshness: z.enum(['fresh', 'stale', 'empty']).optional(),
     isDefault: z.boolean(),
     isActive: z.boolean(),
     createdAt: isoDate,

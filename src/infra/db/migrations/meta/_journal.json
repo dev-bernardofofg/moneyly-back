@@ -127,6 +127,13 @@
       "when": 1792710937389,
       "tag": "0017_drop_users_monthly_income",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792800000000,
+      "tag": "0018_account_statement_coverage",
+      "breakpoints": true
     }
   ]
 }

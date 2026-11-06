@@ -27,6 +27,10 @@ export const accountRepository = {
       .where(and(eq(accounts.type, 'credit_card'), eq(accounts.isActive, true)));
   },
 
+  async findAllActive(): Promise<Account[]> {
+    return db.select().from(accounts).where(eq(accounts.isActive, true));
+  },
+
   async findAllByUserId(userId: string): Promise<Account[]> {
     return db.select().from(accounts).where(eq(accounts.userId, userId));
   },
@@ -51,6 +55,30 @@ export const accountRepository = {
         )
       );
     return account ?? null;
+  },
+
+  async findByStatementKey(userId: string, key: string): Promise<Account | null> {
+    const [account] = await db
+      .select()
+      .from(accounts)
+      .where(and(eq(accounts.userId, userId), eq(accounts.statementKey, key)));
+    return account ?? null;
+  },
+
+  // GREATEST: reenviar um extrato antigo nunca recua a cobertura já registrada.
+  async recordImport(
+    id: string,
+    userId: string,
+    data: { statementKey: string; through: Date }
+  ): Promise<void> {
+    await db
+      .update(accounts)
+      .set({
+        statementKey: data.statementKey,
+        dataThrough: sql`greatest(${accounts.dataThrough}, ${data.through.toISOString()}::timestamp)`,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
   },
 
   async findDefault(userId: string): Promise<Account | null> {

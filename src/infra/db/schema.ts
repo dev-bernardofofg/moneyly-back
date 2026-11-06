@@ -80,6 +80,10 @@ export const accounts = pgTable(
     // Centavos. Saldo da conta corrente na data informada; transações anteriores já estão nele.
     openingBalance: integer('opening_balance').default(0).notNull(),
     openingBalanceDate: timestamp('opening_balance_date'),
+    // Último dia coberto por extrato importado; null = nunca importou.
+    dataThrough: timestamp('data_through'),
+    // Identificador da conta no arquivo bancário (ex.: ACCTID do OFX).
+    statementKey: text('statement_key'),
     isDefault: boolean('is_default').default(false).notNull(),
     isActive: boolean('is_active').default(true).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -89,6 +93,9 @@ export const accounts = pgTable(
     uniqueIndex('accounts_user_default_unique')
       .on(table.userId)
       .where(sql`${table.isDefault}`),
+    uniqueIndex('accounts_user_statement_key_unique')
+      .on(table.userId, table.statementKey)
+      .where(sql`${table.statementKey} is not null`),
   ]
 );
 
@@ -434,6 +441,7 @@ export const notifications = pgTable('notifications', {
       'spending_alert',
       'transaction_income',
       'transaction_expense',
+      'check_in_reminder',
     ],
   }).notNull(),
   severity: text('severity', { enum: ['info', 'warning', 'danger'] }).notNull(),

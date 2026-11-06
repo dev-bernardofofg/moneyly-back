@@ -1395,7 +1395,8 @@
               "goal_milestone",
               "spending_alert",
               "transaction_income",
-              "transaction_expense"
+              "transaction_expense",
+              "check_in_reminder"
             ]
           },
           "severity": {
@@ -2076,6 +2077,23 @@
             "nullable": true,
             "example": "2026-05-17T00:00:00.000Z"
           },
+          "dataThrough": {
+            "type": "string",
+            "nullable": true,
+            "example": "2026-05-17T00:00:00.000Z"
+          },
+          "statementKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "freshness": {
+            "type": "string",
+            "enum": [
+              "fresh",
+              "stale",
+              "empty"
+            ]
+          },
           "isDefault": {
             "type": "boolean"
           },
@@ -2101,6 +2119,8 @@
           "creditLimit",
           "openingBalance",
           "openingBalanceDate",
+          "dataThrough",
+          "statementKey",
           "isDefault",
           "isActive",
           "createdAt",
