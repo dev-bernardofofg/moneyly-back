@@ -19,7 +19,13 @@ ${rows
 </BANKTRANLIST>
 </OFX>`;
 
-type PreviewItem = { type: 'income' | 'expense'; amount: number; date: string; status: string };
+type PreviewItem = {
+  externalId: string;
+  type: 'income' | 'expense';
+  amount: number;
+  date: string;
+  status: string;
+};
 
 describe('Card bill payments', () => {
   let token: string;
@@ -68,7 +74,7 @@ describe('Card bill payments', () => {
       .expect(200);
     const billPayments = (preview.body.data.items as PreviewItem[])
       .filter((item) => item.status === 'bill_payment')
-      .map(({ type, amount, date }) => ({ type, amount, date }));
+      .map(({ externalId, type, amount, date }) => ({ externalId, type, amount, date }));
     const res = await request(app)
       .post('/transactions/import')
       .set(auth())

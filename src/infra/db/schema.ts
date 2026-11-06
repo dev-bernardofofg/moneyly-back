@@ -128,6 +128,27 @@ export const transfers = pgTable(
   ]
 );
 
+// Linha do extrato que paga fatura: não é despesa, mas tira dinheiro da conta corrente.
+export const billPaymentOutflows = pgTable(
+  'bill_payment_outflows',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => accounts.id),
+    amount: integer('amount').notNull(), // centavos
+    date: timestamp('date').notNull(),
+    externalId: text('external_id').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('bill_payment_outflows_user_external_unique').on(table.userId, table.externalId),
+  ]
+);
+
 // Fatura paga: uma linha por cartão e vencimento. Ausente = pendente.
 export const cardBillPayments = pgTable(
   'card_bill_payments',
@@ -536,6 +557,7 @@ export type NewDeviceRegistration = typeof deviceRegistrations.$inferInsert;
 export type Transfer = typeof transfers.$inferSelect;
 export type NewTransfer = typeof transfers.$inferInsert;
 export type CardBillPayment = typeof cardBillPayments.$inferSelect;
+export type NewBillPaymentOutflow = typeof billPaymentOutflows.$inferInsert;
 export type Account = typeof accounts.$inferSelect;
 export type NewAccount = typeof accounts.$inferInsert;
 export type Company = typeof companies.$inferSelect;

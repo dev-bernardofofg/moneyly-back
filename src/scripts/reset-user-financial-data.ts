@@ -8,6 +8,7 @@ import { and, eq, isNotNull, ne, or, sql } from 'drizzle-orm';
 import { db, disconnectDB } from '@infra/db';
 import {
   accounts,
+  billPaymentOutflows,
   cardBillPayments,
   overtimeRecords,
   transactions,
@@ -19,6 +20,7 @@ export interface ResetCounts {
   transactions: number;
   transfers: number;
   billPayments: number;
+  billPaymentOutflows: number;
   overtimeLinks: number;
   accounts: number;
 }
@@ -59,6 +61,12 @@ export async function resetUserFinancialData(
           .from(cardBillPayments)
           .where(eq(cardBillPayments.userId, userId))
       ),
+      billPaymentOutflows: await count(
+        tx
+          .select({ n: sql<number>`count(*)::int` })
+          .from(billPaymentOutflows)
+          .where(eq(billPaymentOutflows.userId, userId))
+      ),
       overtimeLinks: await count(
         tx
           .select({ n: sql<number>`count(*)::int` })
@@ -83,6 +91,7 @@ export async function resetUserFinancialData(
     await tx.delete(transactions).where(eq(transactions.userId, userId));
     await tx.delete(transfers).where(eq(transfers.userId, userId));
     await tx.delete(cardBillPayments).where(eq(cardBillPayments.userId, userId));
+    await tx.delete(billPaymentOutflows).where(eq(billPaymentOutflows.userId, userId));
     // statement_key fica: reimportar precisa reconhecer as contas.
     await tx
       .update(accounts)
@@ -109,6 +118,7 @@ async function main() {
   console.log(`Transações: ${counts.transactions}`);
   console.log(`Transferências: ${counts.transfers}`);
   console.log(`Pagamentos de fatura: ${counts.billPayments}`);
+  console.log(`Saídas de pagamento de fatura: ${counts.billPaymentOutflows}`);
   console.log(`Horas extras desvinculadas: ${counts.overtimeLinks}`);
   console.log(`Contas com saldo inicial/cobertura limpos: ${counts.accounts}`);
   console.log(

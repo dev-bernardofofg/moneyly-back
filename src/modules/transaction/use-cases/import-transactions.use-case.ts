@@ -1,5 +1,6 @@
 import { spDayString, spEndOfDay, spMidnight } from '@core/helpers/dates';
 import { accountRepository } from '@modules/account/repositories/account.repository';
+import { billPaymentOutflowRepository } from '@modules/account/repositories/bill-payment-outflow.repository';
 import { isWeakStatementKey } from '../helpers/statement-key';
 import { BadRequestError } from '@core/errors';
 import { logger } from '@core/lib/logger';
@@ -111,15 +112,17 @@ export const previewTransactionImportUseCase = async (
           start: new Date(Math.min(...times) - RECONCILE_MARGIN_MS),
           end: spEndOfDay(new Date(Math.max(...times) + RECONCILE_MARGIN_MS)),
         };
-  const [imported, importedAsTransfer, candidates, history, categories] = await Promise.all([
-    transactionRepository.findImportedExternalIds(userId, externalIds),
-    transferRepository.findExternalIds(userId, externalIds),
-    transactionRepository.findReconcileCandidates(userId, account.id, scope),
-    transactionRepository.findRecentTitleCategories(userId, TITLE_HISTORY_LIMIT),
-    categoryRepository.findByUserId(userId),
-  ]);
+  const [imported, importedAsTransfer, importedAsOutflow, candidates, history, categories] =
+    await Promise.all([
+      transactionRepository.findImportedExternalIds(userId, externalIds),
+      transferRepository.findExternalIds(userId, externalIds),
+      billPaymentOutflowRepository.findExternalIds(userId, externalIds),
+      transactionRepository.findReconcileCandidates(userId, account.id, scope),
+      transactionRepository.findRecentTitleCategories(userId, TITLE_HISTORY_LIMIT),
+      categoryRepository.findByUserId(userId),
+    ]);
 
-  const importedIds = new Set([...imported, ...importedAsTransfer]);
+  const importedIds = new Set([...imported, ...importedAsTransfer, ...importedAsOutflow]);
   const pendingRows = statement.transactions.filter(
     (transaction) =>
       !importedIds.has(transaction.externalId) &&
@@ -239,6 +242,21 @@ export const confirmTransactionImportUseCase = async (
   }
 
   const billsPaid = await registerImportedBillPayments(userId, account, billPayments);
+
+  // Na fatura a linha é só o crédito do pagamento: o dinheiro sai quando vem o extrato da conta.
+  if (account.type === 'checking') {
+    await billPaymentOutflowRepository.createMany(
+      billPayments
+        .filter((payment) => payment.type === 'expense')
+        .map(({ externalId, amount, date }) => ({
+          userId,
+          accountId: account.id,
+          amount,
+          date,
+          externalId,
+        }))
+    );
+  }
 
   for (const item of transferItems) {
     await convertToTransfer(userId, account, { ...item, transferOf: item.transferOf! });

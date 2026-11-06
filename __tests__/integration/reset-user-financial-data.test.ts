@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '@infra/db';
 import {
   accounts,
+  billPaymentOutflows,
   cardBillPayments,
   categories,
   companies,
@@ -111,6 +112,13 @@ async function seedUser(label: string) {
     dueDate: DATA_THROUGH,
     source: 'manual',
   });
+  await db.insert(billPaymentOutflows).values({
+    userId: user.id,
+    accountId: checking.id,
+    amount: 150000,
+    date: DATA_THROUGH,
+    externalId: `outflow-${label}`,
+  });
 
   const company = one(
     await db
@@ -144,17 +152,18 @@ async function seedUser(label: string) {
 }
 
 async function snapshot(userId: string) {
-  const [txs, trs, bills, overtime, accs, cats, cos, recurring] = await Promise.all([
+  const [txs, trs, bills, outflows, overtime, accs, cats, cos, recurring] = await Promise.all([
     db.select().from(transactions).where(eq(transactions.userId, userId)),
     db.select().from(transfers).where(eq(transfers.userId, userId)),
     db.select().from(cardBillPayments).where(eq(cardBillPayments.userId, userId)),
+    db.select().from(billPaymentOutflows).where(eq(billPaymentOutflows.userId, userId)),
     db.select().from(overtimeRecords).where(eq(overtimeRecords.userId, userId)),
     db.select().from(accounts).where(eq(accounts.userId, userId)),
     db.select().from(categories).where(eq(categories.userId, userId)),
     db.select().from(companies).where(eq(companies.userId, userId)),
     db.select().from(recurringTransactions).where(eq(recurringTransactions.userId, userId)),
   ]);
-  return { txs, trs, bills, overtime, accs, cats, cos, recurring };
+  return { txs, trs, bills, outflows, overtime, accs, cats, cos, recurring };
 }
 
 describe('resetUserFinancialData', () => {
@@ -175,6 +184,7 @@ describe('resetUserFinancialData', () => {
       transactions: 2,
       transfers: 1,
       billPayments: 1,
+      billPaymentOutflows: 1,
       overtimeLinks: 1,
       accounts: 1,
     });
@@ -190,6 +200,7 @@ describe('resetUserFinancialData', () => {
       transactions: 2,
       transfers: 1,
       billPayments: 1,
+      billPaymentOutflows: 1,
       overtimeLinks: 1,
       accounts: 1,
     });
@@ -197,6 +208,7 @@ describe('resetUserFinancialData', () => {
     expect(after.txs).toHaveLength(0);
     expect(after.trs).toHaveLength(0);
     expect(after.bills).toHaveLength(0);
+    expect(after.outflows).toHaveLength(0);
     expect(await snapshot(other.user.id)).toEqual(otherBefore);
   });
 

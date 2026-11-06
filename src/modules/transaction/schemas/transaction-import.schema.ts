@@ -54,10 +54,11 @@ export const confirmImportSchema = z.object({
   through: isoDay,
   // Fatura em PDF: vencimento lido do arquivo; no cartão, todas as linhas vão para ele.
   billDueDate: isoDay.optional(),
-  // Linhas "pagamento de fatura" do extrato: marcam a fatura como paga, importadas ou não.
+  // Linhas "pagamento de fatura" do extrato: marcam a fatura e, na conta corrente, saem do saldo.
   billPayments: z
     .array(
       z.object({
+        externalId: z.string().min(1).max(200),
         type: z.enum(['income', 'expense']),
         amount: z.number().int().positive().max(999999999),
         date: isoDay,

@@ -9,6 +9,7 @@ import type { Account } from '@infra/db/schema';
 import { billingDateFor } from '../helpers/billing-date';
 import { accountFreshness } from '../helpers/freshness';
 import { accountRepository } from '../repositories/account.repository';
+import { billPaymentOutflowRepository } from '../repositories/bill-payment-outflow.repository';
 import type { CreateAccountInput, UpdateAccountInput } from '../schemas/account.schema';
 import {
   validateActiveAccount,
@@ -40,13 +41,16 @@ export const listAccountsUseCase = async (userId: string) => {
       const account = { ...stored, freshness: accountFreshness(stored.dataThrough, today) };
       const since = account.type === 'checking' ? account.openingBalanceDate : null;
       if (!since) return { ...account, currentBalance: null };
-      const transactionsNet = await transactionRepository.sumSignedSince(userId, account.id, since);
+      const [transactionsNet, billPayments] = await Promise.all([
+        transactionRepository.sumSignedSince(userId, account.id, since),
+        billPaymentOutflowRepository.sumAfter(userId, account.id, since),
+      ]);
       const transfersNet = legs
         .filter((leg) => leg.accountId === account.id && leg.date.getTime() > since.getTime())
         .reduce((total, leg) => total + (leg.type === 'income' ? leg.amount : -leg.amount), 0);
       return {
         ...account,
-        currentBalance: account.openingBalance + transactionsNet + transfersNet,
+        currentBalance: account.openingBalance + transactionsNet + transfersNet - billPayments,
       };
     })
   );
