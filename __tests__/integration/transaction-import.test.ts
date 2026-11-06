@@ -264,7 +264,11 @@ describe('Transaction import: statement account and coverage', () => {
     return res.body.data.accessToken as string;
   };
 
-  const previewBody = async (content: string, accountId?: string, as = token) =>
+  const previewBody = async (
+    content: string,
+    accountId?: string,
+    as = token
+  ): Promise<PreviewBody> =>
     (
       await request(app)
         .post('/transactions/import/preview')
@@ -386,11 +390,25 @@ describe('Transaction import: statement account and coverage', () => {
       .send({ file: toFile(content), accountId: mainId })
       .expect(404);
     const data = await previewBody(content, mainId);
+    const before = (await account(mainId)).dataThrough;
     await request(app)
       .post('/transactions/import')
       .set(auth(strangerToken))
-      .send({ accountId: mainId, accountKey: data.accountKey, through: data.through, items: [] })
-      .expect(400);
+      .send({
+        accountId: mainId,
+        accountKey: data.accountKey,
+        through: dayAt(0).toISOString(),
+        items: data.items.map(({ externalId, type, amount, date, title }) => ({
+          externalId,
+          type,
+          amount,
+          date,
+          title,
+          categoryId,
+        })),
+      })
+      .expect(404);
+    expect((await account(mainId)).dataThrough).toEqual(before);
   });
 
   it('moves the key to the chosen account when another one already holds it', async () => {
@@ -417,6 +435,35 @@ describe('Transaction import: statement account and coverage', () => {
       needsAccount: true,
       accountId: null,
       items: [],
+    });
+  });
+
+  it('still records coverage and key when every row was already imported', async () => {
+    const content = statement('h1', -1, { acctId: 'heal' });
+    const first = await previewBody(content, mainId);
+    await confirmPreview(first, mainId).expect(201);
+    await db
+      .update(accounts)
+      .set({ statementKey: null, dataThrough: null })
+      .where(eq(accounts.id, mainId));
+
+    const again = await previewBody(content, mainId);
+    expect(again.items.map((item) => item.status)).toEqual(['imported']);
+    await request(app)
+      .post('/transactions/import')
+      .set(auth())
+      .send({
+        accountId: mainId,
+        accountKey: again.accountKey,
+        through: again.through,
+        items: [],
+        billPayments: [{ type: 'expense', amount: 100, date: dayAt(-1).toISOString() }],
+      })
+      .expect(201);
+
+    expect(await account(mainId)).toMatchObject({
+      statementKey: '0001:heal',
+      dataThrough: dayAt(-1),
     });
   });
 });
