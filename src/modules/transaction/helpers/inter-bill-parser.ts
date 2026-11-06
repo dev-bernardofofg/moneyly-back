@@ -2,6 +2,7 @@ import { spMidnight, spMidnightOf } from '@core/helpers/dates';
 import type { OfxStatement, OfxTransaction } from './ofx-parser';
 
 export interface BillStatement extends OfxStatement {
+  through: Date;
   dueDate: Date;
   total: number | null;
 }

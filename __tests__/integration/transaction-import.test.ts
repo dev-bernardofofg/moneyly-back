@@ -438,6 +438,45 @@ describe('Transaction import: statement account and coverage', () => {
     });
   });
 
+  it('previews a statement without rows and records its coverage on confirm', async () => {
+    await db
+      .update(accounts)
+      .set({ statementKey: null, dataThrough: null })
+      .where(eq(accounts.id, mainId));
+    const content = ofx([], { acctId: 'empty', dtEnd: ymd(-2) });
+
+    const unknown = await previewBody(content);
+    expect(unknown).toMatchObject({ needsAccount: true, accountKey: '0001:empty', items: [] });
+    expect(unknown.through).toBe(dayAt(-2).toISOString());
+
+    const data = await previewBody(content, mainId);
+    expect(data).toMatchObject({ needsAccount: false, accountId: mainId, items: [] });
+    expect(data.through).toBe(dayAt(-2).toISOString());
+    await confirmPreview(data, mainId).expect(201);
+
+    expect(await account(mainId)).toMatchObject({
+      statementKey: '0001:empty',
+      dataThrough: dayAt(-2),
+    });
+  });
+
+  it('keeps clamping a future DTEND of a statement without rows', async () => {
+    const data = await previewBody(ofx([], { acctId: 'empty', dtEnd: ymd(15) }), mainId);
+    await confirmPreview(data, mainId).expect(201);
+
+    expect((await account(mainId)).dataThrough).toEqual(dayAt(0));
+  });
+
+  it('rejects a statement without rows and without DTEND', async () => {
+    const res = await request(app)
+      .post('/transactions/import/preview')
+      .set(auth())
+      .send({ file: toFile(ofx([], { acctId: 'none' })), accountId: mainId })
+      .expect(400);
+
+    expect(res.body.error).toBe('Nenhuma transação encontrada no extrato');
+  });
+
   it('still records coverage and key when every row was already imported', async () => {
     const content = statement('h1', -1, { acctId: 'heal' });
     const first = await previewBody(content, mainId);

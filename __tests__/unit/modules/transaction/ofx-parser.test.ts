@@ -100,6 +100,25 @@ describe('parseOfx', () => {
     expect(parseOfx(SGML).through).toEqual(spMidnight('2026-10-06'));
   });
 
+  it('keeps DTEND as coverage for a statement without rows', () => {
+    const empty = `<OFX><BANKACCTFROM><BANKID>0260<ACCTID>1</BANKACCTFROM>
+<BANKTRANLIST>
+<DTSTART>20261001
+<DTEND>20261031
+</BANKTRANLIST></OFX>`;
+
+    const { transactions, through } = parseOfx(empty);
+
+    expect(transactions).toEqual([]);
+    expect(through).toEqual(spMidnight('2026-10-31'));
+  });
+
+  it('leaves coverage undefined when there is neither DTEND nor rows', () => {
+    const empty = '<OFX><BANKACCTFROM><BANKID>0260<ACCTID>1</BANKACCTFROM></OFX>';
+
+    expect(parseOfx(empty).through).toBeUndefined();
+  });
+
   it('rejects content that is not OFX', () => {
     expect(() => parseOfx('data;valor\n2026-10-01;10')).toThrow();
   });

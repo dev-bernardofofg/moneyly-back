@@ -11,7 +11,8 @@ export interface OfxTransaction {
 export interface OfxStatement {
   accountKey: string;
   // Último dia coberto pelo arquivo (meia-noite SP): DTEND ou a maior data de lançamento.
-  through: Date;
+  // Ausente quando o arquivo não traz nenhum dos dois: cobertura desconhecida.
+  through?: Date;
   transactions: OfxTransaction[];
 }
 
@@ -87,8 +88,7 @@ export function parseOfx(content: string): OfxStatement {
     (latest, row) => (!latest || row.date > latest ? row.date : latest),
     undefined
   );
-  // Sem DTEND nem lançamento a cobertura é desconhecida; a época nunca eleva data_through.
-  const through = throughFromEnd ?? latestRow ?? new Date(0);
+  const through = throughFromEnd ?? latestRow;
 
   return { accountKey, through, transactions };
 }

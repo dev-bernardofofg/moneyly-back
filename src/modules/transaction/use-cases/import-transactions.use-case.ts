@@ -66,7 +66,9 @@ export const previewTransactionImportUseCase = async (
       throw new BadRequestError('Arquivo não é um extrato OFX válido');
     }
   }
-  if (statement.transactions.length === 0) {
+  // Semana sem movimento gera OFX válido sem lançamentos: o DTEND ainda atualiza a cobertura.
+  const { through } = statement;
+  if (statement.transactions.length === 0 && !through) {
     throw new BadRequestError('Nenhuma transação encontrada no extrato');
   }
 
@@ -80,7 +82,19 @@ export const previewTransactionImportUseCase = async (
       accountId: null,
       needsAccount: true,
       accountKey: statement.accountKey,
-      through: statement.through,
+      through,
+      bill,
+      items: [],
+    };
+  }
+
+  // Sem linhas não há o que conciliar, e Math.min/max de lista vazia daria escopo de data inválido.
+  if (statement.transactions.length === 0) {
+    return {
+      accountId: account.id,
+      needsAccount: false,
+      accountKey: statement.accountKey,
+      through,
       bill,
       items: [],
     };
@@ -131,7 +145,7 @@ export const previewTransactionImportUseCase = async (
     accountId: account.id,
     needsAccount: false,
     accountKey: statement.accountKey,
-    through: statement.through,
+    through,
     bill,
     items: statement.transactions.map((transaction) => {
       const match = matches.get(transaction.externalId);
