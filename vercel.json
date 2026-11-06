@@ -4,7 +4,7 @@
   "crons": [{ "path": "/internal/cron/daily", "schedule": "0 9 * * *" }],
   "functions": {
     "api/index.js": {
-      "includeFiles": "{node_modules/.pnpm/@napi-rs+canvas*/**,node_modules/.pnpm/pdf-parse@*/node_modules/@napi-rs/**}"
+      "includeFiles": "{node_modules/.pnpm/@napi-rs+canvas*/**,node_modules/.pnpm/pdf-parse@*/node_modules/@napi-rs/**,node_modules/.pnpm/pdf-parse@*/node_modules/pdf-parse/dist/pdf-parse/cjs/pdf.worker.mjs}"
     }
   }
 }
