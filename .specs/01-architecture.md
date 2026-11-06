@@ -46,7 +46,7 @@ Erro de domínio: lança `HttpError` (`src/core/errors/http-error.ts`; subclasse
 
 - **Entrypoints:** `src/server.ts` (local, `app.listen` + scheduler) | `api/index.js` (Vercel, sem listen; jobs pelo cron).
 - **Middlewares globais** (`src/server.ts`): `securityMiddleware` (helmet/cors/rate-limit/slow-down), `express.json({limit:"10mb"})`, `sanitizeData`, router, `errorHandler` (último).
-- **Scheduler:** `processRecurringTransactions()` + `processBudgetAlerts()` + `processBillReminders()` rodam a cada 1h + 1x no startup (só fora de `NODE_ENV=test`) — importados via `index.ts` dos módulos.
+- **Scheduler:** `runScheduledJobs()` (`jobs/scheduled-jobs.ts`) roda recorrências, lembretes de conta, de fatura e de check-in a cada 1h + 1x no startup (só fora de `NODE_ENV=test`), com os processadores importados via `index.ts` dos módulos. `processBudgetAlerts` e `processSpendingAlerts` seguem exportados, mas não rodam no scheduler desde o F21.
 - **DB connect:** `connectDB()` em `src/infra/db/index.ts`, exporta `db`.
 - **Health:** `GET /health`.
 - **Períodos financeiros:** middleware `ensurePeriodExists` (`modules/financial-period`) cria período atual + 1 futuro a cada request autenticado nas rotas que o usam.

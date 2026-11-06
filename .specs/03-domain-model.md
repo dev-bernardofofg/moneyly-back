@@ -81,6 +81,10 @@ Fonte de verdade: `src/infra/db/schema.ts` (Drizzle). Atualizar este doc quando 
 
 `data_through` timestamp nullable: última data coberta por arquivo importado. `statement_key` text nullable, único por usuário (índice parcial): identifica a origem do arquivo. Migration `0018`, escrita à mão como as 0006 a 0017.
 
+### `bill_payment_outflows` (F21)
+
+`id` · `userId`→users (cascade) · `accountId`→accounts · `amount` int centavos · `date` · `externalId` text · `createdAt`. Único em `(userId, externalId)`. Linha `bill_payment` de extrato de conta corrente: reduz `currentBalance`, não é transação nem transferência, e não entra em realizado, estatísticas ou insights. Apagada por `db:reset-user`.
+
 ## Relacionamentos chave
 
 - `users` 1—N `transactions`, `categories`, `budgets`, `goals`, `financialPeriods`, `refreshTokens`, `recurringTransactions`, `categoryPreferences`, `companies`, `overtimeRecords`.

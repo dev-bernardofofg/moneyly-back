@@ -1,7 +1,8 @@
 # F1 / F21 — Saldo Livre
 
 **Tipo:** feature (read-only). **Status:** Done. **Schema novo:** nenhum no endpoint; o F21 acrescenta
-`accounts.data_through` e `accounts.statement_key` (migration `0018`).
+`accounts.data_through` e `accounts.statement_key` (migration `0018`) e `bill_payment_outflows`
+(migration `0019`).
 **Design:** `.specs/features/2026-11-05-check-in-semanal-design.md` na raiz. Esta spec descreve o que o
 código faz hoje.
 
@@ -55,6 +56,13 @@ total = saldo atual das contas
   dele. Sem salário, a janela termina no último dia do período financeiro atual e `nextPayment` é nulo.
 - **Saldo atual:** soma de `currentBalance` das contas correntes ativas. Conta sem saldo inicial fica
   fora e derruba a confiança.
+- **Saldo informado:** vale como saldo no fim do dia de `opening_balance_date`. Transações,
+  transferências e saídas de pagamento de fatura só contam com data posterior a ela.
+- **Pagamento de fatura:** não é despesa, mas tira dinheiro da conta corrente. Toda linha
+  `bill_payment` confirmada num extrato de conta corrente grava uma saída em `bill_payment_outflows`,
+  única por `(user_id, external_id)`, mesmo sem cartão identificado, e `currentBalance` a subtrai.
+  No extrato do cartão a linha só marca a fatura. Marcar a fatura à mão não move dinheiro. Saída não
+  entra em realizado, estatísticas nem insights, e a prévia trata o `external_id` dela como `imported`.
 - **Recorrência prevista:** ocorrência posterior a `data_through` da conta dela (hoje, se nulo) e
   anterior ao fim da janela. Em conta corrente vale a data mais recente entre `data_through` e
   `opening_balance_date`, porque o saldo informado já contém o que aconteceu até ali. Nunca é anterior
@@ -63,7 +71,11 @@ total = saldo atual das contas
 - **Salário atrasado no extrato:** salário com data já passada e posterior a `data_through` é uma
   ocorrência prevista, então conta como entrada até o extrato chegar.
 - **Fatura:** transações importadas do ciclo somadas às recorrências de cartão previstas para ele. Fatura
-  paga (`card_bill_payments`) fica fora, e fatura vencida também, como no limite do cartão.
+  paga (`card_bill_payments`) fica fora.
+- **Fatura vencida:** não paga conta enquanto o vencimento for hoje ou depois, ou posterior à cobertura
+  de conta corrente, porque o dinheiro ainda aparece no saldo. Cobertura é o maior
+  `max(data_through, opening_balance_date)` entre as contas correntes ativas; sem nenhuma, vale hoje.
+  Depois disso fica fora, porque o histórico pode não ter marcação de pagamento.
 - **Próximo pagamento:** salário somado às horas extras do mês anterior ao do salário
   (`overtimeMonthForSalary`).
 - **Já comprometido (`committedAfter`):** faturas não pagas que vencem no dia do próximo salário ou depois.
@@ -82,7 +94,9 @@ removem transação.
 `overview.router.ts` → `getForecast` (`overview.controller.ts`) → `getFreeBalanceUseCase`. Leitura de
 contas por `listAccountsUseCase`, recorrências por `recurringTransactionRepository`, faturas por
 `transactionRepository.sumCardExpensesByPeriod` e `cardBillPaymentRepository`, horas por
-`overtimeRepository`. Schema OpenAPI do `ForecastResponse` em `src/core/openapi/schemas.ts`.
+`overtimeRepository`. `currentBalance` vem de `listAccountsUseCase`, que soma transações e transferências
+e subtrai `billPaymentOutflowRepository.sumAfter`. Schema OpenAPI do `ForecastResponse` em
+`src/core/openapi/schemas.ts`.
 
 ## Validação
 
