@@ -457,7 +457,7 @@ describe('Transaction import: statement account and coverage', () => {
         accountKey: again.accountKey,
         through: again.through,
         items: [],
-        billPayments: [{ type: 'expense', amount: 100, date: dayAt(-1).toISOString() }],
+        billPayments: [],
       })
       .expect(201);
 
