@@ -51,6 +51,20 @@ describe('deleteTransactionUseCase', () => {
     expect(mockedOvertimeRepository.clearTransactionId).not.toHaveBeenCalled();
   });
 
+  it('does not run spending alerts when an expense is deleted', async () => {
+    mockedTransactionRepository.delete.mockResolvedValue({
+      id: TRANSACTION_ID,
+      userId: USER_ID,
+      type: 'expense',
+      overtimeRecordId: null,
+      periodId: 'period-1',
+    } as never);
+
+    await deleteTransactionUseCase(TRANSACTION_ID, USER_ID);
+
+    expect(processUserSpendingAlert).not.toHaveBeenCalled();
+  });
+
   it('throws 404 without side effects when the transaction does not exist', async () => {
     mockedTransactionRepository.delete.mockResolvedValue(null);
 

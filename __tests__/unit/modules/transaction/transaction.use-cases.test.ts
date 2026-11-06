@@ -81,7 +81,7 @@ describe('TransactionService', () => {
       );
       expect(result).toEqual(mockCreatedTransaction);
       expect(notifyTransactionCreated).toHaveBeenCalledWith(mockCreatedTransaction);
-      expect(processUserSpendingAlert).toHaveBeenCalledWith(mockUserId, 'p1');
+      expect(processUserSpendingAlert).not.toHaveBeenCalled();
     });
 
     it('notifies income without spending alert', async () => {
@@ -104,7 +104,6 @@ describe('TransactionService', () => {
       const result = await createTransactionUseCase(mockUserId, mockTransactionData);
 
       expect(result).toEqual(mockCreatedTransaction);
-      expect(processUserSpendingAlert).toHaveBeenCalled();
     });
 
     it('creates a transaction with the current date when no date is provided', async () => {

@@ -9,7 +9,6 @@ import { billingDateFor } from '@modules/account/helpers/billing-date';
 import { resolveAccount } from '@modules/account/use-cases/account.use-cases';
 import { registerImportedBillPayments } from '@modules/account/use-cases/card-bill-payment.use-cases';
 import { financialPeriodService } from '@modules/financial-period';
-import { processUserSpendingAlert } from '@modules/notification';
 import { transferRepository } from '@modules/transfer/repositories/transfer.repository';
 import {
   convertToTransfer,
@@ -226,20 +225,8 @@ export const confirmTransactionImportUseCase = async (
     });
   }
 
-  // Sem notificação por linha (importar 80 lançamentos não pode virar 80 pushes);
-  // o alerta de gasto é reavaliado uma vez por período afetado.
+  // Sem notificação por linha: importar 80 lançamentos não pode virar 80 pushes.
   const created = await transactionRepository.createManyImported(rows);
-
-  const expensePeriods = new Set(
-    created.filter((row) => row.type === 'expense' && row.periodId).map((row) => row.periodId!)
-  );
-  for (const periodId of expensePeriods) {
-    try {
-      await processUserSpendingAlert(userId, periodId);
-    } catch (error) {
-      logger.error('[transactions] import spending alert failed', error as Error);
-    }
-  }
 
   const billsPaid = await registerImportedBillPayments(userId, account, billPayments);
 
