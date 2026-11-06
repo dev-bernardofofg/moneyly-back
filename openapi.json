@@ -1096,8 +1096,20 @@
       "TransactionImportPreview": {
         "type": "object",
         "properties": {
+          "accountId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "needsAccount": {
+            "type": "boolean"
+          },
           "accountKey": {
             "type": "string"
+          },
+          "through": {
+            "type": "string",
+            "example": "2026-05-17T00:00:00.000Z"
           },
           "bill": {
             "type": "object",
@@ -1205,7 +1217,10 @@
           }
         },
         "required": [
+          "accountId",
+          "needsAccount",
           "accountKey",
+          "through",
           "bill",
           "items"
         ]
@@ -9531,6 +9546,15 @@
                     },
                     "maxItems": 500
                   },
+                  "accountKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "through": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
                   "billDueDate": {
                     "type": "string",
                     "format": "date-time"
@@ -9570,7 +9594,9 @@
                 },
                 "required": [
                   "accountId",
-                  "items"
+                  "items",
+                  "accountKey",
+                  "through"
                 ]
               }
             }

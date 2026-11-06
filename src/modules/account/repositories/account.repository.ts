@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, ne, sql } from 'drizzle-orm';
 import { db } from '@infra/db';
 import { accounts, type Account, type NewAccount } from '@infra/db/schema';
 import type { AccountUpdate, IAccountRepository } from './IAccountRepository';
@@ -66,19 +66,35 @@ export const accountRepository = {
   },
 
   // GREATEST: reenviar um extrato antigo nunca recua a cobertura já registrada.
+  // Sem statementKey só a cobertura muda. A chave é única por usuário: quem a tinha perde,
+  // a última escolha vence.
   async recordImport(
     id: string,
     userId: string,
-    data: { statementKey: string; through: Date }
+    data: { statementKey?: string; through: Date }
   ): Promise<void> {
-    await db
-      .update(accounts)
-      .set({
-        statementKey: data.statementKey,
-        dataThrough: sql`greatest(${accounts.dataThrough}, ${data.through.toISOString()}::timestamp)`,
-        updatedAt: new Date(),
-      })
-      .where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
+    await db.transaction(async (tx) => {
+      if (data.statementKey) {
+        await tx
+          .update(accounts)
+          .set({ statementKey: null, updatedAt: new Date() })
+          .where(
+            and(
+              eq(accounts.userId, userId),
+              eq(accounts.statementKey, data.statementKey),
+              ne(accounts.id, id)
+            )
+          );
+      }
+      await tx
+        .update(accounts)
+        .set({
+          ...(data.statementKey ? { statementKey: data.statementKey } : {}),
+          dataThrough: sql`greatest(${accounts.dataThrough}, ${data.through.toISOString()}::timestamp)`,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
+    });
   },
 
   async findDefault(userId: string): Promise<Account | null> {

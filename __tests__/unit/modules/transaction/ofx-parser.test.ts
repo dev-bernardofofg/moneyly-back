@@ -87,6 +87,19 @@ describe('parseOfx', () => {
     });
   });
 
+  it('uses DTEND as the coverage end, even after the last row', () => {
+    const content = SGML.replace(
+      '<BANKTRANLIST>',
+      '<BANKTRANLIST>\n<DTSTART>20261001\n<DTEND>20261031120000[-3:BRT]'
+    );
+
+    expect(parseOfx(content).through).toEqual(spMidnight('2026-10-31'));
+  });
+
+  it('falls back to the latest row date when DTEND is missing', () => {
+    expect(parseOfx(SGML).through).toEqual(spMidnight('2026-10-06'));
+  });
+
   it('rejects content that is not OFX', () => {
     expect(() => parseOfx('data;valor\n2026-10-01;10')).toThrow();
   });

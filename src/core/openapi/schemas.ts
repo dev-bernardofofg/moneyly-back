@@ -343,7 +343,12 @@ export const SubscriptionCandidateSchema = registry.register(
 export const TransactionImportPreviewSchema = registry.register(
   'TransactionImportPreview',
   z.object({
+    // Conta resolvida (informada ou pela chave do arquivo); null quando o usuário precisa escolher.
+    accountId: z.string().uuid().nullable(),
+    needsAccount: z.boolean(),
     accountKey: z.string(),
+    // Último dia coberto pelo arquivo; volta na confirmação.
+    through: isoDate,
     // Só na fatura em PDF: vencimento e total impressos nela.
     bill: z.object({ dueDate: isoDate, total: z.number().nullable() }).nullable(),
     items: z.array(

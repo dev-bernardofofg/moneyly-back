@@ -64,7 +64,7 @@ describe('Card bill payments', () => {
     const preview = await request(app)
       .post('/transactions/import/preview')
       .set(auth())
-      .send({ file: Buffer.from(content, 'utf8').toString('base64url') })
+      .send({ file: Buffer.from(content, 'utf8').toString('base64url'), accountId })
       .expect(200);
     const billPayments = (preview.body.data.items as PreviewItem[])
       .filter((item) => item.status === 'bill_payment')
@@ -72,7 +72,13 @@ describe('Card bill payments', () => {
     const res = await request(app)
       .post('/transactions/import')
       .set(auth())
-      .send({ accountId, items: [], billPayments })
+      .send({
+        accountId,
+        accountKey: preview.body.data.accountKey,
+        through: preview.body.data.through,
+        items: [],
+        billPayments,
+      })
       .expect(201);
     return res.body.data.billsPaid as number;
   };

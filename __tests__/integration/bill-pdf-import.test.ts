@@ -80,6 +80,8 @@ describe('Card bill PDF import', () => {
       .set(auth())
       .send({
         accountId: cardId,
+        accountKey: preview.body.data.accountKey,
+        through: preview.body.data.through,
         billDueDate: bill.dueDate,
         items: purchases.map(({ externalId, type, amount, date, title }) => ({
           externalId,
@@ -148,6 +150,8 @@ describe('Card bill PDF import', () => {
       .set(auth())
       .send({
         accountId: cardId,
+        accountKey: preview.body.data.accountKey,
+        through: preview.body.data.through,
         billDueDate: preview.body.data.bill.dueDate,
         items: [
           {

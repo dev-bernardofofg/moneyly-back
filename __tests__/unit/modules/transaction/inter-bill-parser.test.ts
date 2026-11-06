@@ -40,6 +40,10 @@ describe('parseInterBill', () => {
     expect(bill.accountKey).toBe('inter:1111');
   });
 
+  it('covers the bill up to its latest purchase day', () => {
+    expect(bill.through).toEqual(spMidnight('2026-09-21'));
+  });
+
   it('reads every row in cents, credits as income', () => {
     expect(bill.transactions.map(({ title, type, amount }) => [title, type, amount])).toEqual([
       ['PADARIA CENTRAL', 'expense', 800],

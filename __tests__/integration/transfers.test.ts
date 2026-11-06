@@ -153,6 +153,8 @@ describe('Transfers', () => {
       .set(auth())
       .send({
         accountId: mainId,
+        accountKey: preview.body.data.accountKey,
+        through: preview.body.data.through,
         items: [
           {
             externalId: item!.externalId,

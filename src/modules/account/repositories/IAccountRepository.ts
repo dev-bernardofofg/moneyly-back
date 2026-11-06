@@ -25,7 +25,7 @@ export interface IAccountRepository {
   recordImport(
     id: string,
     userId: string,
-    data: { statementKey: string; through: Date }
+    data: { statementKey?: string; through: Date }
   ): Promise<void>;
   findDefault(userId: string): Promise<Account | null>;
   ensureDefault(userId: string): Promise<Account>;

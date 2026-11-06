@@ -2,15 +2,23 @@
  * Integration tests for OFX statement import (preview + confirm)
  */
 
+import { eq } from 'drizzle-orm';
 import request from 'supertest';
+import { spDayString, spMidnight, spMidnightPlusDays, spParts } from '@core/helpers/dates';
+import { db } from '@infra/db';
+import { accounts } from '@infra/db/schema';
 import { app } from '../../src/server';
 
-const ofx = (rows: Array<{ fitId: string; date: string; amount: string; memo: string }>) => `
+const ofx = (
+  rows: Array<{ fitId: string; date: string; amount: string; memo: string }>,
+  { acctId = '777', dtEnd }: { acctId?: string | null; dtEnd?: string } = {}
+) => `
 OFXHEADER:100
 DATA:OFXSGML
 <OFX>
-<BANKACCTFROM><BANKID>0001<ACCTID>777</BANKACCTFROM>
+<BANKACCTFROM><BANKID>0001${acctId ? `<ACCTID>${acctId}` : ''}</BANKACCTFROM>
 <BANKTRANLIST>
+${dtEnd ? `<DTEND>${dtEnd}` : ''}
 ${rows
   .map(
     (row) =>
@@ -19,6 +27,8 @@ ${rows
   .join('\n')}
 </BANKTRANLIST>
 </OFX>`;
+
+const STATEMENT = { accountKey: '0001:777', through: spMidnight('2026-10-01').toISOString() };
 
 const toFile = (content: string) => Buffer.from(content, 'utf8').toString('base64url');
 
@@ -62,7 +72,7 @@ describe('Transaction import', () => {
     const res = await request(app)
       .post('/transactions/import/preview')
       .set('Authorization', `Bearer ${token}`)
-      .send({ file: toFile(content) })
+      .send({ file: toFile(content), accountId })
       .expect(200);
     return res.body.data.items as PreviewItem[];
   };
@@ -73,6 +83,7 @@ describe('Transaction import', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({
         accountId: targetAccountId ?? undefined,
+        ...STATEMENT,
         items: items.map(({ externalId, type, amount, date, title, suggestedCategoryId }) => ({
           externalId,
           type,
@@ -223,5 +234,189 @@ describe('Transaction import', () => {
 
     expect(list.body.data).toHaveLength(1);
     expect(list.body.data[0].periodId).toBe(reference.body.data.periodId);
+  });
+});
+
+describe('Transaction import: statement account and coverage', () => {
+  let token: string;
+  let strangerToken: string;
+  let categoryId: string;
+  let mainId: string;
+  let otherId: string;
+
+  const auth = (value = token) => ({ Authorization: `Bearer ${value}` });
+  const dayAt = (offset: number) => {
+    const { year, month, day } = spParts(new Date());
+    return spMidnightPlusDays(year, month, day, offset);
+  };
+  const ymd = (offset: number) => spDayString(dayAt(offset)).replace(/-/g, '');
+  const account = async (id: string) =>
+    (await db.select().from(accounts).where(eq(accounts.id, id)))[0]!;
+
+  const signUp = async (label: string) => {
+    const res = await request(app)
+      .post('/auth/sign-up')
+      .send({
+        name: `Coverage ${label}`,
+        email: `coverage-${label}-${Date.now()}@test.com`,
+        password: 'password123',
+      });
+    return res.body.data.accessToken as string;
+  };
+
+  const previewBody = async (content: string, accountId?: string, as = token) =>
+    (
+      await request(app)
+        .post('/transactions/import/preview')
+        .set(auth(as))
+        .send({ file: toFile(content), accountId })
+        .expect(200)
+    ).body.data;
+
+  const confirmPreview = (data: PreviewBody, accountId: string, through = data.through) =>
+    request(app)
+      .post('/transactions/import')
+      .set(auth())
+      .send({
+        accountId,
+        accountKey: data.accountKey,
+        through,
+        items: data.items.map(({ externalId, type, amount, date, title }) => ({
+          externalId,
+          type,
+          amount,
+          date,
+          title,
+          categoryId,
+        })),
+      });
+
+  type PreviewBody = {
+    accountId: string | null;
+    needsAccount: boolean;
+    accountKey: string;
+    through: string;
+    items: PreviewItem[];
+  };
+
+  const statement = (fitId: string, offset: number, options?: Parameters<typeof ofx>[1]) =>
+    ofx([{ fitId, date: ymd(offset), amount: '-10.00', memo: `Compra ${fitId}` }], options);
+
+  beforeAll(async () => {
+    token = await signUp('owner');
+    strangerToken = await signUp('stranger');
+    categoryId = (
+      await request(app)
+        .post('/categories/create')
+        .set(auth())
+        .send({ name: `Cobertura ${Date.now()}` })
+    ).body.data.id;
+    const list = await request(app).get('/accounts').set(auth()).expect(200);
+    mainId = list.body.data[0].id;
+    otherId = (
+      await request(app)
+        .post('/accounts')
+        .set(auth())
+        .send({ type: 'checking', name: 'Outra conta' })
+        .expect(201)
+    ).body.data.id;
+  });
+
+  it('asks for the account when the statement key is unknown', async () => {
+    const data = await previewBody(statement('k1', -3));
+
+    expect(data).toMatchObject({
+      needsAccount: true,
+      accountId: null,
+      accountKey: '0001:777',
+      items: [],
+    });
+    expect(data.through).toBe(dayAt(-3).toISOString());
+  });
+
+  it('records the key and coverage on confirm and recognizes the account afterwards', async () => {
+    const data = await previewBody(statement('k1', -3), mainId);
+    expect(data).toMatchObject({ needsAccount: false, accountId: mainId });
+    await confirmPreview(data, mainId).expect(201);
+
+    expect(await account(mainId)).toMatchObject({
+      statementKey: '0001:777',
+      dataThrough: dayAt(-3),
+    });
+
+    const next = await previewBody(statement('k2', -2));
+    expect(next).toMatchObject({ needsAccount: false, accountId: mainId });
+    expect(next.items).toHaveLength(1);
+  });
+
+  it('never lowers the coverage when an older file is sent', async () => {
+    const data = await previewBody(statement('k3', -10));
+    await confirmPreview(data, mainId).expect(201);
+
+    expect((await account(mainId)).dataThrough).toEqual(dayAt(-3));
+  });
+
+  it('clamps a future DTEND to today', async () => {
+    const data = await previewBody(statement('k4', -1, { dtEnd: ymd(20) }));
+    expect(data.through).toBe(dayAt(20).toISOString());
+    await confirmPreview(data, mainId).expect(201);
+
+    expect((await account(mainId)).dataThrough).toEqual(dayAt(0));
+  });
+
+  it('clamps a future through sent straight to confirm', async () => {
+    const data = await previewBody(statement('k5', -1), otherId);
+    await confirmPreview(data, otherId, dayAt(40).toISOString()).expect(201);
+
+    expect((await account(otherId)).dataThrough).toEqual(dayAt(0));
+  });
+
+  it('lets an explicit account win over the stored key', async () => {
+    const data = await previewBody(statement('k6', -1), otherId);
+
+    expect(data).toMatchObject({ needsAccount: false, accountId: otherId });
+  });
+
+  it('fails for an account of another user', async () => {
+    const content = statement('k7', -1);
+
+    await request(app)
+      .post('/transactions/import/preview')
+      .set(auth(strangerToken))
+      .send({ file: toFile(content), accountId: mainId })
+      .expect(404);
+    const data = await previewBody(content, mainId);
+    await request(app)
+      .post('/transactions/import')
+      .set(auth(strangerToken))
+      .send({ accountId: mainId, accountKey: data.accountKey, through: data.through, items: [] })
+      .expect(400);
+  });
+
+  it('moves the key to the chosen account when another one already holds it', async () => {
+    const data = await previewBody(statement('k8', -1), otherId);
+    await confirmPreview(data, otherId).expect(201);
+
+    expect((await account(otherId)).statementKey).toBe('0001:777');
+    expect((await account(mainId)).statementKey).toBeNull();
+    expect(await previewBody(statement('k9', -1))).toMatchObject({
+      needsAccount: false,
+      accountId: otherId,
+    });
+  });
+
+  it('does not trust a weak key: it is never stored and always asks for the account', async () => {
+    const content = statement('w1', -1, { acctId: null });
+    const data = await previewBody(content, mainId);
+    expect(data.accountKey).toBe('0001:unknown');
+    await confirmPreview(data, mainId).expect(201);
+
+    expect((await account(mainId)).statementKey).toBeNull();
+    expect((await account(mainId)).dataThrough).toEqual(dayAt(0));
+    expect(await previewBody(content)).toMatchObject({
+      needsAccount: true,
+      accountId: null,
+      items: [],
+    });
   });
 });

@@ -108,6 +108,7 @@ export function parseInterBill(text: string): BillStatement | null {
   const totalMatch = totalIndex >= 0 ? lines[totalIndex + 1]?.match(AMOUNT_END) : null;
   return {
     accountKey: `inter:${card?.[1] ?? 'pdf'}`,
+    through: new Date(Math.max(...transactions.map((row) => row.date.getTime()))),
     dueDate,
     total: totalMatch ? toCents(totalMatch[2]!) : null,
     transactions,

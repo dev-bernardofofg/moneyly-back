@@ -1,4 +1,6 @@
-import { spDayString, spEndOfDay } from '@core/helpers/dates';
+import { spDayString, spEndOfDay, spMidnight } from '@core/helpers/dates';
+import { accountRepository } from '@modules/account/repositories/account.repository';
+import { isWeakStatementKey } from '../helpers/statement-key';
 import { BadRequestError } from '@core/errors';
 import { logger } from '@core/lib/logger';
 import { categoryRepository } from '@modules/category/repositories/category.repository';
@@ -32,6 +34,13 @@ export type ImportItemStatus =
 
 const RECONCILE_MARGIN_MS = 3 * 24 * 60 * 60 * 1000;
 
+const findStatementAccount = async (userId: string, accountKey: string, accountId?: string) => {
+  if (accountId) return resolveAccount(userId, accountId);
+  if (isWeakStatementKey(accountKey)) return null;
+  const known = await accountRepository.findByStatementKey(userId, accountKey);
+  return known?.isActive ? known : null;
+};
+
 export const previewTransactionImportUseCase = async (
   userId: string,
   fileBase64Url: string,
@@ -61,9 +70,24 @@ export const previewTransactionImportUseCase = async (
     throw new BadRequestError('Nenhuma transação encontrada no extrato');
   }
 
+  // Fatura em PDF: toda linha pertence a esta fatura, até parcela de compra antiga.
+  const bill =
+    'dueDate' in statement ? { dueDate: statement.dueDate, total: statement.total } : null;
+
+  const account = await findStatementAccount(userId, statement.accountKey, accountId);
+  if (!account) {
+    return {
+      accountId: null,
+      needsAccount: true,
+      accountKey: statement.accountKey,
+      through: statement.through,
+      bill,
+      items: [],
+    };
+  }
+
   const times = statement.transactions.map((transaction) => transaction.date.getTime());
   const externalIds = statement.transactions.map((transaction) => transaction.externalId);
-  const account = await resolveAccount(userId, accountId);
   const billDueDate = 'dueDate' in statement ? statement.dueDate : null;
   // Fatura no cartão: o que já existe no período dela é candidato, venha de onde vier a data.
   const scope =
@@ -103,12 +127,11 @@ export const previewTransactionImportUseCase = async (
   );
   const suggester = buildImportCategorySuggester(history, categories);
 
-  // Fatura em PDF: toda linha pertence a esta fatura, até parcela de compra antiga.
-  const bill =
-    'dueDate' in statement ? { dueDate: statement.dueDate, total: statement.total } : null;
-
   return {
+    accountId: account.id,
+    needsAccount: false,
     accountKey: statement.accountKey,
+    through: statement.through,
     bill,
     items: statement.transactions.map((transaction) => {
       const match = matches.get(transaction.externalId);
@@ -140,7 +163,14 @@ export const previewTransactionImportUseCase = async (
 
 export const confirmTransactionImportUseCase = async (
   userId: string,
-  { items, billPayments, billDueDate, accountId: requestedAccountId }: ConfirmImportInput
+  {
+    items,
+    billPayments,
+    billDueDate,
+    accountId: requestedAccountId,
+    accountKey,
+    through,
+  }: ConfirmImportInput
 ) => {
   const account = await resolveAccount(userId, requestedAccountId);
   const transferItems = items.filter((item) => item.transferOf);
@@ -216,6 +246,14 @@ export const confirmTransactionImportUseCase = async (
       linked++;
     }
   }
+
+  // DTEND futuro não pode marcar a conta como em dia além de hoje (nem vazar a ocorrência de
+  // hoje para o passado coberto).
+  const today = spMidnight(new Date());
+  await accountRepository.recordImport(account.id, userId, {
+    statementKey: isWeakStatementKey(accountKey) ? undefined : accountKey,
+    through: through > today ? today : through,
+  });
 
   return {
     created: created.length,

@@ -10,6 +10,8 @@ export interface OfxTransaction {
 
 export interface OfxStatement {
   accountKey: string;
+  // Último dia coberto pelo arquivo (meia-noite SP): DTEND ou a maior data de lançamento.
+  through: Date;
   transactions: OfxTransaction[];
 }
 
@@ -79,5 +81,14 @@ export function parseOfx(content: string): OfxStatement {
     });
   }
 
-  return { accountKey, transactions };
+  const dtEnd = readTag(content, 'DTEND');
+  const throughFromEnd = dtEnd ? parseOfxDate(dtEnd) : undefined;
+  const latestRow = transactions.reduce<Date | undefined>(
+    (latest, row) => (!latest || row.date > latest ? row.date : latest),
+    undefined
+  );
+  // Sem DTEND nem lançamento a cobertura é desconhecida; a época nunca eleva data_through.
+  const through = throughFromEnd ?? latestRow ?? new Date(0);
+
+  return { accountKey, through, transactions };
 }
