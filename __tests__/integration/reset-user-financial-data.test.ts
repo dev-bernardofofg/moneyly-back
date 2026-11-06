@@ -6,6 +6,7 @@ import {
   categories,
   companies,
   overtimeRecords,
+  recurringTransactions,
   transactions,
   transfers,
   users,
@@ -19,6 +20,7 @@ function one<T>(rows: T[]): T {
 }
 
 const OPENING_DATE = new Date('2026-01-01T00:00:00Z');
+const NEXT_EXECUTION = new Date('2026-12-05T00:00:00Z');
 const DATA_THROUGH = new Date('2026-10-30T00:00:00Z');
 
 async function seedUser(label: string) {
@@ -83,6 +85,19 @@ async function seedUser(label: string) {
 
   if (!tx1 || !tx2) throw new Error('transações esperadas');
 
+  await db.insert(recurringTransactions).values({
+    userId: user.id,
+    type: 'expense',
+    title: 'Aluguel',
+    amount: 100000,
+    categoryId: category.id,
+    frequency: 'monthly',
+    dayOfMonth: 5,
+    totalInstallments: 12,
+    executedInstallments: 3,
+    nextExecution: NEXT_EXECUTION,
+  });
+
   await db.insert(transfers).values({
     userId: user.id,
     fromAccountId: checking.id,
@@ -129,7 +144,7 @@ async function seedUser(label: string) {
 }
 
 async function snapshot(userId: string) {
-  const [txs, trs, bills, overtime, accs, cats, cos] = await Promise.all([
+  const [txs, trs, bills, overtime, accs, cats, cos, recurring] = await Promise.all([
     db.select().from(transactions).where(eq(transactions.userId, userId)),
     db.select().from(transfers).where(eq(transfers.userId, userId)),
     db.select().from(cardBillPayments).where(eq(cardBillPayments.userId, userId)),
@@ -137,8 +152,9 @@ async function snapshot(userId: string) {
     db.select().from(accounts).where(eq(accounts.userId, userId)),
     db.select().from(categories).where(eq(categories.userId, userId)),
     db.select().from(companies).where(eq(companies.userId, userId)),
+    db.select().from(recurringTransactions).where(eq(recurringTransactions.userId, userId)),
   ]);
-  return { txs, trs, bills, overtime, accs, cats, cos };
+  return { txs, trs, bills, overtime, accs, cats, cos, recurring };
 }
 
 describe('resetUserFinancialData', () => {
@@ -193,6 +209,9 @@ describe('resetUserFinancialData', () => {
     expect(after.accs).toHaveLength(3);
     expect(after.cats).toHaveLength(1);
     expect(after.cos).toHaveLength(1);
+    expect(after.recurring).toHaveLength(1);
+    expect(after.recurring[0]?.nextExecution).toEqual(NEXT_EXECUTION);
+    expect(after.recurring[0]?.executedInstallments).toBe(3);
   });
 
   it('zera saldo inicial e data_through', async () => {
