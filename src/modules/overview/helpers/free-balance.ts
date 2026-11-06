@@ -1,3 +1,5 @@
+import type { AccountFreshness } from '@modules/account/helpers/freshness';
+
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 export type ForecastConfidence = 'low' | 'medium' | 'high';
@@ -76,6 +78,24 @@ export const getForecastConfidence = (
   if (expectedFixedIncome > 0 && hasBudgets) return 'high';
   if (expectedFixedIncome > 0 || realizedIncome > 0) return 'medium';
   return 'low';
+};
+
+export const calculateFreeBalance = (input: {
+  accountsBalance: number;
+  otherIncome: number;
+  recurringExpense: number;
+  cardBills: number;
+}): number =>
+  roundMoney(input.accountsBalance + input.otherIncome - input.recurringExpense - input.cardBills);
+
+export const getFreeBalanceConfidence = (input: {
+  accounts: Array<{ freshness: AccountFreshness; hasOpeningBalance: boolean }>;
+  hasSalary: boolean;
+}): ForecastConfidence => {
+  if (!input.hasSalary) return 'low';
+  if (input.accounts.length === 0 || input.accounts.some((a) => !a.hasOpeningBalance)) return 'low';
+  if (input.accounts.some((a) => a.freshness !== 'fresh')) return 'medium';
+  return 'high';
 };
 
 export const toMoney = roundMoney;
