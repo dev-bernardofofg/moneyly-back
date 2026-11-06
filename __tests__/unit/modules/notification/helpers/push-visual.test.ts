@@ -18,7 +18,7 @@ describe('resolvePushVisual', () => {
     expect(resolvePushVisual('transaction_income', null).url).toBe('/transactions');
   });
 
-  it('maps goal milestone with query param', () => {
-    expect(resolvePushVisual('goal_milestone', 'g1').url).toBe('/planner?goalId=g1');
+  it('sends goal milestone to the dashboard', () => {
+    expect(resolvePushVisual('goal_milestone', 'g1').url).toBe('/dashboard');
   });
 });

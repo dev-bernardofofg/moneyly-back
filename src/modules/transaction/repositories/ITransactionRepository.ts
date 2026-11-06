@@ -74,7 +74,6 @@ export interface ITransactionRepository {
     accountIds: string[],
     periodsEndingFrom: Date
   ): Promise<CardPeriodTotal[]>;
-  findFlowsBeforePeriod(userId: string, periodStart: Date, since: Date): Promise<AccountFlow[]>;
   findDatesByAccountId(
     userId: string,
     accountId: string
@@ -102,7 +101,6 @@ export type PeriodCategoryTotal = {
   total: number;
 };
 export type CardPeriodTotal = { accountId: string; startDate: Date; endDate: Date; total: number };
-export type AccountFlow = Pick<Transaction, 'accountId' | 'type' | 'amount' | 'date'>;
 export type AccountCategoryTotal = {
   accountId: string;
   categoryId: string;

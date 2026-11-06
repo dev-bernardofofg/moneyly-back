@@ -14,11 +14,7 @@ export const resolvePushVisual = (type: string, relatedId: string | null): PushV
     case 'bill_reminder':
       return { url: '/recurring-transactions', icon: '/icons/bill.png', badge: BADGE };
     case 'goal_milestone':
-      return {
-        url: relatedId ? `/planner?goalId=${relatedId}` : '/planner',
-        icon: '/icons/goal.png',
-        badge: BADGE,
-      };
+      return { url: '/dashboard', icon: '/icons/goal.png', badge: BADGE };
     case 'spending_alert':
       return { url: '/dashboard', icon: '/icons/spending.png', badge: BADGE };
     case 'transaction_income':

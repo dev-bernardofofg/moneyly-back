@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, inArray, isNull, lt, lte, ne, or, sql, sum } from 'drizzle-orm';
+import { and, count, desc, eq, gte, inArray, isNull, lte, ne, sql, sum } from 'drizzle-orm';
 import { db } from '@infra/db';
 import {
   accounts,
@@ -15,7 +15,6 @@ import {
 } from '@core/helpers/pagination';
 import type {
   AccountCategoryTotal,
-  AccountFlow,
   CardPeriodTotal,
   ITransactionRepository,
   PeriodCategoryTotal,
@@ -376,33 +375,6 @@ export const transactionRepository = {
       )
       .groupBy(transactions.accountId, financialPeriods.startDate, financialPeriods.endDate);
     return rows.map((row) => ({ ...row, total: Number(row.total ?? 0) }));
-  },
-
-  async findFlowsBeforePeriod(
-    userId: string,
-    periodStart: Date,
-    since: Date
-  ): Promise<AccountFlow[]> {
-    return db
-      .select({
-        accountId: transactions.accountId,
-        type: transactions.type,
-        amount: transactions.amount,
-        date: transactions.date,
-      })
-      .from(transactions)
-      .leftJoin(financialPeriods, eq(transactions.periodId, financialPeriods.id))
-      .where(
-        and(
-          eq(transactions.userId, userId),
-          gte(transactions.date, since),
-          // Pelo período, não pela data: compra no cartão pertence ao período da fatura.
-          or(
-            lt(financialPeriods.startDate, periodStart),
-            and(isNull(transactions.periodId), lt(transactions.date, periodStart))
-          )
-        )
-      );
   },
 
   async findDatesByAccountId(
