@@ -4,13 +4,17 @@
  * Uso: pnpm db:reset-user <email> [--confirm]
  * Sem --confirm só conta; nada é escrito. Faça backup antes de confirmar.
  */
-import { and, eq, isNotNull, ne, or, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, ne, or, sql } from 'drizzle-orm';
 import { db, disconnectDB } from '@infra/db';
 import {
   accounts,
   billPaymentOutflows,
+  budgets,
   cardBillPayments,
+  categories,
+  financialPeriods,
   overtimeRecords,
+  recurringTransactions,
   transactions,
   transfers,
   users,
@@ -21,6 +25,10 @@ export interface ResetCounts {
   transfers: number;
   billPayments: number;
   billPaymentOutflows: number;
+  recurringTransactions: number;
+  financialPeriods: number;
+  categories: number;
+  budgets: number;
   overtimeLinks: number;
   accounts: number;
 }
@@ -35,6 +43,9 @@ export async function resetUserFinancialData(
     const userId = user.id;
 
     const count = async (query: Promise<{ n: number }[]>) => (await query)[0]?.n ?? 0;
+
+    const isOwnCategory = and(eq(categories.userId, userId), eq(categories.isGlobal, false));
+    const ownCategoryIds = tx.select({ id: categories.id }).from(categories).where(isOwnCategory);
 
     const hasAccountState = or(
       ne(accounts.openingBalance, 0),
@@ -67,6 +78,30 @@ export async function resetUserFinancialData(
           .from(billPaymentOutflows)
           .where(eq(billPaymentOutflows.userId, userId))
       ),
+      recurringTransactions: await count(
+        tx
+          .select({ n: sql<number>`count(*)::int` })
+          .from(recurringTransactions)
+          .where(eq(recurringTransactions.userId, userId))
+      ),
+      financialPeriods: await count(
+        tx
+          .select({ n: sql<number>`count(*)::int` })
+          .from(financialPeriods)
+          .where(eq(financialPeriods.userId, userId))
+      ),
+      categories: await count(
+        tx
+          .select({ n: sql<number>`count(*)::int` })
+          .from(categories)
+          .where(isOwnCategory)
+      ),
+      budgets: await count(
+        tx
+          .select({ n: sql<number>`count(*)::int` })
+          .from(budgets)
+          .where(and(eq(budgets.userId, userId), inArray(budgets.categoryId, ownCategoryIds)))
+      ),
       overtimeLinks: await count(
         tx
           .select({ n: sql<number>`count(*)::int` })
@@ -92,6 +127,11 @@ export async function resetUserFinancialData(
     await tx.delete(transfers).where(eq(transfers.userId, userId));
     await tx.delete(cardBillPayments).where(eq(cardBillPayments.userId, userId));
     await tx.delete(billPaymentOutflows).where(eq(billPaymentOutflows.userId, userId));
+    await tx.delete(recurringTransactions).where(eq(recurringTransactions.userId, userId));
+    // Orçamento de categoria própria cai junto (cascade).
+    await tx.delete(categories).where(isOwnCategory);
+    // Recriados sob demanda pelo ensurePeriodExists e pela importação.
+    await tx.delete(financialPeriods).where(eq(financialPeriods.userId, userId));
     // statement_key fica: reimportar precisa reconhecer as contas.
     await tx
       .update(accounts)
@@ -119,6 +159,10 @@ async function main() {
   console.log(`Transferências: ${counts.transfers}`);
   console.log(`Pagamentos de fatura: ${counts.billPayments}`);
   console.log(`Saídas de pagamento de fatura: ${counts.billPaymentOutflows}`);
+  console.log(`Recorrentes: ${counts.recurringTransactions}`);
+  console.log(`Períodos: ${counts.financialPeriods}`);
+  console.log(`Categorias próprias: ${counts.categories}`);
+  console.log(`Orçamentos dessas categorias: ${counts.budgets}`);
   console.log(`Horas extras desvinculadas: ${counts.overtimeLinks}`);
   console.log(`Contas com saldo inicial/cobertura limpos: ${counts.accounts}`);
   console.log(
