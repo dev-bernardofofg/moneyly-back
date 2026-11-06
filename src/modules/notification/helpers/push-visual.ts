@@ -17,6 +17,8 @@ export const resolvePushVisual = (type: string, relatedId: string | null): PushV
       return { url: '/dashboard', icon: '/icons/goal.png', badge: BADGE };
     case 'spending_alert':
       return { url: '/dashboard', icon: '/icons/spending.png', badge: BADGE };
+    case 'check_in_reminder':
+      return { url: '/check-in', badge: BADGE };
     case 'transaction_income':
       return {
         url: relatedId ? `/transactions?id=${relatedId}` : '/transactions',

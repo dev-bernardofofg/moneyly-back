@@ -4,6 +4,7 @@ import type { PaginationQuery, PaginationResult } from '@core/helpers/pagination
 export interface INotificationRepository {
   create(data: Omit<NewNotification, 'id' | 'createdAt'>): Promise<Notification | null>;
   findByDedupeKey(dedupeKey: string): Promise<Notification | null>;
+  findLatestByType(userId: string, type: string): Promise<Notification | null>;
   deleteByDedupeKeys(dedupeKeys: string[]): Promise<number>;
   findByUserPaginated(
     userId: string,

@@ -28,6 +28,18 @@ export const notificationRepository = {
     return notification ?? null;
   },
 
+  async findLatestByType(userId: string, type: string): Promise<Notification | null> {
+    const [notification] = await db
+      .select()
+      .from(notifications)
+      .where(
+        and(eq(notifications.userId, userId), eq(notifications.type, type as Notification['type']))
+      )
+      .orderBy(desc(notifications.createdAt))
+      .limit(1);
+    return notification ?? null;
+  },
+
   async deleteByDedupeKeys(dedupeKeys: string[]): Promise<number> {
     if (dedupeKeys.length === 0) return 0;
     const deleted = await db
