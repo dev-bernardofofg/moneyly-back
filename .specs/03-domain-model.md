@@ -51,7 +51,7 @@ Fonte de verdade: `src/infra/db/schema.ts` (Drizzle). Atualizar este doc quando 
 
 ### `notifications` (F2/F8/F9 + transações)
 
-`id` · `userId`→users (cascade) · `type` enum `budget_alert|bill_reminder|goal_milestone|spending_alert|transaction_income|transaction_expense` · `severity` enum `info|warning|danger` · `title` · `message` · `relatedId` uuid nullable (budgetId/recurringId/goalId/transactionId) · `periodId`→financial_periods (cascade, nullable) · `dedupeKey` text **unique** · `isRead` bool default false · `createdAt`.
+`id` · `userId`→users (cascade) · `type` enum `budget_alert|bill_reminder|goal_milestone|spending_alert|transaction_income|transaction_expense|check_in_reminder` · `severity` enum `info|warning|danger` · `title` · `message` · `relatedId` uuid nullable (budgetId/recurringId/goalId/transactionId) · `periodId`→financial_periods (cascade, nullable) · `dedupeKey` text **unique** · `isRead` bool default false · `createdAt`.
 
 > **Idempotência por `dedupeKey`:** `budget:<budgetId>:<periodId>:<status>` (F2) · `bill:<recurringId>:<yyyy-MM-dd>` (F8) · `goal:<goalId>:milestone:<pct>` (F9) · `spending:<userId>:<periodId>:<status>` · `transaction:<transactionId>` (criação de lançamento). Coluna `type` é text sem CHECK no Postgres — enum só em TS, extensão não exige migration. Push data-only inclui `url`/`icon`/`badge`/`relatedId` (ver `helpers/push-visual.ts`).
 
@@ -63,9 +63,9 @@ Fonte de verdade: `src/infra/db/schema.ts` (Drizzle). Atualizar este doc quando 
 
 ### `overtime_records` (F7 — horas extras)
 
-`id` · `userId`→users (cascade) · `companyId`→companies (cascade) · `description` varchar(500) nullable · `startTime` timestamp · `endTime` timestamp · `hoursWorked` decimal(10,2) (calculado e armazenado) · `hourlyRateSnapshot` int centavos (congelado no cadastro) · `amount` int centavos (`round(hoursWorked x hourlyRateSnapshot)`, armazenado) · `month` int (1-12) · `year` int — mês civil derivado de `startTime` · `transactionId` uuid nullable→transactions · timestamps.
+`id` · `userId`→users (cascade) · `companyId`→companies (cascade) · `description` varchar(500) nullable · `startTime` timestamp · `endTime` timestamp · `hoursWorked` decimal(10,2) (calculado e armazenado) · `hourlyRateSnapshot` int centavos (congelado no cadastro) · `amount` int centavos (`round(hoursWorked x hourlyRateSnapshot)`, armazenado) · `month` int (1-12) · `year` int — mês civil derivado de `startTime` · `transactionId` uuid nullable→transactions (legado) · timestamps.
 
-> Usa **mês civil** (não período financeiro) para agrupar/filtrar. Transaction vinculada recebe `periodId` financeiro normal. Criação: gera income transaction. Edição: recalcula e sincroniza transaction. Deleção: deleta transaction vinculada primeiro.
+> Usa **mês civil** (não período financeiro) para agrupar/filtrar. Desde o F21 horas extras não criam, sincronizam nem removem transação; `transactionId` fica nulo e sai em migration separada. Horas do mês M entram no salário do começo do mês M+1.
 
 ### `refresh_tokens`
 
@@ -75,7 +75,11 @@ Fonte de verdade: `src/infra/db/schema.ts` (Drizzle). Atualizar este doc quando 
 
 `id` · `userId`→users · `type` `income|expense` · `title` · `amount` · `categoryId`→categories · `frequency` enum `daily|weekly|monthly|yearly` · `dayOfMonth` int (monthly) · `dayOfWeek` int 0-6 (weekly, dom=0) · `startDate` · `totalInstallments` · `executedInstallments` int default 0 · `nextExecution` (notNull) · `isActive` bool default true · `description` · timestamps.
 
-> Scheduler (`processRecurringTransactions`, src/server.ts) executa a cada 1h: gera `transactions` quando `nextExecution` vence, atualiza `nextExecution`/`executedInstallments`, desativa ao atingir `totalInstallments`.
+> Desde o F21 recorrência é só previsão. O scheduler diário (`processRecurringTransactions`) atualiza `nextExecution`/`executedInstallments` e desativa ao atingir `totalInstallments`, sem criar `transactions`.
+
+### `accounts` (colunas do F21)
+
+`data_through` timestamp nullable: última data coberta por arquivo importado. `statement_key` text nullable, único por usuário (índice parcial): identifica a origem do arquivo. Migration `0018`, escrita à mão como as 0006 a 0017.
 
 ## Relacionamentos chave
 

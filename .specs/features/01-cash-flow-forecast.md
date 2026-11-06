@@ -1,155 +1,103 @@
-# F1 — Saldo Projetado e Saldo Livre
+# F1 / F21 — Saldo Livre
 
-**Tipo:** feature (read-only). **Status:** Done. **Esforço:** baixo. **Schema novo:** nenhum.
-**Por quê:** tendência 2026 #1 (forecast preditivo). Reusa `recurring_transactions` + `financial_periods` + `transactions`. Responde "quanto vou ter no fim do período" sem o usuário simular na mão.
+**Tipo:** feature (read-only). **Status:** Done. **Schema novo:** nenhum no endpoint; o F21 acrescenta
+`accounts.data_through` e `accounts.statement_key` (migration `0018`).
+**Design:** `.specs/features/2026-11-05-check-in-semanal-design.md` na raiz. Esta spec descreve o que o
+código faz hoje.
 
 ## Objetivo
 
-Endpoint que projeta o saldo até o fim do período financeiro selecionado (ou atual), combinando:
-
-- saldo realizado: transações já existentes no período;
-- entradas/saídas futuras: ocorrências de `recurring_transactions` ativas com `nextExecution` dentro da janela `[hoje, period.endDate]`;
-
-Sem persistir nada. Cálculo determinístico em São Paulo (helpers de `financial-period.ts`/`dates.ts`).
+Responder "quanto posso gastar até receber?". O banco é a fonte do dinheiro real: o app parte do saldo
+das contas e só prevê o que ainda não apareceu no extrato. Sem persistir nada.
 
 ## Endpoint
 
-`GET /overview/forecast?periodId=<uuid?>`
+`GET /overview/forecast`
 
-- Auth: bearer. Router: `overview.router.ts` (já tem `authenticateUser` + `ensurePeriodExists`).
-- `periodId` opcional (ausente = período atual via `financialPeriodService.ensureCurrentPeriodExists`).
-
-### Response (envelope `wrapSuccess`)
-
-`data: ForecastResponse`
+- Auth: bearer. Não aceita `periodId`: calcula sempre para hoje (São Paulo).
+- Resposta (envelope `wrapSuccess`): `data: { freeBalance }`.
+- `GET /overview/planner` foi removido. As reservas de orçamento e de meta saíram da fórmula.
 
 ```
-{
-  period: { id, startDate, endDate, label },
-  realized: {
-    income: number,        // soma income já lançado no período
-    expense: number,       // soma expense já lançado
-    balance: number        // income - expense
-  },
-  projected: {
-    recurringIncome: number,   // recorrentes income que ainda vão executar até endDate
+freeBalance: {
+  total: number,
+  until: string,                 // ISO
+  confidence: 'high' | 'medium' | 'low',
+  components: {
+    accountsBalance: number,
+    otherIncome: number,
     recurringExpense: number,
-    occurrences: Array<{       // detalhe das ocorrências futuras previstas
-      recurringTransactionId: string,
-      title: string,
-      type: "income" | "expense",
-      amount: number,
-      date: string             // ISO, ocorrência prevista
-    }>
+    cardBills: number
   },
-  projectedEndBalance: number, // inclui renda variável pendente
-  freeBalance: {
-    total: number,             // disponível após compromissos e reservas
-    daysRemaining: number,
-    confidence: "low" | "medium" | "high",
-    income: { fixed, variable, pendingVariable },
-    commitments: { recurringExpenses },
-    reserves: { budgets, goals },
-    components: {
-      realizedBalance,
-      futureRecurringIncome,
-      futureRecurringExpense,
-      pendingVariableIncome,
-      budgetReserve,
-      goalReserve
-    }
-  },
-  asOf: string                 // ISO, agora (São Paulo)
+  nextPayment: { date: string, salary: number, overtime: number, total: number } | null,
+  committedAfter: number
 }
 ```
 
-> Dinheiro derivado = `number` (consistente com stats/insights existentes; ver `02-conventions.md`).
+Valores em centavos. `GET /accounts` expõe `dataThrough` e `freshness`: `fresh` até 7 dias depois de
+`data_through`, `stale` depois disso, `empty` quando `data_through` é nulo (`account/helpers/freshness.ts`).
 
-## Camadas (seguir `04-feature-playbook.md`)
+## Fórmula
 
-1. **Schema DB:** nenhum.
-2. **Repos:** reusa `transactionRepository.findByPeriodId`, `recurringTransactionRepository` (listar ativas do user), `financialPeriodService.getPeriodById`/`ensureCurrentPeriodExists`.
-3. **Validações:** período existe/pertence ao user (404 se `periodId` inválido).
-4. **Service:** `src/services/forecast.service.ts` → `getForecastService(userId, periodId?)`.
-   - `requireUser`.
-   - Resolve período (igual `getUserBudgetsService`).
-   - `realized` = reduce das transações do período por tipo.
-   - Projeção: para cada recorrente ativa, gerar datas de execução de `nextExecution` até `period.endDate` via `calculateNextExecution` (helper `dates.ts`), respeitando `frequency`/`dayOfMonth`/`dayOfWeek` e `totalInstallments`/`executedInstallments` (não projetar além das parcelas restantes). Não duplicar ocorrência já materializada (transação com `recurringTransactionId` + mesma data já contada em `realized`).
-   - Somar, montar `projectedEndBalance`.
-5. **Schema Zod (request):** `forecastQuerySchema` em `src/schemas/overview.schema.ts` (`periodId: z.string().uuid().optional()`).
-6. **Controller:** `getForecast` em `overview.controller.ts` (padrão: `if(!req.user)`, try/catch, `isHttpError→next`, `ResponseHandler.success`).
-7. **Router:** `OverviewRouter.get("/forecast", validateQuery(forecastQuerySchema), getForecast)`.
-8. **OpenAPI:** registrar `ForecastResponse` em `src/openapi/schemas.ts` + rota em `paths.ts` (`ok: ok(wrapSuccess(ForecastResponseSchema))`). `pnpm openapi:gen`. Teste regressão router↔openapi pega a rota nova automaticamente.
-
-## Edge cases
-
-- Sem recorrentes ativas → `projected.*` zerado, `projectedEndBalance == realized.balance`.
-- `nextExecution` já passou (overdue) mas dentro do período → conta como ocorrência prevista (1x) — alinhar com lógica de `processRecurringTransactions` p/ não divergir.
-- Recorrente com `totalInstallments` esgotando no meio do período → projetar só as parcelas restantes.
-- Período no passado (histórico) → `projected` vazio (nada futuro); `realized` = fechamento real.
-- `monthlyIncome` foi removido do produto (2026-10-22): renda = entradas lançadas + recorrentes previstas. Salário é recorrência de entrada. (Histórico: v1 já NÃO injetava `monthlyIncome` automático; evitava dupla contagem com recorrente income). Documentar; reavaliar em F4.
-- Recorrências já materializadas no mesmo dia não entram novamente na projeção.
-- Horas extras com transação vinculada já pertencem ao realizado; registros sem transação
-  entram como renda variável pendente.
-- A reserva de orçamento exclui contas recorrentes da mesma categoria para evitar dupla
-  contagem. A reserva de metas é proporcional aos ciclos restantes até a data-alvo.
-
-## Fórmula do Saldo Livre
-
-Implementação: `get-forecast.use-case.ts` + helpers puros em `overview/helpers/free-balance.ts`.
+Implementação: `overview/use-cases/get-free-balance.use-case.ts` e helpers puros em
+`overview/helpers/free-balance.ts`.
 
 ```
-total = carryOverBalance
-      + realizedBalance
-      + futureRecurringIncome
-      + pendingVariableIncome
-      − futureRecurringExpense
-      − budgetReserve
-      − goalReserve
+total = saldo atual das contas
+      + outras entradas até o próximo salário
+      − recorrentes de saída até o próximo salário
+      − faturas não pagas que vencem até o próximo salário
 ```
 
-- `carryOverBalance`: saldos iniciais das contas correntes com data ≤ `period.endDate` + fluxos
-  de períodos anteriores feitos a partir da data do saldo (`overview/helpers/carry-over.ts`).
-  Sem saldo inicial = 0 e nada muda. Lançamento anterior ao corte já está no saldo: sai também
-  do `realizedBalance`. Corte por conta; cartões e contas sem saldo usam o corte mais antigo.
-- `realizedBalance`: receitas − despesas das transações do período (inclui recorrências
-  materializadas e horas extras com transação vinculada), sem as anteriores ao corte.
-- `futureRecurring*`: ocorrências com data > agora cujo período (no cartão, o do vencimento da
-  fatura) é este, sem as já materializadas e
-  limitadas às parcelas restantes.
-- `pendingVariableIncome`: horas extras do período sem transação vinculada.
-- `budgetReserve`: por orçamento, `max(0, restante − contas futuras previstas na categoria)`.
-- `goalReserve`: por meta não concluída, `restante / ceil(dias até a data-alvo / dias do período)`
-  (mínimo 1 período).
-- `confidence`: `high` com renda fixa prevista e orçamento; `medium` com alguma renda; senão `low`.
+- **Salário:** recorrência de entrada, mensal e ativa, de maior valor com uma ocorrência futura
+  (`findSalary`). As demais recorrências de entrada são "outras entradas".
+- **Janela:** de hoje até o dia anterior ao próximo salário. O salário fica fora, e `until` é a data
+  dele. Sem salário, a janela termina no último dia do período financeiro atual e `nextPayment` é nulo.
+- **Saldo atual:** soma de `currentBalance` das contas correntes ativas. Conta sem saldo inicial fica
+  fora e derruba a confiança.
+- **Recorrência prevista:** ocorrência posterior a `data_through` da conta dela (hoje, se nulo) e
+  anterior ao fim da janela. Em conta corrente vale a data mais recente entre `data_through` e
+  `opening_balance_date`, porque o saldo informado já contém o que aconteceu até ali. Nunca é anterior
+  a `start_date` e respeita as parcelas restantes (`recurring-transaction/helpers/occurrences.ts`).
+  Recorrência sem conta usa a conta padrão.
+- **Salário atrasado no extrato:** salário com data já passada e posterior a `data_through` é uma
+  ocorrência prevista, então conta como entrada até o extrato chegar.
+- **Fatura:** transações importadas do ciclo somadas às recorrências de cartão previstas para ele. Fatura
+  paga (`card_bill_payments`) fica fora, e fatura vencida também, como no limite do cartão.
+- **Próximo pagamento:** salário somado às horas extras do mês anterior ao do salário
+  (`overtimeMonthForSalary`).
+- **Já comprometido (`committedAfter`):** faturas não pagas que vencem no dia do próximo salário ou depois.
+- **Horas extras** nunca entram no total. Elas aparecem em `nextPayment` e passam a contar quando o
+  salário chega ao saldo, sem casar hora extra com o crédito do extrato.
+- **Confiança:** `low` sem salário, sem contas ou com conta corrente sem saldo inicial; `medium` com
+  alguma conta, inclusive cartão, que não esteja `fresh`; `high` nos demais casos.
 - Dinheiro arredondado em centavos.
 
-Mudanças na fórmula dependem do registro em `.specs/validation/free-balance-validation.md`.
+Recorrências são só previsão. O cron diário avança `next_execution` e `executed_installments` e não
+cria transação, e a criação de uma recorrência também não cria. Horas extras não criam, sincronizam nem
+removem transação.
 
-## Planner — impacto no Saldo Livre
+## Camadas
 
-`GET /overview/planner?periodId=<uuid?>`, com a mesma validação do forecast (`400` para uuid
-inválido, `404` para período de outro usuário). As reservas vêm do próprio `getForecastUseCase`, sem
-recálculo, então planner e forecast nunca divergem no mesmo período.
+`overview.router.ts` → `getForecast` (`overview.controller.ts`) → `getFreeBalanceUseCase`. Leitura de
+contas por `listAccountsUseCase`, recorrências por `recurringTransactionRepository`, faturas por
+`transactionRepository.sumCardExpensesByPeriod` e `cardBillPaymentRepository`, horas por
+`overtimeRepository`. Schema OpenAPI do `ForecastResponse` em `src/core/openapi/schemas.ts`.
 
-- `currentPeriod` passou a ser o período selecionado e ganhou `id`.
-- Campo novo `freeBalanceImpact: { budgetReserve, goalReserve, total }`.
+## Validação
+
+Mudanças na fórmula dependem do registro em `.specs/validation/free-balance-validation.md`: uma linha por
+check-in, comparando o Saldo Livre com o saldo real.
+
+## Histórico
+
+A versão anterior (F1) fechava o Saldo Livre por período financeiro: somava realizado, recorrências
+materializadas, horas extras pendentes e descontava reservas de orçamento e de meta, com o impacto no
+planner. Esse desenho foi substituído no F21 porque dependia de lançamentos que o usuário parou de
+alimentar.
 
 ## Testes
 
-- Unit `forecast.service`: mock repos. Casos: só realizado; realizado + 1 recorrente mensal dentro da janela; recorrente com parcelas esgotando; período passado; periodId inválido → 404.
-- Integração: `GET /overview/forecast` com/sem `periodId`, 401 sem token.
-- OpenAPI: rota presente + `data.$ref = ForecastResponse` (regressão já cobre presença).
-
-## Roadmap / contrato
-
-- `moneyly/.specs/03-feature-roadmap.md`: F1 Back WIP→Done quando mergeado; Front consome `getOverviewForecast` gerado.
-- Front spec: `moneyly-front/.specs/features/01-cash-flow-forecast.md` (dashboard, insights, planner e onboarding).
-
-## DoD
-
-- [x] `forecast.service` + controller + router + schema Zod
-- [x] `ForecastResponse` em components.schemas, rota no openapi
-- [x] Testes unit+integração verdes
-- [x] Specs (back features + roadmap + front) atualizados
-- [x] Sem schema DB novo; sem persistência
+- Unit: fórmula, janela, confiança e frescor (`overview/helpers`, `account/helpers`).
+- Integração: `GET /overview/forecast` e a importação com `data_through` e `statement_key`.
+- OpenAPI: o teste de regressão router↔openapi cobre a rota.

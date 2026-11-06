@@ -2,8 +2,12 @@
 
 ## Objetivo
 
-Usuário registra horas extras trabalhadas por empresa. Cada registro gera automaticamente
-uma transação de receita vinculada. Editar ou deletar o registro sincroniza a transação.
+Usuário registra horas extras trabalhadas por empresa.
+
+> **Mudança do F21:** o registro não cria, sincroniza nem remove transação. As horas do mês M são pagas
+> junto com o salário do começo do mês M+1 e aparecem em `nextPayment.overtime` do Saldo Livre, nunca no
+> total. As seções abaixo que falam em transação vinculada descrevem o comportamento anterior; a coluna
+> `overtime_records.transaction_id` sai em migration separada, depois da virada.
 
 ---
 

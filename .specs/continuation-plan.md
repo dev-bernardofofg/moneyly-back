@@ -9,23 +9,33 @@ A pergunta central do produto é:
 
 > Quanto posso gastar com segurança até receber novamente?
 
-O **Saldo Livre** deve responder essa pergunta considerando movimentações realizadas,
-entradas futuras, contas recorrentes, orçamento, metas e horas extras.
+Desde o F21 a promessa é: em 5 minutos por semana, saber quanto posso gastar até receber. O **Saldo
+Livre** parte do saldo real das contas e prevê só o que ainda não apareceu no extrato. A spec de
+referência é `.specs/features/2026-11-05-check-in-semanal-design.md` na raiz do workspace, e o que o código
+faz hoje está em `features/01-cash-flow-forecast.md`.
 
 ## Estado atual
 
-O primeiro ciclo técnico está implementado:
+O check-in semanal (F21) está implementado:
 
-- `GET /overview/forecast` retorna `freeBalance` com valor, dias restantes, confiança,
-  renda fixa e variável, compromissos, reservas e memória de cálculo;
-- recorrências materializadas não são contabilizadas novamente;
-- horas extras são integradas como renda variável no período financeiro;
-- o dashboard apresenta o Saldo Livre como informação principal;
-- o contrato OpenAPI e os clientes gerados do frontend estão sincronizados;
-- existem testes unitários no backend e testes de componente no frontend;
-- middleware, metadata, manifest, README e especificações refletem o novo posicionamento.
+- `GET /overview/forecast` retorna `{ freeBalance }` sempre para hoje: saldo atual das contas, mais
+  outras entradas, menos recorrentes de saída e faturas, até o dia anterior ao próximo salário;
+- `nextPayment` mostra salário mais as horas extras do mês anterior, e `committedAfter` as faturas que
+  vencem depois. Horas extras nunca entram no total;
+- recorrências são só previsão (o cron avança `next_execution` e as parcelas, sem criar transação) e
+  horas extras não criam transação;
+- contas têm `data_through` e `statement_key` (migration `0018`, escrita à mão como as 0006 a 0017
+  porque `db:generate` falha em um snapshot malformado da 0005). O frescor da conta é `fresh`,
+  `stale` ou `empty`;
+- a prévia da importação reconhece a conta pelo `accountKey` do arquivo, e a confirmação grava
+  `through` em `data_through`. Chaves fracas (`:pdf`, `:unknown`) nunca são salvas;
+- o lembrete `check_in_reminder` sai quando uma conta está atrasada ou vazia, no máximo um por 7 dias,
+  e abre `/check-in`;
+- `pnpm db:reset-user <email> [--confirm]` recomeça os dados financeiros de um usuário;
+- `GET /overview/planner` saiu. Os módulos e as tabelas de orçamento e meta continuam no back; o front
+  não os usa mais.
 
-Ainda faltam refinamentos de produto, infraestrutura de integração e validação prática.
+A decisão de congelar a fórmula até a validação, tomada antes do F21, foi substituída por esse design.
 
 ## Localização dos repositórios
 
@@ -88,11 +98,8 @@ encerrar com código `0` mesmo sem aplicar o schema.
 
 - CRUD de empresas;
 - CRUD de horas extras;
-- criação de hora extra gerando transação de receita;
-- atualização de hora extra sincronizando a transação;
-- exclusão de hora extra removendo a transação;
-- exclusão direta da transação desvinculando a hora extra;
-- materialização de recorrências sem dupla contagem no forecast;
+- criação, atualização e exclusão de hora extra sem tocar em transações;
+- recorrências avançando `next_execution` sem criar transação;
 - `GET /overview/forecast` retornando todo o contrato de `freeBalance`;
 - autenticação obrigatória para os endpoints envolvidos.
 
@@ -131,108 +138,18 @@ e filtrar em memória.
 - período inexistente ou de outro usuário retorna `404`;
 - os endpoints atuais mantêm o mesmo contrato.
 
-## Fase 3 — Conectar Planner e Saldo Livre
+## Fases 3 a 5 — substituídas pelo F21
 
-### Objetivo
-
-Mostrar como orçamentos e metas afetam o valor disponível no período selecionado.
-
-### Backend
-
-1. Permitir `periodId` em `GET /overview/planner`.
-2. Validar o `periodId` com o mesmo padrão do forecast.
-3. Reutilizar `getBudgetProgressUseCase(userId, periodId)`.
-4. Expor separadamente:
-   - reserva restante de orçamento;
-   - contribuição recomendada para metas no ciclo;
-   - impacto total no Saldo Livre.
-5. Atualizar OpenAPI e testes.
-
-### Frontend
-
-1. Enviar o período selecionado na consulta do planner.
-2. Exibir uma seção “Impacto no Saldo Livre”.
-3. Separar reserva de orçamento e reserva de metas.
-4. Após mutações em orçamento ou metas, invalidar:
-   - planner;
-   - forecast;
-   - dashboard.
-5. Cobrir loading, erro e ausência de orçamento/metas.
-
-### Critérios de aceite
-
-- planner e forecast usam o mesmo período financeiro;
-- alterar orçamento ou meta atualiza o Saldo Livre;
-- nenhuma fórmula é recalculada no componente visual.
-
-## Fase 4 — Tornar Insights acionáveis
-
-### Objetivo
-
-Explicar por que o Saldo Livre mudou e o que o usuário pode fazer.
-
-### Implementação
-
-1. Criar um detalhamento do Saldo Livre em `/insights`.
-2. Exibir saldo realizado, entradas futuras, renda variável pendente, contas futuras e
-   reservas.
-3. Renderizar as ocorrências futuras relevantes.
-4. Gerar mensagens determinísticas a partir do contrato, por exemplo:
-   - “Suas contas futuras consomem R$ X.”
-   - “R$ Y estão reservados para orçamento e metas.”
-   - “Horas extras adicionaram R$ Z à renda do período.”
-5. Evitar IA generativa: mensagens devem ser previsíveis e testáveis.
-6. Reutilizar a action/hook da página e manter componentes visuais sem regra de negócio.
-
-### Critérios de aceite
-
-- o usuário consegue reconstruir mentalmente o valor exibido;
-- valores negativos indicam claramente o motivo;
-- loading, erro, período histórico e ausência de previsões estão cobertos;
-- testes validam comportamento, não detalhes internos.
-
-## Fase 5 — Evoluir o onboarding
-
-### Objetivo
-
-Fazer o novo usuário fornecer dados suficientes para receber uma projeção útil.
-
-### Etapas sugeridas
-
-1. Renda e ciclo de pagamento.
-2. Primeiras contas recorrentes.
-3. Primeiro orçamento.
-4. Meta financeira opcional.
-5. Prévia do primeiro Saldo Livre.
-
-### Regras
-
-- reutilizar formulários e endpoints existentes;
-- permitir pular etapas opcionais;
-- não criar novas tabelas apenas para o wizard;
-- preservar o progresso local enquanto o dialog estiver aberto;
-- não bloquear o acesso caso o usuário escolha configurar depois;
-- concluir com uma explicação curta do Saldo Livre.
-
-### Critérios de aceite
-
-- o usuário pode concluir apenas a configuração mínima;
-- etapas opcionais podem ser ignoradas;
-- existem estados de submissão, erro e conclusão;
-- o dashboard recebe dados úteis imediatamente após o onboarding.
+Planner com impacto no Saldo Livre, detalhamento acionável em `/insights` e onboarding de 5 etapas foram
+entregues antes do F21 e depois redesenhados. Hoje: não há planner nem reservas; `/insights` aparece como
+"Gastos" e explica o Saldo Livre pelos quatro componentes do contrato; o onboarding tem 3 etapas (renda e
+ciclo, primeiras recorrentes e prévia do Saldo Livre). Detalhes em `features/01-cash-flow-forecast.md` e
+nas specs do front.
 
 ## Fase 6 — Validação durante dois períodos financeiros
 
-Criar `.specs/validation/free-balance-validation.md` e registrar diariamente:
-
-- Saldo Livre apresentado;
-- valor que o usuário acreditava poder gastar;
-- diferença entre os valores;
-- entrada ou compromisso ausente;
-- decisão tomada com ajuda do Moneyly;
-- dúvida causada pela interface ou pela fórmula.
-
-Ao final de cada período, avaliar:
+Registrar em `validation/free-balance-validation.md` uma linha por check-in, comparando o Saldo Livre
+exibido com o saldo real das contas. Ao fim de cada período, avaliar:
 
 - precisão da projeção;
 - frequência de dados ausentes;
@@ -247,11 +164,14 @@ inconsistências.
 
 1. Estabilizar banco e testes integrados.
 2. Remover a busca provisória de período.
-3. Conectar Planner e Saldo Livre.
-4. Tornar Insights acionáveis.
-5. Evoluir o onboarding.
-6. Validar durante dois períodos financeiros.
-7. Ajustar a fórmula somente com base nos resultados da validação.
+3. Aplicar a virada do F21: publicar back e front, fazer backup, rodar `pnpm db:reset-user <email>`
+   sem `--confirm` e conferir as contagens, rodar com `--confirm`, informar o saldo inicial de cada
+   conta e reimportar faturas e extratos. O usuário faz o backup e executa o script, que nunca roda em
+   CI contra produção.
+4. Validar durante dois períodos financeiros, um registro por check-in.
+5. Ajustar a fórmula somente com base nos resultados da validação.
+6. Tarefa separada, depois da virada: remover as tabelas e os módulos de orçamento e meta e as colunas
+   `overtime_records.transaction_id` e `transactions.overtime_record_id`.
 
 ## Verificação
 
@@ -276,29 +196,20 @@ pnpm build
 ## Prompt de handoff para o Claude Code
 
 ```text
-Continue o reposicionamento do Moneyly como copiloto financeiro para pessoas com salário
-fixo e renda variável.
+Continue o Moneyly a partir do check-in semanal (F21).
 
 Leia primeiro:
-- moneyly-back/.specs/continuation-plan.md
+- .specs/features/2026-11-05-check-in-semanal-design.md (raiz do workspace)
 - moneyly-back/.specs/features/01-cash-flow-forecast.md
-- moneyly-front/.specs/features/01-cash-flow-forecast.md
+- moneyly-back/.specs/validation/free-balance-validation.md
 
-Implemente uma fase por vez, seguindo a ordem do plano. Comece estabilizando o banco e os
-testes integrados. Reutilize o contrato freeBalance existente e não duplique regras
-financeiras no frontend.
+O Saldo Livre vem do back e o front só exibe. Não duplique regras financeiras no frontend.
 
 Antes de editar:
 1. confira git status nos dois repositórios;
 2. preserve alterações não relacionadas;
-3. identifique os testes proporcionais à fase.
+3. identifique os testes proporcionais à mudança.
 
-Ao concluir cada fase:
-1. execute testes focais;
-2. execute type-check/build aplicável;
-3. atualize este documento somente se uma decisão de escopo mudar;
-4. relate arquivos alterados, verificações e bloqueios reais.
-
-Não implemente integração bancária, IA generativa, multi-carteira ou novos tipos de renda
-antes da validação de dois períodos.
+Não implemente integração bancária, IA generativa nem novos tipos de renda antes da validação de dois
+períodos, e não remova orçamentos e metas dentro de outra tarefa.
 ```

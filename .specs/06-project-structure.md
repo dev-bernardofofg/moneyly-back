@@ -65,7 +65,7 @@ api/index.ts                       # entrypoint Vercel (inalterado)
 
 ### Módulos do Moneyly
 
-`auth` · `user` · `transaction` · `category` · `budget` · `goal` · `overview` (dashboard/planner/insights/forecast/comparative) · `recurring-transaction` · `notification` (+ bill-reminder) · `subscription` (detector F3 + convert F10; rotas continuam montadas nos routers de transaction/recurring) · `overtime` (companies + records) · `financial-period` (interno, sem router).
+`auth` · `user` · `transaction` · `category` · `budget` · `goal` · `overview` (dashboard/insights/forecast/comparative) · `recurring-transaction` · `notification` (+ bill-reminder) · `subscription` (detector F3 + convert F10; rotas continuam montadas nos routers de transaction/recurring) · `overtime` (companies + records) · `financial-period` (interno, sem router).
 
 ### Regras da camada use-case
 
