@@ -12,6 +12,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:baseline": "tsx src/scripts/baseline-migrations.ts",
+    "db:reset-user": "tsx src/scripts/reset-user-financial-data.ts",
     "restore:categories": "tsx src/modules/category/seed-categories.ts",
     "openapi:gen": "tsx src/core/openapi/generate.ts",
     "test": "jest",
