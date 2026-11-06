@@ -16,7 +16,9 @@ import {
 } from '@modules/transfer/use-cases/import-transfers.use-case';
 import { buildImportCategorySuggester, isBillPayment } from '../helpers/import-category-suggester';
 import { parseInterBill, type BillStatement } from '../helpers/inter-bill-parser';
+import { parseInterStatement } from '../helpers/inter-statement-parser';
 import { parseNubankBill } from '../helpers/nubank-bill-parser';
+import { parseNubankStatement } from '../helpers/nubank-statement-parser';
 import { decodeOfxFile, parseOfx, type OfxStatement } from '../helpers/ofx-parser';
 import { reconcile } from '../helpers/reconcile';
 import { extractPdfText, isPdf } from '../helpers/pdf-text';
@@ -32,6 +34,9 @@ export type ImportItemStatus =
   | 'possible_duplicate'
   | 'bill_payment'
   | 'transfer';
+
+// Extrato de conta em PDF também não traz vencimento: é isso que o separa de fatura.
+const isBill = (statement: OfxStatement): statement is BillStatement => 'dueDate' in statement;
 
 const RECONCILE_MARGIN_MS = 3 * 24 * 60 * 60 * 1000;
 
@@ -50,19 +55,23 @@ export const previewTransactionImportUseCase = async (
   const bytes = Buffer.from(fileBase64Url, 'base64url');
   let statement: OfxStatement | BillStatement;
   if (isPdf(bytes)) {
-    let bill: BillStatement | null = null;
+    let pdfStatement: OfxStatement | BillStatement | null = null;
     try {
       const pdfText = await extractPdfText(bytes);
-      bill = parseInterBill(pdfText) ?? parseNubankBill(pdfText);
+      pdfStatement =
+        parseInterBill(pdfText) ??
+        parseNubankBill(pdfText) ??
+        parseInterStatement(pdfText) ??
+        parseNubankStatement(pdfText);
     } catch (error) {
       logger.warn(`[transactions] PDF text extraction failed: ${(error as Error).message}`);
     }
-    if (!bill) {
+    if (!pdfStatement) {
       throw new BadRequestError(
-        'PDF não reconhecido. Por enquanto só faturas do cartão Inter e Nubank.'
+        'PDF não reconhecido. Por enquanto só faturas e extratos de Inter e Nubank.'
       );
     }
-    statement = bill;
+    statement = pdfStatement;
   } else {
     try {
       statement = parseOfx(decodeOfxFile(bytes));
@@ -77,8 +86,7 @@ export const previewTransactionImportUseCase = async (
   }
 
   // Fatura em PDF: toda linha pertence a esta fatura, até parcela de compra antiga.
-  const bill =
-    'dueDate' in statement ? { dueDate: statement.dueDate, total: statement.total } : null;
+  const bill = isBill(statement) ? { dueDate: statement.dueDate, total: statement.total } : null;
 
   const account = await findStatementAccount(userId, statement.accountKey, accountId);
   if (!account) {
@@ -106,7 +114,7 @@ export const previewTransactionImportUseCase = async (
 
   const times = statement.transactions.map((transaction) => transaction.date.getTime());
   const externalIds = statement.transactions.map((transaction) => transaction.externalId);
-  const billDueDate = 'dueDate' in statement ? statement.dueDate : null;
+  const billDueDate = isBill(statement) ? statement.dueDate : null;
   // Fatura no cartão: o que já existe no período dela é candidato, venha de onde vier a data.
   const scope =
     billDueDate && account.type === 'credit_card'
