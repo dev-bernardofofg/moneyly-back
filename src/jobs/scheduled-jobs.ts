@@ -3,7 +3,6 @@ import {
   processBillReminders,
   processCardBillReminders,
   processCheckInReminders,
-  processSpendingAlerts,
 } from '@modules/notification';
 import { processRecurringTransactions } from '@modules/recurring-transaction';
 
@@ -12,7 +11,6 @@ const JOBS = [
   { name: 'bill reminders', run: processBillReminders },
   { name: 'card bill reminders', run: processCardBillReminders },
   { name: 'check-in reminders', run: processCheckInReminders },
-  { name: 'spending alerts', run: processSpendingAlerts },
 ] as const;
 
 // Sequencial: recorrências avançam o calendário antes dos lembretes que leem nextExecution.
