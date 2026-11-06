@@ -123,7 +123,7 @@ export const previewTransactionImportUseCase = async (
   const pendingRows = statement.transactions.filter(
     (transaction) =>
       !importedIds.has(transaction.externalId) &&
-      !isBillPayment(transaction.title, transaction.type)
+      !isBillPayment(transaction.title, transaction.type, account.type)
   );
   // A linha que já foi importada por id não pode "gastar" um candidato de outra linha.
   const linkedIds = new Set(
@@ -154,7 +154,7 @@ export const previewTransactionImportUseCase = async (
       const status: ImportItemStatus =
         importedIds.has(transaction.externalId) || match?.kind === 'imported'
           ? 'imported'
-          : isBillPayment(transaction.title, transaction.type)
+          : isBillPayment(transaction.title, transaction.type, account.type)
             ? 'bill_payment'
             : transferOf
               ? 'transfer'

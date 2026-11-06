@@ -210,6 +210,14 @@ describe('Transaction import', () => {
     expect(item!.status).toBe('bill_payment');
   });
 
+  it('does not take money received on checking for a bill payment', async () => {
+    const [item] = await preview(
+      ofx([{ fitId: 'f8', date: '20260915', amount: '800.00', memo: 'PAGAMENTO RECEBIDO' }])
+    );
+
+    expect(item!.status).toBe('new');
+  });
+
   it('imports card rows into the invoice period', async () => {
     const card = await request(app)
       .post('/accounts')

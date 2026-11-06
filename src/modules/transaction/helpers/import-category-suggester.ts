@@ -293,9 +293,15 @@ const ruleText = (title: string) =>
 const CARD_SIDE = /\b(pagamento|pagto|pgto)\b.*\b(on ?line|fatura|efetuado|recebido)\b/;
 const ACCOUNT_SIDE = /\b(pagamento|pagto|pgto|pag)\b.*\bfatura\b|\bfatura\b.*\bcartao\b/;
 
-export const isBillPayment = (title: string, type: TransactionType): boolean => {
+export const isBillPayment = (
+  title: string,
+  type: TransactionType,
+  accountType: 'checking' | 'credit_card'
+): boolean => {
   const text = normalize(title);
-  return type === 'income' ? CARD_SIDE.test(text) : ACCOUNT_SIDE.test(text);
+  return accountType === 'credit_card'
+    ? type === 'income' && CARD_SIDE.test(text)
+    : type === 'expense' && ACCOUNT_SIDE.test(text);
 };
 
 // "fallback" = nada identificou a compra; o front avisa para o usuário escolher.

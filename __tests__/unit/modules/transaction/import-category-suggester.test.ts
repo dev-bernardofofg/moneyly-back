@@ -121,19 +121,28 @@ describe('suggestion source', () => {
 
 describe('isBillPayment', () => {
   it('flags the previous bill payment credited on a card statement', () => {
-    expect(isBillPayment('PAGAMENTO ON LINE', 'income')).toBe(true);
-    expect(isBillPayment('PAGTO FATURA CARTAO', 'income')).toBe(true);
+    expect(isBillPayment('PAGAMENTO ON LINE', 'income', 'credit_card')).toBe(true);
+    expect(isBillPayment('PAGTO FATURA CARTAO', 'income', 'credit_card')).toBe(true);
   });
 
   it('flags the bill payment debited on a checking statement', () => {
-    expect(isBillPayment('PAGAMENTO FATURA CARTAO INTER', 'expense')).toBe(true);
-    expect(isBillPayment('PAG FATURA', 'expense')).toBe(true);
-    expect(isBillPayment('FATURA CARTAO DE CREDITO', 'expense')).toBe(true);
+    expect(isBillPayment('PAGAMENTO FATURA CARTAO INTER', 'expense', 'checking')).toBe(true);
+    expect(isBillPayment('PAG FATURA', 'expense', 'checking')).toBe(true);
+    expect(isBillPayment('FATURA CARTAO DE CREDITO', 'expense', 'checking')).toBe(true);
   });
 
   it('does not flag regular income or expenses', () => {
-    expect(isBillPayment('PIX RECEBIDO FULANO', 'income')).toBe(false);
-    expect(isBillPayment('PAGAMENTO ON LINE', 'expense')).toBe(false);
-    expect(isBillPayment('PAGAMENTO BOLETO CONDOMINIO', 'expense')).toBe(false);
+    expect(isBillPayment('PIX RECEBIDO FULANO', 'income', 'checking')).toBe(false);
+    expect(isBillPayment('PAGAMENTO ON LINE', 'expense', 'checking')).toBe(false);
+    expect(isBillPayment('PAGAMENTO BOLETO CONDOMINIO', 'expense', 'checking')).toBe(false);
+  });
+
+  it('never takes an income on checking for a bill payment', () => {
+    expect(isBillPayment('PAGAMENTO RECEBIDO', 'income', 'checking')).toBe(false);
+    expect(isBillPayment('PAGAMENTO ON LINE', 'income', 'checking')).toBe(false);
+  });
+
+  it('never takes an expense on a card for a bill payment', () => {
+    expect(isBillPayment('PAGAMENTO FATURA CARTAO', 'expense', 'credit_card')).toBe(false);
   });
 });
