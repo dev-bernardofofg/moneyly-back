@@ -540,7 +540,7 @@ export const AccountSchema = registry.register(
     dueDay: z.number().int().nullable(),
     creditLimit: money.nullable(),
     openingBalance: money,
-    // Só em GET /accounts: saldo inicial + movimentos desde a data dele; null sem saldo inicial.
+    // Só em GET /accounts: saldo inicial + movimentos depois da data dele; null sem saldo inicial.
     currentBalance: money.nullable().optional(),
     openingBalanceDate: isoDate.nullable(),
     dataThrough: isoDate.nullable(),

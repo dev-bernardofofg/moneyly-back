@@ -3,6 +3,7 @@
  */
 
 import request from 'supertest';
+import { spDayString, spMidnightPlusDays, spParts } from '@core/helpers/dates';
 import { app } from '../../src/server';
 
 async function signUp(label: string) {
@@ -354,6 +355,84 @@ describe('Opening balance', () => {
 
     const res = await request(app).get('/overview/forecast').set(auth()).expect(200);
     expect(res.body.data.freeBalance.components.accountsBalance).toBe(0);
+  });
+});
+
+describe('Opening balance counts as the end of its day', () => {
+  let token: string;
+  let categoryId: string;
+  let mainId: string;
+  let otherId: string;
+  const auth = () => ({ Authorization: `Bearer ${token}` });
+  const dayAt = (offset: number) => {
+    const { year, month, day } = spParts(new Date());
+    return spDayString(spMidnightPlusDays(year, month, day, offset));
+  };
+
+  const spend = (amount: number, date: string) =>
+    request(app)
+      .post('/transactions/create')
+      .set(auth())
+      .send({ type: 'expense', title: 'Gasto', amount, category: categoryId, date })
+      .expect(201);
+
+  const transfer = (amount: number, date: string) =>
+    request(app)
+      .post('/transfers')
+      .set(auth())
+      .send({ fromAccountId: otherId, toAccountId: mainId, amount, date })
+      .expect(201);
+
+  const balances = async () => {
+    const res = await request(app).get('/accounts').set(auth()).expect(200);
+    const byId = new Map<string, number>(
+      res.body.data.map((row: { id: string; currentBalance: number }) => [
+        row.id,
+        row.currentBalance,
+      ])
+    );
+    return { main: byId.get(mainId), other: byId.get(otherId) };
+  };
+
+  beforeAll(async () => {
+    token = await signUp('end-of-day');
+    const category = await request(app)
+      .post('/categories/create')
+      .set(auth())
+      .send({ name: `End of day ${Date.now()}` });
+    categoryId = category.body.data.id;
+    mainId = (await request(app).get('/accounts').set(auth())).body.data[0].id;
+    otherId = (
+      await request(app)
+        .post('/accounts')
+        .set(auth())
+        .send({
+          type: 'checking',
+          name: 'Outra',
+          openingBalance: 100000,
+          openingBalanceDate: dayAt(-3),
+        })
+        .expect(201)
+    ).body.data.id;
+    await request(app)
+      .put(`/accounts/${mainId}`)
+      .set(auth())
+      .send({ openingBalance: 100000, openingBalanceDate: dayAt(-3) })
+      .expect(200);
+  });
+
+  it('ignores what happened on the balance date', async () => {
+    await spend(1000, dayAt(-3));
+    await transfer(2000, dayAt(-3));
+
+    expect(await balances()).toEqual({ main: 100000, other: 100000 });
+  });
+
+  it('counts what happened on the following day', async () => {
+    await spend(1000, dayAt(-2));
+    await transfer(2000, dayAt(-2));
+
+    expect(await balances()).toEqual({ main: 101000, other: 98000 });
   });
 });
 

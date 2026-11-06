@@ -42,7 +42,7 @@ export const listAccountsUseCase = async (userId: string) => {
       if (!since) return { ...account, currentBalance: null };
       const transactionsNet = await transactionRepository.sumSignedSince(userId, account.id, since);
       const transfersNet = legs
-        .filter((leg) => leg.accountId === account.id && leg.date.getTime() >= since.getTime())
+        .filter((leg) => leg.accountId === account.id && leg.date.getTime() > since.getTime())
         .reduce((total, leg) => total + (leg.type === 'income' ? leg.amount : -leg.amount), 0);
       return {
         ...account,

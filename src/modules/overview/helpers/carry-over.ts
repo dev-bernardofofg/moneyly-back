@@ -14,8 +14,9 @@ interface Flow {
 
 /**
  * Saldos iniciais das contas correntes vigentes até o fim do período. Cada saldo tem um corte:
- * o que aconteceu antes dele já está no saldo. Cartões e contas sem saldo usam o corte mais
- * antigo, porque compras pagas antes dele saíram do dinheiro já informado.
+ * o saldo vale como fim do dia dele, então o que aconteceu até esse dia já está nele. Cartões e
+ * contas sem saldo usam o corte mais antigo, porque compras pagas antes dele saíram do dinheiro
+ * já informado.
  * Período anterior a todos os saldos (ou nenhum saldo informado): nada muda, tudo conta.
  */
 export function buildOpeningBalances(accounts: BalanceAccount[], periodEnd: Date) {
@@ -32,7 +33,7 @@ export function buildOpeningBalances(accounts: BalanceAccount[], periodEnd: Date
 
   const counts = (flow: Pick<Flow, 'accountId' | 'date'>) => {
     const cutoff = cutoffById.get(flow.accountId) ?? globalCutoff;
-    return cutoff === null || new Date(flow.date).getTime() >= cutoff;
+    return cutoff === null || new Date(flow.date).getTime() > cutoff;
   };
 
   const opening = active.reduce((total, a) => total + Number(a.openingBalance), 0);

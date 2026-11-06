@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, inArray, isNull, lte, ne, sql, sum } from 'drizzle-orm';
+import { and, count, desc, eq, gt, gte, inArray, isNull, lte, ne, sql, sum } from 'drizzle-orm';
 import { db } from '@infra/db';
 import {
   accounts,
@@ -344,7 +344,7 @@ export const transactionRepository = {
         and(
           eq(transactions.userId, userId),
           eq(transactions.accountId, accountId),
-          gte(transactions.date, since)
+          gt(transactions.date, since)
         )
       );
     return Number(row?.total ?? 0);

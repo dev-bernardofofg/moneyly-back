@@ -47,14 +47,15 @@ describe('buildOpeningBalances', () => {
     ).toBe(1180);
   });
 
-  it('ignores transactions dated before the opening balance in the current period', () => {
+  it('ignores transactions dated up to the opening balance in the current period', () => {
     const balances = buildOpeningBalances(
       [checking('main', 500, '2026-10-10')],
       spMidnight('2026-10-31')
     );
 
     expect(balances.counts(flow('main', 'expense', 10, '2026-10-05'))).toBe(false);
-    expect(balances.counts(flow('main', 'expense', 10, '2026-10-10'))).toBe(true);
+    expect(balances.counts(flow('main', 'expense', 10, '2026-10-10'))).toBe(false);
+    expect(balances.counts(flow('main', 'expense', 10, '2026-10-11'))).toBe(true);
   });
 
   it('does not apply an opening balance dated after the period', () => {
