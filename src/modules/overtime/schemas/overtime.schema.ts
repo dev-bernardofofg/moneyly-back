@@ -2,7 +2,6 @@ import { z } from 'zod';
 
 export const createOvertimeSchema = z.object({
   companyId: z.string().uuid('companyId deve ser um UUID válido'),
-  categoryId: z.string().uuid('categoryId deve ser um UUID válido').optional(),
   description: z.string().max(500).optional(),
   startTime: z.string().datetime({ message: 'startTime deve ser uma data ISO válida' }),
   endTime: z.string().datetime({ message: 'endTime deve ser uma data ISO válida' }),
@@ -10,7 +9,6 @@ export const createOvertimeSchema = z.object({
 
 export const updateOvertimeSchema = z.object({
   companyId: z.string().uuid('companyId deve ser um UUID válido').optional(),
-  categoryId: z.string().uuid('categoryId deve ser um UUID válido').optional(),
   description: z.string().max(500).optional(),
   startTime: z.string().datetime({ message: 'startTime deve ser uma data ISO válida' }).optional(),
   endTime: z.string().datetime({ message: 'endTime deve ser uma data ISO válida' }).optional(),

@@ -14,7 +14,6 @@ import { validateActiveCompany } from '@modules/overtime/validations/company.val
 import { validateOvertimeOwnership } from '@modules/overtime/validations/overtime.validation';
 import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
 import { financialPeriodService } from '@modules/financial-period';
-import { categoryRepository } from '@modules/category';
 import { notifyTransactionCreated } from '@modules/notification';
 
 jest.mock('@modules/account/use-cases/account.use-cases', () => ({
@@ -30,12 +29,6 @@ jest.mock('@modules/financial-period', () => ({
     findOrCreatePeriodForDate: jest.fn(),
   },
 }));
-jest.mock('@modules/category', () => ({
-  categoryRepository: {
-    findByIdAndUserId: jest.fn(),
-    findGlobalCategories: jest.fn(),
-  },
-}));
 jest.mock('@modules/notification', () => ({
   notifyTransactionCreated: jest.fn().mockResolvedValue(undefined),
 }));
@@ -43,7 +36,6 @@ jest.mock('@modules/notification', () => ({
 const mockedOvertimeRepo = overtimeRepository as jest.Mocked<typeof overtimeRepository>;
 const mockedTransactionRepo = transactionRepository as jest.Mocked<typeof transactionRepository>;
 const mockedPeriodService = financialPeriodService as jest.Mocked<typeof financialPeriodService>;
-const mockedCategoryRepo = categoryRepository as jest.Mocked<typeof categoryRepository>;
 const mockedValidateActiveCompany = validateActiveCompany as jest.Mock;
 const mockedValidateOwnership = validateOvertimeOwnership as jest.Mock;
 
@@ -66,14 +58,10 @@ describe('overtime use-cases', () => {
       description: 'Deploy noturno',
     };
 
-    it('creates the record with computed hours/amount and links the income transaction', async () => {
-      mockedCategoryRepo.findGlobalCategories.mockResolvedValue([
-        { id: 'cat-sal', name: 'Salário' },
-      ] as never);
+    it('creates the record with computed hours/amount and no transaction', async () => {
       mockedOvertimeRepo.create.mockResolvedValue({ id: 'ot-1', transactionId: null } as never);
-      mockedTransactionRepo.create.mockResolvedValue({ id: 'tx-1' } as never);
 
-      const result = await createOvertimeUseCase(USER, input);
+      const record = await createOvertimeUseCase(USER, input);
 
       // 2h * R$50 = R$100 — startTime/endTime preservados como instantes reais
       expect(mockedOvertimeRepo.create).toHaveBeenCalledWith(
@@ -87,48 +75,13 @@ describe('overtime use-cases', () => {
           amount: 100,
           month: 3,
           year: 2026,
+          transactionId: null,
         })
       );
-      expect(mockedPeriodService.findOrCreatePeriodForDate).toHaveBeenCalledWith(
-        USER,
-        new Date('2026-03-10T18:00:00.000Z')
-      );
-      expect(mockedTransactionRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'income',
-          title: 'Hora extra — ACME',
-          amount: 100,
-          categoryId: 'cat-sal',
-          date: new Date('2026-03-10T18:00:00.000Z'),
-          overtimeRecordId: 'ot-1',
-          periodId: 'p1',
-        })
-      );
-      expect(mockedOvertimeRepo.setTransactionId).toHaveBeenCalledWith('ot-1', 'tx-1');
-      expect(notifyTransactionCreated).toHaveBeenCalledWith({ id: 'tx-1' });
-      expect(result.transactionId).toBe('tx-1');
-    });
-
-    it('uses the provided category when it belongs to the user', async () => {
-      mockedCategoryRepo.findByIdAndUserId.mockResolvedValue({ id: 'cat-custom' } as never);
-      mockedOvertimeRepo.create.mockResolvedValue({ id: 'ot-1' } as never);
-      mockedTransactionRepo.create.mockResolvedValue({ id: 'tx-1' } as never);
-
-      await createOvertimeUseCase(USER, { ...input, categoryId: 'cat-custom' });
-
-      expect(mockedCategoryRepo.findByIdAndUserId).toHaveBeenCalledWith('cat-custom', USER);
-      expect(mockedTransactionRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ categoryId: 'cat-custom' })
-      );
-    });
-
-    it('throws when the provided category does not belong to the user', async () => {
-      mockedCategoryRepo.findByIdAndUserId.mockResolvedValue(null);
-
-      await expect(
-        createOvertimeUseCase(USER, { ...input, categoryId: 'cat-alien' })
-      ).rejects.toThrow('Categoria não encontrada');
-      expect(mockedOvertimeRepo.create).not.toHaveBeenCalled();
+      expect(record.transactionId).toBeNull();
+      expect(mockedTransactionRepo.create).not.toHaveBeenCalled();
+      expect(mockedOvertimeRepo.setTransactionId).not.toHaveBeenCalled();
+      expect(notifyTransactionCreated).not.toHaveBeenCalled();
     });
   });
 
@@ -142,7 +95,7 @@ describe('overtime use-cases', () => {
       transactionId: 'tx-1',
     };
 
-    it('recalculates amount and syncs the linked transaction when times change', async () => {
+    it('recalculates amount without touching the legacy transaction when times change', async () => {
       mockedValidateOwnership.mockResolvedValue(existing);
       mockedOvertimeRepo.update.mockResolvedValue({ id: 'ot-1' } as never);
 
@@ -162,16 +115,7 @@ describe('overtime use-cases', () => {
           year: 2026,
         })
       );
-      expect(mockedTransactionRepo.update).toHaveBeenCalledWith(
-        'tx-1',
-        USER,
-        expect.objectContaining({
-          amount: 150,
-          date: new Date('2026-03-10T18:00:00.000Z'),
-          periodId: 'p1',
-          title: 'Hora extra — ACME',
-        })
-      );
+      expect(mockedTransactionRepo.update).not.toHaveBeenCalled();
     });
 
     it('updates only the description without recalculating', async () => {
@@ -183,9 +127,7 @@ describe('overtime use-cases', () => {
       expect(mockedOvertimeRepo.update).toHaveBeenCalledWith('ot-1', USER, {
         description: 'Nova descrição',
       });
-      expect(mockedTransactionRepo.update).toHaveBeenCalledWith('tx-1', USER, {
-        description: 'Nova descrição',
-      });
+      expect(mockedTransactionRepo.update).not.toHaveBeenCalled();
       expect(mockedPeriodService.findOrCreatePeriodForDate).not.toHaveBeenCalled();
     });
 
@@ -201,7 +143,7 @@ describe('overtime use-cases', () => {
   });
 
   describe('deleteOvertimeUseCase', () => {
-    it('deletes the linked transaction before deleting the record', async () => {
+    it('still removes a legacy linked transaction before deleting the record', async () => {
       mockedValidateOwnership.mockResolvedValue({ id: 'ot-1', transactionId: 'tx-1' });
       mockedOvertimeRepo.delete.mockResolvedValue({ id: 'ot-1' } as never);
 

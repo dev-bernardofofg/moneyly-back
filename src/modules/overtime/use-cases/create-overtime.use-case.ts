@@ -1,12 +1,6 @@
 import { toSaoPauloTimezone } from '@core/helpers/dates';
-import { logger } from '@core/lib/logger';
-import { notifyTransactionCreated } from '@modules/notification';
-import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
-import { resolveAccountId } from '@modules/account/use-cases/account.use-cases';
-import { financialPeriodService } from '@modules/financial-period';
 import { calcHours } from '../helpers/calc-hours';
 import { overtimeRepository } from '../repositories/overtime.repository';
-import { resolveCategory } from '../services/resolve-category';
 import { validateActiveCompany } from '../validations/company.validation';
 import { validateTimeRange } from '../validations/overtime.validation';
 import type { CreateOvertimeInput } from '../schemas/overtime.schema';
@@ -25,14 +19,8 @@ export const createOvertimeUseCase = async (userId: string, data: CreateOvertime
   const startTimeSP = toSaoPauloTimezone(startTime);
   const month = startTimeSP.getMonth() + 1;
   const year = startTimeSP.getFullYear();
-  const categoryId = await resolveCategory(data.categoryId, userId);
 
-  const [periodId, accountId] = await Promise.all([
-    financialPeriodService.findOrCreatePeriodForDate(userId, startTime),
-    resolveAccountId(userId),
-  ]);
-
-  const record = await overtimeRepository.create({
+  return overtimeRepository.create({
     userId,
     companyId: company.id,
     description: data.description || null,
@@ -45,28 +33,4 @@ export const createOvertimeUseCase = async (userId: string, data: CreateOvertime
     year,
     transactionId: null,
   });
-
-  const transaction = await transactionRepository.create({
-    userId,
-    type: 'income',
-    title: `Hora extra — ${company.name}`,
-    amount,
-    categoryId,
-    description: data.description || null,
-    date: startTime,
-    periodId,
-    recurringTransactionId: null,
-    overtimeRecordId: record.id,
-    accountId,
-  });
-
-  await overtimeRepository.setTransactionId(record.id, transaction.id);
-
-  try {
-    await notifyTransactionCreated(transaction);
-  } catch (error) {
-    logger.error('[overtime] transaction notification failed', error as Error);
-  }
-
-  return { ...record, transactionId: transaction.id };
 };

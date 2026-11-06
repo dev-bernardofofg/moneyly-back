@@ -3286,10 +3286,6 @@
                     "type": "string",
                     "format": "uuid"
                   },
-                  "categoryId": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
                   "description": {
                     "type": "string",
                     "maxLength": 500
@@ -3832,10 +3828,6 @@
                     "type": "string",
                     "format": "uuid"
                   },
-                  "categoryId": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
                   "description": {
                     "type": "string",
                     "maxLength": 500
@@ -3965,7 +3957,7 @@
         "tags": [
           "Overtime"
         ],
-        "summary": "Deletar registro e transaction vinculada",
+        "summary": "Deletar registro de hora extra",
         "security": [
           {
             "bearerAuth": []

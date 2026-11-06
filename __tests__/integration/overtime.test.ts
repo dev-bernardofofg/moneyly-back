@@ -1,5 +1,5 @@
 /**
- * Integration tests for companies and overtime, including the linked income transaction
+ * Integration tests for companies and overtime (no automatic transactions)
  */
 
 import request from 'supertest';
@@ -140,7 +140,7 @@ describe('Overtime Endpoints', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ companyId, startTime: anchor.toISOString(), endTime: plusHours(anchor, hours) })
       .expect(201);
-    return res.body.data as { id: string; transactionId: string; amount: string };
+    return res.body.data as { id: string; transactionId: string | null; amount: string };
   }
 
   it('requires authentication', async () => {
@@ -156,16 +156,13 @@ describe('Overtime Endpoints', () => {
       .expect(400);
   });
 
-  it('creates a record and a linked income transaction', async () => {
+  it('creates a record without creating a transaction', async () => {
+    const before = await listTransactions(token);
     const record = await createOvertime(1);
 
     expect(Number(record.amount)).toBe(50);
-    expect(record.transactionId).toEqual(expect.any(String));
-
-    const transaction = (await listTransactions(token)).find((t) => t.id === record.transactionId);
-    expect(transaction).toBeDefined();
-    expect(transaction!.type).toBe('income');
-    expect(Number(transaction!.amount)).toBe(50);
+    expect(record.transactionId).toBeNull();
+    expect(await listTransactions(token)).toHaveLength(before.length);
   });
 
   it('lists the created record', async () => {
@@ -176,8 +173,9 @@ describe('Overtime Endpoints', () => {
     expect(otherRecords).toEqual([]);
   });
 
-  it('syncs the linked transaction when the record is updated', async () => {
+  it('recalculates the amount on update without creating a transaction', async () => {
     const record = await createOvertime(1);
+    const before = await listTransactions(token);
 
     const res = await request(app)
       .put(`/overtime/${record.id}`)
@@ -185,9 +183,7 @@ describe('Overtime Endpoints', () => {
       .send({ endTime: plusHours(anchor, 2) })
       .expect(200);
     expect(Number(res.body.data.amount)).toBe(100);
-
-    const transaction = (await listTransactions(token)).find((t) => t.id === record.transactionId);
-    expect(Number(transaction!.amount)).toBe(100);
+    expect(await listTransactions(token)).toHaveLength(before.length);
   });
 
   it('does not let another user update or delete the record', async () => {
@@ -204,7 +200,7 @@ describe('Overtime Endpoints', () => {
       .expect(404);
   });
 
-  it('removes the linked transaction when the record is deleted', async () => {
+  it('deletes the record', async () => {
     const record = await createOvertime(1);
 
     await request(app)
@@ -212,22 +208,7 @@ describe('Overtime Endpoints', () => {
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
-    const transactions = await listTransactions(token);
-    expect(transactions.map((t) => t.id)).not.toContain(record.transactionId);
     expect((await listOvertime(token)).map((r) => r.id)).not.toContain(record.id);
-  });
-
-  it('unlinks the record when its transaction is deleted directly', async () => {
-    const record = await createOvertime(1);
-
-    await request(app)
-      .delete(`/transactions/${record.transactionId}`)
-      .set('Authorization', `Bearer ${token}`)
-      .expect(200);
-
-    const stored = (await listOvertime(token)).find((r) => r.id === record.id);
-    expect(stored).toBeDefined();
-    expect(stored!.transactionId).toBeNull();
   });
 
   it('exports the month with total hours and amount described', async () => {

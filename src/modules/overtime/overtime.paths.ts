@@ -96,7 +96,7 @@ route({
   method: 'delete',
   path: '/overtime/{id}',
   tag: 'Overtime',
-  summary: 'Deletar registro e transaction vinculada',
+  summary: 'Deletar registro de hora extra',
   params: idParamSchema,
   ok: ok(nullData),
 });

@@ -1,6 +1,4 @@
 import { toSaoPauloTimezone } from '@core/helpers/dates';
-import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
-import { financialPeriodService } from '@modules/financial-period';
 import { HttpError } from '@core/errors/http-error';
 import { calcHours } from '../helpers/calc-hours';
 import { overtimeRepository } from '../repositories/overtime.repository';
@@ -36,8 +34,6 @@ export const updateOvertimeUseCase = async (
     ...(data.companyId !== undefined && { companyId: data.companyId }),
   };
 
-  let transactionUpdate: Record<string, unknown> = {};
-
   if (needsRecalc) {
     const hoursWorked = calcHours(startTime, endTime);
     const companyFull = await validateActiveCompany(company.id, userId);
@@ -46,7 +42,6 @@ export const updateOvertimeUseCase = async (
     const startTimeSP = toSaoPauloTimezone(startTime);
     const month = startTimeSP.getMonth() + 1;
     const year = startTimeSP.getFullYear();
-    const periodId = await financialPeriodService.findOrCreatePeriodForDate(userId, startTime);
 
     Object.assign(updatePayload, {
       startTime,
@@ -57,29 +52,10 @@ export const updateOvertimeUseCase = async (
       month,
       year,
     });
-
-    transactionUpdate = {
-      amount,
-      date: startTime,
-      periodId,
-      title: `Hora extra — ${company.name}`,
-    };
-  }
-
-  if (data.description !== undefined) {
-    transactionUpdate.description = data.description || null;
   }
 
   const updated = await overtimeRepository.update(id, userId, updatePayload);
   if (!updated) throw new HttpError(404, 'Registro de hora extra não encontrado');
-
-  if (existing.transactionId && Object.keys(transactionUpdate).length > 0) {
-    await transactionRepository.update(
-      existing.transactionId,
-      userId,
-      transactionUpdate as Parameters<typeof transactionRepository.update>[2]
-    );
-  }
 
   return updated;
 };
