@@ -39,6 +39,17 @@ const nextDay = (date: Date) => {
   return spMidnightPlusDays(year, month, day, 1);
 };
 
+// Data até onde o dinheiro real é conhecido: sem cobertura, vale hoje.
+const checkingCoverage = (
+  checking: Pick<Account, 'dataThrough' | 'openingBalanceDate'>[],
+  today: Date
+) => {
+  const dates = checking.flatMap(({ dataThrough, openingBalanceDate }) =>
+    [dataThrough, openingBalanceDate].flatMap((date) => (date ? [date.getTime()] : []))
+  );
+  return dates.length > 0 ? new Date(Math.max(...dates)) : today;
+};
+
 // Saldo informado já contém o que aconteceu até a data dele, mesmo além do extrato importado.
 const predictedAfter = (
   account: Pick<Account, 'type' | 'dataThrough' | 'openingBalanceDate'> | undefined,
@@ -110,8 +121,12 @@ export const getFreeBalanceUseCase = async (userId: string): Promise<FreeBalance
     predicted.filter(({ type, account }) => type === 'expense' && account?.type !== 'credit_card')
   );
 
+  const coverage = checkingCoverage(checking, today);
+  // Fatura vencida depois da cobertura pode ser de período já encerrado.
+  const periodsEndingFrom = coverage.getTime() < today.getTime() ? coverage : today;
+
   const [openPeriods, payments] = await Promise.all([
-    transactionRepository.sumCardExpensesByPeriod(userId, cardIds, today),
+    transactionRepository.sumCardExpensesByPeriod(userId, cardIds, periodsEndingFrom),
     cardBillPaymentRepository.findByAccountIds(userId, cardIds),
   ]);
 
@@ -123,9 +138,12 @@ export const getFreeBalanceUseCase = async (userId: string): Promise<FreeBalance
   const isPaid = (accountId: string, due: Date) =>
     payments.some((row) => row.accountId === accountId && row.dueDate.getTime() === due.getTime());
 
-  // Fatura vencida fica fora, como no limite do cartão: sem marcação, o histórico contaria tudo.
+  // Vencida conta até o extrato alcançar o vencimento: antes disso o dinheiro ainda está no saldo.
+  // Depois fica fora, porque o histórico pode não ter marcação de pagamento.
+  const isOpen = (due: Date) =>
+    due.getTime() >= today.getTime() || due.getTime() > coverage.getTime();
   const openBills = [...imported, ...onCard].filter(
-    ({ accountId, due }) => due.getTime() >= today.getTime() && !isPaid(accountId, due)
+    ({ accountId, due }) => isOpen(due) && !isPaid(accountId, due)
   );
   const cardBills = sumAmounts(openBills.filter(({ due }) => due.getTime() < windowEnd.getTime()));
   const committedAfter = sumAmounts(

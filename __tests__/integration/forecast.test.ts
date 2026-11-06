@@ -82,16 +82,17 @@ describe('GET /overview/forecast', () => {
       .set(auth())
       .send({ type: 'credit_card', name: `Cartão ${++cardCount}`, closingDay, dueDay })
       .expect(201);
-    return { id: res.body.data.id as string, dueDay };
+    return { id: res.body.data.id as string, dueDay, closingDay };
   };
 
   const purchaseOnBill = async (
-    card: { id: string; dueDay: number },
+    card: { id: string; dueDay: number; closingDay: number },
     due: Date,
     amount: number
   ) => {
     const date = Array.from({ length: 120 }, (_, index) => dayOffset(index - 60)).find(
-      (candidate) => invoiceDueDate(candidate, CLOSING_DAY, card.dueDay).getTime() === due.getTime()
+      (candidate) =>
+        invoiceDueDate(candidate, card.closingDay, card.dueDay).getTime() === due.getTime()
     );
     await request(app)
       .post('/transactions/create')
@@ -426,6 +427,80 @@ describe('GET /overview/forecast', () => {
 
     expect(freeBalance.components.cardBills).toBe(7000);
     expect(freeBalance.total).toBe(-7000);
+  });
+
+  describe('overdue bill and statement coverage', () => {
+    const overdueBill = async (days = 1) => {
+      await addSalary(dayOffset(10));
+      // Fecha uma semana antes de vencer: a compra da fatura cai sempre perto do vencimento.
+      const card = await addCard(spParts(dayOffset(-days)).day, spParts(dayOffset(-days - 7)).day);
+      await purchaseOnBill(card, dayOffset(-days), 40000);
+      return card;
+    };
+
+    it('counts it while the statement stops before the due date', async () => {
+      await overdueBill();
+      await setDataThrough(defaultAccountId, dayOffset(-2));
+
+      expect((await getFreeBalance()).components.cardBills).toBe(40000);
+    });
+
+    it('drops it once the statement reaches today', async () => {
+      await overdueBill();
+      await setDataThrough(defaultAccountId, dayOffset(0));
+
+      expect((await getFreeBalance()).components.cardBills).toBe(0);
+    });
+
+    it('drops it when the statement stops exactly on the due date', async () => {
+      await overdueBill();
+      await setDataThrough(defaultAccountId, dayOffset(-1));
+
+      expect((await getFreeBalance()).components.cardBills).toBe(0);
+    });
+
+    it('uses the informed balance as coverage too', async () => {
+      await overdueBill();
+      await setDataThrough(defaultAccountId, dayOffset(-5));
+      await setOpeningBalance(defaultAccountId, 0, dayOffset(0));
+
+      expect((await getFreeBalance()).components.cardBills).toBe(0);
+    });
+
+    it('takes the most recent coverage among checking accounts', async () => {
+      await overdueBill();
+      await setDataThrough(defaultAccountId, dayOffset(-5));
+      await setDataThrough(await addChecking(), dayOffset(0));
+
+      expect((await getFreeBalance()).components.cardBills).toBe(0);
+    });
+
+    it('ignores the coverage of a card', async () => {
+      const card = await overdueBill();
+      await setDataThrough(defaultAccountId, dayOffset(-2));
+      await setDataThrough(card.id, dayOffset(0));
+
+      expect((await getFreeBalance()).components.cardBills).toBe(40000);
+    });
+
+    it('finds a bill from a period that already ended', async () => {
+      await overdueBill(40);
+      await setDataThrough(defaultAccountId, dayOffset(-45));
+
+      expect((await getFreeBalance()).components.cardBills).toBe(40000);
+    });
+
+    it('ignores a paid bill', async () => {
+      const card = await overdueBill();
+      await setDataThrough(defaultAccountId, dayOffset(-2));
+      await request(app)
+        .post(`/accounts/${card.id}/bill-payment`)
+        .set(auth())
+        .send({ dueDate: spDayString(dayOffset(-1)) })
+        .expect(200);
+
+      expect((await getFreeBalance()).components.cardBills).toBe(0);
+    });
   });
 
   it('ignores a paid bill', async () => {
