@@ -250,6 +250,16 @@ describe('Bill payment outflows', () => {
     expect(insightsAfter.body.data).toEqual(insightsBefore.body.data);
   });
 
+  it('ignores a credit sent as a bill payment on a checking statement', async () => {
+    const data = await preview(statement('o11'));
+    const lines = billPaymentsOf(data).map((line) => ({ ...line, type: 'income' as const }));
+
+    await confirm(data, lines);
+
+    expect(await outflows()).toHaveLength(0);
+    expect(await balance()).toBe(OPENING);
+  });
+
   it('rejects a bill payment without the id of the statement line', async () => {
     const data = await preview(statement('o10'));
     const lines = billPaymentsOf(data).map(({ type, amount, date }) => ({ type, amount, date }));
