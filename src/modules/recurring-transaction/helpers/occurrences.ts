@@ -37,7 +37,12 @@ const stepBack = (rec: RecurrenceSchedule, from: Date): Date => {
 };
 
 /** Datas da recorrência em (after, before), limites exclusivos. */
-export function occurrencesBetween(rec: RecurrenceSchedule, after: Date, before: Date): Date[] {
+export function occurrencesBetween(
+  rec: RecurrenceSchedule,
+  after: Date,
+  before: Date,
+  limit = Number.POSITIVE_INFINITY
+): Date[] {
   const afterMs = after.getTime();
   const beforeMs = before.getTime();
   const nextMs = rec.nextExecution.getTime();
@@ -64,7 +69,10 @@ export function occurrencesBetween(rec: RecurrenceSchedule, after: Date, before:
     const consumesInstallment = ms >= nextMs;
     if (consumesInstallment && remaining <= 0) break;
 
-    if (ms > afterMs) dates.push(cursor);
+    if (ms > afterMs) {
+      dates.push(cursor);
+      if (dates.length >= limit) break;
+    }
     if (consumesInstallment) remaining--;
 
     const next = calculateNextExecution(rec.frequency, rec.dayOfMonth, rec.dayOfWeek, cursor);
@@ -84,7 +92,7 @@ export function findSalary<T extends SalaryCandidate>(
     .sort((a, b) => Number(b.amount) - Number(a.amount));
 
   for (const recurrence of candidates) {
-    const [date] = occurrencesBetween(recurrence, now, FAR_FUTURE);
+    const [date] = occurrencesBetween(recurrence, now, FAR_FUTURE, 1);
     if (date) return { recurrence, date };
   }
   return null;
