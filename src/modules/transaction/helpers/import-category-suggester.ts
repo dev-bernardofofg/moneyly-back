@@ -290,7 +290,8 @@ const ruleText = (title: string) =>
 // Pagamento de fatura não é renda nem despesa: as compras do cartão já representam esse
 // dinheiro. Na fatura aparece como crédito ("PAGAMENTO ON LINE"); no extrato da conta, como
 // débito ("PAGAMENTO FATURA CARTAO").
-const CARD_SIDE = /\b(pagamento|pagto|pgto)\b.*\b(on ?line|fatura|efetuado|recebido)\b/;
+const CARD_SIDE =
+  /\b(pagamento|pagto|pgto)\b.*\b(on ?line|fatura|efetuado|recebido)\b|^\s*pagamento em\b/;
 const ACCOUNT_SIDE = /\b(pagamento|pagto|pgto|pag)\b.*\bfatura\b|\bfatura\b.*\bcartao\b/;
 
 export const isBillPayment = (

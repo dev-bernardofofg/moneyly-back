@@ -16,6 +16,7 @@ import {
 } from '@modules/transfer/use-cases/import-transfers.use-case';
 import { buildImportCategorySuggester, isBillPayment } from '../helpers/import-category-suggester';
 import { parseInterBill, type BillStatement } from '../helpers/inter-bill-parser';
+import { parseNubankBill } from '../helpers/nubank-bill-parser';
 import { decodeOfxFile, parseOfx, type OfxStatement } from '../helpers/ofx-parser';
 import { reconcile } from '../helpers/reconcile';
 import { extractPdfText, isPdf } from '../helpers/pdf-text';
@@ -51,12 +52,15 @@ export const previewTransactionImportUseCase = async (
   if (isPdf(bytes)) {
     let bill: BillStatement | null = null;
     try {
-      bill = parseInterBill(await extractPdfText(bytes));
+      const pdfText = await extractPdfText(bytes);
+      bill = parseInterBill(pdfText) ?? parseNubankBill(pdfText);
     } catch (error) {
       logger.warn(`[transactions] PDF text extraction failed: ${(error as Error).message}`);
     }
     if (!bill) {
-      throw new BadRequestError('PDF não reconhecido. Por enquanto só a fatura do cartão Inter.');
+      throw new BadRequestError(
+        'PDF não reconhecido. Por enquanto só faturas do cartão Inter e Nubank.'
+      );
     }
     statement = bill;
   } else {
