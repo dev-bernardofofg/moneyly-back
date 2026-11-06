@@ -5,14 +5,19 @@
  * repasse das transações ao detector.
  */
 import { detectSubscriptionsUseCase } from '@modules/subscription/use-cases/detect-subscriptions.use-case';
+import { recurringTransactionRepository } from '@modules/recurring-transaction/repositories/recurring-transaction.repository';
 import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
 import { requireUser } from '@modules/user/validations/user.validation';
 import { HttpError } from '@core/errors/http-error';
 
+jest.mock('@modules/recurring-transaction/repositories/recurring-transaction.repository');
 jest.mock('@modules/transaction/repositories/transaction.repository');
 jest.mock('@modules/user/validations/user.validation');
 
 const mockedRepo = transactionRepository as jest.Mocked<typeof transactionRepository>;
+const mockedRecurringRepo = recurringTransactionRepository as jest.Mocked<
+  typeof recurringTransactionRepository
+>;
 const mockedRequireUser = requireUser as jest.Mock;
 
 const USER = 'user-123';
@@ -37,6 +42,7 @@ const expense = (date: Date, title = 'Spotify', amount = 1990): Tx =>
 beforeEach(() => {
   jest.clearAllMocks();
   mockedRequireUser.mockResolvedValue({ id: USER });
+  mockedRecurringRepo.findByUserId.mockResolvedValue([]);
 });
 
 describe('detectSubscriptionsUseCase', () => {

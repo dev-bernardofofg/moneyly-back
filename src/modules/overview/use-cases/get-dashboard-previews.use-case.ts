@@ -1,5 +1,6 @@
 import { formatPeriodLabel, getPreviousFinancialPeriods } from '@modules/financial-period';
-import { groupSubscriptionCandidates } from '@modules/subscription';
+import { recurringTransactionRepository } from '@modules/recurring-transaction/repositories/recurring-transaction.repository';
+import { excludeActiveRecurring, groupSubscriptionCandidates } from '@modules/subscription';
 import { transactionRepository } from '@modules/transaction';
 import { buildComparison } from '../helpers/comparative-insights';
 
@@ -25,9 +26,12 @@ export const getDashboardPreviewsUseCase = async (
   financialDayStart: number,
   financialDayEnd: number
 ): Promise<DashboardPreviews> => {
-  const transactions = await transactionRepository.findAllByUserId(userId);
+  const [transactions, activeRecurring] = await Promise.all([
+    transactionRepository.findAllByUserId(userId),
+    recurringTransactionRepository.findByUserId(userId),
+  ]);
 
-  const subs = groupSubscriptionCandidates(transactions);
+  const subs = excludeActiveRecurring(groupSubscriptionCandidates(transactions), activeRecurring);
   const topSub = subs[0] ?? null;
 
   const periods = getPreviousFinancialPeriods(financialDayStart, financialDayEnd, 4).map((p) => ({

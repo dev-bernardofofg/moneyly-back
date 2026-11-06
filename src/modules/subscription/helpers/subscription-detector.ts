@@ -49,6 +49,15 @@ export function addCadence(date: Date, cadence: SubscriptionCadence): Date {
   return d;
 }
 
+// Recorrência não cria transação: a linha importada igual a ela nunca ganha vínculo.
+export function excludeActiveRecurring(
+  candidates: SubscriptionCandidate[],
+  activeRecurring: { title: string }[]
+): SubscriptionCandidate[] {
+  const titles = new Set(activeRecurring.map(({ title }) => normalizeTitle(title)));
+  return candidates.filter(({ title }) => !titles.has(normalizeTitle(title)));
+}
+
 /**
  * Heurística pura: detecta grupos de despesas recorrentes não modeladas
  * como recurring_transactions. Testável sem DB.

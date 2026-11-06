@@ -3,11 +3,16 @@
  * findAllByUserId mockado; heurísticas F3/F4 reais.
  */
 import { getDashboardPreviewsUseCase } from '@modules/overview/use-cases/get-dashboard-previews.use-case';
+import { recurringTransactionRepository } from '@modules/recurring-transaction/repositories/recurring-transaction.repository';
 import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
 
+jest.mock('@modules/recurring-transaction/repositories/recurring-transaction.repository');
 jest.mock('@modules/transaction/repositories/transaction.repository');
 
 const txRepo = transactionRepository as jest.Mocked<typeof transactionRepository>;
+const recurringRepo = recurringTransactionRepository as jest.Mocked<
+  typeof recurringTransactionRepository
+>;
 
 const USER = 'user-123';
 
@@ -25,7 +30,10 @@ const expense = (amount: string, date: Date, title = 'Spotify') => ({
   category: { id: 'c1', name: 'Streaming' },
 });
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+  jest.clearAllMocks();
+  recurringRepo.findByUserId.mockResolvedValue([]);
+});
 
 describe('getDashboardPreviewsService', () => {
   it('no transactions → nulls and stable signal', async () => {
