@@ -1,246 +1,520 @@
 /**
- * Integration tests for GET /overview/forecast and the freeBalance contract
+ * Integration tests for GET /overview/forecast and the real-money freeBalance contract.
+ * Dates are relative to today so the suite does not depend on the current month.
  */
 
+import { and, eq } from 'drizzle-orm';
 import request from 'supertest';
+import { spDayString, spMidnightOf, spMidnightPlusDays, spParts } from '@core/helpers/dates';
+import { db } from '@infra/db';
+import {
+  accounts,
+  cardBillPayments,
+  companies,
+  overtimeRecords,
+  recurringTransactions,
+  transactions,
+  transfers,
+} from '@infra/db/schema';
+import { invoiceDueDate } from '@modules/account/helpers/billing-date';
+import { calculateNextExecution } from '@modules/recurring-transaction/helpers/execution-dates';
+import { overtimeMonthForSalary } from '@modules/recurring-transaction/helpers/occurrences';
 import { app } from '../../src/server';
-import { currentPeriodAnchor, plusHours } from '../setup/period-anchor';
+import { currentPeriod } from '../setup/period-anchor';
 
-const HOUR = 60 * 60 * 1000;
+const CLOSING_DAY = 28;
 
-type Occurrence = { recurringTransactionId: string; date: string; amount: number };
+const dayOffset = (days: number) => {
+  const { year, month, day } = spParts(new Date());
+  return spMidnightPlusDays(year, month, day, days);
+};
 
-async function signUp(label: string) {
-  const res = await request(app)
-    .post('/auth/sign-up')
-    .send({
-      name: `Forecast ${label}`,
-      email: `forecast-${label}-${Date.now()}@test.com`,
-      password: 'password123',
-    });
-  return res.body.data.accessToken as string;
-}
+const addDays = (date: Date, days: number) => {
+  const { year, month, day } = spParts(date);
+  return spMidnightPlusDays(year, month, day, days);
+};
 
-async function getForecast(token: string) {
-  const res = await request(app)
-    .get('/overview/forecast')
-    .set('Authorization', `Bearer ${token}`)
-    .expect(200);
-  return res.body.data;
-}
-
-async function createCategory(token: string) {
-  const res = await request(app)
-    .post('/categories/create')
-    .set('Authorization', `Bearer ${token}`)
-    .send({ name: `Forecast Category ${Date.now()}` });
-  return res.body.data.id as string;
-}
-
-// /auth/sign-up tem rate limit de 10 por processo: reaproveitar usuários sem estado.
-let emptyUser: string;
-let intruder: string;
-
-beforeAll(async () => {
-  emptyUser = await signUp('empty');
-  intruder = await signUp('intruder');
-});
+const zeroFreeBalance = {
+  total: 0,
+  components: { accountsBalance: 0, otherIncome: 0, recurringExpense: 0, cardBills: 0 },
+  committedAfter: 0,
+};
 
 describe('GET /overview/forecast', () => {
+  let token: string;
+  let userId: string;
+  let categoryId: string;
+  let defaultAccountId: string;
+  let cardCount = 0;
+  let accountCount = 0;
+  const auth = () => ({ Authorization: `Bearer ${token}` });
+
+  const getFreeBalance = async () => {
+    const res = await request(app).get('/overview/forecast').set(auth()).expect(200);
+    expect(Object.keys(res.body.data)).toEqual(['freeBalance']);
+    return res.body.data.freeBalance;
+  };
+
+  const setOpeningBalance = (accountId: string, openingBalance: number) =>
+    request(app)
+      .put(`/accounts/${accountId}`)
+      .set(auth())
+      .send({ openingBalance, openingBalanceDate: spDayString(dayOffset(0)) })
+      .expect(200);
+
+  const setDataThrough = (accountId: string, dataThrough: Date) =>
+    db.update(accounts).set({ dataThrough }).where(eq(accounts.id, accountId));
+
+  const addChecking = async (openingBalance?: number) => {
+    const res = await request(app)
+      .post('/accounts')
+      .set(auth())
+      .send({ type: 'checking', name: `Conta ${++accountCount}` })
+      .expect(201);
+    const id = res.body.data.id as string;
+    if (openingBalance !== undefined) await setOpeningBalance(id, openingBalance);
+    return id;
+  };
+
+  const addCard = async (dueDay: number, closingDay = CLOSING_DAY) => {
+    const res = await request(app)
+      .post('/accounts')
+      .set(auth())
+      .send({ type: 'credit_card', name: `Cartão ${++cardCount}`, closingDay, dueDay })
+      .expect(201);
+    return { id: res.body.data.id as string, dueDay };
+  };
+
+  const purchaseOnBill = async (
+    card: { id: string; dueDay: number },
+    due: Date,
+    amount: number
+  ) => {
+    const date = Array.from({ length: 120 }, (_, index) => dayOffset(index - 60)).find(
+      (candidate) => invoiceDueDate(candidate, CLOSING_DAY, card.dueDay).getTime() === due.getTime()
+    );
+    await request(app)
+      .post('/transactions/create')
+      .set(auth())
+      .send({
+        type: 'expense',
+        title: 'Compra',
+        amount,
+        category: categoryId,
+        date: spDayString(date!),
+        accountId: card.id,
+      })
+      .expect(201);
+  };
+
+  const addRecurrence = (data: {
+    type: 'income' | 'expense';
+    amount: number;
+    nextExecution: Date;
+    frequency?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+    accountId?: string;
+    startDate?: Date;
+  }) =>
+    db.insert(recurringTransactions).values({
+      userId,
+      categoryId,
+      title: 'Recorrente',
+      frequency: 'monthly',
+      dayOfMonth: spParts(data.nextExecution).day,
+      ...data,
+    });
+
+  const addSalary = (date: Date, amount = 500000, accountId?: string) =>
+    addRecurrence({ type: 'income', amount, nextExecution: date, accountId });
+
+  const addOvertimeIn = async (companyId: string, month: number, year: number) => {
+    const start = spMidnightOf(year, month - 1, 15);
+    const res = await request(app)
+      .post('/overtime')
+      .set(auth())
+      .send({
+        companyId,
+        startTime: start.toISOString(),
+        endTime: new Date(start.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+      })
+      .expect(201);
+    return res.body.data.amount as number;
+  };
+
+  beforeAll(async () => {
+    const res = await request(app)
+      .post('/auth/sign-up')
+      .send({
+        name: 'Forecast',
+        email: `forecast-${Date.now()}@test.com`,
+        password: 'password123',
+      });
+    token = res.body.data.accessToken;
+    const category = await request(app)
+      .post('/categories/create')
+      .set(auth())
+      .send({ name: `Forecast Category ${Date.now()}` });
+    categoryId = category.body.data.id;
+    const list = await request(app).get('/accounts').set(auth()).expect(200);
+    defaultAccountId = list.body.data[0].id;
+    userId = list.body.data[0].userId;
+  });
+
+  // /auth/sign-up tem limite de 10 por processo: um usuário só, com os dados limpos a cada caso.
+  beforeEach(async () => {
+    await db.delete(cardBillPayments).where(eq(cardBillPayments.userId, userId));
+    await db.delete(transfers).where(eq(transfers.userId, userId));
+    await db.delete(transactions).where(eq(transactions.userId, userId));
+    await db.delete(overtimeRecords).where(eq(overtimeRecords.userId, userId));
+    await db.delete(companies).where(eq(companies.userId, userId));
+    await db.delete(recurringTransactions).where(eq(recurringTransactions.userId, userId));
+    await db
+      .delete(accounts)
+      .where(and(eq(accounts.userId, userId), eq(accounts.isDefault, false)));
+    await db
+      .update(accounts)
+      .set({ openingBalance: 0, openingBalanceDate: null, dataThrough: null })
+      .where(eq(accounts.userId, userId));
+  });
+
   it('requires authentication', async () => {
     await request(app).get('/overview/forecast').expect(401);
   });
 
-  it('returns the full freeBalance contract', async () => {
-    const data = await getForecast(emptyUser);
+  it('computes the free balance until the next salary', async () => {
+    const salaryDate = dayOffset(10);
+    const billDue = dayOffset(5);
+    const { year, month, day: dueDay } = spParts(billDue);
 
-    expect(data).toEqual({
-      period: {
-        id: expect.any(String),
-        startDate: expect.any(String),
-        endDate: expect.any(String),
-        label: expect.any(String),
+    await setOpeningBalance(defaultAccountId, 100000);
+    await addSalary(salaryDate);
+    await addRecurrence({ type: 'income', amount: 15000, nextExecution: dayOffset(4) });
+    await addRecurrence({ type: 'expense', amount: 20000, nextExecution: dayOffset(3) });
+    await addRecurrence({
+      type: 'expense',
+      amount: 3000,
+      nextExecution: dayOffset(2),
+      frequency: 'weekly',
+    });
+    await addRecurrence({
+      type: 'expense',
+      amount: 7000,
+      nextExecution: salaryDate,
+      frequency: 'yearly',
+    });
+
+    const card = await addCard(dueDay);
+    await purchaseOnBill(card, billDue, 40000);
+    await purchaseOnBill(card, spMidnightOf(year, month + 1, dueDay), 25000);
+
+    const company = await request(app)
+      .post('/companies')
+      .set(auth())
+      .send({ name: 'Forecast Co', hourlyRate: 4000 })
+      .expect(201);
+    const overtime = overtimeMonthForSalary(salaryDate);
+    const lastMonthHours = await addOvertimeIn(company.body.data.id, overtime.month, overtime.year);
+    const earlier = overtimeMonthForSalary(
+      new Date(Date.UTC(overtime.year, overtime.month - 1, 15))
+    );
+    await addOvertimeIn(company.body.data.id, earlier.month, earlier.year);
+
+    const freeBalance = await getFreeBalance();
+
+    const recurringInWindow = 20000 + 2 * 3000;
+    expect(freeBalance).toEqual({
+      total: 100000 + 15000 - recurringInWindow - 40000,
+      until: salaryDate.toISOString(),
+      confidence: 'medium',
+      components: {
+        accountsBalance: 100000,
+        otherIncome: 15000,
+        recurringExpense: recurringInWindow,
+        cardBills: 40000,
       },
-      realized: { income: 0, expense: 0, balance: 0 },
-      projected: { recurringIncome: 0, recurringExpense: 0, occurrences: [] },
-      projectedEndBalance: 0,
-      freeBalance: {
-        total: 0,
-        daysRemaining: expect.any(Number),
-        confidence: expect.stringMatching(/^(low|medium|high)$/),
-        income: { fixed: 0, variable: 0, pendingVariable: 0 },
-        commitments: { recurringExpenses: 0 },
-        reserves: { budgets: 0, goals: 0 },
-        components: {
-          carryOverBalance: 0,
-          realizedBalance: 0,
-          futureRecurringIncome: 0,
-          futureRecurringExpense: 0,
-          pendingVariableIncome: 0,
-          budgetReserve: 0,
-          goalReserve: 0,
-        },
+      nextPayment: {
+        date: salaryDate.toISOString(),
+        salary: 500000,
+        overtime: lastMonthHours,
+        total: 500000 + lastMonthHours,
       },
-      asOf: expect.any(String),
+      committedAfter: 25000,
     });
   });
 
-  it('rejects an invalid periodId', async () => {
-    await request(app)
-      .get('/overview/forecast')
-      .set('Authorization', `Bearer ${emptyUser}`)
-      .query({ periodId: 'not-a-uuid' })
-      .expect(400);
+  it('keeps a passed salary as other income until the statement covers it', async () => {
+    const passed = dayOffset(-3);
+    const next = calculateNextExecution('monthly', spParts(passed).day, null, passed);
+    await setOpeningBalance(defaultAccountId, 10000);
+    await setDataThrough(defaultAccountId, dayOffset(-10));
+    await addRecurrence({
+      type: 'income',
+      amount: 500000,
+      nextExecution: next,
+      accountId: defaultAccountId,
+    });
+
+    const freeBalance = await getFreeBalance();
+
+    expect(freeBalance.components.otherIncome).toBe(500000);
+    expect(freeBalance.total).toBe(510000);
+    expect(freeBalance.until).toBe(next.toISOString());
+    expect(freeBalance.nextPayment.date).toBe(next.toISOString());
   });
 
-  it('returns 404 for a period owned by another user', async () => {
-    const { period } = await getForecast(emptyUser);
+  it('does not count a passed salary already covered by the statement', async () => {
+    const passed = dayOffset(-3);
+    const next = calculateNextExecution('monthly', spParts(passed).day, null, passed);
+    await setOpeningBalance(defaultAccountId, 10000);
+    await setDataThrough(defaultAccountId, dayOffset(-1));
+    await addSalary(next);
 
-    await request(app)
-      .get('/overview/forecast')
-      .set('Authorization', `Bearer ${intruder}`)
-      .query({ periodId: period.id })
-      .expect(404);
+    const freeBalance = await getFreeBalance();
+
+    expect(freeBalance.components.otherIncome).toBe(0);
+    expect(freeBalance.total).toBe(10000);
   });
 
-  it('does not project pre-created installments again', async () => {
-    const token = await signUp('installments');
-    const categoryId = await createCategory(token);
+  it('predicts only what comes after today when the account has no statement', async () => {
+    await setOpeningBalance(defaultAccountId, 10000);
+    await addSalary(dayOffset(10));
+    await addRecurrence({
+      type: 'expense',
+      amount: 999,
+      nextExecution: dayOffset(-2),
+      frequency: 'yearly',
+    });
+    await addRecurrence({
+      type: 'expense',
+      amount: 111,
+      nextExecution: dayOffset(0),
+      frequency: 'yearly',
+    });
 
-    const created = await request(app)
-      .post('/recurring-transactions')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
+    expect((await getFreeBalance()).components.recurringExpense).toBe(0);
+  });
+
+  it('uses the data through of the account of each recurrence', async () => {
+    const otherId = await addChecking(0);
+    await setDataThrough(defaultAccountId, dayOffset(-5));
+    await setDataThrough(otherId, dayOffset(-1));
+    await addSalary(dayOffset(10));
+
+    const passed = dayOffset(-2);
+    // accountId null vai para a conta padrão, ainda sem extrato nessa data.
+    await addRecurrence({
+      type: 'expense',
+      amount: 1000,
+      nextExecution: passed,
+      frequency: 'yearly',
+    });
+    await addRecurrence({
+      type: 'expense',
+      amount: 2000,
+      nextExecution: passed,
+      frequency: 'yearly',
+      accountId: otherId,
+    });
+
+    expect((await getFreeBalance()).components.recurringExpense).toBe(1000);
+  });
+
+  it('does not predict occurrences before the recurrence started', async () => {
+    await setDataThrough(defaultAccountId, dayOffset(-40));
+    await addSalary(dayOffset(3));
+    await addRecurrence({
+      type: 'expense',
+      amount: 1000,
+      nextExecution: dayOffset(6),
+      frequency: 'weekly',
+      startDate: dayOffset(-1),
+    });
+
+    expect((await getFreeBalance()).components.recurringExpense).toBe(1000);
+  });
+
+  it('leaves an account without opening balance out of the sum, with low confidence', async () => {
+    await addChecking(5000);
+    await addSalary(dayOffset(10));
+
+    const freeBalance = await getFreeBalance();
+
+    expect(freeBalance.components.accountsBalance).toBe(5000);
+    expect(freeBalance.confidence).toBe('low');
+  });
+
+  it('ignores an overdue bill and counts a bill due today', async () => {
+    await addSalary(dayOffset(10));
+    const overdue = await addCard(spParts(dayOffset(-1)).day);
+    await purchaseOnBill(overdue, dayOffset(-1), 40000);
+    const dueToday = await addCard(spParts(dayOffset(0)).day);
+    await purchaseOnBill(dueToday, dayOffset(0), 7000);
+
+    const freeBalance = await getFreeBalance();
+
+    expect(freeBalance.components.cardBills).toBe(7000);
+    expect(freeBalance.total).toBe(-7000);
+  });
+
+  it('ignores a paid bill', async () => {
+    const due = dayOffset(5);
+    await addSalary(dayOffset(10));
+    const card = await addCard(spParts(due).day);
+    await purchaseOnBill(card, due, 40000);
+    await request(app)
+      .post(`/accounts/${card.id}/bill-payment`)
+      .set(auth())
+      .send({ dueDate: spDayString(due) })
+      .expect(200);
+
+    expect((await getFreeBalance()).components.cardBills).toBe(0);
+  });
+
+  it('treats a bill due on the salary day as committed after', async () => {
+    const salaryDate = dayOffset(10);
+    await addSalary(salaryDate);
+    const card = await addCard(spParts(salaryDate).day);
+    await purchaseOnBill(card, salaryDate, 40000);
+
+    const freeBalance = await getFreeBalance();
+
+    expect(freeBalance.components.cardBills).toBe(0);
+    expect(freeBalance.committedAfter).toBe(40000);
+  });
+
+  it('adds nothing for a card without transactions', async () => {
+    await addSalary(dayOffset(10));
+    await addCard(spParts(dayOffset(5)).day);
+
+    const freeBalance = await getFreeBalance();
+
+    expect(freeBalance.components.cardBills).toBe(0);
+    expect(freeBalance.committedAfter).toBe(0);
+  });
+
+  describe('card recurrences', () => {
+    const charge = dayOffset(2);
+    const due = dayOffset(5);
+    const dueDay = spParts(due).day;
+    const closingDay = Array.from({ length: 31 }, (_, index) => index + 1).find(
+      (candidate) => invoiceDueDate(charge, candidate, dueDay).getTime() === due.getTime()
+    )!;
+
+    const addCardRecurrence = async () => {
+      const card = await addCard(dueDay, closingDay);
+      await addRecurrence({
         type: 'expense',
-        title: 'Parcelado',
-        amount: 30,
-        categoryId,
-        frequency: 'monthly',
-        totalInstallments: 3,
-      })
-      .expect(201);
+        amount: 5590,
+        nextExecution: charge,
+        frequency: 'yearly',
+        accountId: card.id,
+      });
+    };
 
-    const data = await getForecast(token);
-    const occurrences = (data.projected.occurrences as Occurrence[]).filter(
-      (o) => o.recurringTransactionId === created.body.data.id
-    );
+    it('adds to the bill due before the salary, not to recurring expenses', async () => {
+      await addSalary(dayOffset(6));
+      await addCardRecurrence();
 
-    expect(data.realized.expense).toBe(30);
-    expect(occurrences).toEqual([]);
-    expect(data.projected.recurringExpense).toBe(0);
+      const freeBalance = await getFreeBalance();
+
+      expect(freeBalance.components).toMatchObject({ recurringExpense: 0, cardBills: 5590 });
+      expect(freeBalance.committedAfter).toBe(0);
+      expect(freeBalance.total).toBe(-5590);
+    });
+
+    it('commits the amount after the salary when the bill is due later', async () => {
+      await addSalary(dayOffset(3));
+      await addCardRecurrence();
+
+      const freeBalance = await getFreeBalance();
+
+      expect(freeBalance.components).toMatchObject({ recurringExpense: 0, cardBills: 0 });
+      expect(freeBalance.committedAfter).toBe(5590);
+    });
+
+    it('stays out when the charge falls after the window', async () => {
+      await addSalary(charge);
+      await addCardRecurrence();
+
+      const freeBalance = await getFreeBalance();
+
+      expect(freeBalance.components).toMatchObject({ recurringExpense: 0, cardBills: 0 });
+      expect(freeBalance.committedAfter).toBe(0);
+    });
   });
 
-  it('does not project an occurrence that was already materialized', async () => {
-    const token = await signUp('materialized');
-    const categoryId = await createCategory(token);
+  it('ends at the period end, included, for a user without salary', async () => {
+    const period = await currentPeriod(app, token);
+    const end = new Date(period.endDate);
+    await setDataThrough(defaultAccountId, dayOffset(-1));
+    await addRecurrence({ type: 'expense', amount: 1000, nextExecution: end, frequency: 'yearly' });
+    await addRecurrence({
+      type: 'expense',
+      amount: 2000,
+      nextExecution: addDays(end, 1),
+      frequency: 'yearly',
+    });
 
-    const created = await request(app)
-      .post('/recurring-transactions')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ type: 'expense', title: 'Diário', amount: 10, categoryId, frequency: 'daily' })
-      .expect(201);
-    const recurringId = created.body.data.id as string;
+    const freeBalance = await getFreeBalance();
 
-    const history = await request(app)
-      .get(`/recurring-transactions/${recurringId}/transactions`)
-      .set('Authorization', `Bearer ${token}`)
-      .expect(200);
-    const materialized = history.body.data as Array<{ date: string }>;
-    expect(materialized).toHaveLength(1);
-    const materializedDay = new Date(materialized[0]!.date).toISOString().slice(0, 10);
-
-    const data = await getForecast(token);
-    const occurrences = (data.projected.occurrences as Occurrence[]).filter(
-      (o) => o.recurringTransactionId === recurringId
-    );
-
-    expect(data.realized.expense).toBe(10);
-    expect(occurrences.map((o) => o.date.slice(0, 10))).not.toContain(materializedDay);
-    expect(data.projected.recurringExpense).toBe(occurrences.length * 10);
-    expect(data.freeBalance.commitments.recurringExpenses).toBe(occurrences.length * 10);
+    expect(freeBalance.until).toBe(end.toISOString());
+    expect(freeBalance.nextPayment).toBeNull();
+    expect(freeBalance.components.recurringExpense).toBe(1000);
+    expect(freeBalance.confidence).toBe('low');
   });
 
-  it('counts overtime as realized variable income', async () => {
-    const token = await signUp('overtime');
-    const anchor = await currentPeriodAnchor(app, token);
-    const company = await request(app)
-      .post('/companies')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ name: 'Forecast Co', hourlyRate: 40 });
+  it('does not change the total with a transfer between accounts', async () => {
+    const otherId = await addChecking(100000);
+    await setOpeningBalance(defaultAccountId, 50000);
+    const before = await getFreeBalance();
 
     await request(app)
-      .post('/overtime')
-      .set('Authorization', `Bearer ${token}`)
+      .post('/transfers')
+      .set(auth())
       .send({
-        companyId: company.body.data.id,
-        startTime: anchor.toISOString(),
-        endTime: plusHours(anchor, 1),
+        fromAccountId: otherId,
+        toAccountId: defaultAccountId,
+        amount: 30000,
+        date: spDayString(dayOffset(0)),
       })
       .expect(201);
 
-    const { freeBalance, realized } = await getForecast(token);
-
-    expect(realized.income).toBe(40);
-    expect(freeBalance.income).toEqual({ fixed: 0, variable: 40, pendingVariable: 0 });
-    expect(freeBalance.components.realizedBalance).toBe(40);
-    expect(freeBalance.total).toBe(40);
-  });
-});
-
-describe('GET /overview/planner', () => {
-  it('requires authentication', async () => {
-    await request(app).get('/overview/planner').expect(401);
+    const after = await getFreeBalance();
+    expect(after.components.accountsBalance).toBe(150000);
+    expect(after.total).toBe(before.total);
   });
 
-  it('rejects an invalid periodId', async () => {
-    await request(app)
-      .get('/overview/planner')
-      .set('Authorization', `Bearer ${emptyUser}`)
+  it('is high with fresh accounts, opening balance and salary, medium with a stale one', async () => {
+    const card = await addCard(10);
+    await setOpeningBalance(defaultAccountId, 1000);
+    await setDataThrough(defaultAccountId, dayOffset(-1));
+    await setDataThrough(card.id, dayOffset(-1));
+    await addSalary(dayOffset(10));
+
+    expect((await getFreeBalance()).confidence).toBe('high');
+
+    await setDataThrough(card.id, dayOffset(-8));
+    expect((await getFreeBalance()).confidence).toBe('medium');
+  });
+
+  it('ignores the periodId query', async () => {
+    const res = await request(app)
+      .get('/overview/forecast')
+      .set(auth())
       .query({ periodId: 'not-a-uuid' })
-      .expect(400);
-  });
-
-  it('returns 404 for a period owned by another user', async () => {
-    const { period } = await getForecast(emptyUser);
-
-    await request(app)
-      .get('/overview/planner')
-      .set('Authorization', `Bearer ${intruder}`)
-      .query({ periodId: period.id })
-      .expect(404);
-  });
-
-  it('reports the same reserves the forecast subtracts from the free balance', async () => {
-    const token = await signUp('planner-impact');
-    const categoryId = await createCategory(token);
-    const targetDate = new Date(Date.now() + 365 * 24 * HOUR).toISOString().slice(0, 10);
-
-    await request(app)
-      .post('/budgets/')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ categoryId, monthlyLimit: 500 })
-      .expect(201);
-    await request(app)
-      .post('/goals/')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ title: 'Reserva', targetAmount: 1200, targetDate })
-      .expect(201);
-
-    const forecast = await getForecast(token);
-    const planner = await request(app)
-      .get('/overview/planner')
-      .set('Authorization', `Bearer ${token}`)
-      .query({ periodId: forecast.period.id })
       .expect(200);
 
-    const { budgets, goals } = forecast.freeBalance.reserves;
-    expect(budgets).toBe(500);
-    expect(goals).toBeGreaterThan(0);
-    expect(planner.body.data.currentPeriod.id).toBe(forecast.period.id);
-    expect(planner.body.data.freeBalanceImpact).toEqual({
-      budgetReserve: budgets,
-      goalReserve: goals,
-      total: Math.round((budgets + goals) * 100) / 100,
+    expect(res.body.data.freeBalance).toEqual(await getFreeBalance());
+  });
+
+  it('returns zeros for a user without data', async () => {
+    const period = await currentPeriod(app, token);
+
+    expect(await getFreeBalance()).toEqual({
+      ...zeroFreeBalance,
+      until: new Date(period.endDate).toISOString(),
+      confidence: 'low',
+      nextPayment: null,
     });
   });
 });

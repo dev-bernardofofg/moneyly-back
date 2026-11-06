@@ -91,7 +91,6 @@ describe('Transfers', () => {
 
     expect(await balances()).toMatchObject({ [otherId]: 70000, [mainId]: 80000 });
     const after = await request(app).get('/overview/forecast').set(auth()).expect(200);
-    expect(after.body.data.realized).toEqual(before.body.data.realized);
     expect(after.body.data.freeBalance.total).toBe(before.body.data.freeBalance.total);
   });
 

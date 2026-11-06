@@ -30,22 +30,13 @@ describe('Insights features (F1/F3/F4/F5)', () => {
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
 
-      expect(r.body.data).toHaveProperty('period');
-      expect(r.body.data).toHaveProperty('realized');
-      expect(r.body.data).toHaveProperty('projected');
-      expect(r.body.data).toHaveProperty('projectedEndBalance');
       expect(r.body.data.freeBalance).toMatchObject({
         total: expect.any(Number),
-        daysRemaining: expect.any(Number),
+        until: expect.any(String),
         confidence: expect.stringMatching(/^(low|medium|high)$/),
-        income: expect.objectContaining({
-          fixed: expect.any(Number),
-          variable: expect.any(Number),
-        }),
-        commitments: expect.any(Object),
-        reserves: expect.any(Object),
+        components: expect.any(Object),
+        committedAfter: expect.any(Number),
       });
-      expect(Array.isArray(r.body.data.projected.occurrences)).toBe(true);
     });
   });
 

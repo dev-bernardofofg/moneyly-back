@@ -1037,145 +1037,6 @@
           "categories"
         ]
       },
-      "PlannerOverview": {
-        "type": "object",
-        "properties": {
-          "stats": {
-            "type": "object",
-            "properties": {
-              "totalBudgeted": {
-                "type": "number"
-              },
-              "totalSavingsGoal": {
-                "type": "number"
-              },
-              "totalSaved": {
-                "type": "number"
-              },
-              "savingsProgress": {
-                "type": "number"
-              },
-              "budgetPercentage": {
-                "type": "number"
-              },
-              "savingsPercentage": {
-                "type": "number"
-              },
-              "remainingToSave": {
-                "type": "number"
-              },
-              "availableForBudget": {
-                "type": "number"
-              }
-            },
-            "required": [
-              "totalBudgeted",
-              "totalSavingsGoal",
-              "totalSaved",
-              "savingsProgress",
-              "budgetPercentage",
-              "savingsPercentage",
-              "remainingToSave",
-              "availableForBudget"
-            ]
-          },
-          "currentPeriod": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "format": "uuid"
-              },
-              "startDate": {
-                "type": "string",
-                "example": "2026-05-17T00:00:00.000Z"
-              },
-              "endDate": {
-                "type": "string",
-                "example": "2026-05-17T00:00:00.000Z"
-              },
-              "description": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "id",
-              "startDate",
-              "endDate",
-              "description"
-            ]
-          },
-          "freeBalanceImpact": {
-            "type": "object",
-            "properties": {
-              "budgetReserve": {
-                "type": "number"
-              },
-              "goalReserve": {
-                "type": "number"
-              },
-              "total": {
-                "type": "number"
-              }
-            },
-            "required": [
-              "budgetReserve",
-              "goalReserve",
-              "total"
-            ]
-          },
-          "alerts": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "enum": [
-                    "danger",
-                    "warning",
-                    "info"
-                  ]
-                },
-                "message": {
-                  "type": "string"
-                },
-                "priority": {
-                  "type": "string",
-                  "enum": [
-                    "high",
-                    "medium",
-                    "low"
-                  ]
-                },
-                "category": {
-                  "type": "string"
-                },
-                "goal": {
-                  "type": "string"
-                },
-                "percentage": {
-                  "type": "number"
-                },
-                "daysRemaining": {
-                  "type": "number"
-                }
-              },
-              "required": [
-                "type",
-                "message",
-                "priority"
-              ]
-            }
-          }
-        },
-        "required": [
-          "stats",
-          "currentPeriod",
-          "freeBalanceImpact",
-          "alerts"
-        ]
-      },
       "SubscriptionCandidate": {
         "type": "object",
         "properties": {
@@ -1773,120 +1634,17 @@
       "ForecastResponse": {
         "type": "object",
         "properties": {
-          "period": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "format": "uuid"
-              },
-              "startDate": {
-                "type": "string",
-                "example": "2026-05-17T00:00:00.000Z"
-              },
-              "endDate": {
-                "type": "string",
-                "example": "2026-05-17T00:00:00.000Z"
-              },
-              "label": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "id",
-              "startDate",
-              "endDate",
-              "label"
-            ]
-          },
-          "realized": {
-            "type": "object",
-            "properties": {
-              "income": {
-                "type": "number"
-              },
-              "expense": {
-                "type": "number"
-              },
-              "balance": {
-                "type": "number"
-              }
-            },
-            "required": [
-              "income",
-              "expense",
-              "balance"
-            ]
-          },
-          "projected": {
-            "type": "object",
-            "properties": {
-              "recurringIncome": {
-                "type": "number"
-              },
-              "recurringExpense": {
-                "type": "number"
-              },
-              "occurrences": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "recurringTransactionId": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "title": {
-                      "type": "string"
-                    },
-                    "type": {
-                      "type": "string",
-                      "enum": [
-                        "income",
-                        "expense"
-                      ]
-                    },
-                    "amount": {
-                      "type": "number"
-                    },
-                    "date": {
-                      "type": "string",
-                      "example": "2026-05-17T00:00:00.000Z"
-                    },
-                    "categoryId": {
-                      "type": "string",
-                      "format": "uuid"
-                    }
-                  },
-                  "required": [
-                    "recurringTransactionId",
-                    "title",
-                    "type",
-                    "amount",
-                    "date",
-                    "categoryId"
-                  ]
-                }
-              }
-            },
-            "required": [
-              "recurringIncome",
-              "recurringExpense",
-              "occurrences"
-            ]
-          },
-          "projectedEndBalance": {
-            "type": "number"
-          },
           "freeBalance": {
             "type": "object",
             "properties": {
               "total": {
-                "type": "number"
-              },
-              "daysRemaining": {
                 "type": "integer",
-                "minimum": 0
+                "description": "Valor em centavos",
+                "example": 123450
+              },
+              "until": {
+                "type": "string",
+                "example": "2026-05-17T00:00:00.000Z"
               },
               "confidence": {
                 "type": "string",
@@ -1896,109 +1654,86 @@
                   "high"
                 ]
               },
-              "income": {
-                "type": "object",
-                "properties": {
-                  "fixed": {
-                    "type": "number"
-                  },
-                  "variable": {
-                    "type": "number"
-                  },
-                  "pendingVariable": {
-                    "type": "number"
-                  }
-                },
-                "required": [
-                  "fixed",
-                  "variable",
-                  "pendingVariable"
-                ]
-              },
-              "commitments": {
-                "type": "object",
-                "properties": {
-                  "recurringExpenses": {
-                    "type": "number"
-                  }
-                },
-                "required": [
-                  "recurringExpenses"
-                ]
-              },
-              "reserves": {
-                "type": "object",
-                "properties": {
-                  "budgets": {
-                    "type": "number"
-                  },
-                  "goals": {
-                    "type": "number"
-                  }
-                },
-                "required": [
-                  "budgets",
-                  "goals"
-                ]
-              },
               "components": {
                 "type": "object",
                 "properties": {
-                  "carryOverBalance": {
-                    "type": "number"
+                  "accountsBalance": {
+                    "type": "integer",
+                    "description": "Valor em centavos",
+                    "example": 123450
                   },
-                  "realizedBalance": {
-                    "type": "number"
+                  "otherIncome": {
+                    "type": "integer",
+                    "description": "Valor em centavos",
+                    "example": 123450
                   },
-                  "futureRecurringIncome": {
-                    "type": "number"
+                  "recurringExpense": {
+                    "type": "integer",
+                    "description": "Valor em centavos",
+                    "example": 123450
                   },
-                  "futureRecurringExpense": {
-                    "type": "number"
-                  },
-                  "pendingVariableIncome": {
-                    "type": "number"
-                  },
-                  "budgetReserve": {
-                    "type": "number"
-                  },
-                  "goalReserve": {
-                    "type": "number"
+                  "cardBills": {
+                    "type": "integer",
+                    "description": "Valor em centavos",
+                    "example": 123450
                   }
                 },
                 "required": [
-                  "carryOverBalance",
-                  "realizedBalance",
-                  "futureRecurringIncome",
-                  "futureRecurringExpense",
-                  "pendingVariableIncome",
-                  "budgetReserve",
-                  "goalReserve"
+                  "accountsBalance",
+                  "otherIncome",
+                  "recurringExpense",
+                  "cardBills"
                 ]
+              },
+              "nextPayment": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "example": "2026-05-17T00:00:00.000Z"
+                  },
+                  "salary": {
+                    "type": "integer",
+                    "description": "Valor em centavos",
+                    "example": 123450
+                  },
+                  "overtime": {
+                    "type": "integer",
+                    "description": "Valor em centavos",
+                    "example": 123450
+                  },
+                  "total": {
+                    "type": "integer",
+                    "description": "Valor em centavos",
+                    "example": 123450
+                  }
+                },
+                "required": [
+                  "date",
+                  "salary",
+                  "overtime",
+                  "total"
+                ]
+              },
+              "committedAfter": {
+                "type": "integer",
+                "description": "Valor em centavos",
+                "example": 123450
               }
             },
             "required": [
               "total",
-              "daysRemaining",
+              "until",
               "confidence",
-              "income",
-              "commitments",
-              "reserves",
-              "components"
+              "components",
+              "nextPayment",
+              "committedAfter"
             ]
-          },
-          "asOf": {
-            "type": "string",
-            "example": "2026-05-17T00:00:00.000Z"
           }
         },
         "required": [
-          "period",
-          "realized",
-          "projected",
-          "projectedEndBalance",
-          "freeBalance",
-          "asOf"
+          "freeBalance"
         ]
       },
       "TransactionListSummary": {
@@ -10144,109 +9879,6 @@
         }
       }
     },
-    "/overview/planner": {
-      "get": {
-        "tags": [
-          "Overview"
-        ],
-        "summary": "Planejamento financeiro e impacto no Saldo Livre",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": false,
-            "name": "periodId",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Sucesso",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "$ref": "#/components/schemas/PlannerOverview"
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "data"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Requisição inválida",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        false
-                      ]
-                    },
-                    "error": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "nullable": true
-                    }
-                  },
-                  "required": [
-                    "success",
-                    "error"
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Não autenticado",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        false
-                      ]
-                    },
-                    "error": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "nullable": true
-                    }
-                  },
-                  "required": [
-                    "success",
-                    "error"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/overview/insights": {
       "get": {
         "tags": [
@@ -10355,21 +9987,10 @@
         "tags": [
           "Overview"
         ],
-        "summary": "Saldo Livre e projeção do período",
+        "summary": "Saldo Livre calculado para hoje, até o próximo salário",
         "security": [
           {
             "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": false,
-            "name": "periodId",
-            "in": "query"
           }
         ],
         "responses": {

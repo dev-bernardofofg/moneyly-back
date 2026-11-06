@@ -9,13 +9,11 @@ import {
   FinancialInsightsSchema,
   ForecastResponseSchema,
   CardBillsSchema,
-  PlannerOverviewSchema,
 } from '@core/openapi/schemas';
 import { ok, route } from '@core/openapi/route';
 import {
   getAvailablePeriodsQuerySchema,
   getDashboardOverviewQuerySchema,
-  plannerQuerySchema,
 } from './schemas/overview.schema';
 
 route({
@@ -36,14 +34,6 @@ route({
 });
 route({
   method: 'get',
-  path: '/overview/planner',
-  tag: 'Overview',
-  summary: 'Planejamento financeiro e impacto no Saldo Livre',
-  query: plannerQuerySchema,
-  ok: ok(wrapSuccess(PlannerOverviewSchema)),
-});
-route({
-  method: 'get',
   path: '/overview/insights',
   tag: 'Overview',
   summary: 'Gastos do período por categoria e comparados aos períodos anteriores',
@@ -54,8 +44,7 @@ route({
   method: 'get',
   path: '/overview/forecast',
   tag: 'Overview',
-  summary: 'Saldo Livre e projeção do período',
-  query: z.object({ periodId: z.string().uuid().optional() }),
+  summary: 'Saldo Livre calculado para hoje, até o próximo salário',
   ok: ok(wrapSuccess(ForecastResponseSchema)),
 });
 route({

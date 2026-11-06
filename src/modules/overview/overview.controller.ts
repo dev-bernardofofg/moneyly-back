@@ -8,9 +8,8 @@ import { getCardBillsUseCase } from './use-cases/get-card-bills.use-case';
 import { getDashboardOverviewUseCase } from './use-cases/get-dashboard-overview.use-case';
 import { getDashboardPreviewsUseCase } from './use-cases/get-dashboard-previews.use-case';
 import { getFinancialInsightsUseCase } from './use-cases/get-financial-insights.use-case';
-import { getForecastUseCase } from './use-cases/get-forecast.use-case';
+import { getFreeBalanceUseCase } from './use-cases/get-free-balance.use-case';
 import { getPeriodTransactionsUseCase } from './use-cases/get-period-transactions.use-case';
-import { getPlannerOverviewUseCase } from './use-cases/get-planner-overview.use-case';
 
 export const getDashboardOverview = asyncHandler<
   AuthRequest & { query: GetDashboardOverviewQuery }
@@ -75,33 +74,8 @@ export const getFinancialInsights = asyncHandler<AuthRequest>(async (req, res) =
 });
 
 export const getForecast = asyncHandler<AuthRequest>(async (req, res) => {
-  const { periodId } = req.query as { periodId?: string };
-  const forecast = await getForecastUseCase(req.user.id, periodId);
-  return ResponseHandler.success(res, forecast, 'Projeção de saldo gerada com sucesso');
-});
-
-export const getPlannerOverview = asyncHandler<AuthRequest>(async (req, res) => {
-  const { periodId } = req.query as { periodId?: string };
-  const { stats, alerts, period, freeBalanceImpact } = await getPlannerOverviewUseCase(
-    req.user.id,
-    periodId
-  );
-
-  return ResponseHandler.success(
-    res,
-    {
-      stats,
-      currentPeriod: {
-        id: period.id,
-        startDate: period.startDate,
-        endDate: period.endDate,
-        description: `Período financeiro: ${formatBrazilianDate(period.startDate)} a ${formatBrazilianDate(period.endDate)}`,
-      },
-      freeBalanceImpact,
-      alerts,
-    },
-    'Stats do planejamento recuperados com sucesso'
-  );
+  const freeBalance = await getFreeBalanceUseCase(req.user.id);
+  return ResponseHandler.success(res, { freeBalance }, 'Saldo Livre calculado com sucesso');
 });
 
 export const getCardBills = asyncHandler<AuthRequest>(async (req, res) => {

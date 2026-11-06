@@ -3,7 +3,7 @@ import { financialPeriodService, formatPeriodLabel } from '@modules/financial-pe
 import { financialPeriodRepository } from '@modules/financial-period/repositories/financial-period.repository';
 import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
 import { buildPeriodInsights } from '../helpers/period-insights';
-import { getForecastUseCase } from './get-forecast.use-case';
+import { getPeriodProjectionUseCase } from './get-period-projection.use-case';
 
 const HISTORY_SIZE = 6;
 
@@ -26,19 +26,19 @@ export const getFinancialInsightsUseCase = async (userId: string, periodId?: str
 
   // Em andamento: as contas recorrentes que ainda vão cair entram na previsão de gasto.
   const isOpen = Date.now() <= new Date(period.endDate).getTime();
-  const [totals, forecast] = await Promise.all([
+  const [totals, projection] = await Promise.all([
     transactionRepository.sumByPeriodAndCategory(
       userId,
       periods.map((item) => item.id)
     ),
-    isOpen ? getForecastUseCase(userId, period.id) : null,
+    isOpen ? getPeriodProjectionUseCase(userId, period.id) : null,
   ]);
 
   return buildPeriodInsights({
     periods,
     selectedId: period.id,
     totals,
-    upcomingExpense: forecast?.projected.recurringExpense ?? 0,
+    upcomingExpense: projection?.projected.recurringExpense ?? 0,
     isOpen,
   });
 };

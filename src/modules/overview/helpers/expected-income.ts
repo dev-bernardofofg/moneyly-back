@@ -1,14 +1,14 @@
-import { getForecastUseCase } from '../use-cases/get-forecast.use-case';
+import { getPeriodProjectionUseCase } from '../use-cases/get-period-projection.use-case';
 
 /**
- * Renda do período para percentuais (alerta de gasto, planner, insights): o que já entrou mais
- * as entradas recorrentes previstas (salário cadastrado como recorrência conta antes de cair).
+ * Renda do perÃ­odo para percentuais (alerta de gasto, insights): o que jÃ¡ entrou mais
+ * as entradas recorrentes previstas (salÃ¡rio cadastrado como recorrÃªncia conta antes de cair).
  * Substitui o antigo "rendimento mensal" fixo do perfil.
  */
 export const expectedIncomeForPeriod = async (userId: string, periodId?: string) => {
-  const forecast = await getForecastUseCase(userId, periodId);
+  const projection = await getPeriodProjectionUseCase(userId, periodId);
   return {
-    periodId: forecast.period.id,
-    income: forecast.realized.income + forecast.projected.recurringIncome,
+    periodId: projection.period.id,
+    income: projection.realized.income + projection.projected.recurringIncome,
   };
 };

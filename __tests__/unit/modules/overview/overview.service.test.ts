@@ -2,30 +2,19 @@
  * Testes unitários para overview.service (reescrito contra a API atual).
  * Funções puras testadas direto; serviços que tocam DB com mocks.
  */
-import { calculateAlerts, calculatePlanningStats } from '@modules/overview/helpers/planner-calcs';
 import {
   getDashboardOverviewUseCase,
   getStatsOverview,
 } from '@modules/overview/use-cases/get-dashboard-overview.use-case';
 import { getPeriodTransactionsUseCase } from '@modules/overview/use-cases/get-period-transactions.use-case';
-import { getPlannerOverviewUseCase } from '@modules/overview/use-cases/get-planner-overview.use-case';
 import { financialPeriodRepository } from '@modules/financial-period/repositories/financial-period.repository';
 import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
-import { getBudgetProgressUseCase } from '@modules/budget';
-import { getGoalsProgressUseCase } from '@modules/goal';
-import { getForecastUseCase } from '@modules/overview/use-cases/get-forecast.use-case';
 
 jest.mock('@modules/financial-period/repositories/financial-period.repository');
 jest.mock('@modules/transaction/repositories/transaction.repository');
-jest.mock('@modules/budget');
-jest.mock('@modules/goal');
-jest.mock('@modules/overview/use-cases/get-forecast.use-case');
 
 const fpRepo = financialPeriodRepository as jest.Mocked<typeof financialPeriodRepository>;
 const txRepo = transactionRepository as jest.Mocked<typeof transactionRepository>;
-const mockedBudgetProgress = getBudgetProgressUseCase as jest.Mock;
-const mockedGoalsProgress = getGoalsProgressUseCase as jest.Mock;
-const mockedForecast = getForecastUseCase as jest.Mock;
 
 const USER = 'user-123';
 
@@ -69,94 +58,6 @@ describe('getDashboardOverviewService', () => {
     expect(Array.isArray(r.recentTransactions)).toBe(true);
     expect(r.chart).toHaveProperty('data');
     expect(r.chart).toHaveProperty('categories');
-  });
-});
-
-describe('calculatePlanningStats (pure)', () => {
-  it('aggregates budgeted/savings and percentages', () => {
-    const budgetProgress = [{ monthlyLimit: 1000 }, { monthlyLimit: 500 }] as never;
-    const goalsProgress = [{ targetAmount: 2000, currentAmount: 500 }] as never;
-
-    const r = calculatePlanningStats(budgetProgress, goalsProgress, 4000);
-
-    expect(r.totalBudgeted).toBe(1500);
-    expect(r.totalSavingsGoal).toBe(2000);
-    expect(r.totalSaved).toBe(500);
-    expect(r.savingsProgress).toBe(25); // 500/2000*100
-    expect(r.budgetPercentage).toBe(37.5); // 1500/4000*100
-    expect(r.remainingToSave).toBe(1500);
-    expect(r.availableForBudget).toBe(2000); // 4000-2000
-  });
-
-  it('no income in the period → percentages 0, no division by zero', () => {
-    const r = calculatePlanningStats([], [], 0);
-    expect(r.budgetPercentage).toBe(0);
-    expect(r.savingsPercentage).toBe(0);
-  });
-});
-
-describe('calculateAlerts (pure)', () => {
-  it('emits danger for exceeded budget and sorts by priority', () => {
-    const budgetProgress = [
-      { percentage: 120, category: { name: 'Comida' } },
-      { percentage: 85, category: { name: 'Lazer' } },
-    ] as never;
-    const stats = {
-      budgetPercentage: 50,
-      savingsPercentage: 0,
-    } as never;
-
-    const alerts = calculateAlerts(stats, 1000, budgetProgress, []);
-
-    expect(alerts.length).toBeGreaterThanOrEqual(2);
-    expect(alerts[0]!.priority).toBe('high'); // ordenado: high primeiro
-    expect(alerts.some((a) => a.type === 'danger')).toBe(true);
-  });
-
-  it('no alerts when everything healthy', () => {
-    const alerts = calculateAlerts(
-      { budgetPercentage: 10, savingsPercentage: 0 } as never,
-      1000,
-      [],
-      []
-    );
-    expect(alerts).toEqual([]);
-  });
-});
-
-describe('getPlannerOverviewUseCase', () => {
-  beforeEach(() => {
-    mockedForecast.mockResolvedValue({
-      period: {
-        id: 'period-1',
-        startDate: new Date('2026-10-01'),
-        endDate: new Date('2026-10-31'),
-      },
-      realized: { income: 400000 },
-      projected: { recurringIncome: 100000 },
-      freeBalance: { reserves: { budgets: 30010, goals: 15020 } },
-    });
-    mockedBudgetProgress.mockResolvedValue([{ monthlyLimit: 1000 }]);
-    mockedGoalsProgress.mockResolvedValue([{ targetAmount: 2000, currentAmount: 0 }]);
-  });
-
-  it('combines stats + alerts from budget/goal services for the forecast period', async () => {
-    const r = await getPlannerOverviewUseCase(USER, 'period-1');
-
-    expect(mockedForecast).toHaveBeenCalledWith(USER, 'period-1');
-    expect(mockedBudgetProgress).toHaveBeenCalledWith(USER, 'period-1');
-    expect(mockedGoalsProgress).toHaveBeenCalledWith(USER);
-    expect(r).toHaveProperty('alerts');
-    expect(r.stats.totalBudgeted).toBe(1000);
-    // Renda do período = realizada + recorrente prevista (400000 + 100000).
-    expect(r.stats.budgetPercentage).toBe(0.2);
-    expect(r.period.id).toBe('period-1');
-  });
-
-  it('exposes the forecast reserves as the free balance impact', async () => {
-    const r = await getPlannerOverviewUseCase(USER);
-
-    expect(r.freeBalanceImpact).toEqual({ budgetReserve: 30010, goalReserve: 15020, total: 45030 });
   });
 });
 

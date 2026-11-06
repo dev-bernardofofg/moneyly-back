@@ -324,44 +324,6 @@ export const FinancialInsightsSchema = registry.register(
   })
 );
 
-const PlanningAlertSchema = z.object({
-  type: z.enum(['danger', 'warning', 'info']),
-  message: z.string(),
-  priority: z.enum(['high', 'medium', 'low']),
-  category: z.string().optional(),
-  goal: z.string().optional(),
-  percentage: z.number().optional(),
-  daysRemaining: z.number().optional(),
-});
-
-export const PlannerOverviewSchema = registry.register(
-  'PlannerOverview',
-  z.object({
-    stats: z.object({
-      totalBudgeted: z.number(),
-      totalSavingsGoal: z.number(),
-      totalSaved: z.number(),
-      savingsProgress: z.number(),
-      budgetPercentage: z.number(),
-      savingsPercentage: z.number(),
-      remainingToSave: z.number(),
-      availableForBudget: z.number(),
-    }),
-    currentPeriod: z.object({
-      id: z.string().uuid(),
-      startDate: isoDate,
-      endDate: isoDate,
-      description: z.string(),
-    }),
-    freeBalanceImpact: z.object({
-      budgetReserve: z.number(),
-      goalReserve: z.number(),
-      total: z.number(),
-    }),
-    alerts: z.array(PlanningAlertSchema),
-  })
-);
-
 export const SubscriptionCandidateSchema = registry.register(
   'SubscriptionCandidate',
   z.object({
@@ -528,60 +490,27 @@ export const CardBillsSchema = registry.register(
 export const ForecastResponseSchema = registry.register(
   'ForecastResponse',
   z.object({
-    period: z.object({
-      id: z.string().uuid(),
-      startDate: isoDate,
-      endDate: isoDate,
-      label: z.string(),
-    }),
-    realized: z.object({
-      income: z.number(),
-      expense: z.number(),
-      balance: z.number(),
-    }),
-    projected: z.object({
-      recurringIncome: z.number(),
-      recurringExpense: z.number(),
-      occurrences: z.array(
-        z.object({
-          recurringTransactionId: z.string().uuid(),
-          title: z.string(),
-          type: z.enum(['income', 'expense']),
-          amount: z.number(),
-          date: isoDate,
-          categoryId: z.string().uuid(),
-        })
-      ),
-    }),
-    projectedEndBalance: z.number(),
     freeBalance: z.object({
-      total: z.number(),
-      daysRemaining: z.number().int().nonnegative(),
+      total: money,
+      // Data do próximo salário; sem salário, fim do período financeiro atual.
+      until: isoDate,
       confidence: z.enum(['low', 'medium', 'high']),
-      income: z.object({
-        fixed: z.number(),
-        variable: z.number(),
-        pendingVariable: z.number(),
-      }),
-      commitments: z.object({
-        recurringExpenses: z.number(),
-      }),
-      reserves: z.object({
-        budgets: z.number(),
-        goals: z.number(),
-      }),
       components: z.object({
-        // Saldo trazido de antes do período (saldos iniciais das contas + sobras anteriores).
-        carryOverBalance: z.number(),
-        realizedBalance: z.number(),
-        futureRecurringIncome: z.number(),
-        futureRecurringExpense: z.number(),
-        pendingVariableIncome: z.number(),
-        budgetReserve: z.number(),
-        goalReserve: z.number(),
+        accountsBalance: money,
+        otherIncome: money,
+        recurringExpense: money,
+        cardBills: money,
       }),
+      nextPayment: z
+        .object({
+          date: isoDate,
+          salary: money,
+          overtime: money,
+          total: money,
+        })
+        .nullable(),
+      committedAfter: money,
     }),
-    asOf: isoDate,
   })
 );
 

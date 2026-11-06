@@ -203,7 +203,7 @@ Detalhes e convenções em `__tests__/README.md`.
 
 - `POST /overview/periods` - Períodos financeiros disponíveis
 - `POST /overview/dashboard` - Dados do dashboard
-- `GET /overview/planner` - Planejamento financeiro
+- `GET /overview/forecast` - Saldo Livre até o próximo salário
 
 ## 🛡️ Segurança
 

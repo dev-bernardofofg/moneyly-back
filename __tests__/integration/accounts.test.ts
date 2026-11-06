@@ -330,7 +330,7 @@ describe('Opening balance', () => {
   it('carries the balance and later flows into the free balance', async () => {
     await spend(50, '2026-08-20'); // antes do saldo: já está nele
     await spend(30, '2026-09-10'); // período anterior, depois do saldo
-    const current = await spend(100, new Date().toISOString().slice(0, 10));
+    await spend(100, new Date().toISOString().slice(0, 10));
 
     const account = await request(app)
       .put(`/accounts/${defaultId}`)
@@ -339,14 +339,9 @@ describe('Opening balance', () => {
       .expect(200);
     expect(account.body.data).toMatchObject({ openingBalance: 1000 });
 
-    const res = await request(app)
-      .get('/overview/forecast')
-      .set(auth())
-      .query({ periodId: current.body.data.periodId })
-      .expect(200);
+    const res = await request(app).get('/overview/forecast').set(auth()).expect(200);
 
-    expect(res.body.data.freeBalance.components.carryOverBalance).toBe(970);
-    expect(res.body.data.realized.balance).toBe(-100);
+    expect(res.body.data.freeBalance.components.accountsBalance).toBe(870);
     expect(res.body.data.freeBalance.total).toBe(870);
   });
 
@@ -358,7 +353,7 @@ describe('Opening balance', () => {
       .expect(200);
 
     const res = await request(app).get('/overview/forecast').set(auth()).expect(200);
-    expect(res.body.data.freeBalance.components.carryOverBalance).toBe(0);
+    expect(res.body.data.freeBalance.components.accountsBalance).toBe(0);
   });
 });
 

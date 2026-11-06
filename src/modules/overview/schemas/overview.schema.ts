@@ -26,7 +26,5 @@ export const forecastQuerySchema = z.object({
   periodId: z.string().uuid('periodId inválido').optional(),
 });
 
-export const plannerQuerySchema = forecastQuerySchema;
-
 export type GetDashboardOverviewQuery = z.infer<typeof getDashboardOverviewQuerySchema>;
 export type GetAvailablePeriodsQuery = z.infer<typeof getAvailablePeriodsQuerySchema>;
