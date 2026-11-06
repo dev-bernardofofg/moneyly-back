@@ -66,6 +66,11 @@ total = saldo atual das contas
   única por `(user_id, external_id)`, mesmo sem cartão identificado, e `currentBalance` a subtrai.
   No extrato do cartão a linha só marca a fatura. Marcar a fatura à mão não move dinheiro. Saída não
   entra em realizado, estatísticas nem insights, e a prévia trata o `external_id` dela como `imported`.
+- **Extrato de conta em PDF (Inter e Nubank):** `parseInterStatement` e `parseNubankStatement` devolvem
+  `OfxStatement` sem `dueDate`, o que os separa de fatura (`bill` nulo na prévia). O `external_id` usa
+  conta, dia, tipo, valor, título e índice de repetição, nunca saldo do dia nem posição, então extratos
+  sobrepostos geram os mesmos ids. `through` é o fim do período impresso. No Nubank o rendimento do
+  resumo vira uma linha `income` "Rendimento da conta" no fim do período.
 - **Recorrência prevista:** ocorrência posterior a `data_through` da conta dela (hoje, se nulo) e
   anterior ao fim da janela. Em conta corrente vale a data mais recente entre `data_through` e
   `opening_balance_date`, porque o saldo informado já contém o que aconteceu até ali. Nunca é anterior
