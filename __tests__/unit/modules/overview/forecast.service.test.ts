@@ -52,6 +52,7 @@ const recurrence = (overrides: Record<string, unknown>) => ({
   frequency: 'monthly',
   dayOfMonth: null,
   dayOfWeek: null,
+  startDate: null,
   totalInstallments: null,
   executedInstallments: 0,
   ...overrides,
@@ -192,6 +193,39 @@ describe('getPeriodProjectionUseCase', () => {
     expect(r.projected.occurrences.map((o) => o.recurringTransactionId)).toEqual([
       'before-closing',
     ]);
+  });
+
+  it('invents no occurrence for a recurrence that starts after the period', async () => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'] });
+    jest.setSystemTime(new Date('2026-11-05T15:00:00.000Z'));
+    const now = new Date();
+    const start = spMidnight('2027-01-20');
+    mockedPeriodSvc.ensureCurrentPeriodExists.mockResolvedValue({
+      ...periodAround(now),
+      startDate: spMidnight('2026-11-01'),
+      endDate: spMidnight('2026-11-30'),
+    } as never);
+    mockedTxRepo.findByPeriodId.mockResolvedValue([] as never);
+    mockedRecRepo.findByUserId.mockResolvedValue([
+      recurrence({
+        type: 'income',
+        amount: 500000,
+        dayOfMonth: 20,
+        startDate: start,
+        nextExecution: start,
+      }),
+      recurrence({
+        id: '44444444-4444-4444-4444-444444444444',
+        dayOfMonth: 20,
+        startDate: start,
+        nextExecution: start,
+      }),
+    ] as never);
+
+    const r = await getPeriodProjectionUseCase(USER);
+    jest.useRealTimers();
+
+    expect(r.projected).toEqual({ recurringIncome: 0, recurringExpense: 0, occurrences: [] });
   });
 
   it('invalid periodId → HttpError 404', async () => {

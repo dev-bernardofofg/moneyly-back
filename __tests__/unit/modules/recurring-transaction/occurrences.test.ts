@@ -15,6 +15,7 @@ const base = {
   type: 'income',
   isActive: true,
   dayOfWeek: null,
+  startDate: null,
   totalInstallments: null,
   executedInstallments: 0,
 } as const;
@@ -64,6 +65,15 @@ describe('findSalary', () => {
     const overdue = { ...salary5000, nextExecution: sp('2026-11-05') };
     expect(findSalary([overdue], now)?.date).toEqual(sp('2026-12-05'));
   });
+
+  it('returns the first real date of a salary that starts in the future', () => {
+    const future = {
+      ...salary5000,
+      startDate: sp('2027-01-05'),
+      nextExecution: sp('2027-01-05'),
+    };
+    expect(findSalary([future], now)?.date).toEqual(sp('2027-01-05'));
+  });
 });
 
 describe('overtimeMonthForSalary', () => {
@@ -79,6 +89,7 @@ describe('occurrencesBetween', () => {
     dayOfMonth: 31,
     dayOfWeek: null,
     nextExecution: sp('2027-02-28'),
+    startDate: null,
     totalInstallments: null,
     executedInstallments: 0,
   } as const;
@@ -90,7 +101,12 @@ describe('occurrencesBetween', () => {
   });
 
   it('reproduces dates already advanced by the cron', () => {
-    const advanced = { ...monthlyDay31, dayOfMonth: 10, nextExecution: sp('2027-03-10') };
+    const advanced = {
+      ...monthlyDay31,
+      dayOfMonth: 10,
+      startDate: sp('2026-01-10'),
+      nextExecution: sp('2027-03-10'),
+    };
     expect(occurrencesBetween(advanced, sp('2027-01-05'), sp('2027-03-11'))).toEqual([
       sp('2027-01-10'),
       sp('2027-02-10'),
@@ -102,6 +118,7 @@ describe('occurrencesBetween', () => {
     const twoInstallmentsLeft = {
       ...monthlyDay31,
       dayOfMonth: 10,
+      startDate: sp('2026-01-10'),
       nextExecution: sp('2027-03-10'),
       totalInstallments: 5,
       executedInstallments: 3,
@@ -112,6 +129,52 @@ describe('occurrencesBetween', () => {
     expect(occurrencesBetween(twoInstallmentsLeft, sp('2027-03-09'), sp('2035-01-01'))).toEqual([
       sp('2027-03-10'),
       sp('2027-04-10'),
+    ]);
+  });
+
+  it('invents nothing before a future start', () => {
+    const future = {
+      ...monthlyDay31,
+      dayOfMonth: 20,
+      startDate: sp('2027-01-20'),
+      nextExecution: sp('2027-01-20'),
+    };
+    expect(occurrencesBetween(future, sp('2026-11-05'), sp('2027-03-01'))).toEqual([
+      sp('2027-01-20'),
+      sp('2027-02-20'),
+    ]);
+  });
+
+  it('stops stepping back at startDate', () => {
+    const advanced = {
+      ...monthlyDay31,
+      dayOfMonth: 10,
+      startDate: sp('2027-01-10'),
+      nextExecution: sp('2027-03-10'),
+    };
+    expect(occurrencesBetween(advanced, sp('2026-11-01'), sp('2027-03-11'))).toEqual([
+      sp('2027-01-10'),
+      sp('2027-02-10'),
+      sp('2027-03-10'),
+    ]);
+  });
+
+  it('returns no date before nextExecution without startDate', () => {
+    const legacy = { ...monthlyDay31, dayOfMonth: 10, nextExecution: sp('2027-03-10') };
+    expect(occurrencesBetween(legacy, sp('2027-01-05'), sp('2027-03-11'))).toEqual([
+      sp('2027-03-10'),
+    ]);
+  });
+
+  it('skips nextExecution when it falls before startDate', () => {
+    const edited = {
+      ...monthlyDay31,
+      dayOfMonth: 10,
+      startDate: sp('2027-02-10'),
+      nextExecution: sp('2027-01-10'),
+    };
+    expect(occurrencesBetween(edited, sp('2026-11-01'), sp('2027-03-01'))).toEqual([
+      sp('2027-02-10'),
     ]);
   });
 });

@@ -55,11 +55,11 @@ describe('GET /overview/forecast', () => {
     return res.body.data.freeBalance;
   };
 
-  const setOpeningBalance = (accountId: string, openingBalance: number) =>
+  const setOpeningBalance = (accountId: string, openingBalance: number, date = dayOffset(0)) =>
     request(app)
       .put(`/accounts/${accountId}`)
       .set(auth())
-      .send({ openingBalance, openingBalanceDate: spDayString(dayOffset(0)) })
+      .send({ openingBalance, openingBalanceDate: spDayString(date) })
       .expect(200);
 
   const setDataThrough = (accountId: string, dataThrough: Date) =>
@@ -242,17 +242,20 @@ describe('GET /overview/forecast', () => {
     });
   });
 
-  it('keeps a passed salary as other income until the statement covers it', async () => {
-    const passed = dayOffset(-3);
+  const addPassedSalary = (passed: Date) => {
     const next = calculateNextExecution('monthly', spParts(passed).day, null, passed);
-    await setOpeningBalance(defaultAccountId, 10000);
-    await setDataThrough(defaultAccountId, dayOffset(-10));
-    await addRecurrence({
+    return addRecurrence({
       type: 'income',
       amount: 500000,
       nextExecution: next,
-      accountId: defaultAccountId,
-    });
+      startDate: dayOffset(-120),
+    }).then(() => next);
+  };
+
+  it('keeps a passed salary as other income until the statement covers it', async () => {
+    await setOpeningBalance(defaultAccountId, 10000, dayOffset(-20));
+    await setDataThrough(defaultAccountId, dayOffset(-10));
+    const next = await addPassedSalary(dayOffset(-3));
 
     const freeBalance = await getFreeBalance();
 
@@ -263,16 +266,74 @@ describe('GET /overview/forecast', () => {
   });
 
   it('does not count a passed salary already covered by the statement', async () => {
-    const passed = dayOffset(-3);
-    const next = calculateNextExecution('monthly', spParts(passed).day, null, passed);
-    await setOpeningBalance(defaultAccountId, 10000);
+    await setOpeningBalance(defaultAccountId, 10000, dayOffset(-20));
     await setDataThrough(defaultAccountId, dayOffset(-1));
-    await addSalary(next);
+    await addPassedSalary(dayOffset(-3));
 
     const freeBalance = await getFreeBalance();
 
     expect(freeBalance.components.otherIncome).toBe(0);
     expect(freeBalance.total).toBe(10000);
+  });
+
+  it('counts a salary dated today when the statement stops earlier', async () => {
+    await setOpeningBalance(defaultAccountId, 10000, dayOffset(-20));
+    await setDataThrough(defaultAccountId, dayOffset(-3));
+    const next = await addPassedSalary(dayOffset(0));
+
+    const freeBalance = await getFreeBalance();
+
+    expect(freeBalance.components.otherIncome).toBe(500000);
+    expect(freeBalance.until).toBe(next.toISOString());
+  });
+
+  it('treats an event exactly on data through as covered', async () => {
+    await setDataThrough(defaultAccountId, dayOffset(-2));
+    await addSalary(dayOffset(10));
+    await addRecurrence({
+      type: 'expense',
+      amount: 1000,
+      nextExecution: dayOffset(-2),
+      frequency: 'yearly',
+    });
+    await addRecurrence({
+      type: 'expense',
+      amount: 2000,
+      nextExecution: dayOffset(-1),
+      frequency: 'yearly',
+    });
+
+    expect((await getFreeBalance()).components.recurringExpense).toBe(2000);
+  });
+
+  it('uses the real first date of a salary that starts in the future', async () => {
+    const start = dayOffset(70);
+    await addRecurrence({
+      type: 'income',
+      amount: 500000,
+      nextExecution: start,
+      startDate: start,
+    });
+
+    const freeBalance = await getFreeBalance();
+
+    expect(freeBalance.until).toBe(start.toISOString());
+    expect(freeBalance.nextPayment.date).toBe(start.toISOString());
+    expect(freeBalance.components.otherIncome).toBe(0);
+  });
+
+  it('predicts a recurrence with a future start only from that start', async () => {
+    await addSalary(dayOffset(10));
+    await addRecurrence({
+      type: 'expense',
+      amount: 1000,
+      nextExecution: dayOffset(40),
+      startDate: dayOffset(40),
+    });
+
+    const freeBalance = await getFreeBalance();
+
+    expect(freeBalance.components.recurringExpense).toBe(0);
   });
 
   it('predicts only what comes after today when the account has no statement', async () => {
@@ -295,7 +356,7 @@ describe('GET /overview/forecast', () => {
   });
 
   it('uses the data through of the account of each recurrence', async () => {
-    const otherId = await addChecking(0);
+    const otherId = await addChecking();
     await setDataThrough(defaultAccountId, dayOffset(-5));
     await setDataThrough(otherId, dayOffset(-1));
     await addSalary(dayOffset(10));

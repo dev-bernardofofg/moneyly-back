@@ -80,14 +80,13 @@ export const getFreeBalanceUseCase = async (userId: string): Promise<FreeBalance
 
   const predicted = recurrences.flatMap((rec) => {
     const account = (rec.accountId && accountById.get(rec.accountId)) || defaultAccount;
-    const after = account?.dataThrough ?? today;
 
-    return (
-      occurrencesBetween(rec, after, windowEnd)
-        // O passo para trás de occurrencesBetween não conhece o início da recorrência.
-        .filter((date) => !rec.startDate || date.getTime() >= rec.startDate.getTime())
-        .map((date) => ({ type: rec.type, amount: rec.amount, date, account }))
-    );
+    return occurrencesBetween(rec, account?.dataThrough ?? today, windowEnd).map((date) => ({
+      type: rec.type,
+      amount: rec.amount,
+      date,
+      account,
+    }));
   });
 
   const onCard = predicted.flatMap(({ type, amount, date, account }) =>

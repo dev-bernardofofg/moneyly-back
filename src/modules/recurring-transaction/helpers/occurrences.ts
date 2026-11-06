@@ -10,6 +10,7 @@ export type RecurrenceSchedule = {
   dayOfMonth: number | null;
   dayOfWeek: number | null;
   nextExecution: Date;
+  startDate: Date | null;
   totalInstallments: number | null;
   executedInstallments: number;
 };
@@ -46,12 +47,14 @@ export function occurrencesBetween(
   const afterMs = after.getTime();
   const beforeMs = before.getTime();
   const nextMs = rec.nextExecution.getTime();
+  // Início futuro grava nextExecution = startDate: sem esse piso, o passo para trás inventa datas.
+  const firstMs = (rec.startDate ?? rec.nextExecution).getTime();
 
-  // O cron já avançou nextExecution: datas anteriores a ele são ocorrências reais passadas.
+  // O cron já avançou nextExecution: entre startDate e ele estão as ocorrências reais passadas.
   let cursor = rec.nextExecution;
   for (let i = 0; i < MAX_OCCURRENCE_ITERATIONS && cursor.getTime() > afterMs; i++) {
     const previous = stepBack(rec, cursor);
-    if (previous.getTime() >= cursor.getTime()) break;
+    if (previous.getTime() >= cursor.getTime() || previous.getTime() < firstMs) break;
     cursor = previous;
   }
 
@@ -69,7 +72,7 @@ export function occurrencesBetween(
     const consumesInstallment = ms >= nextMs;
     if (consumesInstallment && remaining <= 0) break;
 
-    if (ms > afterMs) {
+    if (ms > afterMs && ms >= firstMs) {
       dates.push(cursor);
       if (dates.length >= limit) break;
     }
