@@ -221,7 +221,6 @@ describe('resetUserFinancialData', () => {
       billPayments: 1,
       billPaymentOutflows: 1,
       recurringTransactions: 1,
-      financialPeriods: 1,
       categories: 1,
       budgets: 1,
       overtimeLinks: 1,
@@ -241,7 +240,6 @@ describe('resetUserFinancialData', () => {
       billPayments: 1,
       billPaymentOutflows: 1,
       recurringTransactions: 1,
-      financialPeriods: 1,
       categories: 1,
       budgets: 1,
       overtimeLinks: 1,
@@ -253,12 +251,11 @@ describe('resetUserFinancialData', () => {
     expect(after.bills).toHaveLength(0);
     expect(after.outflows).toHaveLength(0);
     expect(after.recurring).toHaveLength(0);
-    expect(after.periods).toHaveLength(0);
     expect(after.cats).toHaveLength(0);
     expect(await snapshot(other.user.id)).toEqual(otherBefore);
   });
 
-  it('mantém horas extras, empresas, contas, metas e categorias globais', async () => {
+  it('mantém horas extras, empresas, contas, períodos, metas e categorias globais', async () => {
     await resetUserFinancialData(target.email, { confirm: true });
 
     const after = await snapshot(target.user.id);
@@ -266,6 +263,7 @@ describe('resetUserFinancialData', () => {
     expect(after.overtime[0]?.transactionId).toBeNull();
     expect(after.accs).toHaveLength(3);
     expect(after.cos).toHaveLength(1);
+    expect(after.periods).toHaveLength(1);
     expect(after.metas).toHaveLength(1);
     expect(after.buds.map((budget) => budget.categoryId)).toEqual([target.globalCategory.id]);
     expect(
