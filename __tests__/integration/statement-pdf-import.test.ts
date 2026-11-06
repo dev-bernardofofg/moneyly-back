@@ -59,6 +59,26 @@ describe('Checking statement PDF import', () => {
     ]);
   });
 
+  it('routes an Inter statement that mentions Nubank to the Inter parser', async () => {
+    const { extractPdfText } = jest.requireMock('../../src/modules/transaction/helpers/pdf-text');
+    (extractPdfText as jest.Mock).mockResolvedValueOnce(
+      [
+        'Banco Inter, Conta: 7654321-0',
+        'Período: 01/10/2026 a 31/10/2026',
+        '5 de Outubro de 2026 Saldo do dia: R$ 10,00',
+        'Pix enviado: "Cp :00000000-Nubank Pagamentos"  \t-R$ 30,00  \tR$ 10,00',
+      ].join('\n')
+    );
+
+    const preview = await request(app)
+      .post('/transactions/import/preview')
+      .set(auth())
+      .send({ file, accountId })
+      .expect(200);
+    expect(preview.body.data.accountKey).toBe('inter:conta:7654321-0');
+    expect(preview.body.data.items).toHaveLength(1);
+  });
+
   it('tells which PDFs are supported when none is recognized', async () => {
     const { extractPdfText } = jest.requireMock('../../src/modules/transaction/helpers/pdf-text');
     (extractPdfText as jest.Mock).mockResolvedValueOnce('Outro documento qualquer');
