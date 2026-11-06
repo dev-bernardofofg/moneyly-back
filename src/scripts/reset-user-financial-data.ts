@@ -12,7 +12,6 @@ import {
   budgets,
   cardBillPayments,
   categories,
-  financialPeriods,
   overtimeRecords,
   recurringTransactions,
   transactions,
@@ -26,7 +25,6 @@ export interface ResetCounts {
   billPayments: number;
   billPaymentOutflows: number;
   recurringTransactions: number;
-  financialPeriods: number;
   categories: number;
   budgets: number;
   overtimeLinks: number;
@@ -84,12 +82,6 @@ export async function resetUserFinancialData(
           .from(recurringTransactions)
           .where(eq(recurringTransactions.userId, userId))
       ),
-      financialPeriods: await count(
-        tx
-          .select({ n: sql<number>`count(*)::int` })
-          .from(financialPeriods)
-          .where(eq(financialPeriods.userId, userId))
-      ),
       categories: await count(
         tx
           .select({ n: sql<number>`count(*)::int` })
@@ -130,8 +122,6 @@ export async function resetUserFinancialData(
     await tx.delete(recurringTransactions).where(eq(recurringTransactions.userId, userId));
     // Orçamento de categoria própria cai junto (cascade).
     await tx.delete(categories).where(isOwnCategory);
-    // Recriados sob demanda pelo ensurePeriodExists e pela importação.
-    await tx.delete(financialPeriods).where(eq(financialPeriods.userId, userId));
     // statement_key fica: reimportar precisa reconhecer as contas.
     await tx
       .update(accounts)
@@ -160,7 +150,6 @@ async function main() {
   console.log(`Pagamentos de fatura: ${counts.billPayments}`);
   console.log(`Saídas de pagamento de fatura: ${counts.billPaymentOutflows}`);
   console.log(`Recorrentes: ${counts.recurringTransactions}`);
-  console.log(`Períodos: ${counts.financialPeriods}`);
   console.log(`Categorias próprias: ${counts.categories}`);
   console.log(`Orçamentos dessas categorias: ${counts.budgets}`);
   console.log(`Horas extras desvinculadas: ${counts.overtimeLinks}`);
