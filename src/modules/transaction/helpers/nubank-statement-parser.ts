@@ -31,6 +31,7 @@ const INLINE_ENTRY = new RegExp(`^(.+?)\\s+(${MONEY})$`);
 const AMOUNT_ONLY = new RegExp(`^(${MONEY})$`);
 const PAGINATION = /^--\s*\d+\s+\S+\s+\d+\s*--$/;
 const FOOTER_START = /^[^\d,.]*\?(?:\s|$)|^Extrato\b.*\bdia\b/;
+const SUMMARY_VALUE = new RegExp(`^[+-]?${MONEY}$`);
 const MAX_TITLE = 80;
 // Nome, documento, número da conta e período: se o período não casar, não engole o resto.
 const HEADER_LINES = 4;
@@ -45,7 +46,7 @@ const cleanTitle = (parts: string[]) =>
   parts
     .join(' ')
     .replace(/•{3}\.\s*\d+\.\s*\d+\s*-\s*••/g, '')
-    .replace(/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/g, '')
+    .replace(/\d{2}\.\d{3}\.\d{3}\s*\/\s*\d{4}\s*-\s*\d{2}/g, '')
     .replace(/Ag[êe]ncia:\s*\d+/gi, '')
     .replace(/Conta:\s*(?:\d+\s*-\s*\d+|\d+)?/gi, '')
     .replace(/\s+/g, ' ')
@@ -54,6 +55,20 @@ const cleanTitle = (parts: string[]) =>
     .trim()
     .slice(0, MAX_TITLE)
     .trim();
+
+// Resumo: rótulos em linhas seguidos dos valores na mesma ordem. O rendimento não é linha de
+// Movimentações, mas entra no saldo; sem ele o saldo do app fica abaixo do real.
+const readSummaryYield = (summary: string[]) => {
+  const first = summary.indexOf('Saldo inicial');
+  const label = summary.findIndex((line) => /^Rendimento(?:\s|$)/.test(line));
+  if (first < 0 || label < first) return 0;
+  const last = summary.findIndex(
+    (line, index) => index > label && line === 'Saldo final do período'
+  );
+  if (last < 0) return 0;
+  const value = summary.slice(last + 1).filter((line) => SUMMARY_VALUE.test(line))[label - first];
+  return value?.startsWith('-') ? 0 : toCents(value ?? '');
+};
 
 /**
  * Texto extraído do extrato de conta em PDF do Nubank. Lançamentos ficam depois de
@@ -81,6 +96,7 @@ export function parseNubankStatement(text: string): OfxStatement | null {
   const transactions: OfxTransaction[] = [];
   const occurrences = new Map<string, number>();
   let started = false;
+  const summary: string[] = [];
   let headerLines = 0;
   let inFooter = false;
   let date: Date | null = null;
@@ -109,6 +125,7 @@ export function parseNubankStatement(text: string): OfxStatement | null {
   for (const line of lines) {
     if (!started) {
       started = line === 'Movimentações';
+      if (!started) summary.push(line);
       continue;
     }
     if (PAGINATION.test(line)) {
@@ -156,6 +173,20 @@ export function parseNubankStatement(text: string): OfxStatement | null {
     }
     // Resto de "Conta: 123-4" que a quebra de página deixou sozinho.
     if (!ACCOUNT_NUMBER.test(line)) pending.push(line);
+  }
+
+  // Sem a linha exata de início, nada foi lido: lista vazia avançaria a cobertura sem dados.
+  if (!started) return null;
+
+  const yielded = readSummaryYield(summary);
+  if (yielded > 0 && periodEnd) {
+    transactions.push({
+      externalId: `${accountKey}:rendimento:${periodEnd.toISOString().slice(0, 10)}`,
+      type: 'income',
+      amount: yielded,
+      date: periodEnd,
+      title: 'Rendimento da conta',
+    });
   }
 
   const through =

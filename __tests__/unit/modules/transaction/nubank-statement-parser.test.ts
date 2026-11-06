@@ -19,15 +19,21 @@ const footer = [
 ];
 
 // Forma do texto extraído do extrato do Nubank, com dados inventados.
-const build = () =>
+const build = (yieldValue = '+0,00') =>
   [
     ...header,
     'Saldo final do período',
     'R$ 10,00',
+    'Saldo inicial',
+    'Rendimento líquido',
     'Total de entradas',
     'Total de saídas',
-    '+1.000,00',
-    '-990,00',
+    'Saldo final do período',
+    '10,00',
+    yieldValue,
+    '+1.300,00',
+    '-1.300,00',
+    '10,00',
     'Movimentações',
     '2 OUT 2026 Total de entradas + 1.300,00',
     'Resgate RDB 100,00',
@@ -132,6 +138,54 @@ describe('parseNubankStatement', () => {
     expect(parseNubankStatement(build().replace('Movimentações', 'Outra coisa'))).toBeNull();
     expect(parseNubankStatement(build().replace('98765-4', 'sem conta'))).toBeNull();
     expect(parseNubankBill(build())).toBeNull();
+  });
+
+  describe('account yield', () => {
+    it('adds one income row at the period end when the summary yield is positive', () => {
+      const withYield = parseNubankStatement(build('+12,34'))!;
+      expect(withYield.transactions).toHaveLength(8);
+      expect(withYield.transactions.at(-1)).toMatchObject({
+        title: 'Rendimento da conta',
+        type: 'income',
+        amount: 1234,
+        date: spMidnight('2026-10-31'),
+        externalId: 'nubank:conta:98765-4:rendimento:2026-10-31',
+      });
+    });
+
+    it('does not shift the ids of the other rows', () => {
+      const withYield = parseNubankStatement(build('+12,34'))!;
+      expect(withYield.transactions.slice(0, 7).map((t) => t.externalId)).toEqual(
+        statement.transactions.map((t) => t.externalId)
+      );
+    });
+
+    it('adds nothing for zero or missing yield', () => {
+      expect(statement.transactions).toHaveLength(7);
+      const missing = build().replace('Rendimento líquido', 'Outro rótulo');
+      expect(parseNubankStatement(missing)!.transactions).toHaveLength(7);
+    });
+  });
+
+  it('refuses a statement whose Movimentações line is never found alone', () => {
+    const text = build().replace('Movimentações', 'Movimentações do mês');
+    expect(parseNubankStatement(text)).toBeNull();
+  });
+
+  it('strips a CNPJ broken around its separators', () => {
+    const broken = build().replace('12.345.678/0001-90', '12.345.678/\n0001-90');
+    expect(parseNubankStatement(broken)!.transactions[2]!.title).toBe(
+      'Transferência enviada pelo Pix PADARIA CENTRAL LTDA - BANCO X (0001)'
+    );
+  });
+
+  it('keeps a title that ends in a number', () => {
+    const text = build()
+      .replace('Resgate RDB 100,00', 'Compra Parcela 2 12,50')
+      .replace('Aplicação RDB 50,00', 'Mercado Central\nCompra Parcela 2\n50,00');
+    const titles = parseNubankStatement(text)!.transactions.map((t) => [t.title, t.amount]);
+    expect(titles).toContainEqual(['Compra Parcela 2', 1250]);
+    expect(titles).toContainEqual(['Mercado Central Compra Parcela 2', 5000]);
   });
 
   it('marks its bill payment as a bill_payment on a checking account', () => {
