@@ -2,7 +2,10 @@
  * Integration tests for importing a checking account statement in PDF (text extraction mocked)
  */
 
+import { eq } from 'drizzle-orm';
 import request from 'supertest';
+import { db } from '../../src/infra/db';
+import { accounts } from '../../src/infra/db/schema';
 import { app } from '../../src/server';
 
 // pdfjs carrega o worker como ESM, o que o Jest (CJS) não executa; o parser tem teste próprio.
@@ -77,6 +80,59 @@ describe('Checking statement PDF import', () => {
       .expect(200);
     expect(preview.body.data.accountKey).toBe('inter:conta:7654321-0');
     expect(preview.body.data.items).toHaveLength(1);
+  });
+
+  describe('on a credit card', () => {
+    let cardId: string;
+
+    beforeAll(async () => {
+      cardId = (
+        await request(app)
+          .post('/accounts')
+          .set(auth())
+          .send({ type: 'credit_card', name: 'Cartão Inter', closingDay: 30, dueDay: 7 })
+          .expect(201)
+      ).body.data.id;
+    });
+
+    it('refuses the statement in the preview and in the confirmation', async () => {
+      const preview = await request(app)
+        .post('/transactions/import/preview')
+        .set(auth())
+        .send({ file, accountId: cardId })
+        .expect(400);
+      expect(JSON.stringify(preview.body)).toContain('Extrato de conta só entra em conta corrente');
+
+      const confirm = await request(app)
+        .post('/transactions/import')
+        .set(auth())
+        .send({
+          accountId: cardId,
+          accountKey: 'inter:conta:7654321-0',
+          through: '2026-10-31T00:00:00.000Z',
+          items: [],
+        })
+        .expect(400);
+      expect(JSON.stringify(confirm.body)).toContain('Extrato de conta só entra em conta corrente');
+    });
+
+    it('asks for an account when a past import tied the key to a card', async () => {
+      await db
+        .update(accounts)
+        .set({ statementKey: 'inter:conta:7654321-0' })
+        .where(eq(accounts.id, cardId));
+
+      const preview = await request(app)
+        .post('/transactions/import/preview')
+        .set(auth())
+        .send({ file })
+        .expect(200);
+      expect(preview.body.data).toMatchObject({
+        accountId: null,
+        needsAccount: true,
+        requiredAccountType: 'checking',
+      });
+    });
   });
 
   it('tells which PDFs are supported when none is recognized', async () => {

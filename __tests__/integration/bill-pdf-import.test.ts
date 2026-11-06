@@ -182,6 +182,36 @@ describe('Card bill PDF import', () => {
     expect(again.body.data.items[0].status).toBe('imported');
   });
 
+  it('refuses a bill on a checking account', async () => {
+    const checkingId = (
+      await request(app)
+        .post('/accounts')
+        .set(auth())
+        .send({ type: 'checking', name: 'Conta Inter' })
+        .expect(201)
+    ).body.data.id;
+
+    const preview = await request(app)
+      .post('/transactions/import/preview')
+      .set(auth())
+      .send({ file, accountId: checkingId })
+      .expect(400);
+    expect(JSON.stringify(preview.body)).toContain('Fatura só entra em cartão');
+
+    const confirm = await request(app)
+      .post('/transactions/import')
+      .set(auth())
+      .send({
+        accountId: checkingId,
+        accountKey: 'inter:1234',
+        through: '2026-10-07T00:00:00.000Z',
+        billDueDate: '2026-10-07T00:00:00.000Z',
+        items: [],
+      })
+      .expect(400);
+    expect(JSON.stringify(confirm.body)).toContain('Fatura só entra em cartão');
+  });
+
   it('rejects a PDF that is not an Inter bill', async () => {
     const { extractPdfText } = jest.requireMock('../../src/modules/transaction/helpers/pdf-text');
     (extractPdfText as jest.Mock).mockResolvedValueOnce('Outro documento qualquer');
