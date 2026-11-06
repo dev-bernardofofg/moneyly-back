@@ -3,9 +3,12 @@ import { db } from '@infra/db';
 import {
   accounts,
   billPaymentOutflows,
+  budgets,
   cardBillPayments,
   categories,
   companies,
+  financialPeriods,
+  goals,
   overtimeRecords,
   recurringTransactions,
   transactions,
@@ -62,6 +65,33 @@ async function seedUser(label: string) {
       .returning()
   );
 
+  const period = one(
+    await db
+      .insert(financialPeriods)
+      .values({
+        userId: user.id,
+        startDate: new Date('2026-10-01T03:00:00Z'),
+        endDate: new Date('2026-11-01T02:59:59Z'),
+      })
+      .returning()
+  );
+  const globalCategory = one(
+    await db
+      .insert(categories)
+      .values({ name: `Global ${label}`, isGlobal: true })
+      .returning()
+  );
+  await db.insert(budgets).values([
+    { userId: user.id, categoryId: category.id, monthlyLimit: 10000 },
+    { userId: user.id, categoryId: globalCategory.id, monthlyLimit: 20000 },
+  ]);
+  await db.insert(goals).values({
+    userId: user.id,
+    title: 'Viagem',
+    targetAmount: 500000,
+    targetDate: NEXT_EXECUTION,
+  });
+
   const [tx1, tx2] = await db
     .insert(transactions)
     .values([
@@ -72,6 +102,7 @@ async function seedUser(label: string) {
         amount: 5000,
         categoryId: category.id,
         accountId: checking.id,
+        periodId: period.id,
       },
       {
         userId: user.id,
@@ -148,22 +179,26 @@ async function seedUser(label: string) {
     .set({ overtimeRecordId: overtime.id })
     .where(eq(transactions.id, tx2.id));
 
-  return { user, email, category, checking, card, tx1, tx2, overtime };
+  return { user, email, category, globalCategory, checking, card, tx1, tx2, overtime };
 }
 
 async function snapshot(userId: string) {
-  const [txs, trs, bills, outflows, overtime, accs, cats, cos, recurring] = await Promise.all([
-    db.select().from(transactions).where(eq(transactions.userId, userId)),
-    db.select().from(transfers).where(eq(transfers.userId, userId)),
-    db.select().from(cardBillPayments).where(eq(cardBillPayments.userId, userId)),
-    db.select().from(billPaymentOutflows).where(eq(billPaymentOutflows.userId, userId)),
-    db.select().from(overtimeRecords).where(eq(overtimeRecords.userId, userId)),
-    db.select().from(accounts).where(eq(accounts.userId, userId)),
-    db.select().from(categories).where(eq(categories.userId, userId)),
-    db.select().from(companies).where(eq(companies.userId, userId)),
-    db.select().from(recurringTransactions).where(eq(recurringTransactions.userId, userId)),
-  ]);
-  return { txs, trs, bills, outflows, overtime, accs, cats, cos, recurring };
+  const [txs, trs, bills, outflows, overtime, accs, cats, cos, recurring, periods, buds, metas] =
+    await Promise.all([
+      db.select().from(transactions).where(eq(transactions.userId, userId)),
+      db.select().from(transfers).where(eq(transfers.userId, userId)),
+      db.select().from(cardBillPayments).where(eq(cardBillPayments.userId, userId)),
+      db.select().from(billPaymentOutflows).where(eq(billPaymentOutflows.userId, userId)),
+      db.select().from(overtimeRecords).where(eq(overtimeRecords.userId, userId)),
+      db.select().from(accounts).where(eq(accounts.userId, userId)),
+      db.select().from(categories).where(eq(categories.userId, userId)),
+      db.select().from(companies).where(eq(companies.userId, userId)),
+      db.select().from(recurringTransactions).where(eq(recurringTransactions.userId, userId)),
+      db.select().from(financialPeriods).where(eq(financialPeriods.userId, userId)),
+      db.select().from(budgets).where(eq(budgets.userId, userId)),
+      db.select().from(goals).where(eq(goals.userId, userId)),
+    ]);
+  return { txs, trs, bills, outflows, overtime, accs, cats, cos, recurring, periods, buds, metas };
 }
 
 describe('resetUserFinancialData', () => {
@@ -185,6 +220,10 @@ describe('resetUserFinancialData', () => {
       transfers: 1,
       billPayments: 1,
       billPaymentOutflows: 1,
+      recurringTransactions: 1,
+      financialPeriods: 1,
+      categories: 1,
+      budgets: 1,
       overtimeLinks: 1,
       accounts: 1,
     });
@@ -201,6 +240,10 @@ describe('resetUserFinancialData', () => {
       transfers: 1,
       billPayments: 1,
       billPaymentOutflows: 1,
+      recurringTransactions: 1,
+      financialPeriods: 1,
+      categories: 1,
+      budgets: 1,
       overtimeLinks: 1,
       accounts: 1,
     });
@@ -209,21 +252,25 @@ describe('resetUserFinancialData', () => {
     expect(after.trs).toHaveLength(0);
     expect(after.bills).toHaveLength(0);
     expect(after.outflows).toHaveLength(0);
+    expect(after.recurring).toHaveLength(0);
+    expect(after.periods).toHaveLength(0);
+    expect(after.cats).toHaveLength(0);
     expect(await snapshot(other.user.id)).toEqual(otherBefore);
   });
 
-  it('mantém horas extras, contas, categorias e recorrentes', async () => {
+  it('mantém horas extras, empresas, contas, metas e categorias globais', async () => {
     await resetUserFinancialData(target.email, { confirm: true });
 
     const after = await snapshot(target.user.id);
     expect(after.overtime).toHaveLength(1);
     expect(after.overtime[0]?.transactionId).toBeNull();
     expect(after.accs).toHaveLength(3);
-    expect(after.cats).toHaveLength(1);
     expect(after.cos).toHaveLength(1);
-    expect(after.recurring).toHaveLength(1);
-    expect(after.recurring[0]?.nextExecution).toEqual(NEXT_EXECUTION);
-    expect(after.recurring[0]?.executedInstallments).toBe(3);
+    expect(after.metas).toHaveLength(1);
+    expect(after.buds.map((budget) => budget.categoryId)).toEqual([target.globalCategory.id]);
+    expect(
+      await db.select().from(categories).where(eq(categories.id, target.globalCategory.id))
+    ).toHaveLength(1);
   });
 
   it('zera saldo inicial e data_through', async () => {
