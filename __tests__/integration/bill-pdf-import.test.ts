@@ -95,6 +95,13 @@ describe('Card bill PDF import', () => {
       .expect(201);
     expect(confirm.body.data).toMatchObject({ created: 2 });
 
+    expect(preview.body.data.from).toBeNull();
+    const card = (await request(app).get('/accounts').set(auth()).expect(200)).body.data.find(
+      (row: { id: string }) => row.id === cardId
+    );
+    expect(card.lastImportFrom).toBeNull();
+    expect(card.lastImportDueDate.slice(0, 10)).toBe('2026-10-07');
+
     const list = await request(app)
       .get('/transactions/')
       .set(auth())

@@ -45,7 +45,9 @@ describe('accountRepository.recordImport', () => {
 
     await accountRepository.recordImport(firstId, userId, {
       statementKey: 'bank:1',
+      from: null,
       through: spMidnight('2026-10-10'),
+      dueDate: null,
     });
 
     expect(await load(firstId)).toMatchObject({
@@ -57,19 +59,27 @@ describe('accountRepository.recordImport', () => {
   it('does not lower the coverage with an older file, and raises it with a newer one', async () => {
     await accountRepository.recordImport(firstId, userId, {
       statementKey: 'bank:1',
+      from: null,
       through: spMidnight('2026-09-01'),
+      dueDate: null,
     });
     expect((await load(firstId)).dataThrough).toEqual(spMidnight('2026-10-10'));
 
     await accountRepository.recordImport(firstId, userId, {
       statementKey: 'bank:1',
+      from: null,
       through: spMidnight('2026-10-20'),
+      dueDate: null,
     });
     expect((await load(firstId)).dataThrough).toEqual(spMidnight('2026-10-20'));
   });
 
   it('keeps the stored key when none is given', async () => {
-    await accountRepository.recordImport(firstId, userId, { through: spMidnight('2026-10-25') });
+    await accountRepository.recordImport(firstId, userId, {
+      from: null,
+      through: spMidnight('2026-10-25'),
+      dueDate: null,
+    });
 
     expect(await load(firstId)).toMatchObject({
       statementKey: 'bank:1',
@@ -80,12 +90,61 @@ describe('accountRepository.recordImport', () => {
   it('moves a key held by another account instead of raising a unique violation', async () => {
     await accountRepository.recordImport(secondId, userId, {
       statementKey: 'bank:1',
+      from: null,
       through: spMidnight('2026-10-01'),
+      dueDate: null,
     });
 
     expect((await load(secondId)).statementKey).toBe('bank:1');
     expect((await load(firstId)).statementKey).toBeNull();
     expect((await load(firstId)).dataThrough).toEqual(spMidnight('2026-10-25'));
     expect((await accountRepository.findByStatementKey(userId, 'bank:1'))?.id).toBe(secondId);
+  });
+
+  it('stores the period of the last file', async () => {
+    await accountRepository.recordImport(secondId, userId, {
+      from: spMidnight('2026-10-10'),
+      through: spMidnight('2026-11-14'),
+      dueDate: null,
+    });
+
+    expect(await load(secondId)).toMatchObject({
+      lastImportFrom: spMidnight('2026-10-10'),
+      lastImportThrough: spMidnight('2026-11-14'),
+      lastImportDueDate: null,
+    });
+  });
+
+  it('overwrites the last period with an older file, without lowering the coverage', async () => {
+    await accountRepository.recordImport(secondId, userId, {
+      from: spMidnight('2026-09-01'),
+      through: spMidnight('2026-09-30'),
+      dueDate: null,
+    });
+
+    expect(await load(secondId)).toMatchObject({
+      lastImportFrom: spMidnight('2026-09-01'),
+      lastImportThrough: spMidnight('2026-09-30'),
+      dataThrough: spMidnight('2026-11-14'),
+    });
+  });
+
+  it('keeps the due date of a bill and drops it when a statement comes next', async () => {
+    await accountRepository.recordImport(secondId, userId, {
+      from: null,
+      through: spMidnight('2026-11-03'),
+      dueDate: spMidnight('2026-11-10'),
+    });
+    expect(await load(secondId)).toMatchObject({
+      lastImportFrom: null,
+      lastImportDueDate: spMidnight('2026-11-10'),
+    });
+
+    await accountRepository.recordImport(secondId, userId, {
+      from: spMidnight('2026-11-01'),
+      through: spMidnight('2026-11-12'),
+      dueDate: null,
+    });
+    expect((await load(secondId)).lastImportDueDate).toBeNull();
   });
 });

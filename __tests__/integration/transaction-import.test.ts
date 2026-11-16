@@ -11,13 +11,18 @@ import { app } from '../../src/server';
 
 const ofx = (
   rows: Array<{ fitId: string; date: string; amount: string; memo: string }>,
-  { acctId = '777', dtEnd }: { acctId?: string | null; dtEnd?: string } = {}
+  {
+    acctId = '777',
+    dtStart,
+    dtEnd,
+  }: { acctId?: string | null; dtStart?: string; dtEnd?: string } = {}
 ) => `
 OFXHEADER:100
 DATA:OFXSGML
 <OFX>
 <BANKACCTFROM><BANKID>0001${acctId ? `<ACCTID>${acctId}` : ''}</BANKACCTFROM>
 <BANKTRANLIST>
+${dtStart ? `<DTSTART>${dtStart}` : ''}
 ${dtEnd ? `<DTEND>${dtEnd}` : ''}
 ${rows
   .map(
@@ -285,13 +290,19 @@ describe('Transaction import: statement account and coverage', () => {
         .expect(200)
     ).body.data;
 
-  const confirmPreview = (data: PreviewBody, accountId: string, through = data.through) =>
+  const confirmPreview = (
+    data: PreviewBody,
+    accountId: string,
+    through = data.through,
+    overrides: { from?: string | null } = {}
+  ) =>
     request(app)
       .post('/transactions/import')
       .set(auth())
       .send({
         accountId,
         accountKey: data.accountKey,
+        from: 'from' in overrides ? overrides.from : data.from,
         through,
         items: data.items.map(({ externalId, type, amount, date, title }) => ({
           externalId,
@@ -307,6 +318,7 @@ describe('Transaction import: statement account and coverage', () => {
     accountId: string | null;
     needsAccount: boolean;
     accountKey: string;
+    from: string | null;
     through: string;
     items: PreviewItem[];
   };
@@ -511,6 +523,86 @@ describe('Transaction import: statement account and coverage', () => {
     expect(await account(mainId)).toMatchObject({
       statementKey: '0001:heal',
       dataThrough: dayAt(-1),
+    });
+  });
+
+  describe('last imported period', () => {
+    let periodAccountId: string;
+
+    const listed = async () =>
+      (await request(app).get('/accounts').set(auth()).expect(200)).body.data.find(
+        (row: { id: string }) => row.id === periodAccountId
+      );
+    const period = (fitId: string, start: number, end: number) =>
+      statement(fitId, end, { acctId: 'period', dtStart: ymd(start), dtEnd: ymd(end) });
+
+    beforeAll(async () => {
+      periodAccountId = (
+        await request(app)
+          .post('/accounts')
+          .set(auth())
+          .send({ type: 'checking', name: 'Conta do período' })
+          .expect(201)
+      ).body.data.id;
+    });
+
+    it('returns the file start in the preview', async () => {
+      const data = await previewBody(period('p1', -20, -3), periodAccountId);
+
+      expect(data.from).toBe(dayAt(-20).toISOString());
+    });
+
+    it('stores the last imported period on the account', async () => {
+      const data = await previewBody(period('p1', -20, -3), periodAccountId);
+      await confirmPreview(data, periodAccountId).expect(201);
+
+      expect(await listed()).toMatchObject({
+        lastImportFrom: dayAt(-20).toISOString(),
+        lastImportThrough: dayAt(-3).toISOString(),
+        lastImportDueDate: null,
+      });
+    });
+
+    it('goes back to the period of an older file, keeping the coverage', async () => {
+      const data = await previewBody(period('p2', -60, -40), periodAccountId);
+      await confirmPreview(data, periodAccountId).expect(201);
+
+      expect(await listed()).toMatchObject({
+        lastImportFrom: dayAt(-60).toISOString(),
+        lastImportThrough: dayAt(-40).toISOString(),
+        dataThrough: dayAt(-3).toISOString(),
+      });
+    });
+
+    it('accepts a confirmation without the start', async () => {
+      const data = await previewBody(period('p3', -10, -2), periodAccountId);
+      await confirmPreview(data, periodAccountId, data.through, { from: undefined }).expect(201);
+
+      expect(await listed()).toMatchObject({
+        lastImportFrom: null,
+        lastImportThrough: dayAt(-2).toISOString(),
+      });
+    });
+
+    it('rejects a start after the end', async () => {
+      const data = await previewBody(period('p4', -10, -5), periodAccountId);
+      const res = await confirmPreview(data, periodAccountId, dayAt(-5).toISOString(), {
+        from: dayAt(-1).toISOString(),
+      }).expect(400);
+
+      expect(JSON.stringify(res.body)).toContain('O início do período não pode ser depois do fim.');
+    });
+
+    it('clamps a future start to today', async () => {
+      const data = await previewBody(period('p5', -1, -1), periodAccountId);
+      await confirmPreview(data, periodAccountId, dayAt(20).toISOString(), {
+        from: dayAt(5).toISOString(),
+      }).expect(201);
+
+      expect(await listed()).toMatchObject({
+        lastImportFrom: dayAt(0).toISOString(),
+        lastImportThrough: dayAt(0).toISOString(),
+      });
     });
   });
 });
