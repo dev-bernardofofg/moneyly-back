@@ -69,6 +69,10 @@ describe('parseInterBill', () => {
     );
   });
 
+  it('carries no period start: a bill has no chosen period', () => {
+    expect(bill.from).toBeUndefined();
+  });
+
   it('returns null for text that is not an Inter bill', () => {
     expect(parseInterBill('Extrato qualquer\n01/09/2026 compra 10,00')).toBeNull();
   });
