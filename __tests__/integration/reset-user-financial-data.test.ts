@@ -48,6 +48,9 @@ async function seedUser(label: string) {
         openingBalance: 150000,
         openingBalanceDate: OPENING_DATE,
         dataThrough: DATA_THROUGH,
+        lastImportFrom: DATA_THROUGH,
+        lastImportThrough: DATA_THROUGH,
+        lastImportDueDate: DATA_THROUGH,
         statementKey: `key-${label}-${Date.now()}`,
       })
       .returning()
@@ -280,6 +283,11 @@ describe('resetUserFinancialData', () => {
     expect(after.openingBalance).toBe(0);
     expect(after.openingBalanceDate).toBeNull();
     expect(after.dataThrough).toBeNull();
+    expect(after).toMatchObject({
+      lastImportFrom: null,
+      lastImportThrough: null,
+      lastImportDueDate: null,
+    });
     expect(after.statementKey).toBe(before.statementKey);
   });
 

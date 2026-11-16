@@ -1,5 +1,5 @@
 import { spMidnight } from '@core/helpers/dates';
-import type { OfxStatement, OfxTransaction } from './ofx-parser';
+import { earliestDate, type OfxStatement, type OfxTransaction } from './ofx-parser';
 
 const MONTHS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
 const LONG_MONTHS = [
@@ -86,10 +86,13 @@ export function parseNubankStatement(text: string): OfxStatement | null {
   const accountKey = `nubank:conta:${number}`;
 
   const period = text.match(PERIOD);
+  let periodStart: Date | undefined;
   let periodEnd: Date | null = null;
   if (period) {
+    const startMonth = LONG_MONTHS.indexOf(stripAccents(period[2]!).toUpperCase());
     const month = LONG_MONTHS.indexOf(stripAccents(period[5]!).toUpperCase());
-    if (month < 0) return null;
+    if (startMonth < 0 || month < 0) return null;
+    periodStart = spMidnight(isoDay(Number(period[3]), startMonth, Number(period[1])));
     periodEnd = spMidnight(isoDay(Number(period[6]), month, Number(period[4])));
   }
 
@@ -195,5 +198,5 @@ export function parseNubankStatement(text: string): OfxStatement | null {
       ? new Date(Math.max(...transactions.map((row) => row.date.getTime())))
       : null);
   if (!through) return null;
-  return { accountKey, through, transactions };
+  return { accountKey, from: periodStart ?? earliestDate(transactions), through, transactions };
 }

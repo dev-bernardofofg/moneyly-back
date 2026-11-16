@@ -20,52 +20,59 @@ const isoDay = z
   .datetime({ message: 'A data deve estar no formato ISO 8601.' })
   .transform((value) => spMidnight(new Date(value)));
 
-export const confirmImportSchema = z.object({
-  accountId: z
-    .string({ required_error: 'Escolha a conta ou o cartão do extrato.' })
-    .uuid('O ID da conta deve ser um UUID válido.'),
-  items: z
-    .array(
-      z
-        .object({
+export const confirmImportSchema = z
+  .object({
+    accountId: z
+      .string({ required_error: 'Escolha a conta ou o cartão do extrato.' })
+      .uuid('O ID da conta deve ser um UUID válido.'),
+    items: z
+      .array(
+        z
+          .object({
+            externalId: z.string().min(1).max(200),
+            type: z.enum(['income', 'expense']),
+            title: z.string().min(1).max(100),
+            amount: z.number().int().positive().max(999999999),
+            // Contrato: dia-semântica → meia-noite SP.
+            date: z
+              .string()
+              .datetime({ message: 'A data deve estar no formato ISO 8601.' })
+              .transform((value) => spMidnight(new Date(value))),
+            categoryId: z.string().uuid('O ID da categoria deve ser um UUID válido.').optional(),
+            // Transação da outra conta que é a outra ponta: as duas viram uma transferência.
+            transferOf: z.string().uuid('O ID da transação deve ser um UUID válido.').optional(),
+            // Lançamento já existente nesta conta: confirmar liga a linha a ele em vez de criar.
+            duplicateOf: z.string().uuid('O ID da transação deve ser um UUID válido.').optional(),
+          })
+          .refine((item) => item.transferOf || item.duplicateOf || item.categoryId, {
+            message: 'Escolha a categoria da transação.',
+            path: ['categoryId'],
+          })
+      )
+      .max(MAX_IMPORT_ITEMS, `Importe no máximo ${MAX_IMPORT_ITEMS} transações por vez.`),
+    // Devolvidos pela prévia: a chave liga o arquivo à conta e through marca até onde ele cobre.
+    accountKey: z.string().min(1).max(200),
+    // Ausente em fatura e em cliente antigo em cache: o início do último arquivo fica desconhecido.
+    from: isoDay.nullable().optional(),
+    through: isoDay,
+    // Fatura em PDF: vencimento lido do arquivo; no cartão, todas as linhas vão para ele.
+    billDueDate: isoDay.optional(),
+    // Linhas "pagamento de fatura" do extrato: marcam a fatura e, na conta corrente, saem do saldo.
+    billPayments: z
+      .array(
+        z.object({
           externalId: z.string().min(1).max(200),
           type: z.enum(['income', 'expense']),
-          title: z.string().min(1).max(100),
           amount: z.number().int().positive().max(999999999),
-          // Contrato: dia-semântica → meia-noite SP.
-          date: z
-            .string()
-            .datetime({ message: 'A data deve estar no formato ISO 8601.' })
-            .transform((value) => spMidnight(new Date(value))),
-          categoryId: z.string().uuid('O ID da categoria deve ser um UUID válido.').optional(),
-          // Transação da outra conta que é a outra ponta: as duas viram uma transferência.
-          transferOf: z.string().uuid('O ID da transação deve ser um UUID válido.').optional(),
-          // Lançamento já existente nesta conta: confirmar liga a linha a ele em vez de criar.
-          duplicateOf: z.string().uuid('O ID da transação deve ser um UUID válido.').optional(),
+          date: isoDay,
         })
-        .refine((item) => item.transferOf || item.duplicateOf || item.categoryId, {
-          message: 'Escolha a categoria da transação.',
-          path: ['categoryId'],
-        })
-    )
-    .max(MAX_IMPORT_ITEMS, `Importe no máximo ${MAX_IMPORT_ITEMS} transações por vez.`),
-  // Devolvidos pela prévia: a chave liga o arquivo à conta e through marca até onde ele cobre.
-  accountKey: z.string().min(1).max(200),
-  through: isoDay,
-  // Fatura em PDF: vencimento lido do arquivo; no cartão, todas as linhas vão para ele.
-  billDueDate: isoDay.optional(),
-  // Linhas "pagamento de fatura" do extrato: marcam a fatura e, na conta corrente, saem do saldo.
-  billPayments: z
-    .array(
-      z.object({
-        externalId: z.string().min(1).max(200),
-        type: z.enum(['income', 'expense']),
-        amount: z.number().int().positive().max(999999999),
-        date: isoDay,
-      })
-    )
-    .max(MAX_IMPORT_ITEMS)
-    .default([]),
-});
+      )
+      .max(MAX_IMPORT_ITEMS)
+      .default([]),
+  })
+  .refine(({ from, through }) => !from || from.getTime() <= through.getTime(), {
+    message: 'O início do período não pode ser depois do fim.',
+    path: ['from'],
+  });
 
 export type ConfirmImportInput = z.infer<typeof confirmImportSchema>;

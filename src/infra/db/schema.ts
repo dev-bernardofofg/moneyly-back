@@ -82,6 +82,11 @@ export const accounts = pgTable(
     openingBalanceDate: timestamp('opening_balance_date'),
     // Último dia coberto por extrato importado; null = nunca importou.
     dataThrough: timestamp('data_through'),
+    // Período do último arquivo confirmado. Ao contrário de dataThrough, recua se o arquivo for
+    // mais antigo. dueDate só existe quando o último arquivo foi fatura em PDF.
+    lastImportFrom: timestamp('last_import_from'),
+    lastImportThrough: timestamp('last_import_through'),
+    lastImportDueDate: timestamp('last_import_due_date'),
     // Identificador da conta no arquivo bancário (ex.: ACCTID do OFX).
     statementKey: text('statement_key'),
     isDefault: boolean('is_default').default(false).notNull(),

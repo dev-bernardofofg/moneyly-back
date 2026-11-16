@@ -65,6 +65,15 @@ describe('parseNubankStatement', () => {
     expect(statement.through).toEqual(spMidnight('2026-10-31'));
   });
 
+  it('reads the printed period start as from', () => {
+    expect(statement.from).toEqual(spMidnight('2026-10-01'));
+  });
+
+  it('falls back to the earliest entry date when the period is missing', () => {
+    const noPeriod = parseNubankStatement(build().replace(/VALORES EM R\$/g, ''))!;
+    expect(noPeriod.from).toEqual(spMidnight('2026-10-02'));
+  });
+
   it('is not a bill: it carries no due date', () => {
     expect(statement).not.toHaveProperty('dueDate');
   });

@@ -106,6 +106,7 @@ export const previewTransactionImportUseCase = async (
   }
   // Semana sem movimento gera OFX válido sem lançamentos: o DTEND ainda atualiza a cobertura.
   const { through } = statement;
+  const from = statement.from ?? null;
   if (statement.transactions.length === 0 && !through) {
     throw new BadRequestError('Nenhuma transação encontrada no extrato');
   }
@@ -121,6 +122,7 @@ export const previewTransactionImportUseCase = async (
       needsAccount: true,
       accountKey: statement.accountKey,
       requiredAccountType: required,
+      from,
       through,
       bill,
       items: [],
@@ -134,6 +136,7 @@ export const previewTransactionImportUseCase = async (
       needsAccount: false,
       accountKey: statement.accountKey,
       requiredAccountType: required,
+      from,
       through,
       bill,
       items: [],
@@ -188,6 +191,7 @@ export const previewTransactionImportUseCase = async (
     needsAccount: false,
     accountKey: statement.accountKey,
     requiredAccountType: required,
+    from,
     through,
     bill,
     items: statement.transactions.map((transaction) => {
@@ -226,6 +230,7 @@ export const confirmTransactionImportUseCase = async (
     billDueDate,
     accountId: requestedAccountId,
     accountKey,
+    from,
     through,
   }: ConfirmImportInput
 ) => {
@@ -311,9 +316,12 @@ export const confirmTransactionImportUseCase = async (
   // DTEND futuro não pode marcar a conta como em dia além de hoje (nem vazar a ocorrência de
   // hoje para o passado coberto).
   const today = spMidnight(new Date());
+  const capped = (date: Date) => (date > today ? today : date);
   await accountRepository.recordImport(account.id, userId, {
     statementKey: isWeakStatementKey(accountKey) ? undefined : accountKey,
-    through: through > today ? today : through,
+    from: from ? capped(from) : null,
+    through: capped(through),
+    dueDate: billDueDate ?? null,
   });
 
   return {

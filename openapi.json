@@ -1115,6 +1115,11 @@
               "credit_card"
             ]
           },
+          "from": {
+            "type": "string",
+            "nullable": true,
+            "example": "2026-05-17T00:00:00.000Z"
+          },
           "through": {
             "type": "string",
             "example": "2026-05-17T00:00:00.000Z"
@@ -1229,6 +1234,7 @@
           "needsAccount",
           "accountKey",
           "requiredAccountType",
+          "from",
           "through",
           "bill",
           "items"
@@ -1841,6 +1847,21 @@
             "nullable": true,
             "example": "2026-05-17T00:00:00.000Z"
           },
+          "lastImportFrom": {
+            "type": "string",
+            "nullable": true,
+            "example": "2026-05-17T00:00:00.000Z"
+          },
+          "lastImportThrough": {
+            "type": "string",
+            "nullable": true,
+            "example": "2026-05-17T00:00:00.000Z"
+          },
+          "lastImportDueDate": {
+            "type": "string",
+            "nullable": true,
+            "example": "2026-05-17T00:00:00.000Z"
+          },
           "statementKey": {
             "type": "string",
             "nullable": true
@@ -1879,6 +1900,9 @@
           "openingBalance",
           "openingBalanceDate",
           "dataThrough",
+          "lastImportFrom",
+          "lastImportThrough",
+          "lastImportDueDate",
           "statementKey",
           "isDefault",
           "isActive",
@@ -9559,6 +9583,11 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 200
+                  },
+                  "from": {
+                    "type": "string",
+                    "nullable": true,
+                    "format": "date-time"
                   },
                   "through": {
                     "type": "string",

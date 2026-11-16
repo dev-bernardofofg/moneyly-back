@@ -349,6 +349,8 @@ export const TransactionImportPreviewSchema = registry.register(
     accountKey: z.string(),
     // Tipo de conta que o arquivo aceita; null quando vale qualquer uma (OFX).
     requiredAccountType: z.enum(['checking', 'credit_card']).nullable(),
+    // Primeiro dia coberto pelo arquivo; null em fatura. Volta na confirmação.
+    from: isoDate.nullable(),
     // Último dia coberto pelo arquivo; volta na confirmação.
     through: isoDate,
     // Só na fatura em PDF: vencimento e total impressos nela.
@@ -546,6 +548,10 @@ export const AccountSchema = registry.register(
     currentBalance: money.nullable().optional(),
     openingBalanceDate: isoDate.nullable(),
     dataThrough: isoDate.nullable(),
+    // Período do último arquivo importado; dueDate só quando ele foi fatura em PDF.
+    lastImportFrom: isoDate.nullable(),
+    lastImportThrough: isoDate.nullable(),
+    lastImportDueDate: isoDate.nullable(),
     statementKey: z.string().nullable(),
     // Só em GET /accounts: fresh até 7 dias após dataThrough; empty = nunca importou.
     freshness: z.enum(['fresh', 'stale', 'empty']).optional(),

@@ -90,6 +90,10 @@ describe('parseNubankBill', () => {
     expect(parseNubankBill(text)!.transactions[0]).toMatchObject({ type: 'income', amount: 500 });
   });
 
+  it('carries no period start: a bill has no chosen period', () => {
+    expect(bill.from).toBeUndefined();
+  });
+
   it('refuses text that is not a Nubank bill', () => {
     expect(parseNubankBill('Data de Vencimento\n07/10/2026')).toBeNull();
     expect(parseNubankBill(build('1,00').replace(/TRANSAÇÕES DE/g, 'MOVIMENTOS'))).toBeNull();

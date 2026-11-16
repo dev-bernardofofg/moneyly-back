@@ -1,5 +1,5 @@
 import { spMidnight } from '@core/helpers/dates';
-import type { OfxStatement, OfxTransaction } from './ofx-parser';
+import { earliestDate, type OfxStatement, type OfxTransaction } from './ofx-parser';
 
 const MONTHS = [
   'janeiro',
@@ -18,7 +18,7 @@ const MONTHS = [
 
 const DAY_HEADER = /(\d{1,2}) de (\p{L}+) de (\d{4}) Saldo do dia:/u;
 const ACCOUNT = /Conta:\s*(\d+-\d+)/;
-const PERIOD = /Período:\s*\d{2}\/\d{2}\/\d{4} a (\d{2})\/(\d{2})\/(\d{4})/;
+const PERIOD = /Período:\s*(\d{2})\/(\d{2})\/(\d{4}) a (\d{2})\/(\d{2})\/(\d{4})/;
 // Primeiro valor é o lançamento (com "-" quando sai); o último é o saldo e não interessa.
 const ENTRY = /^(.+?):\s*"(.*)"\s+(-)?R\$\s*([\d.]+,\d{2})\s+-?R\$\s*[\d.]+,\d{2}\s*$/;
 
@@ -41,7 +41,13 @@ export function parseInterStatement(text: string): OfxStatement | null {
   if (!account) return null;
   const accountKey = `inter:conta:${account[1]}`;
 
-  const periodEnd = text.match(PERIOD);
+  const period = text.match(PERIOD);
+  const periodDay = (offset: number) =>
+    period
+      ? spMidnight(
+          isoDay(Number(period[offset + 2]), Number(period[offset + 1]) - 1, Number(period[offset]))
+        )
+      : undefined;
   const transactions: OfxTransaction[] = [];
   const occurrences = new Map<string, number>();
   let date: Date | null = null;
@@ -74,11 +80,11 @@ export function parseInterStatement(text: string): OfxStatement | null {
     });
   }
 
-  const through = periodEnd
-    ? spMidnight(isoDay(Number(periodEnd[3]), Number(periodEnd[2]) - 1, Number(periodEnd[1])))
-    : transactions.length > 0
+  const through =
+    periodDay(4) ??
+    (transactions.length > 0
       ? new Date(Math.max(...transactions.map((row) => row.date.getTime())))
-      : undefined;
+      : undefined);
   if (!through) return null;
-  return { accountKey, through, transactions };
+  return { accountKey, from: periodDay(1) ?? earliestDate(transactions), through, transactions };
 }

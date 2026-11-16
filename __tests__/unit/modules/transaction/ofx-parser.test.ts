@@ -96,6 +96,36 @@ describe('parseOfx', () => {
     expect(parseOfx(content).through).toEqual(spMidnight('2026-10-31'));
   });
 
+  it('uses DTSTART as the coverage start, even before the first row', () => {
+    const content = SGML.replace(
+      '<BANKTRANLIST>',
+      '<BANKTRANLIST>\n<DTSTART>20261001\n<DTEND>20261031120000[-3:BRT]'
+    );
+
+    expect(parseOfx(content).from).toEqual(spMidnight('2026-10-01'));
+  });
+
+  it('falls back to the earliest row date when DTSTART is missing', () => {
+    expect(parseOfx(SGML).from).toEqual(spMidnight('2026-10-05'));
+  });
+
+  it('leaves the start undefined without DTSTART and without rows', () => {
+    const empty = '<OFX><BANKTRANLIST><DTEND>20261031</BANKTRANLIST></OFX>';
+
+    expect(parseOfx(empty).from).toBeUndefined();
+  });
+
+  it('drops a start that falls after the coverage end', () => {
+    const endBeforeRows = SGML.replace('<BANKTRANLIST>', '<BANKTRANLIST>\n<DTEND>20261001');
+    const startAfterEnd = SGML.replace(
+      '<BANKTRANLIST>',
+      '<BANKTRANLIST>\n<DTSTART>20261020\n<DTEND>20261010'
+    );
+
+    expect(parseOfx(endBeforeRows).from).toBeUndefined();
+    expect(parseOfx(startAfterEnd).from).toBeUndefined();
+  });
+
   it('falls back to the latest row date when DTEND is missing', () => {
     expect(parseOfx(SGML).through).toEqual(spMidnight('2026-10-06'));
   });
