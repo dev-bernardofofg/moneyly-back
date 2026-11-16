@@ -81,6 +81,10 @@ Fonte de verdade: `src/infra/db/schema.ts` (Drizzle). Atualizar este doc quando 
 
 `data_through` timestamp nullable: última data coberta por arquivo importado. `statement_key` text nullable, único por usuário (índice parcial): identifica a origem do arquivo. Migration `0018`, escrita à mão como as 0006 a 0017.
 
+### `accounts` (colunas do F22)
+
+`last_import_from`, `last_import_through` e `last_import_due_date`, timestamps nullable: período do último arquivo confirmado e, quando ele foi fatura em PDF, o vencimento. Só para exibição no check-in. Ao contrário de `data_through`, recuam quando o arquivo é mais antigo. Migration `0020`, escrita à mão.
+
 ### `bill_payment_outflows` (F21)
 
 `id` · `userId`→users (cascade) · `accountId`→accounts · `amount` int centavos · `date` · `externalId` text · `createdAt`. Único em `(userId, externalId)`. Linha `bill_payment` de extrato de conta corrente: reduz `currentBalance`, não é transação nem transferência, e não entra em realizado, estatísticas ou insights. Apagada por `db:reset-user`.
