@@ -10,6 +10,9 @@ export interface OfxTransaction {
 
 export interface OfxStatement {
   accountKey: string;
+  // Primeiro dia coberto (meia-noite SP): DTSTART, período impresso ou a menor data de
+  // lançamento. Ausente em fatura, que não tem período escolhido.
+  from?: Date;
   // Último dia coberto pelo arquivo (meia-noite SP): DTEND ou a maior data de lançamento.
   // Ausente quando o arquivo não traz nenhum dos dois: cobertura desconhecida.
   through?: Date;
@@ -40,6 +43,9 @@ const parseOfxAmount = (raw: string): number => {
   const normalized = raw.includes(',') ? raw.replace(/\./g, '').replace(',', '.') : raw;
   return Number(normalized);
 };
+
+export const earliestDate = (rows: { date: Date }[]): Date | undefined =>
+  rows.length > 0 ? new Date(Math.min(...rows.map((row) => row.date.getTime()))) : undefined;
 
 // Bancos brasileiros exportam em UTF-8 ou em windows-1252 (CHARSET:1252) sem padrão;
 // UTF-8 estrito falha nos bytes de acento do 1252, e aí o 1252 é o certo.
@@ -90,5 +96,11 @@ export function parseOfx(content: string): OfxStatement {
   );
   const through = throughFromEnd ?? latestRow;
 
-  return { accountKey, through, transactions };
+  const dtStart = readTag(content, 'DTSTART');
+  const start = (dtStart ? parseOfxDate(dtStart) : undefined) ?? earliestDate(transactions);
+  // Início depois do fim (DTEND antes dos lançamentos, arquivo malformado) faria a confirmação
+  // recusar o arquivo inteiro por um campo que só serve para exibição.
+  const from = start && through && start > through ? undefined : start;
+
+  return { accountKey, from, through, transactions };
 }
