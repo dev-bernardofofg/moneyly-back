@@ -141,6 +141,13 @@
       "when": 1792900000000,
       "tag": "0019_bill_payment_outflows",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1794600000000,
+      "tag": "0020_account_last_import",
+      "breakpoints": true
     }
   ]
 }

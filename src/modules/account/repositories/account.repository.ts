@@ -66,12 +66,12 @@ export const accountRepository = {
   },
 
   // GREATEST: reenviar um extrato antigo nunca recua a cobertura já registrada.
-  // Sem statementKey só a cobertura muda. A chave é única por usuário: quem a tinha perde,
-  // a última escolha vence.
+  // Sem statementKey mudam só a cobertura e o período do último arquivo. A chave é única por
+  // usuário: quem a tinha perde, a última escolha vence.
   async recordImport(
     id: string,
     userId: string,
-    data: { statementKey?: string; through: Date }
+    data: { statementKey?: string; from: Date | null; through: Date; dueDate: Date | null }
   ): Promise<void> {
     await db.transaction(async (tx) => {
       if (data.statementKey) {
@@ -91,6 +91,9 @@ export const accountRepository = {
         .set({
           ...(data.statementKey ? { statementKey: data.statementKey } : {}),
           dataThrough: sql`greatest(${accounts.dataThrough}, ${data.through.toISOString()}::timestamp)`,
+          lastImportFrom: data.from,
+          lastImportThrough: data.through,
+          lastImportDueDate: data.dueDate,
           updatedAt: new Date(),
         })
         .where(and(eq(accounts.id, id), eq(accounts.userId, userId)));

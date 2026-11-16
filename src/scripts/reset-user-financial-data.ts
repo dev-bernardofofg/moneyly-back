@@ -48,7 +48,8 @@ export async function resetUserFinancialData(
     const hasAccountState = or(
       ne(accounts.openingBalance, 0),
       isNotNull(accounts.openingBalanceDate),
-      isNotNull(accounts.dataThrough)
+      isNotNull(accounts.dataThrough),
+      isNotNull(accounts.lastImportThrough)
     );
 
     const counts: ResetCounts = {
@@ -125,7 +126,14 @@ export async function resetUserFinancialData(
     // statement_key fica: reimportar precisa reconhecer as contas.
     await tx
       .update(accounts)
-      .set({ openingBalance: 0, openingBalanceDate: null, dataThrough: null })
+      .set({
+        openingBalance: 0,
+        openingBalanceDate: null,
+        dataThrough: null,
+        lastImportFrom: null,
+        lastImportThrough: null,
+        lastImportDueDate: null,
+      })
       .where(and(eq(accounts.userId, userId), hasAccountState));
 
     return counts;
