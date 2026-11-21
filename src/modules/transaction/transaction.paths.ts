@@ -1,13 +1,11 @@
 /**
  * Registro OpenAPI do módulo transaction (importado por core/openapi/generate).
- * Inclui o endpoint de detecção de assinaturas (F3), montado neste router.
  */
 import { z } from '@core/openapi/registry';
 import { wrapPaginatedWithSummary, wrapSuccess } from '@core/openapi/envelopes';
 import {
   CurrentPeriodSummarySchema,
   MonthlySummaryItemSchema,
-  SubscriptionCandidateSchema,
   TransactionImportPreviewSchema,
   TransactionImportResultSchema,
   TransactionListSummarySchema,
@@ -102,13 +100,6 @@ route({
   summary: 'Exportar transações em CSV',
   query: exportQuery,
   csv: true,
-});
-route({
-  method: 'get',
-  path: '/transactions/subscriptions',
-  tag: 'Transactions',
-  summary: 'Detectar assinaturas (heurística)',
-  ok: ok(wrapSuccess(z.array(SubscriptionCandidateSchema))),
 });
 route({
   method: 'post',
