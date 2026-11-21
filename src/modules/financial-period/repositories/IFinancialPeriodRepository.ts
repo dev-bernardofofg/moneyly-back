@@ -19,4 +19,7 @@ export interface IFinancialPeriodRepository {
     userId: string
   ): Promise<(FinancialPeriod & { transactionCount: number })[]>;
   findById(periodId: string, userId: string): Promise<FinancialPeriod | undefined>;
+  findUserPeriodDays(
+    userId: string
+  ): Promise<{ financialDayStart: number | null; financialDayEnd: number | null } | undefined>;
 }
