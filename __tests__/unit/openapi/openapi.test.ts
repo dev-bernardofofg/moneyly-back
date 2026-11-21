@@ -18,6 +18,8 @@ const MODULE_ROUTER_PREFIX: Record<string, string> = {
   'transaction/transaction.router.ts': '/transactions',
   'overview/overview.router.ts': '/overview',
   'account/account.router.ts': '/accounts',
+  // Montado na raiz: os paths já vêm completos.
+  'subscription/subscription.router.ts': '',
 };
 
 const MODULES_DIR = join(__dirname, '../../../src/modules');
