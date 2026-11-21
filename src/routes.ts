@@ -11,7 +11,7 @@ import { RecurringTransactionRouter } from '@modules/recurring-transaction';
 import { SubscriptionRouter } from '@modules/subscription/subscription.router';
 import transactionRoutes from '@modules/transaction/transaction.router';
 import { UserRouters } from '@modules/user';
-import { AccountRouter } from '@modules/account';
+import { AccountRouter } from '@modules/account-management';
 import { TransferRouter } from '@modules/transfer';
 // Import estático: o tsc copia o JSON para dist/ e o bundle da Vercel o inclui (readFileSync em
 // runtime não era rastreado e /api-docs ficava vazio em produção).
