@@ -2,7 +2,9 @@ import type { NextFunction, Request, Response } from 'express';
 import { verifyAccessToken } from '@core/helpers/token';
 import { ResponseHandler } from '@core/helpers/response-handler';
 import type { AuthenticatedUser } from '../auth.types';
-import { requireUser } from '@modules/user';
+// Direto do arquivo: o index de user carrega user.router, que importa este middleware. Pelo
+// index, quem carrega este arquivo primeiro recebe authenticateUser undefined no router.
+import { requireUser } from '@modules/user/validations/user.validation';
 
 export interface AuthenticatedRequest extends Request {
   user?: AuthenticatedUser;
