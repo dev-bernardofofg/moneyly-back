@@ -1,6 +1,6 @@
 import { and, count, desc, eq, gte, lte } from 'drizzle-orm';
 import { db } from '@infra/db';
-import { financialPeriods, transactions, type FinancialPeriod } from '@infra/db/schema';
+import { financialPeriods, transactions, users, type FinancialPeriod } from '@infra/db/schema';
 import type { IFinancialPeriodRepository } from './IFinancialPeriodRepository';
 
 async function createPeriod(data: {
@@ -108,6 +108,18 @@ export const financialPeriodRepository = {
       .where(and(eq(financialPeriods.id, periodId), eq(financialPeriods.userId, userId)))
       .limit(1);
     return period;
+  },
+
+  // Lê direto da tabela users: importar o módulo user fecharia ciclo, porque user depende deste.
+  async findUserPeriodDays(userId: string) {
+    const [days] = await db
+      .select({
+        financialDayStart: users.financialDayStart,
+        financialDayEnd: users.financialDayEnd,
+      })
+      .from(users)
+      .where(eq(users.id, userId));
+    return days;
   },
 } satisfies IFinancialPeriodRepository;
 

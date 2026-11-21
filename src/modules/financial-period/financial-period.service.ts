@@ -6,21 +6,20 @@ import {
 } from './helpers/financial-period';
 import { spMidnightOf, spParts } from '@core/helpers/dates';
 import { financialPeriodRepository } from './repositories/financial-period.repository';
-import { userRepository } from '@modules/user';
 import { HttpError } from '@core/errors/http-error';
 
-async function getUser(userId: string) {
-  const user = await userRepository.findById(userId);
-  if (!user) throw new HttpError(404, 'Usuário não encontrado');
-  return user;
+async function getPeriodDays(userId: string) {
+  const days = await financialPeriodRepository.findUserPeriodDays(userId);
+  if (!days) throw new HttpError(404, 'Usuário não encontrado');
+  return days;
 }
 
 export const financialPeriodService = {
   async ensureCurrentPeriodExists(userId: string): Promise<FinancialPeriod> {
-    const user = await getUser(userId);
+    const days = await getPeriodDays(userId);
     const currentPeriod = getCurrentFinancialPeriod(
-      user.financialDayStart || 1,
-      user.financialDayEnd || 31
+      days.financialDayStart || 1,
+      days.financialDayEnd || 31
     );
     return financialPeriodRepository.findOrCreatePeriod(
       userId,
@@ -34,10 +33,10 @@ export const financialPeriodService = {
     year: number,
     month: number
   ): Promise<FinancialPeriod> {
-    const user = await getUser(userId);
+    const days = await getPeriodDays(userId);
     const period = getFinancialPeriodForMonth(
-      user.financialDayStart || 1,
-      user.financialDayEnd || 31,
+      days.financialDayStart || 1,
+      days.financialDayEnd || 31,
       year,
       month
     );
@@ -50,11 +49,11 @@ export const financialPeriodService = {
   },
 
   async findOrCreatePeriodForDate(userId: string, date: Date): Promise<string> {
-    const user = await getUser(userId);
+    const days = await getPeriodDays(userId);
     // getCurrentFinancialPeriod extrai o dia SP do instante internamente.
     const period = getCurrentFinancialPeriod(
-      user.financialDayStart ?? 1,
-      user.financialDayEnd ?? 31,
+      days.financialDayStart ?? 1,
+      days.financialDayEnd ?? 31,
       date
     );
     const stored = await financialPeriodRepository.findOrCreatePeriod(
@@ -84,7 +83,7 @@ export const financialPeriodService = {
   },
 
   async createNextPeriods(userId: string, numberOfPeriods: number = 3): Promise<FinancialPeriod[]> {
-    const user = await getUser(userId);
+    const days = await getPeriodDays(userId);
     const periods: FinancialPeriod[] = [];
     const { year, month } = spParts(new Date());
 
@@ -92,8 +91,8 @@ export const financialPeriodService = {
       // Âncora no dia 15 do mês alvo: imune a overflow de fim de mês.
       const futureDate = spMidnightOf(year, month + i, 15);
       const period = getCurrentFinancialPeriod(
-        user.financialDayStart || 1,
-        user.financialDayEnd || 31,
+        days.financialDayStart || 1,
+        days.financialDayEnd || 31,
         futureDate
       );
       const created = await financialPeriodRepository.findOrCreatePeriod(
