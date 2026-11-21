@@ -1,5 +1,5 @@
 /**
- * Registro OpenAPI do módulo account (importado por core/openapi/generate).
+ * Registro OpenAPI do módulo account-management (importado por core/openapi/generate).
  */
 import { z } from '@core/openapi/registry';
 import { wrapSuccess } from '@core/openapi/envelopes';

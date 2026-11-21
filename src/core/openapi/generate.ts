@@ -15,7 +15,7 @@ import '../../modules/recurring-transaction/recurring-transaction.paths';
 import '../../modules/transaction/transaction.paths';
 import '../../modules/subscription/subscription.paths';
 import '../../modules/overview/overview.paths';
-import '../../modules/account/account.paths';
+import '../../modules/account-management/account-management.paths';
 import '../../modules/transfer/transfer.paths';
 
 /**

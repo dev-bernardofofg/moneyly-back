@@ -4,7 +4,7 @@ import { logger } from '@core/lib/logger';
 import { nextDueDate } from '@modules/account/helpers/billing-date';
 import { accountRepository } from '@modules/account/repositories/account.repository';
 import { cardBillPaymentRepository } from '@modules/account/repositories/card-bill-payment.repository';
-import { billTotal } from '@modules/account/use-cases/card-bill-payment.use-cases';
+import { billTotal } from '@modules/transaction/use-cases/bill-total.use-case';
 import { dispatchNotification } from './dispatch-notification.use-case';
 
 const REMINDER_WINDOW_DAYS = 3;

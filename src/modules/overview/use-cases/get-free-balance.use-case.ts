@@ -3,7 +3,7 @@ import { spMidnight, spMidnightPlusDays, spParts } from '@core/helpers/dates';
 import type { Account } from '@infra/db/schema';
 import { billingDateFor, dueDateInPeriod } from '@modules/account/helpers/billing-date';
 import { cardBillPaymentRepository } from '@modules/account/repositories/card-bill-payment.repository';
-import { listAccountsUseCase } from '@modules/account/use-cases/account.use-cases';
+import { listAccountsUseCase } from '@modules/account-management/use-cases/account.use-cases';
 import { financialPeriodService } from '@modules/financial-period';
 import { overtimeRepository } from '@modules/overtime/repositories/overtime.repository';
 import {
