@@ -14,7 +14,6 @@ import { getTransactionSummaryUseCase } from './use-cases/get-transaction-summar
 import { listTransactionsPaginatedUseCase } from './use-cases/list-transactions-paginated.use-case';
 import { updateTransactionUseCase } from './use-cases/update-transaction.use-case';
 import { validatePagination } from '@core/validations/pagination.validation';
-import { detectSubscriptionsUseCase } from '@modules/subscription';
 import {
   confirmTransactionImportUseCase,
   previewTransactionImportUseCase,
@@ -157,11 +156,6 @@ export const exportTransactionsCsv = asyncHandler<AuthRequest>(async (req, res) 
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
   res.send('﻿' + csv);
-});
-
-export const getSubscriptions = asyncHandler<AuthRequest>(async (req, res) => {
-  const candidates = await detectSubscriptionsUseCase(req.user.id);
-  return ResponseHandler.success(res, candidates, 'Possíveis assinaturas detectadas');
 });
 
 export const getCurrentFinancialPeriodSummary = asyncHandler<AuthRequest>(async (req, res) => {

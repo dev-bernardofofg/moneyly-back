@@ -1,7 +1,7 @@
 import { BadRequestError } from '@core/errors';
 import type { Account } from '@infra/db/schema';
-import { transactionRepository } from '@modules/transaction/repositories/transaction.repository';
-import { transferRepository } from '../repositories/transfer.repository';
+import { transferRepository } from '@modules/transfer/repositories/transfer.repository';
+import { transactionRepository } from '../repositories/transaction.repository';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 // PIX/TED entre bancos cai no mesmo dia ou no seguinte.

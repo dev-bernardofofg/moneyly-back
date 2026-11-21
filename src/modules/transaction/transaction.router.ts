@@ -6,7 +6,6 @@ import {
   exportTransactionsCsv,
   getCurrentFinancialPeriodSummary,
   getMonthlySummary,
-  getSubscriptions,
   getTransactions,
   getTransactionSummary,
   previewTransactionImport,
@@ -44,8 +43,6 @@ TransactionsRouter.get('/summary-by-month', getMonthlySummary);
 TransactionsRouter.get('/summary-current-period', getCurrentFinancialPeriodSummary);
 
 TransactionsRouter.get('/export', exportTransactionsCsv);
-
-TransactionsRouter.get('/subscriptions', getSubscriptions);
 
 TransactionsRouter.post(
   '/import/preview',

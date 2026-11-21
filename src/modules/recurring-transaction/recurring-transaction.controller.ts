@@ -9,7 +9,6 @@ import { getRecurringTransactionHistoryUseCase } from './use-cases/get-recurring
 import { listRecurringTransactionsUseCase } from './use-cases/list-recurring-transactions.use-case';
 import { reactivateRecurringTransactionUseCase } from './use-cases/reactivate-recurring-transaction.use-case';
 import { updateRecurringTransactionUseCase } from './use-cases/update-recurring-transaction.use-case';
-import { convertSubscriptionToRecurringUseCase } from '@modules/subscription';
 
 export const createRecurringTransaction = asyncHandler<AuthRequest>(async (req, res) => {
   const {
@@ -39,23 +38,6 @@ export const createRecurringTransaction = asyncHandler<AuthRequest>(async (req, 
     startDate,
   });
   return ResponseHandler.created(res, recurring, 'Transação recorrente criada com sucesso');
-});
-
-export const createRecurringFromSubscription = asyncHandler<AuthRequest>(async (req, res) => {
-  const { title, amount, categoryId, cadence, nextEstimatedDate, description } = req.body;
-  const recurring = await convertSubscriptionToRecurringUseCase(req.user.id, {
-    title,
-    amount,
-    categoryId,
-    cadence,
-    nextEstimatedDate,
-    description,
-  });
-  return ResponseHandler.created(
-    res,
-    recurring,
-    'Assinatura convertida em transação recorrente com sucesso'
-  );
 });
 
 export const getRecurringTransactions = asyncHandler<AuthRequest>(async (req, res) => {

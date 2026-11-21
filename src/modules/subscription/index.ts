@@ -1,7 +1,6 @@
 /**
  * Interface pública do módulo subscription (detector F3 + conversão F10).
- * Sem router próprio: as rotas montam nos routers de transaction e
- * recurring-transaction.
+ * Router fica fora daqui: overview importa só os helpers e não deve carregar a cadeia de rotas.
  */
 export { detectSubscriptionsUseCase } from './use-cases/detect-subscriptions.use-case';
 export {

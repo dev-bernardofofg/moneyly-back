@@ -13,6 +13,7 @@ import '../../modules/auth/auth.paths';
 import '../../modules/user/user.paths';
 import '../../modules/recurring-transaction/recurring-transaction.paths';
 import '../../modules/transaction/transaction.paths';
+import '../../modules/subscription/subscription.paths';
 import '../../modules/overview/overview.paths';
 import '../../modules/account/account.paths';
 import '../../modules/transfer/transfer.paths';

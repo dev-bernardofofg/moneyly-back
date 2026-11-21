@@ -8,6 +8,7 @@ import { NotificationRouter } from '@modules/notification';
 import { OverviewRouter } from '@modules/overview';
 import { CompanyRouter, OvertimeRouter } from '@modules/overtime';
 import { RecurringTransactionRouter } from '@modules/recurring-transaction';
+import { SubscriptionRouter } from '@modules/subscription/subscription.router';
 import transactionRoutes from '@modules/transaction/transaction.router';
 import { UserRouters } from '@modules/user';
 import { AccountRouter } from '@modules/account';
@@ -43,6 +44,9 @@ router.get('/api-docs.json', (_req, res) => {
 
 router.use('/auth', AuthRouters);
 router.use('/user', UserRouters);
+// Antes de /transactions e /recurring-transactions: senão a requisição passa pelos middlewares
+// desses routers antes de chegar aqui.
+router.use(SubscriptionRouter);
 router.use('/transactions', transactionRoutes);
 router.use('/categories', CategoryRouter);
 router.use('/budgets', BudgetRouter);

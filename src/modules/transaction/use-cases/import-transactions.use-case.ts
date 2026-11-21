@@ -10,10 +10,7 @@ import { resolveAccount } from '@modules/account/use-cases/account.use-cases';
 import { registerImportedBillPayments } from '@modules/account/use-cases/card-bill-payment.use-cases';
 import { financialPeriodService } from '@modules/financial-period';
 import { transferRepository } from '@modules/transfer/repositories/transfer.repository';
-import {
-  convertToTransfer,
-  findTransferMatches,
-} from '@modules/transfer/use-cases/import-transfers.use-case';
+import { convertToTransfer, findTransferMatches } from './import-transfers.use-case';
 import { buildImportCategorySuggester, isBillPayment } from '../helpers/import-category-suggester';
 import { parseInterBill, type BillStatement } from '../helpers/inter-bill-parser';
 import { parseInterStatement } from '../helpers/inter-statement-parser';
